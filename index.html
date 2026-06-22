@@ -325,11 +325,11 @@ function ContractContent({c,inv,r,settings}) {
         <span> &nbsp; الجنسية / </span><span style={lineW(80)}>سعودي</span>
         <span> &nbsp; رقم البطاقة / </span><span style={lineW(120)}>{c.idNum||""}</span>
         <br/>
-        <span>نوعها / هوية وطنية &nbsp; صادرة من / </span><span style={lineW(100)}></span>
-        <span> &nbsp; بتاريخ / </span><span style={lineW(80)}></span>
+        <span>نوعها / {c.idType||"هوية وطنية"} &nbsp; صادرة من / </span><span style={lineW(100)}>{c.idIssuer||""}</span>
+        <span> &nbsp; بتاريخ / </span><span style={lineW(80)}>{c.idIssueDate||""}</span>
         <br/>
         <span>وأعمل في / </span><span style={lineW(120)}>{c.job||""}</span>
-        <span> &nbsp; وعنواني / </span><span style={lineW(120)}></span>
+        <span> &nbsp; وعنواني / </span><span style={lineW(120)}>{c.address||""}</span>
         <span> &nbsp; رقم الجوال / </span><span style={lineW(100)}>{c.cPhone||""}</span>
       </div>
 
@@ -422,7 +422,7 @@ function ContractContent({c,inv,r,settings}) {
 function NewContractPage({investors, settings, contracts, onSave, toast}) {
   const today = new Date().toISOString().split("T")[0];
   const nextNum = contracts.length ? Math.max(...contracts.map(c=>parseInt(c.num)||0).filter(n=>n>0), 0) + 1 : 1;
-  const [form, setForm] = useState({client:"",idNum:"",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:""});
+  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:""});
   const set = (k,v) => {
     setForm(f=>({...f,[k]:v}));
     // Auto-fill if idNum entered and matches existing contract
@@ -453,14 +453,17 @@ function NewContractPage({investors, settings, contracts, onSave, toast}) {
       profit:rr.profit, admin:rr.admin, acc:rr.acc, inst:rr.inst, net:rr.net, total:rr.total});
     toast("✅ تم حفظ العقد بنجاح");
     const nn = parseInt(form.num)+1;
-    setForm({client:"",idNum:"",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nn),cPhone:"",gName:"",gId:"",gJob:"",gPhone:""});
+    setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nn),cPhone:"",gName:"",gId:"",gJob:"",gPhone:""});
   };
 
   const fields1 = [
     {label:"اسم العميل *",key:"client",type:"text",ph:"الاسم الكامل"},
-    {label:"السجل المدني",key:"idNum",type:"text",ph:"رقم الهوية"},
+    {label:"رقم الهوية",key:"idNum",type:"text",ph:"رقم الهوية / الإقامة"},
     {label:"العمل",key:"job",type:"text",ph:"جهة العمل"},
     {label:"جوال العميل",key:"cPhone",type:"tel",ph:"05xxxxxxxx"},
+    {label:"صادرة من",key:"idIssuer",type:"text",ph:"جهة الإصدار"},
+    {label:"بتاريخ",key:"idIssueDate",type:"date",ph:""},
+    {label:"عنواني",key:"address",type:"text",ph:"العنوان"},
   ];
   const fields2 = [
     {label:"قيمة العقد النقدية (القيمة) *",key:"amount",type:"number",ph:"مثال: 15000"},
@@ -501,6 +504,13 @@ function NewContractPage({investors, settings, contracts, onSave, toast}) {
                 <input style={styles.input} type={f.type} placeholder={f.ph} value={form[f.key]} onChange={e=>set(f.key,e.target.value)}/>
               </div>
             ))}
+            <div>
+              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>نوع الهوية</label>
+              <select style={styles.select} value={form.idType} onChange={e=>set("idType",e.target.value)}>
+                <option value="هوية وطنية">هوية وطنية</option>
+                <option value="إقامة">إقامة</option>
+              </select>
+            </div>
           </div>
 
           {/* نوع البضاعة */}
@@ -603,7 +613,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast}) {
 
           <div style={{display:"flex",gap:10,marginTop:16}}>
             <button style={styles.btn(C.teal)} onClick={save}>💾 حفظ العقد</button>
-            <button style={styles.btn("transparent",C.ink2)} onClick={()=>setForm({client:"",idNum:"",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,cPhone:"",gName:"",gId:"",gJob:"",gPhone:""})}>مسح</button>
+            <button style={styles.btn("transparent",C.ink2)} onClick={()=>setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,cPhone:"",gName:"",gId:"",gJob:"",gPhone:""})}>مسح</button>
           </div>
         </div>
       </div>
