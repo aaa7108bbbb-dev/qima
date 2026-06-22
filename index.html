@@ -510,7 +510,7 @@ function ContractContent({c,inv,r,settings}) {
 // ─── New Contract Form ───────────────────────────────────────
 function NewContractPage({investors, settings, contracts, onSave, toast}) {
   const today = new Date().toISOString().split("T")[0];
-  const nextNum = contracts.length ? Math.max(...contracts.map(c=>parseInt(c.num)||0).filter(n=>n>0), 0) + 1 : 1;
+  const nextNum = contracts.length ? Math.max(...contracts.map(c=>parseInt(c.num)||0).filter(n=>n>0), 0) + 1 : (settings.startNum||1);
   const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:""});
   const set = (k,v) => {
     setForm(f=>({...f,[k]:v}));
@@ -2198,12 +2198,18 @@ function SettingsPage({settings,onSave,toast}) {
 
       <div style={{...styles.panel,marginBottom:16}}>
         <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:13,fontWeight:700}}>بيانات المؤسسة</h3></div>
-        <div style={{padding:"16px 20px"}}>
-          <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>رقم السجل التجاري</label>
+        <div style={{padding:"16px 20px"}}>          <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>رقم السجل التجاري</label>
           <input style={{...styles.input,maxWidth:280,borderColor:C.gold,fontWeight:700}} type="text"
             placeholder="مثال: 1010xxxxxx"
             value={s.regNum||""} onChange={e=>setS(prev=>({...prev,regNum:e.target.value}))}/>
           <div style={{fontSize:11,color:"#9ca3af",marginTop:5}}>يظهر هذا الرقم تلقائياً في كل عقد مطبوع</div>
+          <div style={{marginTop:16}}>
+            <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>بداية ترقيم العقود</label>
+            <input style={{...styles.input,maxWidth:160,borderColor:C.teal,fontWeight:700}} type="number" min="1"
+              placeholder="مثال: 1"
+              value={s.startNum||1} onChange={e=>setS(prev=>({...prev,startNum:parseInt(e.target.value)||1}))}/>
+            <div style={{fontSize:11,color:"#9ca3af",marginTop:5}}>رقم أول عقد جديد (يُطبق فقط إذا لم توجد عقود)</div>
+          </div>
         </div>
       </div>
 
