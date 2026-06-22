@@ -184,9 +184,9 @@ function BondContent({c,inv,r}) {
         <div style={{fontSize:11,color:"#444",marginTop:3}}>صادر وفق نظام الأوراق التجارية السعودي</div>
       </div>
       <p>حرر بمدينة <u style={{padding:"0 40px"}}></u> بتاريخ <u style={{padding:"0 30px"}}></u> / <u style={{padding:"0 30px"}}></u> / 14<u style={{padding:"0 20px"}}></u> هـ الموافق <u style={{padding:"0 30px"}}></u> / <u style={{padding:"0 30px"}}></u> / 20<u style={{padding:"0 20px"}}></u> م</p>
-      <p>أتعهد أنا الموقع أدناه بأن أدفع بموجب هذا السند بدون قيد أو شرط لأمر <u style={{display:"inline-block",minWidth:160,borderBottom:"1px solid #000"}}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> مبلغاً وقدره:</p>
+      <p>أتعهد أنا الموقع أدناه بأن أدفع بموجب هذا السند بدون قيد أو شرط لأمر <strong>{inv?inv.name:"............................."}</strong> مبلغاً وقدره:</p>
       <div style={{border:"2px solid #000",borderRadius:6,padding:"10px 16px",textAlign:"center",fontSize:15,fontWeight:800,margin:"12px 0",background:"#fffbf0"}}>
-        {words} | ( {bondTotal.toLocaleString("ar-SA")} ريال )
+        {words} | ( {instAmt.toLocaleString("ar-SA")} ريال )
       </div>
       <p>بتاريخ الاستحقاق <u style={{padding:"0 40px"}}></u> / <u style={{padding:"0 30px"}}></u> / 14<u style={{padding:"0 20px"}}></u> هـ</p>
       <div style={{borderRight:"3px solid #000",paddingRight:10,fontSize:11.5,color:"#333",lineHeight:1.8,marginBottom:16}}>
@@ -203,7 +203,7 @@ function BondContent({c,inv,r}) {
         ))}
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginTop:24}}>
-        {["التوقيع","البصمة"].map(s=>(
+        {["التوقيع","البصمة","ختم المؤسسة"].map(s=>(
           <div key={s} style={{textAlign:"center"}}>
             <div style={{borderTop:"1px solid #666",marginTop:50,paddingTop:6,fontSize:12,color:"#444"}}>{s}</div>
           </div>
@@ -260,7 +260,7 @@ function ContractContent({c,inv,r,settings}) {
   const sec = {marginBottom:9,border:"1.2px solid #000",borderRadius:5,overflow:"hidden"};
   const secHdr = {background:"#f0f0f0",color:"#000",fontWeight:800,fontSize:11,padding:"5px 14px",letterSpacing:0.5,borderBottom:"1px solid #000"};
   const secBody = {padding:"8px 14px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 18px"};
-  const fld = {display:"flex",gap:5,borderBottom:"1px dotted #999",paddingBottom:2,fontSize:11};
+  const fld = {display:"flex",gap:5,paddingBottom:2,fontSize:11};
   const fldL = {fontWeight:800,color:"#333",whiteSpace:"nowrap"};
   const fldV = {fontWeight:600};
 
