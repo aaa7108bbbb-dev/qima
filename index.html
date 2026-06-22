@@ -917,11 +917,18 @@ function ContractsPage({contracts,investors,settings,onDelete,payments,setPaymen
         <div id="bond-g-print-area">{bondG && <BondGuarantorContent c={bondG} inv={investors.find(i=>i.id===bondG.investorId)} r={calcContract(bondG.amount,settings)}/>}</div>
       </Modal>
 
-      <Modal open={!!cheque} onClose={()=>setCheque(null)} title="📋 الكمبيالة">
+      <Modal open={!!cheque} onClose={()=>setCheque(null)} title="📋 الكمبيالة - المشتري">
         <div style={{padding:"10px 12px 0",textAlign:"left"}}>
-          <button style={styles.btn(C.gold)} onClick={()=>window.print()}>🖨️ طباعة</button>
+          <button style={styles.btn(C.gold)} onClick={()=>printContent("cheque-print-area")}>🖨️ طباعة</button>
         </div>
-        {cheque && <ChequeContent c={cheque} r={calcContract(cheque.amount,settings)}/>}
+        <div id="cheque-print-area">{cheque && <ChequeContent c={cheque} r={calcContract(cheque.amount,settings)}/>}</div>
+      </Modal>
+
+      <Modal open={!!chequeG} onClose={()=>setChequeG(null)} title="📋 الكمبيالة - الكفيل">
+        <div style={{padding:"10px 12px 0",textAlign:"left"}}>
+          <button style={styles.btn(C.gold)} onClick={()=>printContent("cheque-g-print-area")}>🖨️ طباعة</button>
+        </div>
+        <div id="cheque-g-print-area">{chequeG && <ChequeContent c={chequeG} r={calcContract(chequeG.amount,settings)} isGuarantor={true}/>}</div>
       </Modal>
 
       {/* Contract Doc Modal */}
