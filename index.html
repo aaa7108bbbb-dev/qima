@@ -228,23 +228,29 @@ function BondContent({c,inv,r}) {
         * بموجب هذا السند يسقط المدين كافة حقوق التقديم والمطالبة والاحتجاج والإخطار بالامتناع عن الوفاء.
       </div>
       <div style={{fontWeight:800,marginBottom:8}}>محرر السند:</div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px 20px",marginBottom:16}}>
-        {[["اسم المدين",c.client],["رقم الهوية",c.idNum||"..............."],["العمل",c.job||"..............."],["رقم الجوال",c.cPhone||"..............."]].map(([l,v])=>(
-          <div key={l} style={{display:"flex",gap:6,borderBottom:"1px solid #666",paddingBottom:3,fontSize:12}}>
-            <span style={{fontWeight:700,whiteSpace:"nowrap"}}>{l}:</span>
-            <span style={{flex:1,fontWeight:600}}>{v}</span>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px 20px",marginBottom:0}}>
+        <div style={{display:"flex",gap:6,borderBottom:"2px solid #000",paddingBottom:3,fontSize:12}}>
+          <span style={{fontWeight:800,whiteSpace:"nowrap"}}>اسم المدين:</span>
+          <span style={{flex:1,fontWeight:700}}>{c.client}</span>
+        </div>
+        <div style={{display:"flex",gap:6,borderBottom:"2px solid #000",paddingBottom:3,fontSize:12}}>
+          <span style={{fontWeight:800,whiteSpace:"nowrap"}}>رقم الهوية:</span>
+          <span style={{flex:1,fontWeight:700}}>{c.idNum||"..............."}</span>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",borderBottom:"2px solid #000",paddingBottom:3,fontSize:12}}>
+          <div style={{display:"flex",gap:6}}>
+            <span style={{fontWeight:800,whiteSpace:"nowrap"}}>العمل:</span>
+            <span style={{flex:1,fontWeight:700}}>{c.job||"..............."}</span>
           </div>
-        ))}
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginTop:24}}>
-        {["التوقيع","البصمة"].map(s=>(
-          <div key={s} style={{textAlign:"center"}}>
-            <div style={{borderTop:"1px solid #666",marginTop:50,paddingTop:6,fontSize:12,color:"#444"}}>{s}</div>
+          <div style={{textAlign:"center",marginTop:30,fontSize:12,fontWeight:700,color:"#000"}}>التوقيع</div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",borderBottom:"2px solid #000",paddingBottom:3,fontSize:12}}>
+          <div style={{display:"flex",gap:6}}>
+            <span style={{fontWeight:800,whiteSpace:"nowrap"}}>رقم الجوال:</span>
+            <span style={{flex:1,fontWeight:700}}>{c.cPhone||"..............."}</span>
           </div>
-        ))}
-      </div>
-      <div style={{textAlign:"center",fontSize:11,color:"#666",borderTop:"1px solid #ccc",paddingTop:8,marginTop:14}}>
-        مؤسسة قمة الفرصة التجارية | سند رقم {c.num} | عقد رقم {c.num}
+          <div style={{textAlign:"center",marginTop:30,fontSize:12,fontWeight:700,color:"#000"}}>البصمة</div>
+        </div>
       </div>
     </div>
   );
