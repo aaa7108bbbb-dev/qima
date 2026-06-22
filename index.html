@@ -322,7 +322,7 @@ function ContractContent({c,inv,r,settings}) {
       {/* ══ بيانات المشتري ══ */}
       <div style={{marginBottom:8,lineHeight:2}}>
         <span>نعم أنا / </span><span style={lineW(160)}>{c.client}</span>
-        <span> &nbsp; الجنسية / </span><span style={lineW(80)}>سعودي</span>
+        <span> &nbsp; الجنسية / </span><span style={lineW(80)}>{c.nationality||"سعودي"}</span>
         <span> &nbsp; رقم البطاقة / </span><span style={lineW(120)}>{c.idNum||""}</span>
         <br/>
         <span>نوعها / {c.idType||"هوية وطنية"} &nbsp; صادرة من / </span><span style={lineW(100)}>{c.idIssuer||""}</span>
@@ -350,7 +350,7 @@ function ContractContent({c,inv,r,settings}) {
       <div style={{textAlign:"center",fontWeight:800,textDecoration:"underline",marginBottom:6}}>إقرار بالكفالة الغرامية</div>
       <div style={{marginBottom:8,lineHeight:2}}>
         <span>نعم أنا / </span><span style={lineW(160)}>{c.gName}</span>
-        <span> &nbsp; الجنسية / </span><span style={lineW(80)}>سعودي</span>
+        <span> &nbsp; الجنسية / </span><span style={lineW(80)}>{c.nationality||"سعودي"}</span>
         <span> &nbsp; رقم البطاقة / </span><span style={lineW(120)}>{c.gId||""}</span>
         <br/>
         <span>نوعها / هوية وطنية &nbsp; صادرة من / </span><span style={lineW(100)}></span>
@@ -422,7 +422,7 @@ function ContractContent({c,inv,r,settings}) {
 function NewContractPage({investors, settings, contracts, onSave, toast}) {
   const today = new Date().toISOString().split("T")[0];
   const nextNum = contracts.length ? Math.max(...contracts.map(c=>parseInt(c.num)||0).filter(n=>n>0), 0) + 1 : 1;
-  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:""});
+  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:""});
   const set = (k,v) => {
     setForm(f=>({...f,[k]:v}));
     // Auto-fill if idNum entered and matches existing contract
@@ -453,7 +453,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast}) {
       profit:rr.profit, admin:rr.admin, acc:rr.acc, inst:rr.inst, net:rr.net, total:rr.total});
     toast("✅ تم حفظ العقد بنجاح");
     const nn = parseInt(form.num)+1;
-    setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nn),cPhone:"",gName:"",gId:"",gJob:"",gPhone:""});
+    setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nn),cPhone:"",gName:"",gId:"",gJob:"",gPhone:""});
   };
 
   const fields1 = [
@@ -461,6 +461,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast}) {
     {label:"رقم الهوية",key:"idNum",type:"text",ph:"رقم الهوية / الإقامة"},
     {label:"العمل",key:"job",type:"text",ph:"جهة العمل"},
     {label:"جوال العميل",key:"cPhone",type:"tel",ph:"05xxxxxxxx"},
+    {label:"الجنسية",key:"nationality",type:"text",ph:"سعودي"},
     {label:"صادرة من",key:"idIssuer",type:"text",ph:"جهة الإصدار"},
     {label:"بتاريخ",key:"idIssueDate",type:"date",ph:""},
     {label:"عنواني",key:"address",type:"text",ph:"العنوان"},
@@ -613,7 +614,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast}) {
 
           <div style={{display:"flex",gap:10,marginTop:16}}>
             <button style={styles.btn(C.teal)} onClick={save}>💾 حفظ العقد</button>
-            <button style={styles.btn("transparent",C.ink2)} onClick={()=>setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,cPhone:"",gName:"",gId:"",gJob:"",gPhone:""})}>مسح</button>
+            <button style={styles.btn("transparent",C.ink2)} onClick={()=>setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,cPhone:"",gName:"",gId:"",gJob:"",gPhone:""})}>مسح</button>
           </div>
         </div>
       </div>
