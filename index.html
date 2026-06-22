@@ -443,7 +443,7 @@ function ContractContent({c,inv,r,settings}) {
 function NewContractPage({investors, settings, contracts, onSave, toast}) {
   const today = new Date().toISOString().split("T")[0];
   const nextNum = contracts.length ? Math.max(...contracts.map(c=>parseInt(c.num)||0).filter(n=>n>0), 0) + 1 : 1;
-  const [form, setForm] = useState({client:"",idNum:"",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),gName:"",gId:"",gJob:"",gPhone:""});
+  const [form, setForm] = useState({client:"",idNum:"",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:""});
   const set = (k,v) => setForm(f=>({...f,[k]:v}));
   const amount = parseFloat(form.amount)||0;
   const r = amount ? calcContract(amount, settings) : null;
@@ -464,13 +464,14 @@ function NewContractPage({investors, settings, contracts, onSave, toast}) {
       profit:rr.profit, admin:rr.admin, acc:rr.acc, inst:rr.inst, net:rr.net, total:rr.total});
     toast("✅ تم حفظ العقد بنجاح");
     const nn = parseInt(form.num)+1;
-    setForm({client:"",idNum:"",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nn),gName:"",gId:"",gJob:"",gPhone:""});
+    setForm({client:"",idNum:"",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nn),cPhone:"",gName:"",gId:"",gJob:"",gPhone:""});
   };
 
   const fields1 = [
     {label:"اسم العميل *",key:"client",type:"text",ph:"الاسم الكامل"},
     {label:"السجل المدني",key:"idNum",type:"text",ph:"رقم الهوية"},
     {label:"العمل",key:"job",type:"text",ph:"جهة العمل"},
+    {label:"جوال العميل",key:"cPhone",type:"tel",ph:"05xxxxxxxx"},
   ];
   const fields2 = [
     {label:"قيمة العقد النقدية (القيمة) *",key:"amount",type:"number",ph:"مثال: 15000"},
@@ -613,7 +614,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast}) {
 
           <div style={{display:"flex",gap:10,marginTop:16}}>
             <button style={styles.btn(C.teal)} onClick={save}>💾 حفظ العقد</button>
-            <button style={styles.btn("transparent",C.ink2)} onClick={()=>setForm({client:"",idNum:"",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,gName:"",gId:"",gJob:"",gPhone:""})}>مسح</button>
+            <button style={styles.btn("transparent",C.ink2)} onClick={()=>setForm({client:"",idNum:"",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,cPhone:"",gName:"",gId:"",gJob:"",gPhone:""})}>مسح</button>
           </div>
         </div>
       </div>
