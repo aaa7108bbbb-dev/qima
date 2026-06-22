@@ -7,8 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
-<style>
   * { box-sizing: border-box; }
   @media print {
     body { margin: 0; padding: 0; background: #fff; }
@@ -333,8 +333,8 @@ function ContractContent({c,inv,r,settings}) {
       <div style={sec}>
         <div style={secHdr}>الطرف الثاني — المشتري</div>
         <div style={secBody}>
+          {[["الاسم",c.client],["رقم الهوية",c.idNum||"—"],["العمل",c.job||"—"],["رقم الجوال","________________"]].map(([l,v])=>(
           {[["الاسم",c.client],["رقم الهوية",c.idNum||"—"],["العمل",c.job||"—"],["رقم الجوال",c.gPhone||"—"]].map(([l,v])=>(
-            <div key={l} style={fld}><span style={fldL}>{l}:</span><span style={fldV}>{v}</span></div>
           ))}
         </div>
       </div>
@@ -415,15 +415,15 @@ function ContractContent({c,inv,r,settings}) {
       {/* ══ التوقيعات ══ */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginTop:6}}>
         {[
-          ["الطرف الأول","مؤسسة قمة الفرصة التجارية"],
-          ["الطرف الثاني",c.client],
-          ["الكفيل", c.gName||"________________"]
+          ["البائع","مؤسسة قمة الفرصة التجارية"],
+          ["المشتري",c.client],
+          ["الكفيل", c.gName||""]
         ].map(([title,name])=>(
           <div key={title} style={{border:"1.2px solid #000",borderRadius:5,padding:"6px 10px",textAlign:"center"}}>
-            <div style={{fontWeight:800,fontSize:10,marginBottom:18}}>{title}</div>
-            <div style={{fontSize:9,color:"#333",paddingTop:4}}>{name}</div>
+            <div style={{fontWeight:800,fontSize:10,marginBottom:4}}>{title}</div>
+            <div style={{fontSize:9,color:"#333",paddingTop:2,marginBottom:6}}>{name}</div>
             <div style={{display:"flex",justifyContent:"space-around",marginTop:3,fontSize:9,color:"#555"}}>
-              <span>التوقيع</span><span>البصمة</span>
+              <span>التوقيع</span>
             </div>
           </div>
         ))}
