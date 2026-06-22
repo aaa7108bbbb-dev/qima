@@ -821,9 +821,9 @@ function ContractsPage({contracts,investors,settings,onDelete,payments,setPaymen
       {/* Cheque Modal */}
       <Modal open={!!cheque} onClose={()=>setCheque(null)} title="📋 الكمبيالة">
         <div style={{padding:"10px 12px 0",textAlign:"left"}}>
-          <button style={styles.btn(C.gold)} onClick={()=>window.print()}>🖨️ طباعة</button>
+          <button style={styles.btn(C.gold)} onClick={()=>printContent("cheque-print-area")}>🖨️ طباعة</button>
         </div>
-        {cheque && <ChequeContent c={cheque} r={calcContract(cheque.amount,settings)}/>}
+        <div id="cheque-print-area">{cheque && <ChequeContent c={cheque} r={calcContract(cheque.amount,settings)}/>}</div>
       </Modal>
 
       {/* Contract Doc Modal */}
