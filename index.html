@@ -111,21 +111,7 @@ function fmtDate(dateStr) {
 }
 
 const DEFAULT_INVESTORS = [
-  {id:1, name:"بدر سعود",          fund:"مؤسسة قمة",  capital:500000, date:"2023-04-01"},
-  {id:2, name:"عسلاء حامد",        fund:"مؤسسة قمة",  capital:200000, date:"2023-04-01"},
-  {id:3, name:"محمود لفاء",        fund:"مؤسسة قمة",  capital:95000,  date:"2023-04-01"},
-  {id:4, name:"علي لفاء",          fund:"مؤسسة قمة",  capital:130000, date:"2023-04-01"},
-  {id:5, name:"لفاء نغموش",        fund:"مؤسسة قمة",  capital:500000, date:"2023-04-01"},
-  {id:6, name:"قمراء شليان",       fund:"مؤسسة قمة",  capital:65000,  date:"2023-04-01"},
-  {id:7, name:"نغموش عبدالله",     fund:"مؤسسة قمة",  capital:53000,  date:"2023-04-01"},
-  {id:8, name:"مشاري لفاء",        fund:"مؤسسة قمة",  capital:25000,  date:"2023-04-01"},
-  {id:9, name:"عبدالله لفاء",      fund:"المجموعة",    capital:275200, date:"2023-04-01"},
-  {id:10,name:"بدر لفاء",          fund:"الجيب",       capital:30000,  date:"2025-10-01"},
-  {id:11,name:"مشاري (الجيب)",     fund:"الجيب",       capital:50000,  date:"2025-10-01"},
-  {id:12,name:"نغموش عبدالله (الجيب)",fund:"الجيب",   capital:55000,  date:"2025-10-01"},
-  {id:13,name:"علي لفاء (الجيب)",  fund:"الجيب",       capital:120000, date:"2025-10-01"},
-  {id:14,name:"الضاعين",           fund:"الجيب",       capital:150000, date:"2025-10-01"},
-  {id:15,name:"محمد لفاء",         fund:"الجيب",       capital:100000, date:"2025-10-01"},
+  {id:1, name:"مؤسسة قمة الفرصة التجارية (4)", fund:"عبدالله لفاء (القديم)", capital:-636485, date:"2026-06-01"},
 ];
 
 const GOODS_LIST = ["بطاقة سوا","بطاقة موبايلي","بطاقة زين","أسهم","سيارة","جوال"];
@@ -2277,7 +2263,7 @@ function App() {
     try { localStorage.setItem(key, JSON.stringify(val)); } catch{}
   };
 
-  const [investors,setInvestorsRaw]=useState(()=>loadLS("qimma_investors",DEFAULT_INVESTORS));
+  const [investors,setInvestorsRaw]=useState(()=>{const d=loadLS("qimma_investors",DEFAULT_INVESTORS);return d&&d.length?d:DEFAULT_INVESTORS;});
   const [contracts,setContractsRaw]=useState(()=>loadLS("qimma_contracts",[]));
   const [settings,setSettingsRaw]=useState(()=>loadLS("qimma_settings",{profit:50,admin:2.5,acc:10,inst:10}));
 
