@@ -344,7 +344,7 @@ function ContractContent({c,inv,r,settings}) {
 
       {/* ══ نص العقد ══ */}
       <div style={{marginBottom:8,lineHeight:2,textAlign:"justify"}}>
-        أقر وأعترف وأنا في حالتي الشرعية وبكامل قواي العقلية بأن في ذمتي للمدعو / مؤسسة قمة الفرصة التجارية(ص ص 
+        أقر وأعترف وأنا في حالتي الشرعية وبكامل قواي العقلية بأن في ذمتي للمدعو / {inv?inv.name:"مؤسسة قمة الفرصة التجارية"}
         مبلغ وقدره ( <strong>{(c.totalInst||0).toLocaleString("ar-SA")}</strong> ) {totalWords} . وذلك قيمة شراء ( <strong>{c.qty||""}</strong> ) بطاقات سوا فئة: <strong>{c.category||""}</strong> .
         على أن يُدفع على أقساط شهرية متتالية ومستمرة دون انقطاع بما فيها شهر رمضان والأعياد.
         القسط الواحد ( <strong>{(c.instAmt||0).toLocaleString("ar-SA")}</strong> ) {numToWords(Math.round(c.instAmt||0))} ريال سعودي إعتباراً من تاريخ: <strong>{c.firstInst||"..........."}</strong> م إلى: <strong>{c.lastInst||"..........."}</strong> م
@@ -374,7 +374,7 @@ function ContractContent({c,inv,r,settings}) {
       </div>
       <div style={{marginBottom:8,lineHeight:2,textAlign:"justify"}}>
         أقر وأعترف وأنا في حالتي الشرعية وبكامل قواي العقلية بأني أكفل الكفالة بأني أكفل المدعو / {c.client} كفالة
-        غرم وأداء وتسديد المبلغ المذكور بعاليه والعائد للمدعو / مؤسسة قمة الفرصة التجارية(ص ص 0 0 0 ومستعد بالسداد
+        غرم وأداء وتسديد المبلغ المذكور بعاليه والعائد للمدعو / {inv?inv.name:"مؤسسة قمة الفرصة التجارية"} ومستعد بالسداد
         عنه في حالة التأخير في أي مبلغ لأي سبب كان سواء كان حياً أو ميتاً كما أنني أقر على نفسي بأنه لا يوجد
         على أي إلتزامات مالية ولا كفالات غرامية وقد أذنت لمن يشهد والله خير الشاهدين.
       </div>
@@ -417,7 +417,7 @@ function ContractContent({c,inv,r,settings}) {
         </div>
         <div style={{textAlign:"center",lineHeight:2}}>
           <div style={{fontWeight:800,textDecoration:"underline"}}>البائـــع</div>
-          <div style={{fontSize:10}}>الاسم / مؤسسة قمة الفرصة التجارية(ص ص 0 0 0</div>
+          <div style={{fontSize:10}}>الاسم / {inv?inv.name:"مؤسسة قمة الفرصة التجارية"}</div>
           <div>التوقيع / <span style={lineW(80)}></span></div>
         </div>
       </div>
