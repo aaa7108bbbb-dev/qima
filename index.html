@@ -12,6 +12,9 @@
   * { box-sizing: border-box; }
   @media print {
     @page { size: A4; margin: 10mm; }
+    body * { visibility: hidden !important; }
+    #print-target, #print-target * { visibility: visible !important; }
+    #print-target { position: fixed !important; left: 0 !important; top: 0 !important; width: 100% !important; background: #fff !important; z-index: 99999 !important; }
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   }
   body { margin: 0; font-family: 'Tajawal', Arial, sans-serif; background: #f4f4f6; }
@@ -50,18 +53,15 @@ const { useState, useEffect, useCallback } = React;
 
 function printContent(elementId) {
   const el = document.getElementById(elementId);
-  if(!el) { window.print(); return; }
-  const w = window.open('','_blank','width=800,height=900');
-  w.document.write('<html><head><style>');
-  w.document.write('body{font-family:Tajawal,Arial,sans-serif;direction:rtl;margin:0;padding:20px;background:#fff;color:#000;}');
-  w.document.write('@page{size:A4;margin:10mm;}');
-  w.document.write('</style>');
-  w.document.write('<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">');
-  w.document.write('</head><body>');
-  w.document.write(el.innerHTML);
-  w.document.write('</body></html>');
-  w.document.close();
-  w.onload = function(){ w.print(); w.close(); };
+  if(!el) return;
+  const prev = document.getElementById("print-target");
+  if(prev) prev.remove();
+  const div = document.createElement("div");
+  div.id = "print-target";
+  div.innerHTML = el.innerHTML;
+  document.body.appendChild(div);
+  window.print();
+  div.remove();
 }
 
 
@@ -821,9 +821,9 @@ function ContractsPage({contracts,investors,settings,onDelete,payments,setPaymen
       {/* Cheque Modal */}
       <Modal open={!!cheque} onClose={()=>setCheque(null)} title="📋 الكمبيالة">
         <div style={{padding:"10px 12px 0",textAlign:"left"}}>
-          <button style={styles.btn(C.gold)} onClick={()=>printContent("cheque-print-area")}>🖨️ طباعة</button>
+          <button style={styles.btn(C.gold)} onClick={()=>window.print()}>🖨️ طباعة</button>
         </div>
-        <div id="cheque-print-area">{cheque && <ChequeContent c={cheque} r={calcContract(cheque.amount,settings)}/>}</div>
+        {cheque && <ChequeContent c={cheque} r={calcContract(cheque.amount,settings)}/>}
       </Modal>
 
       {/* Contract Doc Modal */}
