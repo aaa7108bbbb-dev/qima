@@ -11,10 +11,15 @@
 <style>
   * { box-sizing: border-box; }
   @media print {
-    body { margin: 0; padding: 0; background: #fff; }
-    #lock-screen, button { display: none !important; }
-    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     @page { size: A4; margin: 10mm; }
+    body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+    #root > div > div:first-child,
+    #root > div > nav,
+    #root > div > div > div:first-child { display: none !important; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .modal-overlay { position: static !important; background: none !important; }
+    .modal-box { box-shadow: none !important; max-height: none !important; overflow: visible !important; width: 100% !important; max-width: 100% !important; border-radius: 0 !important; }
+    button { display: none !important; }
   }
   body { margin: 0; font-family: 'Tajawal', Arial, sans-serif; background: #f4f4f6; }
 </style>
@@ -181,9 +186,9 @@ function CalcRow({label,value,color="#fff",bold=false,total=false}) {
 function Modal({open,onClose,title,titleBg=C.ink,children,wide=false}) {
   if(!open)return null;
   return (
-    <div onClick={(e)=>{if(e.target===e.currentTarget)onClose();}}
+    <div className="modal-overlay" onClick={(e)=>{if(e.target===e.currentTarget)onClose();}}
       style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:12}}>
-      <div style={{background:C.white,borderRadius:14,width:"100%",maxWidth:wide?820:680,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.3)"}}>
+      <div className="modal-box" style={{background:C.white,borderRadius:14,width:"100%",maxWidth:wide?820:680,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.3)"}}>
         <div style={{padding:"14px 20px",borderBottom:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"space-between",background:titleBg,borderRadius:"14px 14px 0 0"}}>
           <h3 style={{margin:0,color:C.gold,fontSize:15,fontWeight:800}}>{title}</h3>
           <button onClick={onClose} style={{...styles.btn("rgba(255,255,255,0.1)"),border:"1px solid rgba(255,255,255,0.2)",color:"white",padding:"5px 12px"}}>✕</button>
@@ -285,8 +290,8 @@ function ContractContent({c,inv,r,settings}) {
   const hijriFirst = toHijri(c.firstInst);
   const hijriLast = toHijri(c.lastInst);
 
-  const line = {borderBottom:"1px solid #000", display:"inline-block", minWidth:120};
-  const lineW = (w) => ({borderBottom:"1px solid #000", display:"inline-block", minWidth:w||80});
+  const line = {display:"inline-block", minWidth:120};
+  const lineW = (w) => ({display:"inline-block", minWidth:w||80});
 
   return (
     <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",color:"#000",fontSize:11,maxWidth:740,margin:"0 auto",background:"#fff",lineHeight:1.7,padding:"20px 30px"}}>
