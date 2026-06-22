@@ -444,7 +444,17 @@ function NewContractPage({investors, settings, contracts, onSave, toast}) {
   const today = new Date().toISOString().split("T")[0];
   const nextNum = contracts.length ? Math.max(...contracts.map(c=>parseInt(c.num)||0).filter(n=>n>0), 0) + 1 : 1;
   const [form, setForm] = useState({client:"",idNum:"",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:""});
-  const set = (k,v) => setForm(f=>({...f,[k]:v}));
+  const set = (k,v) => {
+    setForm(f=>({...f,[k]:v}));
+    // Auto-fill if idNum entered and matches existing contract
+    if(k==="idNum" && v.length>=9){
+      const prev = contracts.find(c=>c.idNum===v);
+      if(prev){
+        setForm(f=>({...f, idNum:v, client:prev.client||f.client, job:prev.job||f.job, cPhone:prev.cPhone||f.cPhone}));
+        toast("✅ تم تعبئة بيانات العميل تلقائياً");
+      }
+    }
+  };
   const amount = parseFloat(form.amount)||0;
   const r = amount ? calcContract(amount, settings) : null;
   // Auto-calculate lastInst: firstInst + (totalInst/instAmt - 1) months
@@ -630,22 +640,41 @@ function ContractsPage({contracts,investors,settings,onDelete,payments,setPaymen
   const [payAmount,setPayAmount]=useState("");
   const [payDate,setPayDate]=useState(new Date().toISOString().split("T")[0]);
   const [payNote,setPayNote]=useState("");
+  const [statusTab,setStatusTab]=useState("active");
   const addPayment=()=>{
     if(!payAmount||!payModal)return;
+    const paid = _getPaid(payments, payModal.id) + parseFloat(payAmount);
     setPayments(p=>[...p,{id:Date.now(),contractId:payModal.id,amount:parseFloat(payAmount),date:payDate,note:payNote||"قسط"}]);
-    setPayAmount("");setPayNote("");toast("✅ تم تسجيل السداد");
+    setPayAmount("");setPayNote("");
+    if(paid>=(payModal.totalInst||0)){
+      toast("🎉 تم اكتمال سداد عقد "+payModal.client+" بالكامل!");
+    } else {
+      toast("✅ تم تسجيل السداد");
+    }
   };
   const [search,setSearch] = useState("");
   const [bond,setBond] = useState(null);
   const [cheque,setCheque] = useState(null);
   const [contractDoc,setContractDoc] = useState(null);
-  const filtered = contracts.filter(c=>c.client.includes(search)||(investors.find(i=>i.id===c.investorId)?.name||"").includes(search));
+  const isCompleted = c => _getPaid(payments, c.id) >= (c.totalInst||0);
+  const allFiltered = contracts.filter(c=>c.client.includes(search)||(investors.find(i=>i.id===c.investorId)?.name||"").includes(search));
+  const filtered = allFiltered.filter(c=> statusTab==="active" ? !isCompleted(c) : isCompleted(c));
+  const activeCount = allFiltered.filter(c=>!isCompleted(c)).length;
+  const completedCount = allFiltered.filter(c=>isCompleted(c)).length;
 
   return (
     <div>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,flexWrap:"wrap",gap:8}}>
         <div style={{fontSize:17,fontWeight:800}}>📋 العقود</div>
         <input style={{...styles.input,width:200,fontSize:12}} placeholder="🔍 بحث..." value={search} onChange={e=>setSearch(e.target.value)}/>
+      </div>
+      <div style={{display:"flex",gap:8,marginBottom:16}}>
+        <button onClick={()=>setStatusTab("active")} style={{...styles.btn(statusTab==="active"?C.teal:"#e5e7eb",statusTab==="active"?"#fff":C.ink),fontSize:12,padding:"6px 14px"}}>
+          📋 مستمرة ({activeCount})
+        </button>
+        <button onClick={()=>setStatusTab("done")} style={{...styles.btn(statusTab==="done"?C.green:"#e5e7eb",statusTab==="done"?"#fff":C.ink),fontSize:12,padding:"6px 14px"}}>
+          ✅ منتهية ({completedCount})
+        </button>
       </div>
       <div style={styles.panel}>
         <div style={{overflowX:"auto"}}>
@@ -1270,7 +1299,17 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
   const [subTab, setSubTab] = useState("inv");
   const [selInv, setSelInv] = useState(investors[0]?.id||null);
   const [form, setForm] = useState({type:"deposit", amount:"", note:"", date:new Date().toISOString().split("T")[0]});
-  const set = (k,v) => setForm(f=>({...f,[k]:v}));
+  const set = (k,v) => {
+    setForm(f=>({...f,[k]:v}));
+    // Auto-fill if idNum entered and matches existing contract
+    if(k==="idNum" && v.length>=9){
+      const prev = contracts.find(c=>c.idNum===v);
+      if(prev){
+        setForm(f=>({...f, idNum:v, client:prev.client||f.client, job:prev.job||f.job, cPhone:prev.cPhone||f.cPhone}));
+        toast("✅ تم تعبئة بيانات العميل تلقائياً");
+      }
+    }
+  };
 
   const inv = investors.find(i=>i.id===selInv);
   const myTx = (txList[selInv]||[]);
