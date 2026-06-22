@@ -7,15 +7,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
   * { box-sizing: border-box; }
+  @media print {
+    body { margin: 0; padding: 0; background: #fff; }
+    #lock-screen, button { display: none !important; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    @page { size: A4; margin: 10mm; }
+  }
   body { margin: 0; font-family: 'Tajawal', Arial, sans-serif; background: #f4f4f6; }
 </style>
 </head>
 <body>
 <div id="root"></div>
- <div id="lock-screen" style="display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:#1a1a2e;z-index:9999;align-items:center;justify-content:center;font-family:Tajawal,Arial,sans-serif"><div style="background:#fff;border-radius:16px;padding:40px;text-align:center;width:300px"><h2 style="margin:0 0 8px;color:#1a1a2e">نظام قمة الفرصة</h2><p style="color:#888;margin:0 0 24px;font-size:14px">أدخل كلمة المرور</p><input id="pwd-input" type="password" placeholder="كلمة المرور" style="width:100%;padding:12px;border:2px solid #eee;border-radius:8px;font-size:16px;text-align:center;box-sizing:border-box"/><p id="pwd-error" style="color:red;font-size:13px;margin:8px 0 0;display:none">كلمة المرور خاطئة</p><button onclick="checkPwd()" style="margin-top:16px;width:100%;padding:12px;background:#2ecc71;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer">دخول</button></div></div><script>function checkPwd(){if(document.getElementById("pwd-input").value==="2231245"){document.getElementById("lock-screen").style.display="none";sessionStorage.setItem("auth","1");}else{document.getElementById("pwd-error").style.display="block";document.getElementById("pwd-input").value="";}}if(sessionStorage.getItem("auth")==="1"){document.getElementById("lock-screen").style.display="none";}</script>
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useCallback } = React;
 
@@ -179,9 +184,9 @@ function BondContent({c,inv,r}) {
         <div style={{fontSize:11,color:"#444",marginTop:3}}>صادر وفق نظام الأوراق التجارية السعودي</div>
       </div>
       <p>حرر بمدينة <u style={{padding:"0 40px"}}></u> بتاريخ <u style={{padding:"0 30px"}}></u> / <u style={{padding:"0 30px"}}></u> / 14<u style={{padding:"0 20px"}}></u> هـ الموافق <u style={{padding:"0 30px"}}></u> / <u style={{padding:"0 30px"}}></u> / 20<u style={{padding:"0 20px"}}></u> م</p>
-      <p>أتعهد أنا الموقع أدناه بأن أدفع بموجب هذا السند بدون قيد أو شرط لأمر <strong>{inv?inv.name:"............................."}</strong> مبلغاً وقدره:</p>
+      <p>أتعهد أنا الموقع أدناه بأن أدفع بموجب هذا السند بدون قيد أو شرط لأمر <u style={{display:"inline-block",minWidth:160,borderBottom:"1px solid #000"}}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> مبلغاً وقدره:</p>
       <div style={{border:"2px solid #000",borderRadius:6,padding:"10px 16px",textAlign:"center",fontSize:15,fontWeight:800,margin:"12px 0",background:"#fffbf0"}}>
-        {words} | ( {instAmt.toLocaleString("ar-SA")} ريال )
+        {words} | ( {bondTotal.toLocaleString("ar-SA")} ريال )
       </div>
       <p>بتاريخ الاستحقاق <u style={{padding:"0 40px"}}></u> / <u style={{padding:"0 30px"}}></u> / 14<u style={{padding:"0 20px"}}></u> هـ</p>
       <div style={{borderRight:"3px solid #000",paddingRight:10,fontSize:11.5,color:"#333",lineHeight:1.8,marginBottom:16}}>
@@ -198,7 +203,7 @@ function BondContent({c,inv,r}) {
         ))}
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginTop:24}}>
-        {["التوقيع","البصمة","ختم المؤسسة"].map(s=>(
+        {["التوقيع","البصمة"].map(s=>(
           <div key={s} style={{textAlign:"center"}}>
             <div style={{borderTop:"1px solid #666",marginTop:50,paddingTop:6,fontSize:12,color:"#444"}}>{s}</div>
           </div>
@@ -2051,7 +2056,7 @@ function App() {
   const [toastType,setToastType]=useState("");
 
   // ═══ Google Sheets backend ═══
-  const GS_URL = "https://script.google.com/macros/s/AKfycbyAH-4t0dkfSpJ3Q-0M_j8tXRrZk1bOSilSaMm-8wDA8vrIBEF-K1RNDdGIRD4oWiUAyA/exec";
+  const GS_URL = "https://script.google.com/macros/s/AKfycbyUvz0nhPF5n4A4h8jiuMq-2Ygo3_A_5tAZTRov0tTYJz8sIeo_7lt0g4-LFYNl3kH0MA/exec";
   const [syncStatus, setSyncStatus] = useState("idle"); // idle | saving | saved | error | loading
 
   const gsRead = async (sheet) => {
