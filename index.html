@@ -198,7 +198,7 @@ function Modal({open,onClose,title,titleBg=C.ink,children,wide=false}) {
 function BondContent({c,inv,r}) {
   const instAmt = c.instAmt || 0;
   const totalInst = c.totalInst || 0;
-  const words = numToWords(instAmt) + " ريال سعودي";
+  const words = numToWords(Math.round(totalInst)) + " ريال سعودي";
   return (
     <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",padding:"28px 32px",color:"#000",fontSize:13,lineHeight:1.9}}>
       <div style={{textAlign:"center",marginBottom:18,borderBottom:"2px solid #000",paddingBottom:12}}>
@@ -210,9 +210,9 @@ function BondContent({c,inv,r}) {
         <div style={{fontSize:11,color:"#444",marginTop:3}}>صادر وفق نظام الأوراق التجارية السعودي</div>
       </div>
       <p>حرر بمدينة <u style={{padding:"0 40px"}}></u> بتاريخ <u style={{padding:"0 30px"}}></u> / <u style={{padding:"0 30px"}}></u> / 14<u style={{padding:"0 20px"}}></u> هـ الموافق <u style={{padding:"0 30px"}}></u> / <u style={{padding:"0 30px"}}></u> / 20<u style={{padding:"0 20px"}}></u> م</p>
-      <p>أتعهد أنا الموقع أدناه بأن أدفع بموجب هذا السند بدون قيد أو شرط لأمر <strong>{inv?inv.name:"............................."}</strong> مبلغاً وقدره:</p>
+      <p>أتعهد أنا الموقع أدناه بأن أدفع بموجب هذا السند بدون قيد أو شرط لأمر <u style={{display:"inline-block",minWidth:200,borderBottom:"1px solid #000"}}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> مبلغاً وقدره:</p>
       <div style={{border:"2px solid #000",borderRadius:6,padding:"10px 16px",textAlign:"center",fontSize:15,fontWeight:800,margin:"12px 0",background:"#fffbf0"}}>
-        {words} | ( {instAmt.toLocaleString("ar-SA")} ريال )
+        {words} | ( {Math.round(totalInst).toLocaleString("ar-SA")} ريال )
       </div>
       <p>بتاريخ الاستحقاق <u style={{padding:"0 40px"}}></u> / <u style={{padding:"0 30px"}}></u> / 14<u style={{padding:"0 20px"}}></u> هـ</p>
       <div style={{borderRight:"3px solid #000",paddingRight:10,fontSize:11.5,color:"#333",lineHeight:1.8,marginBottom:16}}>
