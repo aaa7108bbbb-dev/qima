@@ -218,8 +218,8 @@ function BondContent({c,inv,r}) {
         <div style={{fontSize:11,color:"#444",marginTop:3}}>صادر وفق نظام الأوراق التجارية السعودي</div>
       </div>
       <p>حرر بمدينة <u style={{padding:"0 40px"}}></u> بتاريخ <u style={{padding:"0 30px"}}></u> / <u style={{padding:"0 30px"}}></u> / 14<u style={{padding:"0 20px"}}></u> هـ الموافق <u style={{padding:"0 30px"}}></u> / <u style={{padding:"0 30px"}}></u> / 20<u style={{padding:"0 20px"}}></u> م</p>
-      <p>أتعهد أنا الموقع أدناه بأن أدفع بموجب هذا السند بدون قيد أو شرط لأمر <u style={{display:"inline-block",minWidth:200,borderBottom:"1px solid #000"}}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> مبلغاً وقدره:</p>
-      <div style={{border:"2px solid #000",borderRadius:6,padding:"10px 16px",textAlign:"center",fontSize:15,fontWeight:800,margin:"12px 0",background:"#fffbf0"}}>
+      <p>أتعهد أنا الموقع أدناه بأن أدفع بموجب هذا السند بدون قيد أو شرط لأمر <u style={{display:"inline-block",minWidth:200,borderBottom:"1px solid #000",marginLeft:8}}></u> مبلغاً وقدره:</p>
+      <div style={{textAlign:"center",fontSize:15,fontWeight:800,margin:"12px 0"}}>
         {words} | ( {Math.round(totalInst).toLocaleString("ar-SA")} ريال )
       </div>
       <p>بتاريخ الاستحقاق <u style={{padding:"0 40px"}}></u> / <u style={{padding:"0 30px"}}></u> / 14<u style={{padding:"0 20px"}}></u> هـ</p>
@@ -229,15 +229,15 @@ function BondContent({c,inv,r}) {
       </div>
       <div style={{fontWeight:800,marginBottom:8}}>محرر السند:</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px 20px",marginBottom:16}}>
-        {[["اسم المدين",c.client],["رقم الهوية",c.idNum||"..............."],["العمل",c.job||"..............."],["مكان الوفاء","___________"],["رقم الجوال","___________"],["الكفيل",c.gName||"..............."],["هوية الكفيل",c.gId||"..............."],["عمل الكفيل",c.gJob||"..............."]].map(([l,v])=>(
+        {[["اسم المدين",c.client],["رقم الهوية",c.idNum||"..............."],["العمل",c.job||"..............."],["رقم الجوال",c.cPhone||"..............."]].map(([l,v])=>(
           <div key={l} style={{display:"flex",gap:6,borderBottom:"1px solid #666",paddingBottom:3,fontSize:12}}>
             <span style={{fontWeight:700,whiteSpace:"nowrap"}}>{l}:</span>
             <span style={{flex:1,fontWeight:600}}>{v}</span>
           </div>
         ))}
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginTop:24}}>
-        {["التوقيع","البصمة","ختم المؤسسة"].map(s=>(
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginTop:24}}>
+        {["التوقيع","البصمة"].map(s=>(
           <div key={s} style={{textAlign:"center"}}>
             <div style={{borderTop:"1px solid #666",marginTop:50,paddingTop:6,fontSize:12,color:"#444"}}>{s}</div>
           </div>
