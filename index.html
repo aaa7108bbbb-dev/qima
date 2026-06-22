@@ -16,9 +16,13 @@
     #contract-print-area, #contract-print-area * { visibility: visible; }
     #bond-print-area, #bond-print-area * { visibility: visible; }
     #cheque-print-area, #cheque-print-area * { visibility: visible; }
+    #bond-g-print-area, #bond-g-print-area * { visibility: visible; }
+    #cheque-g-print-area, #cheque-g-print-area * { visibility: visible; }
     #contract-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
     #bond-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
     #cheque-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
+    #bond-g-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
+    #cheque-g-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
   }
   body { margin: 0; font-family: 'Tajawal', Arial, sans-serif; background: #f4f4f6; }
 </style>
@@ -208,7 +212,7 @@ function BondContent({c,inv,r}) {
   const totalInst = c.totalInst || 0;
   const words = numToWords(Math.round(totalInst)) + " ريال سعودي";
   return (
-    <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",padding:"28px 32px",color:"#000",fontSize:13,lineHeight:1.9}}>
+    <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",padding:"28px 32px",color:"#000",fontSize:13,lineHeight:1.9,border:"2px solid #000"}}>
       <div style={{textAlign:"center",marginBottom:18,borderBottom:"2px solid #000",paddingBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:6}}>
           <span>رقم السند: <strong>{c.num||"—"}</strong></span>
@@ -226,7 +230,7 @@ function BondContent({c,inv,r}) {
         مبلغاً وقدره : {words} | ( {Math.round(totalInst).toLocaleString("ar-SA")} ريال )
       </div>
       <p>بتاريخ الاستحقاق <u style={{padding:"0 40px"}}></u> / <u style={{padding:"0 30px"}}></u> / 14<u style={{padding:"0 20px"}}></u> هـ</p>
-      <div style={{borderRight:"3px solid #000",paddingRight:10,fontSize:11.5,color:"#333",lineHeight:1.8,marginBottom:16}}>
+      <div style={{borderRight:"3px solid #000",paddingRight:10,fontSize:12,fontWeight:700,color:"#000",lineHeight:1.8,marginBottom:16}}>
         هذا السند واجب بدون تعلل بموجب قرار مجلس الوزراء الموقر رقم 692 وتاريخ 1383/09/26هـ والمتوج بالمرسوم الملكي رقم 37 بتاريخ 1383/10/11هـ من نظام الأوراق التجارية.<br/>
         * بموجب هذا السند يسقط المدين كافة حقوق التقديم والمطالبة والاحتجاج والإخطار بالامتناع عن الوفاء.
       </div>
@@ -268,14 +272,80 @@ function BondContent({c,inv,r}) {
   );
 }
 
+// ─── Bond Guarantor Print ──────────────────────────────────────
+function BondGuarantorContent({c,inv,r}) {
+  const totalInst = c.totalInst || 0;
+  const words = numToWords(Math.round(totalInst)) + " ريال سعودي";
+  return (
+    <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",padding:"28px 32px",color:"#000",fontSize:13,lineHeight:1.9,border:"2px solid #000"}}>
+      <div style={{textAlign:"center",marginBottom:18,borderBottom:"2px solid #000",paddingBottom:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:6}}>
+          <span>رقم السند: <strong>{c.num||"—"}</strong></span>
+          <span>رقم العقد: <strong>{c.num||"—"}</strong></span>
+        </div>
+        <div style={{fontSize:22,fontWeight:900,letterSpacing:2}}>( سند الأمر )</div>
+        <div style={{fontSize:11,color:"#444",marginTop:3}}>صادر وفق نظام الأوراق التجارية السعودي</div>
+      </div>
+      <p>حرر بمدينة <u style={{padding:"0 40px"}}></u> بتاريخ <u style={{padding:"0 30px"}}></u> / <u style={{padding:"0 30px"}}></u> / 14<u style={{padding:"0 20px"}}></u> هـ الموافق <u style={{padding:"0 30px"}}></u> / <u style={{padding:"0 30px"}}></u> / 20<u style={{padding:"0 20px"}}></u> م</p>
+      <p style={{display:"flex",alignItems:"flex-end",gap:4}}>
+        <span>أتعهد أنا الموقع أدناه بأن أدفع بموجب هذا السند بدون قيد أو شرط لأمر</span>
+        <span style={{flex:1,borderBottom:"1px solid #000",display:"inline-block",minHeight:20}}></span>
+      </p>
+      <div style={{fontSize:16,fontWeight:900,margin:"10px 0 6px"}}>
+        مبلغاً وقدره : {words} | ( {Math.round(totalInst).toLocaleString("ar-SA")} ريال )
+      </div>
+      <p>بتاريخ الاستحقاق <u style={{padding:"0 40px"}}></u> / <u style={{padding:"0 30px"}}></u> / 14<u style={{padding:"0 20px"}}></u> هـ</p>
+      <div style={{borderRight:"3px solid #000",paddingRight:10,fontSize:12,fontWeight:700,color:"#000",lineHeight:1.8,marginBottom:16}}>
+        هذا السند واجب بدون تعلل بموجب قرار مجلس الوزراء الموقر رقم 692 وتاريخ 1383/09/26هـ والمتوج بالمرسوم الملكي رقم 37 بتاريخ 1383/10/11هـ من نظام الأوراق التجارية.<br/>
+        * بموجب هذا السند يسقط المدين كافة حقوق التقديم والمطالبة والاحتجاج والإخطار بالامتناع عن الوفاء.
+      </div>
+      <div style={{fontWeight:800,marginBottom:8}}>محرر السند:</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px 20px",marginBottom:0}}>
+        <div style={{display:"flex",gap:6,borderBottom:"2px solid #000",paddingBottom:3,fontSize:12}}>
+          <span style={{fontWeight:800,whiteSpace:"nowrap"}}>الاسم:</span>
+          <span style={{flex:1,fontWeight:700}}>{c.gName||"..............."}</span>
+        </div>
+        <div style={{display:"flex",gap:6,borderBottom:"2px solid #000",paddingBottom:3,fontSize:12}}>
+          <span style={{fontWeight:800,whiteSpace:"nowrap"}}>رقم الهوية:</span>
+          <span style={{flex:1,fontWeight:700}}>{c.gId||"..............."}</span>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",borderBottom:"2px solid #000",paddingBottom:3,fontSize:12}}>
+          <div style={{display:"flex",gap:6}}>
+            <span style={{fontWeight:800,whiteSpace:"nowrap"}}>العمل:</span>
+            <span style={{flex:1,fontWeight:700}}>{c.gJob||"..............."}</span>
+          </div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",borderBottom:"2px solid #000",paddingBottom:3,fontSize:12}}>
+          <div style={{display:"flex",gap:6}}>
+            <span style={{fontWeight:800,whiteSpace:"nowrap"}}>رقم الجوال:</span>
+            <span style={{flex:1,fontWeight:700}}>{c.gPhone||"..............."}</span>
+          </div>
+        </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginTop:20}}>
+        <div style={{display:"flex",alignItems:"flex-end",gap:4,borderBottom:"2px solid #000",paddingBottom:4}}>
+          <span style={{fontWeight:800,whiteSpace:"nowrap",fontSize:13}}>التوقيع :</span>
+          <span style={{flex:1}}></span>
+        </div>
+        <div style={{display:"flex",alignItems:"flex-end",gap:4,borderBottom:"2px solid #000",paddingBottom:4}}>
+          <span style={{fontWeight:800,whiteSpace:"nowrap",fontSize:13}}>البصمة :</span>
+          <span style={{flex:1}}></span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Cheque Print ────────────────────────────────────────────
-function ChequeContent({c,r}) {
+function ChequeContent({c,r,isGuarantor=false}) {
   const total = Math.round(r.total);
   const words = numToWords(total) + " ريال سعودي";
+  const name = isGuarantor ? (c.gName||"...............") : c.client;
+  const idNum = isGuarantor ? (c.gId||"...............") : (c.idNum||"...............");
   return (
-    <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",padding:"36px 40px",color:"#000",lineHeight:2.6}}>
+    <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",padding:"36px 40px",color:"#000",lineHeight:2.6,border:"2px solid #000"}}>
       <div style={{textAlign:"center",fontSize:24,fontWeight:900,letterSpacing:3,marginBottom:28,borderBottom:"3px double #000",paddingBottom:12}}>كمبيالة</div>
-      {[["نعم أنا /",c.client],["هوية وطنية /",c.idNum||"..........................."],["عندي وفي ذمتي للمدعو /"," "]].map(([l,v])=>(
+      {[["نعم أنا /",name],["هوية وطنية /",idNum],["عندي وفي ذمتي للمدعو /"," "]].map(([l,v])=>(
         <div key={l} style={{display:"flex",gap:8,alignItems:"flex-end",marginBottom:4,fontSize:15}}>
           <span style={{fontWeight:800,whiteSpace:"nowrap"}}>{l}</span>
           <span style={{borderBottom:"1.5px solid #000",flex:1,fontWeight:600,minHeight:22,paddingBottom:2}}>{v}</span>
@@ -665,7 +735,9 @@ function ContractsPage({contracts,investors,settings,onDelete,payments,setPaymen
   };
   const [search,setSearch] = useState("");
   const [bond,setBond] = useState(null);
+  const [bondG,setBondG] = useState(null);
   const [cheque,setCheque] = useState(null);
+  const [chequeG,setChequeG] = useState(null);
   const [contractDoc,setContractDoc] = useState(null);
   const allFiltered = contracts.filter(c=>c.client.includes(search)||(investors.find(i=>i.id===c.investorId)?.name||"").includes(search));
   const filtered = allFiltered.filter(c=> statusTab==="active" ? !doneIds.includes(c.id) : doneIds.includes(c.id));
@@ -726,8 +798,10 @@ function ContractsPage({contracts,investors,settings,onDelete,payments,setPaymen
                     <td style={{...styles.td,whiteSpace:"nowrap"}}>
                       <button style={{...styles.btn(C.green),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>{setPayModal(c);setPayAmount("");setPayNote("");}}>💳 سدّد</button>
                       <button style={{...styles.btn(C.purple),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>setContractDoc(c)}>📄</button>
-                      <button style={{...styles.btn(C.gold),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>setBond(c)}>📜</button>
-                      <button style={{...styles.btn(C.ink),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>setCheque(c)}>📋</button>
+                      <button style={{...styles.btn(C.gold),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>setBond(c)}>📜م</button>
+                      {c.gName&&<button style={{...styles.btn("#8b5cf6"),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>setBondG(c)}>📜ك</button>}
+                      <button style={{...styles.btn(C.ink),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>setCheque(c)}>📋م</button>
+                      {c.gName&&<button style={{...styles.btn("#6b7280"),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>setChequeG(c)}>📋ك</button>}
                       <button style={{...styles.btn(C.red),fontSize:11,padding:"5px 10px"}} onClick={()=>{if(confirm("حذف هذا العقد؟")){onDelete(c.id);toast("تم الحذف");}}}>🗑️</button>
                     </td>
                   </tr>
@@ -836,6 +910,13 @@ function ContractsPage({contracts,investors,settings,onDelete,payments,setPaymen
       </Modal>
 
       {/* Cheque Modal */}
+      <Modal open={!!bondG} onClose={()=>setBondG(null)} title="📜 سند الأمر">
+        <div style={{padding:"10px 12px 0",textAlign:"left"}}>
+          <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-g-print-area")}>🖨️ طباعة</button>
+        </div>
+        <div id="bond-g-print-area">{bondG && <BondGuarantorContent c={bondG} inv={investors.find(i=>i.id===bondG.investorId)} r={calcContract(bondG.amount,settings)}/>}</div>
+      </Modal>
+
       <Modal open={!!cheque} onClose={()=>setCheque(null)} title="📋 الكمبيالة">
         <div style={{padding:"10px 12px 0",textAlign:"left"}}>
           <button style={styles.btn(C.gold)} onClick={()=>window.print()}>🖨️ طباعة</button>
