@@ -12,14 +12,7 @@
   * { box-sizing: border-box; }
   @media print {
     @page { size: A4; margin: 10mm; }
-    body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
-    #root > div > div:first-child,
-    #root > div > nav,
-    #root > div > div > div:first-child { display: none !important; }
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    .modal-overlay { position: static !important; background: none !important; }
-    .modal-box { box-shadow: none !important; max-height: none !important; overflow: visible !important; width: 100% !important; max-width: 100% !important; border-radius: 0 !important; }
-    button { display: none !important; }
   }
   body { margin: 0; font-family: 'Tajawal', Arial, sans-serif; background: #f4f4f6; }
 </style>
@@ -54,6 +47,22 @@ window.addEventListener("DOMContentLoaded",function(){
 <div id="root"></div>
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useCallback } = React;
+
+function printContent(elementId) {
+  const el = document.getElementById(elementId);
+  if(!el) { window.print(); return; }
+  const w = window.open('','_blank','width=800,height=900');
+  w.document.write('<html><head><style>');
+  w.document.write('body{font-family:Tajawal,Arial,sans-serif;direction:rtl;margin:0;padding:20px;background:#fff;color:#000;}');
+  w.document.write('@page{size:A4;margin:10mm;}');
+  w.document.write('</style>');
+  w.document.write('<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">');
+  w.document.write('</head><body>');
+  w.document.write(el.innerHTML);
+  w.document.write('</body></html>');
+  w.document.close();
+  w.onload = function(){ w.print(); w.close(); };
+}
 
 
 // ─── helpers ───────────────────────────────────────────────
@@ -804,9 +813,9 @@ function ContractsPage({contracts,investors,settings,onDelete,payments,setPaymen
       )}
       <Modal open={!!bond} onClose={()=>setBond(null)} title="📜 سند الأمر">
         <div style={{padding:"10px 12px 0",textAlign:"left"}}>
-          <button style={styles.btn(C.gold)} onClick={()=>window.print()}>🖨️ طباعة</button>
+          <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-print-area")}>🖨️ طباعة</button>
         </div>
-        {bond && <BondContent c={bond} inv={investors.find(i=>i.id===bond.investorId)} r={calcContract(bond.amount,settings)}/>}
+        <div id="bond-print-area">{bond && <BondContent c={bond} inv={investors.find(i=>i.id===bond.investorId)} r={calcContract(bond.amount,settings)}/>}</div>
       </Modal>
 
       {/* Cheque Modal */}
@@ -820,9 +829,11 @@ function ContractsPage({contracts,investors,settings,onDelete,payments,setPaymen
       {/* Contract Doc Modal */}
       <Modal open={!!contractDoc} onClose={()=>setContractDoc(null)} title="📄 عقد التقسيط" titleBg={C.purple} wide>
         <div style={{padding:"10px 12px 0",textAlign:"left"}}>
-          <button style={styles.btn(C.gold)} onClick={()=>window.print()}>🖨️ طباعة</button>
+          <button style={styles.btn(C.gold)} onClick={()=>printContent("contract-print-area")}>🖨️ طباعة</button>
         </div>
-        {contractDoc && <ContractContent c={contractDoc} inv={investors.find(i=>i.id===contractDoc.investorId)} r={calcContract(contractDoc.amount,settings)} settings={settings}/>}
+        <div id="contract-print-area">
+          {contractDoc && <ContractContent c={contractDoc} inv={investors.find(i=>i.id===contractDoc.investorId)} r={calcContract(contractDoc.amount,settings)} settings={settings}/>}
+        </div>
       </Modal>
     </div>
   );
