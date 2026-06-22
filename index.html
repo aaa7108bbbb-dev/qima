@@ -315,7 +315,7 @@ function ContractContent({c,inv,r,settings}) {
       </div>
 
       {/* ══ TITLE ══ */}
-      <div style={{textAlign:"center",fontSize:14,fontWeight:900,textDecoration:"underline",marginBottom:12}}>
+      <div style={{textAlign:"center",fontSize:14,fontWeight:900,marginBottom:12}}>
         عقد بيع بالتقسيط
       </div>
 
@@ -330,10 +330,7 @@ function ContractContent({c,inv,r,settings}) {
         <br/>
         <span>وأعمل في / </span><span style={lineW(120)}>{c.job||""}</span>
         <span> &nbsp; وعنواني / </span><span style={lineW(120)}></span>
-        <br/>
-        <span>رقم الجوال / </span><span style={lineW(100)}>{c.cPhone||""}</span>
-        <span> &nbsp; هاتف العمل / </span><span style={lineW(80)}></span>
-        <span> &nbsp; هاتف المنزل / </span><span style={lineW(80)}></span>
+        <span> &nbsp; رقم الجوال / </span><span style={lineW(100)}>{c.cPhone||""}</span>
       </div>
 
       {/* ══ نص العقد ══ */}
@@ -361,10 +358,7 @@ function ContractContent({c,inv,r,settings}) {
         <br/>
         <span>وأعمل في / </span><span style={lineW(120)}>{c.gJob||""}</span>
         <span> &nbsp; وعنواني / </span><span style={lineW(120)}></span>
-        <br/>
-        <span>رقم الجوال / </span><span style={lineW(100)}>{c.gPhone||""}</span>
-        <span> &nbsp; هاتف العمل / </span><span style={lineW(80)}></span>
-        <span> &nbsp; هاتف المنزل / </span><span style={lineW(80)}></span>
+        <span> &nbsp; رقم الجوال / </span><span style={lineW(100)}>{c.gPhone||""}</span>
       </div>
       <div style={{marginBottom:8,lineHeight:2,textAlign:"justify"}}>
         أقر وأعترف وأنا في حالتي الشرعية وبكامل قواي العقلية بأني أكفل المدعو / {c.client} كفالة
@@ -385,13 +379,13 @@ function ContractContent({c,inv,r,settings}) {
       {/* ══ التوقيعات ══ */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:16}}>
         <div style={{border:"1px solid #000",padding:"8px 12px",lineHeight:2}}>
-          <div style={{fontWeight:800,textAlign:"center",marginBottom:4,textDecoration:"underline"}}>المقر بمافيه (المشتري)</div>
+          <div style={{fontWeight:800,textAlign:"center",marginBottom:4}}>المقر بمافيه (المشتري)</div>
           <div>الاسم / {c.client}</div>
           <div>التوقيع / <span style={lineW(120)}></span></div>
         </div>
         {c.gName && (
         <div style={{border:"1px solid #000",padding:"8px 12px",lineHeight:2}}>
-          <div style={{fontWeight:800,textAlign:"center",marginBottom:4,textDecoration:"underline"}}>المقر بمافيه (الكفيل الغرم)</div>
+          <div style={{fontWeight:800,textAlign:"center",marginBottom:4}}>المقر بمافيه (الكفيل الغرم)</div>
           <div>الاسم / {c.gName}</div>
           <div>التوقيع / <span style={lineW(120)}></span></div>
         </div>
@@ -400,17 +394,17 @@ function ContractContent({c,inv,r,settings}) {
 
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,borderTop:"1px solid #000",paddingTop:10}}>
         <div style={{textAlign:"center",lineHeight:2}}>
-          <div style={{fontWeight:800,textDecoration:"underline"}}>الشاهد الأول</div>
+          <div style={{fontWeight:800}}>الشاهد الأول</div>
           <div>الاسم / <span style={lineW(80)}></span></div>
           <div>التوقيع / <span style={lineW(80)}></span></div>
         </div>
         <div style={{textAlign:"center",lineHeight:2}}>
-          <div style={{fontWeight:800,textDecoration:"underline"}}>الشاهد الثاني</div>
+          <div style={{fontWeight:800}}>الشاهد الثاني</div>
           <div>الاسم / <span style={lineW(80)}></span></div>
           <div>التوقيع / <span style={lineW(80)}></span></div>
         </div>
         <div style={{textAlign:"center",lineHeight:2}}>
-          <div style={{fontWeight:800,textDecoration:"underline"}}>البائـــع</div>
+          <div style={{fontWeight:800}}>البائـــع</div>
           <div style={{fontSize:10}}>الاسم / {inv?inv.name:"مؤسسة قمة الفرصة التجارية"}</div>
           <div>التوقيع / <span style={lineW(80)}></span></div>
         </div>
