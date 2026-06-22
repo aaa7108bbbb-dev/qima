@@ -1956,7 +1956,7 @@ function InvestorsPage({investors,contracts,settings,payments,onAdd,onDelete,toa
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
   const save=()=>{
     if(!form.name){toast("أدخل اسم المستثمر","warn");return;}
-    onAdd({id:Date.now(),...form,fund:"",capital:parseFloat(form.capital)||0});
+    onAdd({id:Date.now(),...form,capital:parseFloat(form.capital)||0});
     toast("✅ تمت إضافة "+form.name);
     setForm({name:"",fund:"",capital:"",date:""});setShow(false);
   };
@@ -1971,7 +1971,7 @@ function InvestorsPage({investors,contracts,settings,payments,onAdd,onDelete,toa
           <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:13,fontWeight:700}}>إضافة مستثمر جديد</h3></div>
           <div style={{padding:"16px 20px"}}>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12,marginBottom:14}}>
-              {[["اسم المستثمر *","name","text","الاسم الكامل"],["رأس المال (ر.س)","capital","number","مثال: 100000"],["تاريخ الدخول","date","date",""]].map(([l,k,t,p])=>(
+              {[["اسم المستثمر *","name","text","الاسم الكامل"],["الصندوق","fund","text","اسم الصندوق"],["رأس المال (ر.س)","capital","number","مثال: 100000"],["تاريخ الدخول","date","date",""]].map(([l,k,t,p])=>(
                 <div key={k}>
                   <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
                   <input style={styles.input} type={t} placeholder={p} value={form[k]} onChange={e=>set(k,e.target.value)}/>
