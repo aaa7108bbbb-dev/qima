@@ -303,12 +303,12 @@ function ContractContent({c,inv,r,settings}) {
   const lineW = (w) => ({display:"inline-block", minWidth:w||80});
 
   return (
-    <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",color:"#000",fontSize:11,maxWidth:740,margin:"0 auto",background:"#fff",lineHeight:1.7,padding:"20px 30px"}}>
+    <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",color:"#000",fontSize:13,maxWidth:740,margin:"0 auto",background:"#fff",lineHeight:1.8,padding:"20px 30px",fontWeight:500}}>
 
       {/* ══ HEADER ══ */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",borderBottom:"2px solid #000",paddingBottom:10,marginBottom:10}}>
         <div style={{textAlign:"right",lineHeight:1.8}}>
-          <div style={{fontSize:14,fontWeight:900}}>مؤسسة قمة الفرصة للتقسيط</div>
+          <div style={{fontSize:14,fontWeight:900}}>مؤسسة قمة الفرصة التجارية</div>
           <div style={{fontSize:10}}>بريدة - شارع الثلاثين</div>
           <div style={{fontSize:10}}>ج: 0555171283 &nbsp;&nbsp; ت: 0163839323</div>
           <div style={{fontSize:10}}>سجل تجاري / {regNum}</div>
@@ -348,7 +348,7 @@ function ContractContent({c,inv,r,settings}) {
         مبلغ وقدره ( <strong>{(c.totalInst||0).toLocaleString("ar-SA")}</strong> ) {totalWords} . وذلك قيمة شراء ( <strong>{c.qty||""}</strong> ) بطاقات سوا فئة: <strong>{c.category||""}</strong> .
         على أن يُدفع على أقساط شهرية متتالية ومستمرة دون انقطاع بما فيها شهر رمضان والأعياد.
         القسط الواحد ( <strong>{(c.instAmt||0).toLocaleString("ar-SA")}</strong> ) {numToWords(Math.round(c.instAmt||0))} ريال سعودي إعتباراً من تاريخ: <strong>{c.firstInst||"..........."}</strong> م إلى: <strong>{c.lastInst||"..........."}</strong> م
-        تهاية المبلغ المذكور أعلاه. وأنني ملتزم بسداد الأقساط في موعدها المحدد بدون تأخير وإذا انقطع أو تأخر عن
+        حتى نهاية المبلغ المذكور أعلاه. وأنني ملتزم بسداد الأقساط في موعدها المحدد بدون تأخير وإذا انقطع أو تأخر عن
         قسطين متتاليين أو ثلاثة أقساط متفرقة فإنني ملتزم تاماً بسداد المبلغ المتبقي كاملاً دفعة واحدة.
         وقد إستلمت البضاعة بحالتها الراهنة وعاينتها المعاينة المنافية للجهالة وقبلتها وتأكدت من عددها وتصرفت بها
         كما أنني أقر على نفسي بأنه لا يوجد على أي التزامات مالية ولا كفالات غرامية وقد أذنت لمن يشهد والله خير الشاهدين.
