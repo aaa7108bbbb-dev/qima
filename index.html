@@ -641,13 +641,17 @@ function ContractsPage({contracts,investors,settings,onDelete,payments,setPaymen
   const [payDate,setPayDate]=useState(new Date().toISOString().split("T")[0]);
   const [payNote,setPayNote]=useState("");
   const [statusTab,setStatusTab]=useState("active");
+  const [doneIds,setDoneIds]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_done")||"[]");}catch{return[];}});
+  const markDone = (id) => { const d=[...doneIds,id]; setDoneIds(d); localStorage.setItem("qimma_done",JSON.stringify(d)); };
+  const [completionAlert,setCompletionAlert]=useState(null);
   const addPayment=()=>{
     if(!payAmount||!payModal)return;
     const paid = _getPaid(payments, payModal.id) + parseFloat(payAmount);
     setPayments(p=>[...p,{id:Date.now(),contractId:payModal.id,amount:parseFloat(payAmount),date:payDate,note:payNote||"قسط"}]);
     setPayAmount("");setPayNote("");
-    if(paid>=(payModal.totalInst||0)){
-      toast("🎉 تم اكتمال سداد عقد "+payModal.client+" بالكامل!");
+    if(paid>=(payModal.totalInst||0) && !doneIds.includes(payModal.id)){
+      setPayModal(null);
+      setCompletionAlert(payModal);
     } else {
       toast("✅ تم تسجيل السداد");
     }
@@ -656,11 +660,10 @@ function ContractsPage({contracts,investors,settings,onDelete,payments,setPaymen
   const [bond,setBond] = useState(null);
   const [cheque,setCheque] = useState(null);
   const [contractDoc,setContractDoc] = useState(null);
-  const isCompleted = c => _getPaid(payments, c.id) >= (c.totalInst||0);
   const allFiltered = contracts.filter(c=>c.client.includes(search)||(investors.find(i=>i.id===c.investorId)?.name||"").includes(search));
-  const filtered = allFiltered.filter(c=> statusTab==="active" ? !isCompleted(c) : isCompleted(c));
-  const activeCount = allFiltered.filter(c=>!isCompleted(c)).length;
-  const completedCount = allFiltered.filter(c=>isCompleted(c)).length;
+  const filtered = allFiltered.filter(c=> statusTab==="active" ? !doneIds.includes(c.id) : doneIds.includes(c.id));
+  const activeCount = allFiltered.filter(c=>!doneIds.includes(c.id)).length;
+  const completedCount = allFiltered.filter(c=>doneIds.includes(c.id)).length;
 
   return (
     <div>
@@ -798,6 +801,26 @@ function ContractsPage({contracts,investors,settings,onDelete,payments,setPaymen
       </Modal>
 
       {/* Bond Modal */}
+      {completionAlert && (
+        <div style={{position:"fixed",top:0,left:0,width:"100%",height:"100%",background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{background:"#fff",borderRadius:16,padding:32,maxWidth:340,width:"90%",textAlign:"center",boxShadow:"0 10px 40px rgba(0,0,0,0.3)"}}>
+            <div style={{fontSize:48,marginBottom:12}}>🎉</div>
+            <div style={{fontSize:18,fontWeight:800,color:"#1a1a2e",marginBottom:8}}>اكتمل السداد!</div>
+            <div style={{fontSize:14,color:"#555",marginBottom:20}}>
+              عقد <strong>{completionAlert.client}</strong> تم سداده بالكامل.<br/>
+              هل تريدين نقله لقائمة العقود المنتهية؟
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+              <button onClick={()=>{markDone(completionAlert.id);setCompletionAlert(null);toast("✅ تم نقل العقد للمنتهية");}} style={{...styles.btn(C.green),padding:"10px 20px",fontSize:14}}>
+                ✅ نعم، انقله
+              </button>
+              <button onClick={()=>setCompletionAlert(null)} style={{...styles.btn("#e5e7eb",C.ink),padding:"10px 20px",fontSize:14}}>
+                لاحقاً
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <Modal open={!!bond} onClose={()=>setBond(null)} title="📜 سند الأمر">
         <div style={{padding:"10px 12px 0",textAlign:"left"}}>
           <button style={styles.btn(C.gold)} onClick={()=>window.print()}>🖨️ طباعة</button>
