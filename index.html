@@ -333,8 +333,8 @@ function ContractContent({c,inv,r,settings}) {
       <div style={sec}>
         <div style={secHdr}>الطرف الثاني — المشتري</div>
         <div style={secBody}>
-          {[["الاسم",c.client],["رقم الهوية",c.idNum||"—"],["العمل",c.job||"—"],["رقم الجوال","________________"]].map(([l,v])=>(
           {[["الاسم",c.client],["رقم الهوية",c.idNum||"—"],["العمل",c.job||"—"],["رقم الجوال",c.cPhone||"—"]].map(([l,v])=>(
+            <div key={l} style={fld}><span style={fldL}>{l}:</span><span style={fldV}>{v}</span></div>
           ))}
         </div>
       </div>
