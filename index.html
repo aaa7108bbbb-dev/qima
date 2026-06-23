@@ -2277,7 +2277,7 @@ function GoodsPage({investors, contracts, invTxList, setInvTxList, toast}) {
     try { return JSON.parse(localStorage.getItem("qimma_goods2") || "[]"); } catch { return []; }
   });
   const [showAdd, setShowAdd] = useState(false);
-  const [newRow, setNewRow] = useState({price:"", supportAcc:"", supportClient:"", withdrawnQty:""});
+  const [newRow, setNewRow] = useState({date:new Date().toISOString().split("T")[0], price:"", supportAcc:"", supportClient:"", withdrawnQty:""});
 
   const saveRows = (r) => { setRows(r); localStorage.setItem("qimma_goods2", JSON.stringify(r)); };
 
@@ -2326,8 +2326,8 @@ function GoodsPage({investors, contracts, invTxList, setInvTxList, toast}) {
   const addManualRow = () => {
     const r = [...rows, {
       id: Date.now(),
-      date: new Date().toISOString().split("T")[0],
-      day: DAYS[new Date().getDay()]||"",
+      date: newRow.date||new Date().toISOString().split("T")[0],
+      day: DAYS[new Date(newRow.date||new Date()).getDay()]||"",
       client:"", investor:"", contractNum:"",
       price: parseFloat(newRow.price)||0,
       supportClient: parseFloat(newRow.supportClient)||0,
@@ -2337,7 +2337,7 @@ function GoodsPage({investors, contracts, invTxList, setInvTxList, toast}) {
       fromContract: false,
     }];
     saveRows(r);
-    setNewRow({price:"", supportAcc:"", supportClient:"", withdrawnQty:""});
+    setNewRow({date:new Date().toISOString().split("T")[0], price:"", supportAcc:"", supportClient:"", withdrawnQty:""});
     setShowAdd(false);
     toast("✅ تم إضافة السطر");
   };
@@ -2381,6 +2381,10 @@ function GoodsPage({investors, contracts, invTxList, setInvTxList, toast}) {
         <div style={{...styles.panel,marginBottom:16,padding:16}}>
           <div style={{fontSize:13,fontWeight:700,marginBottom:12}}>إضافة سطر جديد</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:12}}>
+            <div>
+              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>التاريخ</label>
+              <input style={styles.input} type="date" value={newRow.date||""} onChange={e=>setNewRow(p=>({...p,date:e.target.value}))}/>
+            </div>
             {[["سعر البطاقة","price"],["دعم العميل","supportClient"],["دعم الحساب","supportAcc"],["بطاقات مسحوبة","withdrawnQty"]].map(([l,k])=>(
               <div key={k}>
                 <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>{l}</label>
