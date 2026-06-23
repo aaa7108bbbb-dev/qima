@@ -2395,7 +2395,7 @@ function GoodsPage({investors, contracts, toast}) {
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",background:"#f0faf5",fontWeight:700}}>{row.supported>0?row.supported:""}</td>
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",color:C.red,fontWeight:700}}>{row.withdrawn>0?row.withdrawn:""}</td>
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",background:"#f0f0ff",fontWeight:800,color:C.teal}}>{row.runningCards}</td>
-                <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",background:"#fffbf0",fontWeight:800,color:C.gold}}>{row.rowPrice&&row.runningCards>0?row.cashBalance.toLocaleString("ar-SA"):""}</td>
+                <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",background:"#fffbf0",fontWeight:800,color:row.cashBalance<0?C.red:C.gold}}>{row.rowPrice?row.cashBalance.toLocaleString("ar-SA"):""}</td>
                 <td style={{padding:"4px",borderBottom:"1px solid #eee",textAlign:"center"}}>
                   {!row.fromContract&&<button style={{...styles.btn(C.red),fontSize:10,padding:"3px 8px"}} onClick={()=>saveManual(manualRows.filter(r=>r.id!==row.id))}>🗑️</button>}
                 </td>
