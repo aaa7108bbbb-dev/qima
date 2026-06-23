@@ -361,7 +361,7 @@ function ChequeContent({c,r,isGuarantor=false}) {
 
 // ─── Contract Print ──────────────────────────────────────────
 const LOGO_B64 = "";
-function ContractContent({c,inv,r,settings}) {
+function ContractContent({c,inv,r,settings,investors=[]}) {
   const instAmt = c.instAmt || 0;
   const totalWords = numToWords(Math.round(c.totalInst||0)) + " ريال سعودي";
   const regNum = (settings && settings.regNum) || "1131041762";
@@ -486,6 +486,16 @@ function ContractContent({c,inv,r,settings}) {
         </div>
       </div>
 
+      {/* ملاحظة */}
+      {(c.note || c.deductEnabled) && (
+        <div style={{marginTop:10,padding:"8px 14px",borderTop:"1px solid #000",fontSize:12}}>
+          {c.note && <div style={{marginBottom:4}}><strong>ملاحظة:</strong> {c.note}</div>}
+          {c.deductEnabled && c.deductAmount && (
+            <div><strong>يخصم مبلغ</strong> {parseFloat(c.deductAmount).toLocaleString("ar-SA")} ريال سداد للمستثمر {investors&&investors.find(i=>String(i.id)===String(c.deductInvestorId))?.name||""}</div>
+          )}
+        </div>
+      )}
+
       {/* Footer */}
       <div style={{textAlign:"center",fontSize:9,color:"#555",marginTop:12,borderTop:"1px solid #ccc",paddingTop:6}}>
         مؤسسة قمة الفرصة التجارية | عقد رقم {c.num} | {c.date}
@@ -498,7 +508,7 @@ function ContractContent({c,inv,r,settings}) {
 function NewContractPage({investors, settings, contracts, onSave, toast}) {
   const today = new Date().toISOString().split("T")[0];
   const nextNum = contracts.length ? Math.max(...contracts.map(c=>parseInt(c.num)||0).filter(n=>n>0), 0) + 1 : (settings.startNum||1);
-  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:""});
+  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:""});
   const set = (k,v) => {
     setForm(f=>({...f,[k]:v}));
     // Auto-fill if idNum entered and matches existing contract
@@ -529,7 +539,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast}) {
       profit:rr.profit, admin:rr.admin, acc:rr.acc, inst:rr.inst, net:rr.net, total:rr.total});
     toast("✅ تم حفظ العقد بنجاح");
     const nn = parseInt(form.num)+1;
-    setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nn),cPhone:"",gName:"",gId:"",gJob:"",gPhone:""});
+    setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nn),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:""});
   };
 
   const fields1 = [
@@ -688,9 +698,40 @@ function NewContractPage({investors, settings, contracts, onSave, toast}) {
             </>
           )}
 
+          {/* ملاحظة + خصم مستثمر */}
+          <div style={{marginTop:16,padding:"14px 16px",background:"#f8f8f8",borderRadius:10,border:"1px solid "+C.border}}>
+            <div style={{marginBottom:12}}>
+              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>ملاحظة (اختياري)</label>
+              <textarea style={{...styles.input,height:60,resize:"vertical"}} placeholder="أكتب ملاحظة..." value={form.note||""} onChange={e=>set("note",e.target.value)}/>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:form.deductEnabled?12:0}}>
+              <button
+                style={{...styles.btn(form.deductEnabled?C.gold:"#e5e7eb",form.deductEnabled?"#fff":C.ink),fontSize:12,padding:"8px 14px"}}
+                onClick={()=>set("deductEnabled",!form.deductEnabled)}>
+                {form.deductEnabled?"✅":"💰"} خصم سداد مستثمر
+              </button>
+              {form.deductEnabled && <span style={{fontSize:11,color:"#888"}}>سيطلع في العقد المطبوع</span>}
+            </div>
+            {form.deductEnabled && (
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:8}}>
+                <div>
+                  <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المبلغ (ريال)</label>
+                  <input style={styles.input} type="number" placeholder="مثال: 3000" value={form.deductAmount||""} onChange={e=>set("deductAmount",e.target.value)}/>
+                </div>
+                <div>
+                  <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المستثمر</label>
+                  <select style={styles.select} value={form.deductInvestorId||""} onChange={e=>set("deductInvestorId",e.target.value)}>
+                    <option value="">اختر مستثمر</option>
+                    {investors.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div style={{display:"flex",gap:10,marginTop:16}}>
             <button style={styles.btn(C.teal)} onClick={save}>💾 حفظ العقد</button>
-            <button style={styles.btn("transparent",C.ink2)} onClick={()=>setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,cPhone:"",gName:"",gId:"",gJob:"",gPhone:""})}>مسح</button>
+            <button style={styles.btn("transparent",C.ink2)} onClick={()=>setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:""})}>مسح</button>
           </div>
         </div>
       </div>
@@ -925,7 +966,7 @@ function ContractsPage({contracts,investors,settings,onDelete,payments,setPaymen
           <button style={styles.btn(C.gold)} onClick={()=>printContent("contract-print-area")}>🖨️ طباعة</button>
         </div>
         <div id="contract-print-area">
-          {contractDoc && <ContractContent c={contractDoc} inv={investors.find(i=>i.id===contractDoc.investorId)} r={calcContract(contractDoc.amount,settings)} settings={settings}/>}
+          {contractDoc && <ContractContent c={contractDoc} inv={investors.find(i=>i.id===contractDoc.investorId)} r={calcContract(contractDoc.amount,settings)} settings={settings} investors={investors}/>}
         </div>
       </Modal>
     </div>
