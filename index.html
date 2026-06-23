@@ -2283,7 +2283,7 @@ function GoodsPage({investors, contracts, invTxList, setInvTxList, toast}) {
 
   // Auto-add row when contract with deduct is saved
   // Rows from contracts
-  const contractRows = contracts.filter(c=>c.deductEnabled && c.deductAmount).map(c=>{
+  const contractRows = contracts.map(c=>{
     const inv = investors.find(i=>String(i.id)===String(c.investorId));
     return {
       id: "c_"+c.id,
@@ -2293,7 +2293,7 @@ function GoodsPage({investors, contracts, invTxList, setInvTxList, toast}) {
       investor: inv?inv.name:"—",
       contractNum: c.num,
       price: "",
-      supportClient: parseFloat(c.deductAmount)||0,
+      supportClient: (c.deductEnabled && c.deductAmount) ? parseFloat(c.deductAmount)||0 : 0,
       supportAcc: 0,
       withdrawnQty: parseInt(c.qty)||0,
       contractAmount: parseFloat(c.amount)||0,
