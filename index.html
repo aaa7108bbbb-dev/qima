@@ -2273,17 +2273,21 @@ function SettingsPage({settings,onSave,toast}) {
 // ─── Goods Page ─────────────────────────────────────────────
 // ─── Goods Page ─────────────────────────────────────────────
 function GoodsPage({investors, contracts, toast}) {
-  const [cardPrice, setCardPrice] = useState(()=>parseFloat(localStorage.getItem("qimma_card_price"))||0);
-  const [editingPrice, setEditingPrice] = useState(false);
-  const [tempPrice, setTempPrice] = useState("");
+  const [priceOverrides, setPriceOverrides] = useState(()=>{
+    try{return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}");}catch{return{};}
+  });
   const [manualRows, setManualRows] = useState(()=>{
     try{return JSON.parse(localStorage.getItem("qimma_goods3")||"[]");}catch{return[];}
   });
   const [showAdd, setShowAdd] = useState(false);
-  const [newRow, setNewRow] = useState({date:new Date().toISOString().split("T")[0],supportAcc:"",note:""});
+  const [newRow, setNewRow] = useState({date:new Date().toISOString().split("T")[0],supportAcc:"",note:"",price:""});
 
   const saveManual = r => { setManualRows(r); localStorage.setItem("qimma_goods3",JSON.stringify(r)); };
-  const savePrice = p => { setCardPrice(p); localStorage.setItem("qimma_card_price",String(p)); };
+  const savePriceOverride = (id, val) => {
+    const p = {...priceOverrides, [id]: val};
+    setPriceOverrides(p);
+    localStorage.setItem("qimma_price_ov", JSON.stringify(p));
+  };
 
   // Build rows from contracts + manual
   const contractRows = contracts.map(c=>{
@@ -2302,16 +2306,18 @@ function GoodsPage({investors, contracts, toast}) {
 
   const allRows = [...contractRows, ...manualRows].sort((a,b)=>new Date(a.date)-new Date(b.date));
 
-  // Calculate running balance
+  // Calculate running balance with per-row price
   let runningCards = 0;
+  let lastPrice = 0;
   const display = allRows.map(row=>{
-    const price = cardPrice||1;
+    const rowPrice = parseFloat(priceOverrides[row.id]||row.price)||lastPrice||1;
+    if(rowPrice) lastPrice = rowPrice;
     const supC = parseFloat(row.supportClient)||0;
     const supA = parseFloat(row.supportAcc)||0;
-    const supported = supC||supA ? Math.floor((supC+supA)/price) : 0;
+    const supported = supC||supA ? Math.floor((supC+supA)/rowPrice) : 0;
     const withdrawn = parseInt(row.withdrawnQty)||0;
     runningCards = runningCards + supported - withdrawn;
-    return {...row, supported, withdrawn, runningCards, cashBalance:runningCards*price};
+    return {...row, rowPrice, supported, withdrawn, runningCards, cashBalance:runningCards*rowPrice};
   });
 
   return (
@@ -2320,21 +2326,7 @@ function GoodsPage({investors, contracts, toast}) {
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}}>
         <div style={{fontSize:17,fontWeight:800}}>📦 البضاعة</div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          {/* سعر البطاقة */}
-          {editingPrice?(
-            <div style={{display:"flex",gap:6,alignItems:"center"}}>
-              <input autoFocus type="number" value={tempPrice} onChange={e=>setTempPrice(e.target.value)}
-                style={{...styles.input,width:100,borderColor:C.gold,fontWeight:700}}
-                onKeyDown={e=>{if(e.key==="Enter"){savePrice(parseFloat(tempPrice)||0);setEditingPrice(false);}}}/>
-              <button style={styles.btn(C.gold)} onClick={()=>{savePrice(parseFloat(tempPrice)||0);setEditingPrice(false);}}>✓</button>
-              <button style={styles.btn("#e5e7eb",C.ink)} onClick={()=>setEditingPrice(false)}>✕</button>
-            </div>
-          ):(
-            <button style={{...styles.btn("#fffbf0",C.gold),border:"2px solid "+C.gold,fontWeight:800,fontSize:13}}
-              onClick={()=>{setTempPrice(cardPrice||"");setEditingPrice(true);}}>
-              🏷️ سعر البطاقة: {cardPrice?cardPrice.toLocaleString("ar-SA")+" ر.س":"اضغط لتحديد السعر"}
-            </button>
-          )}
+
           <button style={styles.btn(C.teal)} onClick={()=>setShowAdd(s=>!s)}>➕ إضافة دعم</button>
         </div>
       </div>
@@ -2353,14 +2345,18 @@ function GoodsPage({investors, contracts, toast}) {
               <input style={styles.input} type="number" placeholder="المبلغ" value={newRow.supportAcc} onChange={e=>setNewRow(p=>({...p,supportAcc:e.target.value}))}/>
             </div>
             <div>
+              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>سعر البطاقة</label>
+              <input style={styles.input} type="number" placeholder="اتركه فارغ للتعبئة التلقائية" value={newRow.price} onChange={e=>setNewRow(p=>({...p,price:e.target.value}))}/>
+            </div>
+            <div>
               <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>ملاحظة</label>
               <input style={styles.input} type="text" placeholder="اختياري" value={newRow.note} onChange={e=>setNewRow(p=>({...p,note:e.target.value}))}/>
             </div>
           </div>
           <button style={styles.btn(C.teal)} onClick={()=>{
             if(!newRow.supportAcc){toast("أدخل مبلغ الدعم","error");return;}
-            saveManual([...manualRows,{id:Date.now(),date:newRow.date,contractNum:"—",contractAmount:0,client:newRow.note||"دعم حساب",investor:"—",supportClient:0,supportAcc:parseFloat(newRow.supportAcc)||0,withdrawnQty:0,fromContract:false}]);
-            setNewRow({date:new Date().toISOString().split("T")[0],supportAcc:"",note:""});
+            saveManual([...manualRows,{id:Date.now(),date:newRow.date,contractNum:"—",contractAmount:0,client:newRow.note||"دعم حساب",investor:"—",supportClient:0,supportAcc:parseFloat(newRow.supportAcc)||0,withdrawnQty:0,fromContract:false,price:parseFloat(newRow.price)||0}]);
+            setNewRow({date:new Date().toISOString().split("T")[0],supportAcc:"",note:"",price:""});
             setShowAdd(false);
             toast("✅ تم إضافة الدعم");
           }}>💾 حفظ</button>
@@ -2372,7 +2368,7 @@ function GoodsPage({investors, contracts, toast}) {
         <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:1000}}>
           <thead>
             <tr style={{background:C.ink,color:"#fff"}}>
-              {["التاريخ","رقم العقد","قيمة العقد","اسم العميل","اسم المستثمر","دعم العميل","دعم الحساب","البطاقات المدعومة","البطاقات المسحوبة","رصيد البطاقات","الرصيد النقدي",""].map(h=>(
+              {["التاريخ","رقم العقد","قيمة العقد","اسم العميل","اسم المستثمر","دعم العميل","دعم الحساب","سعر البطاقة","البطاقات المدعومة","البطاقات المسحوبة","رصيد البطاقات","الرصيد النقدي",""].map(h=>(
                 <th key={h} style={{padding:"8px 8px",whiteSpace:"nowrap",fontWeight:700,textAlign:"center",
                   background:["رصيد البطاقات","الرصيد النقدي"].includes(h)?"#1a6b4a":C.ink}}>{h}</th>
               ))}
@@ -2390,10 +2386,16 @@ function GoodsPage({investors, contracts, toast}) {
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee"}}>{row.investor}</td>
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",color:C.green,fontWeight:700}}>{row.supportClient>0?row.supportClient.toLocaleString("ar-SA"):""}</td>
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",color:C.teal,fontWeight:700}}>{row.supportAcc>0?row.supportAcc.toLocaleString("ar-SA"):""}</td>
+                <td style={{padding:"3px 4px",borderBottom:"1px solid #eee",textAlign:"center"}}>
+                  <input type="number" value={priceOverrides[row.id]||row.price||""}
+                    placeholder={String(row.rowPrice||"")}
+                    onChange={e=>savePriceOverride(row.id,e.target.value)}
+                    style={{width:65,border:"1px solid "+C.gold,borderRadius:4,padding:"3px 4px",fontSize:11,textAlign:"center",background:"#fffbf0"}}/>
+                </td>
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",background:"#f0faf5",fontWeight:700}}>{row.supported>0?row.supported:""}</td>
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",color:C.red,fontWeight:700}}>{row.withdrawn>0?row.withdrawn:""}</td>
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",background:"#f0f0ff",fontWeight:800,color:C.teal}}>{row.runningCards}</td>
-                <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",background:"#fffbf0",fontWeight:800,color:C.gold}}>{cardPrice&&row.runningCards>0?row.cashBalance.toLocaleString("ar-SA"):""}</td>
+                <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",background:"#fffbf0",fontWeight:800,color:C.gold}}>{row.rowPrice&&row.runningCards>0?row.cashBalance.toLocaleString("ar-SA"):""}</td>
                 <td style={{padding:"4px",borderBottom:"1px solid #eee",textAlign:"center"}}>
                   {!row.fromContract&&<button style={{...styles.btn(C.red),fontSize:10,padding:"3px 8px"}} onClick={()=>saveManual(manualRows.filter(r=>r.id!==row.id))}>🗑️</button>}
                 </td>
