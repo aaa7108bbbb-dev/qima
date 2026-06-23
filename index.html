@@ -2362,10 +2362,14 @@ function GoodsPage({investors, contracts, invTxList, setInvTxList, toast}) {
   const priceOverrides = {};
   rows.forEach(r=>{ if(r.id) priceOverrides[r.id]=r.price; });
 
-  const displayFinal = display.map(r=>({
-    ...r,
-    price: priceOverrides[r.id]!==undefined ? priceOverrides[r.id] : r.price
-  }));
+  const displayFinal = (() => {
+    let lastPrice = 0;
+    return display.map(r=>{
+      const p = priceOverrides[r.id]!==undefined ? priceOverrides[r.id] : r.price;
+      if(p) lastPrice = p;
+      return {...r, price: p || lastPrice};
+    });
+  })();
 
   const cols = ["التاريخ","اليوم","اسم العميل","المستثمر","العقد","سعر البطاقة","دعم العميل","رصيد دعم العميل","دعم الحساب","رصيد دعم الحساب","الرصيد الكلي","البطاقات المدعومة","قيمة العقد","البطاقات المسحوبة","رصيد البطاقات","الرصيد النقدي"];
   const autoC = ["اليوم","رصيد دعم العميل","رصيد دعم الحساب","الرصيد الكلي","البطاقات المدعومة","قيمة العقد","البطاقات المسحوبة","رصيد البطاقات","الرصيد النقدي"];
@@ -2426,7 +2430,14 @@ function GoodsPage({investors, contracts, invTxList, setInvTxList, toast}) {
                   <td style={{padding:"5px 6px",borderBottom:"1px solid #eee"}}>{row.investor}</td>
                   <td style={{padding:"5px 6px",borderBottom:"1px solid #eee",textAlign:"center"}}>{row.contractNum}</td>
                   <td style={{padding:"3px 4px",borderBottom:"1px solid #eee"}}>
-                    <input type="number" value={row.price||""} onChange={e=>editPrice(row.id, e.target.value, row.fromContract)}
+                    <input type="number" 
+                      value={row.price||""}
+                      placeholder={(() => {
+                        const idx = displayFinal.indexOf(row);
+                        for(let j=idx-1;j>=0;j--){ if(displayFinal[j].price) return displayFinal[j].price; }
+                        return "";
+                      })()}
+                      onChange={e=>editPrice(row.id, e.target.value, row.fromContract)}
                       style={{width:70,border:"1px solid #ddd",borderRadius:4,padding:"3px 4px",fontSize:11,textAlign:"center"}}/>
                   </td>
                   <td style={{padding:"5px 6px",borderBottom:"1px solid #eee",textAlign:"center",color:C.green,fontWeight:700}}>{supClient>0?supClient.toLocaleString("ar-SA"):""}</td>
