@@ -2270,6 +2270,184 @@ function SettingsPage({settings,onSave,toast}) {
   );
 }
 
+// ─── Goods Page ─────────────────────────────────────────────
+function GoodsPage({investors, contracts, invTxList, setInvTxList, toast}) {
+  const DAYS = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+  const [rows, setRows] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("qimma_goods2") || "[]"); } catch { return []; }
+  });
+  const [showAdd, setShowAdd] = useState(false);
+  const [newRow, setNewRow] = useState({price:"", supportAcc:"", supportClient:"", withdrawnQty:""});
+
+  const saveRows = (r) => { setRows(r); localStorage.setItem("qimma_goods2", JSON.stringify(r)); };
+
+  // Auto-add row when contract with deduct is saved
+  // Rows from contracts
+  const contractRows = contracts.filter(c=>c.deductEnabled && c.deductAmount).map(c=>{
+    const inv = investors.find(i=>String(i.id)===String(c.investorId));
+    return {
+      id: "c_"+c.id,
+      date: c.date,
+      day: DAYS[new Date(c.date).getDay()]||"",
+      client: c.client,
+      investor: inv?inv.name:"—",
+      contractNum: c.num,
+      price: "",
+      supportClient: parseFloat(c.deductAmount)||0,
+      supportAcc: 0,
+      withdrawnQty: parseInt(c.qty)||0,
+      contractAmount: parseFloat(c.amount)||0,
+      fromContract: true,
+    };
+  });
+
+  // Merge contract rows with manual rows
+  const allRows = [...contractRows, ...rows].sort((a,b)=>new Date(a.date)-new Date(b.date));
+
+  // Calculate running totals
+  let sumSupportClient=0, sumSupportAcc=0, runningCards=0;
+  const display = allRows.map(row=>{
+    const price = parseFloat(row.price)||0;
+    sumSupportClient += parseFloat(row.supportClient)||0;
+    sumSupportAcc += parseFloat(row.supportAcc)||0;
+    const totalBalance = sumSupportClient + sumSupportAcc;
+    const supportedCards = price>0 ? Math.floor(((parseFloat(row.supportClient)||0)+(parseFloat(row.supportAcc)||0))/price) : 0;
+    const withdrawnCards = parseInt(row.withdrawnQty)||0;
+    runningCards = runningCards + supportedCards - withdrawnCards;
+    const cashBalance = runningCards * price;
+    return {
+      ...row,
+      sumSupportClient, sumSupportAcc, totalBalance,
+      supportedCards, withdrawnCards,
+      runningCards, cashBalance
+    };
+  });
+
+  const addManualRow = () => {
+    const r = [...rows, {
+      id: Date.now(),
+      date: new Date().toISOString().split("T")[0],
+      day: DAYS[new Date().getDay()]||"",
+      client:"", investor:"", contractNum:"",
+      price: parseFloat(newRow.price)||0,
+      supportClient: parseFloat(newRow.supportClient)||0,
+      supportAcc: parseFloat(newRow.supportAcc)||0,
+      withdrawnQty: parseInt(newRow.withdrawnQty)||0,
+      contractAmount: 0,
+      fromContract: false,
+    }];
+    saveRows(r);
+    setNewRow({price:"", supportAcc:"", supportClient:"", withdrawnQty:""});
+    setShowAdd(false);
+    toast("✅ تم إضافة السطر");
+  };
+
+  const delRow = (id) => { saveRows(rows.filter(r=>r.id!==id)); };
+
+  const editPrice = (id, val, isContract) => {
+    if(isContract) {
+      // Update price in rows for contract rows
+      const exists = rows.find(r=>r.id===id);
+      if(exists){
+        saveRows(rows.map(r=>r.id===id?{...r,price:val}:r));
+      } else {
+        saveRows([...rows,{id, price:val}]);
+      }
+    } else {
+      saveRows(rows.map(r=>r.id===id?{...r,price:val}:r));
+    }
+  };
+
+  // Merge prices from manual rows into contract rows
+  const priceOverrides = {};
+  rows.forEach(r=>{ if(r.id) priceOverrides[r.id]=r.price; });
+
+  const displayFinal = display.map(r=>({
+    ...r,
+    price: priceOverrides[r.id]!==undefined ? priceOverrides[r.id] : r.price
+  }));
+
+  const cols = ["التاريخ","اليوم","اسم العميل","المستثمر","العقد","سعر البطاقة","دعم العميل","رصيد دعم العميل","دعم الحساب","رصيد دعم الحساب","الرصيد الكلي","البطاقات المدعومة","قيمة العقد","البطاقات المسحوبة","رصيد البطاقات","الرصيد النقدي"];
+  const autoC = ["اليوم","رصيد دعم العميل","رصيد دعم الحساب","الرصيد الكلي","البطاقات المدعومة","قيمة العقد","البطاقات المسحوبة","رصيد البطاقات","الرصيد النقدي"];
+
+  return (
+    <div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}}>
+        <div style={{fontSize:17,fontWeight:800}}>📦 البضاعة</div>
+        <button style={styles.btn(C.teal)} onClick={()=>setShowAdd(s=>!s)}>➕ إضافة سطر يدوي</button>
+      </div>
+
+      {showAdd && (
+        <div style={{...styles.panel,marginBottom:16,padding:16}}>
+          <div style={{fontSize:13,fontWeight:700,marginBottom:12}}>إضافة سطر جديد</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:12}}>
+            {[["سعر البطاقة","price"],["دعم العميل","supportClient"],["دعم الحساب","supportAcc"],["بطاقات مسحوبة","withdrawnQty"]].map(([l,k])=>(
+              <div key={k}>
+                <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>{l}</label>
+                <input style={styles.input} type="number" value={newRow[k]} onChange={e=>setNewRow(p=>({...p,[k]:e.target.value}))}/>
+              </div>
+            ))}
+          </div>
+          <button style={styles.btn(C.teal)} onClick={addManualRow}>💾 حفظ</button>
+        </div>
+      )}
+
+      <div style={{overflowX:"auto",borderRadius:10,boxShadow:"0 2px 12px rgba(0,0,0,0.08)"}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:1600}}>
+          <thead>
+            <tr>
+              {cols.map(c=>(
+                <th key={c} style={{padding:"8px 6px",whiteSpace:"nowrap",fontWeight:700,textAlign:"center",
+                  background:autoC.includes(c)?"#1a6b4a":c==="سعر البطاقة"?C.gold:C.ink,color:"#fff"}}>
+                  {c}
+                </th>
+              ))}
+              <th style={{background:C.ink,color:"#fff",padding:"8px 6px"}}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {displayFinal.length===0?(
+              <tr><td colSpan={cols.length+1} style={{textAlign:"center",padding:40,color:"#9ca3af"}}>لا توجد بيانات</td></tr>
+            ):displayFinal.map((row,i)=>{
+              const price = parseFloat(row.price)||0;
+              const supClient = parseFloat(row.supportClient)||0;
+              const supAcc = parseFloat(row.supportAcc)||0;
+              const supported = price>0 ? Math.floor((supClient+supAcc)/price) : 0;
+              const withdrawn = parseInt(row.withdrawnQty)||0;
+              return (
+                <tr key={row.id||i} style={{background:i%2===0?"#fff":"#f8f8f8"}}>
+                  <td style={{padding:"5px 6px",borderBottom:"1px solid #eee",textAlign:"center"}}>{row.date}</td>
+                  <td style={{padding:"5px 6px",borderBottom:"1px solid #eee",textAlign:"center"}}>{row.day}</td>
+                  <td style={{padding:"5px 6px",borderBottom:"1px solid #eee",fontWeight:700}}>{row.client}</td>
+                  <td style={{padding:"5px 6px",borderBottom:"1px solid #eee"}}>{row.investor}</td>
+                  <td style={{padding:"5px 6px",borderBottom:"1px solid #eee",textAlign:"center"}}>{row.contractNum}</td>
+                  <td style={{padding:"3px 4px",borderBottom:"1px solid #eee"}}>
+                    <input type="number" value={row.price||""} onChange={e=>editPrice(row.id, e.target.value, row.fromContract)}
+                      style={{width:70,border:"1px solid #ddd",borderRadius:4,padding:"3px 4px",fontSize:11,textAlign:"center"}}/>
+                  </td>
+                  <td style={{padding:"5px 6px",borderBottom:"1px solid #eee",textAlign:"center",color:C.green,fontWeight:700}}>{supClient>0?supClient.toLocaleString("ar-SA"):""}</td>
+                  <td style={{padding:"5px 6px",borderBottom:"1px solid #eee",textAlign:"center",background:"#f0faf5",fontWeight:700}}>{row.sumSupportClient>0?row.sumSupportClient.toLocaleString("ar-SA"):""}</td>
+                  <td style={{padding:"5px 6px",borderBottom:"1px solid #eee",textAlign:"center",color:C.teal,fontWeight:700}}>{supAcc>0?supAcc.toLocaleString("ar-SA"):""}</td>
+                  <td style={{padding:"5px 6px",borderBottom:"1px solid #eee",textAlign:"center",background:"#f0faf5",fontWeight:700}}>{row.sumSupportAcc>0?row.sumSupportAcc.toLocaleString("ar-SA"):""}</td>
+                  <td style={{padding:"5px 6px",borderBottom:"1px solid #eee",textAlign:"center",background:"#fffbf0",fontWeight:800,color:C.gold}}>{row.totalBalance>0?row.totalBalance.toLocaleString("ar-SA"):""}</td>
+                  <td style={{padding:"5px 6px",borderBottom:"1px solid #eee",textAlign:"center",background:"#f0faf5",fontWeight:700}}>{supported>0?supported:""}</td>
+                  <td style={{padding:"5px 6px",borderBottom:"1px solid #eee",textAlign:"center"}}>{row.contractAmount>0?row.contractAmount.toLocaleString("ar-SA"):""}</td>
+                  <td style={{padding:"5px 6px",borderBottom:"1px solid #eee",textAlign:"center",color:C.red,fontWeight:700}}>{withdrawn>0?withdrawn:""}</td>
+                  <td style={{padding:"5px 6px",borderBottom:"1px solid #eee",textAlign:"center",background:"#f0f0ff",fontWeight:800,color:C.teal}}>{row.runningCards}</td>
+                  <td style={{padding:"5px 6px",borderBottom:"1px solid #eee",textAlign:"center",background:"#fffbf0",fontWeight:800,color:C.gold}}>{price>0&&row.runningCards>0?( row.runningCards*price).toLocaleString("ar-SA"):""}</td>
+                  <td style={{padding:"3px 4px",borderBottom:"1px solid #eee",textAlign:"center"}}>
+                    {!row.fromContract && <button style={{...styles.btn(C.red),fontSize:10,padding:"3px 8px"}} onClick={()=>delRow(row.id)}>🗑️</button>}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main App ────────────────────────────────────────────────
 function App() {
   const [page,setPage]=useState("dashboard");
@@ -2355,6 +2533,7 @@ function App() {
     {id:"accounts",label:"💰 الحسابات"},
     {id:"commissions",label:"📑 العمولات"},
     {id:"investors",label:"👥 المستثمرون"},
+    {id:"goods",label:"📦 البضاعة"},
     {id:"settings",label:"⚙️ الإعدادات"},
   ];
 
@@ -2395,6 +2574,7 @@ function App() {
         {page==="accounts" && <AccountsPage contracts={contracts} investors={investors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments}/>}
         {page==="commissions" && <CommissionsPage contracts={contracts} investors={investors} settings={settings}/>}
         {page==="investors" && <InvestorsPage investors={investors} contracts={contracts} settings={settings} payments={payments} onAdd={inv=>setInvestors(p=>[...p,inv])} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} toast={toast}/>}
+        {page==="goods" && <GoodsPage investors={investors} contracts={contracts} invTxList={invTxList} setInvTxList={setInvTxList} toast={toast}/>}
         {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast}/>}
       </div>
 
