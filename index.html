@@ -781,6 +781,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
   const [bond,setBond] = useState(null);
   const [bondG,setBondG] = useState(null);
   const [cheque,setCheque] = useState(null);
+  const [editC,setEditC] = useState(null);
+  const [editForm,setEditForm] = useState({});
   const [chequeG,setChequeG] = useState(null);
   const [contractDoc,setContractDoc] = useState(null);
   const allFiltered = contracts.filter(c=>c.client.includes(search)||(investors.find(i=>i.id===c.investorId)?.name||"").includes(search));
