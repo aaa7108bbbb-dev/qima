@@ -757,7 +757,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
 // ─── Contracts Page ──────────────────────────────────────────
 const _getPaid = (payments, cid) => (payments||[]).filter(p=>p.contractId===cid).reduce((s,p)=>s+p.amount,0);
 
-function ContractsPage({contracts,investors,settings,onDelete,payments,setPayments,toast,completionAlert,setCompletionAlert}) {
+function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,setPayments,toast,completionAlert,setCompletionAlert}) {
   const [payModal,setPayModal]=useState(null);
   const [payAmount,setPayAmount]=useState("");
   const [payDate,setPayDate]=useState(new Date().toISOString().split("T")[0]);
@@ -846,6 +846,7 @@ function ContractsPage({contracts,investors,settings,onDelete,payments,setPaymen
                       {c.gName&&<button style={{...styles.btn("#8b5cf6"),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>setBondG(c)}>📜ك</button>}
                       <button style={{...styles.btn(C.ink),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>setCheque(c)}>📋م</button>
                       {c.gName&&<button style={{...styles.btn("#6b7280"),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>setChequeG(c)}>📋ك</button>}
+                      <button style={{...styles.btn("#f59e0b"),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>{setEditC(c);setEditForm({client:c.client,cPhone:c.cPhone||"",gName:c.gName||"",gPhone:c.gPhone||"",note:c.note||"",date:c.date,firstInst:c.firstInst||""});}}>✏️</button>
                       <button style={{...styles.btn(C.red),fontSize:11,padding:"5px 10px"}} onClick={()=>{if(confirm("حذف هذا العقد؟")){onDelete(c.id);toast("تم الحذف");}}}>🗑️</button>
                     </td>
                   </tr>
@@ -946,6 +947,24 @@ function ContractsPage({contracts,investors,settings,onDelete,payments,setPaymen
           </div>
         </div>
       )}
+      <Modal open={!!editC} onClose={()=>setEditC(null)} title="✏️ تعديل العقد">
+        <div style={{padding:"14px 18px"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+            {[["اسم العميل","client","text"],["جوال العميل","cPhone","tel"],["اسم الكفيل","gName","text"],["جوال الكفيل","gPhone","tel"],["تاريخ العقد","date","date"],["تاريخ أول قسط","firstInst","date"]].map(([l,k,t])=>(
+              <div key={k}>
+                <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>{l}</label>
+                <input style={styles.input} type={t} value={editForm[k]||""} onChange={e=>setEditForm(f=>({...f,[k]:e.target.value}))}/>
+              </div>
+            ))}
+            <div style={{gridColumn:"1/-1"}}>
+              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>ملاحظة</label>
+              <textarea style={{...styles.input,height:60}} value={editForm.note||""} onChange={e=>setEditForm(f=>({...f,note:e.target.value}))}/>
+            </div>
+          </div>
+          <button style={styles.btn(C.teal)} onClick={()=>{onUpdate({...editC,...editForm});setEditC(null);toast("✅ تم التعديل");}}>💾 حفظ التعديل</button>
+        </div>
+      </Modal>
+
       <Modal open={!!bond} onClose={()=>setBond(null)} title="📜 سند الأمر">
         <div style={{padding:"10px 12px 0",textAlign:"left"}}>
           <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-print-area")}>🖨️ طباعة</button>
@@ -1173,9 +1192,13 @@ function LoansPage({loans, setLoans}) {
                       const d = new Date(p.date);
                       const monthName = MONTHS[d.getMonth()]+" "+d.getFullYear();
                       return (
-                        <div key={p.id} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #f0f0f0",fontSize:12}}>
-                          <span style={{color:"#555"}}>{monthName} — {p.date}</span>
-                          <span style={{color:C.green,fontWeight:700}}>+{SAR(p.amount)}</span>
+                        <div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid #f0f0f0",fontSize:12}}>
+                          <span style={{color:"#555"}}>{monthName} — {p.date}{p.note?" | "+p.note:""}</span>
+                          <div style={{display:"flex",alignItems:"center",gap:8}}>
+                            <span style={{color:C.green,fontWeight:700}}>+{SAR(p.amount)}</span>
+                            <button style={{...styles.btn(C.red),fontSize:10,padding:"2px 7px"}}
+                              onClick={()=>setLoans(prev=>prev.map(x=>x.id===l.id?{...x,payments:(x.payments||[]).filter(pp=>pp.id!==p.id)}:x))}>🗑️</button>
+                          </div>
                         </div>
                       );
                     })}
@@ -2599,7 +2622,7 @@ function App() {
       <div style={styles.main}>
         {page==="dashboard" && <Dashboard contracts={contracts} investors={investors} settings={settings}/>}
         {page==="new" && <NewContractPage investors={investors} settings={settings} contracts={contracts} onSave={c=>{setContracts(p=>[...p,c]);setPage("contracts");}} toast={toast} setInvTxList={setInvTxList}/>}
-        {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.filter(c=>c.id!==id))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert}/>}
+        {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.filter(c=>c.id!==id))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert}/>}
         {page==="jard" && <JardPage contracts={contracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending}/>}
         {page==="accounts" && <AccountsPage contracts={contracts} investors={investors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments}/>}
         {page==="commissions" && <CommissionsPage contracts={contracts} investors={investors} settings={settings}/>}
