@@ -2326,7 +2326,7 @@ function GoodsPage({investors, contracts, toast}) {
     };
   });
 
-  const allRows = [...contractRows, ...manualRows].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const allRows = [...contractRows, ...manualRows].sort((a,b)=>new Date(a.date)-new Date(b.date)||String(a.id).localeCompare(String(b.id)));
 
   // Calculate running balance with per-row price
   let runningCards = 0;
