@@ -1082,17 +1082,31 @@ function PendingPage({pending, setPending}) {
 // ─── Loans Page ──────────────────────────────────────────────
 function LoansPage({loans, setLoans}) {
   const today = new Date().toISOString().split("T")[0];
-  const [form,setForm]=useState({name:"",amount:"",date:today,note:"",status:"pending"});
+  const MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+  const [form,setForm]=useState({name:"",amount:"",monthly:"",date:today,note:""});
+  const [selLoan,setSelLoan]=useState(null);
+  const [payForm,setPayForm]=useState({amount:"",date:today,note:""});
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
 
   const save=()=>{
     if(!form.name||!form.amount){return;}
-    setLoans(p=>[...p,{id:Date.now(),...form,amount:parseFloat(form.amount)}]);
-    setForm({name:"",amount:"",date:today,note:"",status:"pending"});
+    setLoans(p=>[...p,{id:Date.now(),...form,amount:parseFloat(form.amount),monthly:parseFloat(form.monthly)||0,payments:[]}]);
+    setForm({name:"",amount:"",monthly:"",date:today,note:""});
   };
 
-  const totalOut   = loans.reduce((s,l)=>s+(l.status==="pending"?l.amount:0),0);
-  const totalBack  = loans.reduce((s,l)=>s+(l.status==="returned"?l.amount:0),0);
+  const addPayment=(loan)=>{
+    if(!payForm.amount){return;}
+    const updated = {...loan, payments:[...(loan.payments||[]),{id:Date.now(),date:payForm.date,amount:parseFloat(payForm.amount),note:payForm.note}]};
+    setLoans(p=>p.map(l=>l.id===loan.id?updated:l));
+    setPayForm({amount:"",date:today,note:""});
+    setSelLoan(null);
+  };
+
+  const totalOut = loans.reduce((s,l)=>{
+    const paid = (l.payments||[]).reduce((ss,p)=>ss+p.amount,0);
+    return s + Math.max(0, l.amount - paid);
+  },0);
+  const totalPaid = loans.reduce((s,l)=>(l.payments||[]).reduce((ss,p)=>ss+p.amount,0)+s,0);
 
   return (
     <div>
@@ -1100,8 +1114,8 @@ function LoansPage({loans, setLoans}) {
 
       {/* Summary */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
-        <KpiCard label="إجمالي السلف المعلقة" value={SAR(totalOut)} color={C.red}/>
-        <KpiCard label="إجمالي المسترد" value={SAR(totalBack)} color={C.green}/>
+        <KpiCard label="إجمالي المتبقي" value={SAR(totalOut)} color={C.red}/>
+        <KpiCard label="إجمالي المدفوع" value={SAR(totalPaid)} color={C.green}/>
         <KpiCard label="عدد السلف" value={NUM(loans.length)} color={C.teal}/>
       </div>
 
@@ -1110,7 +1124,7 @@ function LoansPage({loans, setLoans}) {
         <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:13,fontWeight:700}}>➕ تسجيل سلفة جديدة</h3></div>
         <div style={{padding:"14px 18px"}}>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:12}}>
-            {[["اسم الشخص","name","text","اسم المقترض"],["المبلغ (ر.س)","amount","number","مثال: 5000"],["التاريخ","date","date",""],["ملاحظة","note","text","اختياري"]].map(([l,k,t,p])=>(
+            {[["اسم الشخص","name","text","اسم المقترض"],["المبلغ الكلي (ر.س)","amount","number","مثال: 5000"],["القسط الشهري المقترح","monthly","number","مثال: 500"],["التاريخ","date","date",""],["ملاحظة","note","text","اختياري"]].map(([l,k,t,p])=>(
               <div key={k}>
                 <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
                 <input style={styles.input} type={t} placeholder={p} value={form[k]} onChange={e=>set(k,e.target.value)}/>
@@ -1121,57 +1135,87 @@ function LoansPage({loans, setLoans}) {
         </div>
       </div>
 
-      {/* Loans table */}
-      <div style={styles.panel}>
-        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:13,fontWeight:700}}>📋 سجل السلف</h3></div>
-        <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-            <thead>
-              <tr>{["التاريخ","اسم الشخص","المبلغ","ملاحظة","الحالة",""].map(h=>(
-                <th key={h} style={styles.th}>{h}</th>
-              ))}</tr>
-            </thead>
-            <tbody>
-              {loans.length===0 ? (
-                <tr><td colSpan={6} style={{...styles.td,textAlign:"center",padding:40,color:"#9ca3af"}}>لا توجد سلف مسجلة</td></tr>
-              ) : loans.map((l,i)=>(
-                <tr key={l.id} style={{background:i%2===0?C.white:C.gray}}>
-                  <td style={{...styles.td,fontSize:11,color:"#666"}}>{l.date}</td>
-                  <td style={{...styles.td,fontWeight:700}}>{l.name}</td>
-                  <td style={{...styles.td,color:l.status==="returned"?C.green:C.red,fontWeight:700}}>{SAR(l.amount)}</td>
-                  <td style={styles.td}>{l.note||"—"}</td>
-                  <td style={styles.td}>
-                    <span style={styles.badge(l.status==="returned"?C.greenLt:C.redLt, l.status==="returned"?C.green:C.red)}>
-                      {l.status==="returned"?"✅ مسترد":"⏳ معلق"}
-                    </span>
-                  </td>
-                  <td style={{...styles.td,whiteSpace:"nowrap"}}>
-                    {l.status==="pending" && (
-                      <button style={{...styles.btn(C.green),fontSize:11,padding:"4px 10px",marginLeft:4}}
-                        onClick={()=>setLoans(p=>p.map(x=>x.id===l.id?{...x,status:"returned"}:x))}>
-                        ✅ استرد
-                      </button>
-                    )}
-                    <button style={{...styles.btn(C.red),fontSize:11,padding:"4px 10px"}}
-                      onClick={()=>setLoans(p=>p.filter(x=>x.id!==l.id))}>
-                      🗑️
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            {loans.length>0 && (
-              <tfoot>
-                <tr style={{background:C.goldLt}}>
-                  <td colSpan={2} style={{...styles.td,fontWeight:800}}>الإجمالي المعلق</td>
-                  <td style={{...styles.td,color:C.red,fontWeight:900}}>{SAR(totalOut)}</td>
-                  <td colSpan={3}></td>
-                </tr>
-              </tfoot>
-            )}
-          </table>
-        </div>
+      {/* Loans list */}
+      <div>
+        {loans.length===0 ? (
+          <div style={{...styles.panel,padding:40,textAlign:"center",color:"#9ca3af"}}>لا توجد سلف مسجلة</div>
+        ) : loans.map(l=>{
+          const paid = (l.payments||[]).reduce((s,p)=>s+p.amount,0);
+          const remaining = Math.max(0, l.amount - paid);
+          const pct = l.amount>0 ? Math.min(100, Math.round(paid/l.amount*100)) : 0;
+          return (
+            <div key={l.id} style={{...styles.panel,marginBottom:16}}>
+              <div style={{padding:"14px 18px"}}>
+                {/* Header */}
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+                  <div>
+                    <div style={{fontWeight:800,fontSize:15,color:C.ink,marginBottom:4}}>{l.name}</div>
+                    <div style={{fontSize:11,color:"#9ca3af"}}>{l.date} {l.note?"| "+l.note:""}</div>
+                  </div>
+                  <button style={{...styles.btn(C.red),fontSize:11,padding:"4px 10px"}}
+                    onClick={()=>setLoans(p=>p.filter(x=>x.id!==l.id))}>🗑️</button>
+                </div>
+                {/* Progress */}
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:6}}>
+                  <span style={{color:"#555"}}>المبلغ الكلي: <strong>{SAR(l.amount)}</strong></span>
+                  <span style={{color:C.green}}>مدفوع: <strong>{SAR(paid)}</strong></span>
+                  <span style={{color:remaining>0?C.red:C.green}}>متبقي: <strong>{SAR(remaining)}</strong></span>
+                </div>
+                <div style={{background:"#f0f0f0",borderRadius:99,height:8,marginBottom:8}}>
+                  <div style={{background:C.green,borderRadius:99,height:8,width:pct+"%",transition:"width 0.3s"}}></div>
+                </div>
+                {l.monthly>0 && <div style={{fontSize:11,color:"#9ca3af",marginBottom:10}}>القسط المقترح: {SAR(l.monthly)} / شهر</div>}
+                {/* Payments history */}
+                {(l.payments||[]).length>0 && (
+                  <div style={{marginBottom:12}}>
+                    <div style={{fontSize:12,fontWeight:700,marginBottom:6}}>سجل الدفعات:</div>
+                    {(l.payments||[]).map(p=>{
+                      const d = new Date(p.date);
+                      const monthName = MONTHS[d.getMonth()]+" "+d.getFullYear();
+                      return (
+                        <div key={p.id} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #f0f0f0",fontSize:12}}>
+                          <span style={{color:"#555"}}>{monthName} — {p.date}</span>
+                          <span style={{color:C.green,fontWeight:700}}>+{SAR(p.amount)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {/* Add payment */}
+                {selLoan===l.id ? (
+                  <div style={{background:"#f8f8f8",borderRadius:10,padding:12}}>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:10}}>
+                      <div>
+                        <label style={{fontSize:11,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المبلغ</label>
+                        <input style={styles.input} type="number" placeholder={l.monthly||"المبلغ"} value={payForm.amount} onChange={e=>setPayForm(f=>({...f,amount:e.target.value}))}/>
+                      </div>
+                      <div>
+                        <label style={{fontSize:11,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>التاريخ</label>
+                        <input style={styles.input} type="date" value={payForm.date} onChange={e=>setPayForm(f=>({...f,date:e.target.value}))}/>
+                      </div>
+                      <div>
+                        <label style={{fontSize:11,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>ملاحظة</label>
+                        <input style={styles.input} type="text" placeholder="اختياري" value={payForm.note} onChange={e=>setPayForm(f=>({...f,note:e.target.value}))}/>
+                      </div>
+                    </div>
+                    <div style={{display:"flex",gap:8}}>
+                      <button style={styles.btn(C.teal)} onClick={()=>addPayment(l)}>💾 حفظ الدفعة</button>
+                      <button style={styles.btn("#e5e7eb",C.ink)} onClick={()=>setSelLoan(null)}>إلغاء</button>
+                    </div>
+                  </div>
+                ) : remaining>0 ? (
+                  <button style={styles.btn(C.teal)} onClick={()=>{setSelLoan(l.id);setPayForm({amount:l.monthly||"",date:today,note:""});}}>
+                    💰 تسجيل دفعة
+                  </button>
+                ) : (
+                  <div style={{color:C.green,fontWeight:700,fontSize:13}}>✅ تم السداد الكامل</div>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
+
     </div>
   );
 }
