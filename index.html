@@ -785,13 +785,108 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
   const [editForm,setEditForm] = useState({});
   const [chequeG,setChequeG] = useState(null);
   const [contractDoc,setContractDoc] = useState(null);
+  const [invSearch,setInvSearch] = useState("");
+  const [reportMode,setReportMode] = useState("detailed"); // detailed or brief
   const allFiltered = contracts.filter(c=>c.client.includes(search)||(investors.find(i=>i.id===c.investorId)?.name||"").includes(search));
   const filtered = allFiltered.filter(c=> statusTab==="active" ? !doneIds.includes(c.id) : doneIds.includes(c.id));
   const activeCount = allFiltered.filter(c=>!doneIds.includes(c.id)).length;
   const completedCount = allFiltered.filter(c=>doneIds.includes(c.id)).length;
 
+  // Investor report
+  const invReportContracts = invSearch.length>=2
+    ? contracts.filter(c=>(investors.find(i=>i.id===c.investorId)?.name||"").includes(invSearch) && !doneIds.includes(c.id))
+    : [];
+
+  const today2 = new Date().toISOString().split("T")[0];
+
   return (
     <div>
+      {/* Investor Report */}
+      <div style={{...styles.panel,marginBottom:16,padding:"14px 18px"}}>
+        <div style={{fontWeight:800,fontSize:14,marginBottom:10}}>🔍 كشف المستثمر</div>
+        <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+          <input style={{...styles.input,flex:1,minWidth:180}} placeholder="اسم المستثمر..." value={invSearch} onChange={e=>setInvSearch(e.target.value)}/>
+          <button style={styles.btn(reportMode==="detailed"?C.teal:"#e5e7eb",reportMode==="detailed"?"#fff":C.ink)} onClick={()=>setReportMode("detailed")}>📊 مفصل</button>
+          <button style={styles.btn(reportMode==="brief"?C.teal:"#e5e7eb",reportMode==="brief"?"#fff":C.ink)} onClick={()=>setReportMode("brief")}>📋 مختصر</button>
+        </div>
+        {invSearch.length>=2 && invReportContracts.length===0 && (
+          <div style={{color:"#9ca3af",fontSize:13,textAlign:"center",padding:16}}>لا توجد عقود</div>
+        )}
+        {invReportContracts.length>0 && reportMode==="detailed" && (
+          <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+              <thead>
+                <tr>{["#","اسم الزبون","الجوال","اسم الكفيل","جوال الكفيل","نقداً","أقساط","القسط","الواصل","المتأخر","المتبقي"].map(h=>(
+                  <th key={h} style={{...styles.th,whiteSpace:"nowrap"}}>{h}</th>
+                ))}</tr>
+              </thead>
+              <tbody>
+                {invReportContracts.map((c,i)=>{
+                  const paid = _getPaid(payments,c.id);
+                  const left = Math.max(0,(c.totalInst||0)-paid);
+                  const lastPay = [...(payments||[])].filter(p=>p.contractId===c.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+                  const daysSince = lastPay ? Math.floor((new Date(today2)-new Date(lastPay.date))/(1000*60*60*24)) : 999;
+                  const late = left>0 && daysSince>35 ? daysSince-30 : 0;
+                  return (
+                    <tr key={c.id} style={{background:i%2===0?"#fff":"#f8f8f8"}}>
+                      <td style={styles.td}>{c.num}</td>
+                      <td style={{...styles.td,fontWeight:700}}>{c.client}</td>
+                      <td style={styles.td}>{c.cPhone||"—"}</td>
+                      <td style={styles.td}>{c.gName||"—"}</td>
+                      <td style={styles.td}>{c.gPhone||"—"}</td>
+                      <td style={styles.td}>{SAR(c.amount||0)}</td>
+                      <td style={styles.td}>{SAR(c.totalInst||0)}</td>
+                      <td style={styles.td}>{SAR(c.instAmt||0)}</td>
+                      <td style={{...styles.td,color:C.green,fontWeight:700}}>{SAR(paid)}</td>
+                      <td style={{...styles.td,color:late>0?C.red:"#9ca3af"}}>{late>0?late+" يوم":"—"}</td>
+                      <td style={{...styles.td,color:left>0?C.red:C.green,fontWeight:700}}>{SAR(left)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr style={{background:"#fffbf0",fontWeight:800}}>
+                  <td colSpan={5} style={{...styles.td}}>الإجمالي</td>
+                  <td style={styles.td}>{SAR(invReportContracts.reduce((s,c)=>s+(c.amount||0),0))}</td>
+                  <td style={styles.td}>{SAR(invReportContracts.reduce((s,c)=>s+(c.totalInst||0),0))}</td>
+                  <td style={styles.td}>{SAR(invReportContracts.reduce((s,c)=>s+(c.instAmt||0),0))}</td>
+                  <td style={{...styles.td,color:C.green}}>{SAR(invReportContracts.reduce((s,c)=>s+_getPaid(payments,c.id),0))}</td>
+                  <td style={styles.td}>—</td>
+                  <td style={{...styles.td,color:C.red}}>{SAR(invReportContracts.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0))}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+        {invReportContracts.length>0 && reportMode==="brief" && (
+          <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+              <thead>
+                <tr>{["اسم الزبون","القسط","ملاحظات"].map(h=>(
+                  <th key={h} style={styles.th}>{h}</th>
+                ))}</tr>
+              </thead>
+              <tbody>
+                {invReportContracts.map((c,i)=>(
+                  <tr key={c.id} style={{background:i%2===0?"#fff":"#f8f8f8"}}>
+                    <td style={{...styles.td,fontWeight:700}}>{c.client}</td>
+                    <td style={styles.td}>{SAR(c.instAmt||0)}</td>
+                    <td style={styles.td}>{c.note||"—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr style={{background:"#fffbf0",fontWeight:800}}>
+                  <td style={styles.td}>الإجمالي</td>
+                  <td style={styles.td}>{SAR(invReportContracts.reduce((s,c)=>s+(c.instAmt||0),0))}</td>
+                  <td style={styles.td}></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+      </div>
+
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,flexWrap:"wrap",gap:8}}>
         <div style={{fontSize:17,fontWeight:800}}>📋 العقود</div>
         <input style={{...styles.input,width:200,fontSize:12}} placeholder="🔍 بحث..." value={search} onChange={e=>setSearch(e.target.value)}/>
