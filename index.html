@@ -2494,15 +2494,15 @@ function App() {
   }, []);
 
   const TABS=[
-    {id:"dashboard",label:"🏠",name:"الرئيسية",color:"#1e3a5f"},
-    {id:"new",label:"➕",name:"عقد جديد",color:"#16a34a"},
-    {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
-    {id:"jard",label:"📊",name:"الجرد",color:"#ea580c"},
-    {id:"accounts",label:"💰",name:"الحسابات",color:"#b45309"},
-    {id:"commissions",label:"📑",name:"العمولات",color:"#0891b2"},
-    {id:"investors",label:"👥",name:"المستثمرون",color:"#3b82f6"},
-    {id:"goods",label:"📦",name:"البضاعة",color:"#78350f"},
-    {id:"settings",label:"⚙️",name:"الإعدادات",color:"#4b5563"},
+    {id:"dashboard",label:"🏠 الرئيسية"},
+    {id:"new",label:"➕ عقد جديد"},
+    {id:"contracts",label:"📋 العقود"},
+    {id:"jard",label:"📊 الجرد"},
+    {id:"accounts",label:"💰 الحسابات"},
+    {id:"commissions",label:"📑 العمولات"},
+    {id:"investors",label:"👥 المستثمرون"},
+    {id:"goods",label:"📦 البضاعة"},
+    {id:"settings",label:"⚙️ الإعدادات"},
   ];
 
   return (
@@ -2530,21 +2530,7 @@ function App() {
 
       <nav style={styles.nav}>
         {TABS.map(t=>(
-          <button key={t.id} onClick={()=>setPage(t.id)} style={{
-            display:"flex",flexDirection:"column",alignItems:"center",gap:4,
-            padding:"8px 10px",border:"none",cursor:"pointer",background:"none",
-            fontFamily:"Tajawal,Arial,sans-serif",
-          }}>
-            <div style={{
-              width:40,height:40,borderRadius:10,
-              background:page===t.id?t.color:"#f3f4f6",
-              display:"flex",alignItems:"center",justifyContent:"center",
-              fontSize:18,
-              transition:"all 0.2s",
-              boxShadow:page===t.id?"0 2px 8px rgba(0,0,0,0.2)":"none"
-            }}>{t.label}</div>
-            <span style={{fontSize:9,fontWeight:700,color:page===t.id?t.color:"#9ca3af",whiteSpace:"nowrap"}}>{t.name}</span>
-          </button>
+          <button key={t.id} style={{...styles.navBtn,...(page===t.id?styles.navBtnActive:{})}} onClick={()=>setPage(t.id)}>{t.label}</button>
         ))}
       </nav>
 
