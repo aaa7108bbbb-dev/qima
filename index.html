@@ -1891,11 +1891,25 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending}) {
 
 // ─── Dashboard ───────────────────────────────────────────────
 function Dashboard({contracts,investors,settings}) {
-  const months=[...new Set(contracts.map(c=>{const d=new Date(c.date);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}))].sort().reverse();
+  // Period: starts 21st of month, ends 20th of next month
+  const getPeriod = (dateStr) => {
+    const d = new Date(dateStr);
+    const day = d.getDate();
+    // If day >= 21, belongs to this month's period
+    // If day <= 20, belongs to previous month's period
+    if(day >= 21) {
+      return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+    } else {
+      // belongs to previous month
+      const prev = new Date(d.getFullYear(), d.getMonth()-1, 1);
+      return prev.getFullYear()+"-"+String(prev.getMonth()+1).padStart(2,"0");
+    }
+  };
+  const months=[...new Set(contracts.map(c=>getPeriod(c.date)))].sort().reverse();
   if(!months.length){const now=new Date();months.push(now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0"));}
   const [sel,setSel]=useState(months[0]||"");
   const mLabel=ym=>{const[y,m]=ym.split("-");const ns=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];return(ns[parseInt(m)-1]||"")+" "+y;};
-  const mc=contracts.filter(c=>{const d=new Date(c.date);return(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"))===sel;});
+  const mc=contracts.filter(c=>getPeriod(c.date)===sel);
   const tot=mc.reduce((a,c)=>{const r=calcContract(c.amount,settings);return{amt:a.amt+c.amount,profit:a.profit+r.profit,admin:a.admin+r.admin,acc:a.acc+r.acc,inst:a.inst+r.inst,net:a.net+r.net};},{amt:0,profit:0,admin:0,acc:0,inst:0,net:0});
 
   return (
