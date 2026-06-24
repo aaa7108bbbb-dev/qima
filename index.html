@@ -2500,6 +2500,152 @@ function GoodsPage({investors, contracts, toast}) {
 }
 
 
+// ─── Search Page ─────────────────────────────────────────────
+function SearchPage({contracts, investors, settings, payments, setPayments, toast}) {
+  const [q, setQ] = useState("");
+  const [payModal, setPayModal] = useState(null);
+  const [payAmount, setPayAmount] = useState("");
+  const [payDate, setPayDate] = useState(new Date().toISOString().split("T")[0]);
+
+  const results = q.length >= 2 ? contracts.filter(c =>
+    c.client?.includes(q) ||
+    c.gName?.includes(q) ||
+    c.idNum?.includes(q) ||
+    c.cPhone?.includes(q) ||
+    c.gId?.includes(q) ||
+    c.gPhone?.includes(q)
+  ) : [];
+
+  const active = results.filter(c => {
+    const paid = _getPaid(payments, c.id);
+    return paid < (c.totalInst||0);
+  });
+  const done = results.filter(c => {
+    const paid = _getPaid(payments, c.id);
+    return paid >= (c.totalInst||0);
+  });
+
+  const addPay = () => {
+    if(!payAmount||!payModal) return;
+    const amt = parseFloat(payAmount);
+    setPayments(p=>[...p,{id:Date.now(),contractId:payModal.id,amount:amt,date:payDate}]);
+    toast("✅ تم تسجيل الدفعة");
+    setPayModal(null);
+    setPayAmount("");
+  };
+
+  const ContractCard = ({c, isDone}) => {
+    const inv = investors.find(i=>i.id===c.investorId);
+    const paid = _getPaid(payments, c.id);
+    const left = Math.max(0,(c.totalInst||0)-paid);
+    const pct = c.totalInst>0 ? Math.min(100,Math.round(paid/c.totalInst*100)) : 0;
+    return (
+      <div style={{...styles.panel,marginBottom:12,borderRight:`4px solid ${isDone?C.green:C.teal}`}}>
+        <div style={{padding:"14px 18px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+            <div>
+              <div style={{fontWeight:800,fontSize:15,color:C.ink}}>{c.client}</div>
+              <div style={{fontSize:11,color:"#9ca3af"}}>عقد #{c.num} | {c.date} | {inv?.name||"—"}</div>
+            </div>
+            <span style={styles.badge(isDone?C.greenLt:C.tealLt, isDone?C.green:C.teal)}>
+              {isDone?"✅ منتهي":"⏳ ساري"}
+            </span>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:10,fontSize:12}}>
+            <div style={{background:"#f8f8f8",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+              <div style={{color:"#9ca3af",marginBottom:2}}>إجمالي العقد</div>
+              <div style={{fontWeight:800,color:C.ink}}>{SAR(c.totalInst||0)}</div>
+            </div>
+            <div style={{background:"#f8f8f8",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+              <div style={{color:"#9ca3af",marginBottom:2}}>رأس المال</div>
+              <div style={{fontWeight:800,color:C.ink}}>{SAR(c.amount||0)}</div>
+            </div>
+            <div style={{background:"#f8f8f8",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+              <div style={{color:"#9ca3af",marginBottom:2}}>القسط</div>
+              <div style={{fontWeight:800,color:C.ink}}>{SAR(c.instAmt||0)}</div>
+            </div>
+            <div style={{background:C.greenLt,borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+              <div style={{color:"#9ca3af",marginBottom:2}}>الواصل</div>
+              <div style={{fontWeight:800,color:C.green}}>{SAR(paid)}</div>
+            </div>
+            <div style={{background:left<=0?C.greenLt:C.redLt,borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+              <div style={{color:"#9ca3af",marginBottom:2}}>المتبقي</div>
+              <div style={{fontWeight:800,color:left<=0?C.green:C.red}}>{SAR(left)}</div>
+            </div>
+            <div style={{background:"#f8f8f8",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+              <div style={{color:"#9ca3af",marginBottom:2}}>نسبة السداد</div>
+              <div style={{fontWeight:800,color:C.teal}}>{pct}%</div>
+            </div>
+          </div>
+          <div style={{background:"#f0f0f0",borderRadius:99,height:6,marginBottom:10}}>
+            <div style={{background:isDone?C.green:C.teal,borderRadius:99,height:6,width:pct+"%"}}></div>
+          </div>
+          {!isDone && (
+            <button style={styles.btn(C.teal)} onClick={()=>{setPayModal(c);setPayAmount("");}}>
+              💰 تسجيل دفعة
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div>
+      <div style={{fontSize:17,fontWeight:800,marginBottom:16}}>🔍 البحث</div>
+      <div style={{...styles.card,marginBottom:20}}>
+        <input
+          style={{...styles.input,fontSize:15,padding:"12px 16px"}}
+          placeholder="ابحث باسم العميل، الكفيل، رقم الهوية، أو الجوال..."
+          value={q}
+          onChange={e=>setQ(e.target.value)}
+          autoFocus
+        />
+        {q.length===1 && <div style={{fontSize:12,color:"#9ca3af",marginTop:6}}>اكتب حرفين على الأقل للبحث</div>}
+      </div>
+
+      {q.length>=2 && results.length===0 && (
+        <div style={{...styles.panel,padding:40,textAlign:"center",color:"#9ca3af"}}>لا توجد نتائج</div>
+      )}
+
+      {active.length>0 && (
+        <div style={{marginBottom:20}}>
+          <div style={{fontSize:14,fontWeight:800,marginBottom:12,color:C.teal}}>⏳ العقود السارية ({active.length})</div>
+          {active.map(c=><ContractCard key={c.id} c={c} isDone={false}/>)}
+        </div>
+      )}
+
+      {done.length>0 && (
+        <div>
+          <div style={{fontSize:14,fontWeight:800,marginBottom:12,color:C.green}}>✅ العقود المنتهية ({done.length})</div>
+          {done.map(c=><ContractCard key={c.id} c={c} isDone={true}/>)}
+        </div>
+      )}
+
+      {/* Pay Modal */}
+      <Modal open={!!payModal} onClose={()=>setPayModal(null)} title="💰 تسجيل دفعة">
+        {payModal && (
+          <div style={{padding:"14px 18px"}}>
+            <div style={{fontWeight:700,marginBottom:4}}>{payModal.client}</div>
+            <div style={{fontSize:12,color:"#9ca3af",marginBottom:16}}>المتبقي: {SAR(Math.max(0,(payModal.totalInst||0)-_getPaid(payments,payModal.id)))}</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+              <div>
+                <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المبلغ</label>
+                <input style={styles.input} type="number" value={payAmount} onChange={e=>setPayAmount(e.target.value)} placeholder="المبلغ"/>
+              </div>
+              <div>
+                <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>التاريخ</label>
+                <input style={styles.input} type="date" value={payDate} onChange={e=>setPayDate(e.target.value)}/>
+              </div>
+            </div>
+            <button style={styles.btn(C.teal)} onClick={addPay}>💾 حفظ</button>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
+
 // ─── Main App ────────────────────────────────────────────────
 function App() {
   const [page,setPage]=useState("dashboard");
@@ -2579,6 +2725,7 @@ function App() {
 
   const TABS=[
     {id:"dashboard",label:"🏠",name:"الرئيسية",color:"#1e3a5f"},
+    {id:"search",label:"🔍",name:"البحث",color:"#dc2626"},
     {id:"new",label:"➕",name:"عقد جديد",color:"#16a34a"},
     {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
     {id:"jard",label:"📊",name:"الجرد",color:"#ea580c"},
@@ -2623,6 +2770,7 @@ function App() {
 
       <div style={styles.main}>
         {page==="dashboard" && <Dashboard contracts={contracts} investors={investors} settings={settings}/>}
+        {page==="search" && <SearchPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast}/>}
         {page==="new" && <NewContractPage investors={investors} settings={settings} contracts={contracts} onSave={c=>{setContracts(p=>[...p,c]);setPage("contracts");}} toast={toast} setInvTxList={setInvTxList}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.filter(c=>c.id!==id))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert}/>}
         {page==="jard" && <JardPage contracts={contracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending}/>}
