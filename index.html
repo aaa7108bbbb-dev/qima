@@ -1557,7 +1557,7 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
       id:"auto_"+c.id, date:c.date, auto:true,
       type:"contract",
       amount:-deduct,
-      note:"خصم عقد رقم "+(c.num||"—")+" | "+c.client+" | "+(c.goods||"")+(c.qty?" ("+c.qty+" قطعة)":""),
+      note:c.client,
       breakdown:"نقدي: "+SAR(c.amount)+" | محاسبين: "+SAR(r.acc)+" | مؤسسة: "+SAR(r.inst)+" | رسوم: "+SAR(r.admin),
       admin:r.admin, acc:r.acc, inst:r.inst, net:r.net
     };
@@ -1743,7 +1743,7 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
                     </td>
                     <td style={styles.td}>
                       <div>{tx.note||"—"}</div>
-                      {tx.breakdown && <div style={{fontSize:10,color:"#9ca3af",marginTop:2}}>{tx.breakdown}</div>}
+                      
                     </td>
                     <td style={{...styles.td,color:C.green,fontWeight:isPos?700:400}}>
                       {isPos ? SAR(tx.amount) : "—"}
