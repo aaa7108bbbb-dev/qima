@@ -159,10 +159,9 @@ function Toast({msg,type}) {
 // ─── KPI Card ───────────────────────────────────────────────
 function KpiCard({label,value,color=C.teal}) {
   return (
-    <div style={{background:"#fff",borderRadius:16,padding:"20px 18px",boxShadow:"0 4px 20px rgba(0,0,0,0.08)",borderBottom:`4px solid ${color}`,minWidth:140,position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",top:-10,left:-10,width:70,height:70,borderRadius:"50%",background:color,opacity:0.07}}></div>
-      <div style={{fontSize:11,fontWeight:700,color:"#9ca3af",marginBottom:10,letterSpacing:"0.5px"}}>{label}</div>
-      <div style={{fontSize:22,fontWeight:900,color}}>{value}</div>
+    <div style={{background:"#fff",borderRadius:16,padding:"20px 18px",boxShadow:"0 4px 20px rgba(0,0,0,0.08)",borderBottom:"4px solid #000",minWidth:140}}>
+      <div style={{fontSize:12,fontWeight:700,color:"#1a1a2e",marginBottom:10}}>{label}</div>
+      <div style={{fontSize:22,fontWeight:900,color:C.green}}>{value}</div>
     </div>
   );
 }
@@ -1923,13 +1922,13 @@ function Dashboard({contracts,investors,settings}) {
       </div>
 
       <div style={{fontSize:18,fontWeight:900,marginBottom:16,color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12}}>ملخص الشهر</div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:16,marginBottom:24}}>
-        <KpiCard label="إجمالي قيمة العقود" value={SAR(tot.amt)} color={C.teal}/>
-        <KpiCard label="إجمالي الأرباح" value={SAR(tot.profit)} color={C.green}/>
-        <KpiCard label="نصيب المؤسسة" value={SAR(tot.inst)} color={C.gold}/>
-        <KpiCard label="الرسوم الإدارية" value={SAR(tot.admin)} color={C.red}/>
-        <KpiCard label="صافي المستثمرين" value={SAR(tot.net)} color={C.ink}/>
-        <KpiCard label="عدد العقود" value={NUM(mc.length)} color={C.teal}/>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:24}}>
+        <KpiCard label="قيمة العقود" value={SAR(tot.amt)}/>
+        <KpiCard label="أرباح العقود" value={SAR(tot.profit)}/>
+        <KpiCard label="نصيب المدير 10%" value={SAR(tot.inst)}/>
+        <KpiCard label="نصيب المحاسب 10%" value={SAR(tot.acc)}/>
+        <KpiCard label="صافي المستثمرين" value={SAR(tot.net)}/>
+        <KpiCard label="عدد العقود" value={NUM(mc.length)}/>
       </div>
 
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:16,marginBottom:20}}>
@@ -2494,15 +2493,15 @@ function App() {
   }, []);
 
   const TABS=[
-    {id:"dashboard",label:"🏠 الرئيسية"},
-    {id:"new",label:"➕ عقد جديد"},
-    {id:"contracts",label:"📋 العقود"},
-    {id:"jard",label:"📊 الجرد"},
-    {id:"accounts",label:"💰 الحسابات"},
-    {id:"commissions",label:"📑 العمولات"},
-    {id:"investors",label:"👥 المستثمرون"},
-    {id:"goods",label:"📦 البضاعة"},
-    {id:"settings",label:"⚙️ الإعدادات"},
+    {id:"dashboard",label:"🏠",name:"الرئيسية",color:"#1e3a5f"},
+    {id:"new",label:"➕",name:"عقد جديد",color:"#16a34a"},
+    {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
+    {id:"jard",label:"📊",name:"الجرد",color:"#ea580c"},
+    {id:"accounts",label:"💰",name:"الحسابات",color:"#b45309"},
+    {id:"commissions",label:"📑",name:"العمولات",color:"#0891b2"},
+    {id:"investors",label:"👥",name:"المستثمرون",color:"#3b82f6"},
+    {id:"goods",label:"📦",name:"البضاعة",color:"#78350f"},
+    {id:"settings",label:"⚙️",name:"الإعدادات",color:"#4b5563"},
   ];
 
   return (
@@ -2530,7 +2529,10 @@ function App() {
 
       <nav style={styles.nav}>
         {TABS.map(t=>(
-          <button key={t.id} style={{...styles.navBtn,...(page===t.id?styles.navBtnActive:{})}} onClick={()=>setPage(t.id)}>{t.label}</button>
+          <button key={t.id} onClick={()=>setPage(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"8px 10px",border:"none",cursor:"pointer",background:"none",fontFamily:"Tajawal,Arial,sans-serif"}}>
+            <div style={{width:42,height:42,borderRadius:12,background:page===t.id?t.color:"#d1d5db",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,transition:"all 0.2s",boxShadow:page===t.id?"0 3px 10px rgba(0,0,0,0.25)":"none"}}>{t.label}</div>
+            <span style={{fontSize:10,fontWeight:700,color:"#111",whiteSpace:"nowrap"}}>{t.name}</span>
+          </button>
         ))}
       </nav>
 
