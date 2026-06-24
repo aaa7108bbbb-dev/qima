@@ -159,9 +159,10 @@ function Toast({msg,type}) {
 // ─── KPI Card ───────────────────────────────────────────────
 function KpiCard({label,value,color=C.teal}) {
   return (
-    <div style={{background:"#fff",borderRadius:16,padding:"20px 18px",boxShadow:"0 4px 20px rgba(0,0,0,0.08)",borderBottom:`4px solid #000`,minWidth:140}}>
-      <div style={{fontSize:12,fontWeight:700,color:"#1a1a2e",marginBottom:10}}>{label}</div>
-      <div style={{fontSize:22,fontWeight:900,color:C.green}}>{value}</div>
+    <div style={{background:"#fff",borderRadius:16,padding:"20px 18px",boxShadow:"0 4px 20px rgba(0,0,0,0.08)",borderBottom:`4px solid ${color}`,minWidth:140,position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:-10,left:-10,width:70,height:70,borderRadius:"50%",background:color,opacity:0.07}}></div>
+      <div style={{fontSize:11,fontWeight:700,color:"#9ca3af",marginBottom:10,letterSpacing:"0.5px"}}>{label}</div>
+      <div style={{fontSize:22,fontWeight:900,color}}>{value}</div>
     </div>
   );
 }
@@ -1922,27 +1923,17 @@ function Dashboard({contracts,investors,settings}) {
       </div>
 
       <div style={{fontSize:18,fontWeight:900,marginBottom:16,color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12}}>ملخص الشهر</div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:24}}>
-        <KpiCard label="قيمة العقود" value={SAR(tot.amt)}/>
-        <KpiCard label="أرباح العقود" value={SAR(tot.profit)}/>
-        <KpiCard label="نصيب المدير 10%" value={SAR(tot.inst)}/>
-        <KpiCard label="نصيب المحاسب 10%" value={SAR(tot.acc)}/>
-        <KpiCard label="صافي المستثمرين" value={SAR(tot.net)}/>
-        <KpiCard label="عدد العقود" value={NUM(mc.length)}/>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:16,marginBottom:24}}>
+        <KpiCard label="إجمالي قيمة العقود" value={SAR(tot.amt)} color={C.teal}/>
+        <KpiCard label="إجمالي الأرباح" value={SAR(tot.profit)} color={C.green}/>
+        <KpiCard label="نصيب المؤسسة" value={SAR(tot.inst)} color={C.gold}/>
+        <KpiCard label="الرسوم الإدارية" value={SAR(tot.admin)} color={C.red}/>
+        <KpiCard label="صافي المستثمرين" value={SAR(tot.net)} color={C.ink}/>
+        <KpiCard label="عدد العقود" value={NUM(mc.length)} color={C.teal}/>
       </div>
 
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:16,marginBottom:20}}>
-        <div style={styles.panel}>
-          <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:13,fontWeight:700}}>📈 توزيع الأرباح</h3></div>
-          <div style={{padding:"14px 18px"}}>
-            {[["إجمالي الأرباح",tot.profit,C.green],["الرسوم الإدارية",-tot.admin,C.red],["عمولة المحاسبين",-tot.acc,C.red],["نصيب المؤسسة",-tot.inst,C.gold],["صافي المستثمرين",tot.net,C.teal]].map(([l,v,c])=>(
-              <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid "+C.border,fontSize:12}}>
-                <span style={{color:"#555"}}>{l}</span>
-                <span style={{fontWeight:700,color:c}}>{SAR(Math.abs(v))}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+
         <div style={styles.panel}>
           <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:13,fontWeight:700}}>🏦 الصناديق</h3></div>
           <div style={{padding:"14px 18px"}}>
