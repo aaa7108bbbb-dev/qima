@@ -504,7 +504,7 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
   );
 }
 // ─── New Contract Form ───────────────────────────────────────
-function NewContractPage({investors, settings, contracts, onSave, toast}) {
+function NewContractPage({investors, settings, contracts, onSave, toast, setInvTxList}) {
   const today = new Date().toISOString().split("T")[0];
   const nextNum = contracts.length ? Math.max(...contracts.map(c=>parseInt(c.num)||0).filter(n=>n>0), 0) + 1 : (settings.startNum||1);
   const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:""});
@@ -533,9 +533,25 @@ function NewContractPage({investors, settings, contracts, onSave, toast}) {
     }
     const rr = calcContract(amount, settings);
     const id = Date.now();
-    onSave({id, ...form, amount, totalInst:parseFloat(form.totalInst), instAmt:parseFloat(form.instAmt), lastInst, numMonths,
+    const contract = {id, ...form, amount, totalInst:parseFloat(form.totalInst), instAmt:parseFloat(form.instAmt), lastInst, numMonths,
       investorId:parseInt(form.investorId), lastInst,
-      profit:rr.profit, admin:rr.admin, acc:rr.acc, inst:rr.inst, net:rr.net, total:rr.total});
+      profit:rr.profit, admin:rr.admin, acc:rr.acc, inst:rr.inst, net:rr.net, total:rr.total};
+    onSave(contract);
+    // Add deduct to investor account
+    if(form.deductEnabled && form.deductAmount && form.deductInvestorId && setInvTxList) {
+      const amt = parseFloat(form.deductAmount)||0;
+      const txId = Date.now()+"_deduct";
+      setInvTxList(prev => {
+        const invId = parseInt(form.deductInvestorId);
+        return {...prev, [invId]: [...(prev[invId]||[]), {
+          id: txId,
+          date: form.date,
+          type: "deposit",
+          amount: amt,
+          note: "سداد من عميل: "+form.client+" | عقد رقم "+form.num
+        }]};
+      });
+    }
     toast("✅ تم حفظ العقد بنجاح");
     const nn = parseInt(form.num)+1;
     setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nn),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:""});
@@ -2538,7 +2554,7 @@ function App() {
 
       <div style={styles.main}>
         {page==="dashboard" && <Dashboard contracts={contracts} investors={investors} settings={settings}/>}
-        {page==="new" && <NewContractPage investors={investors} settings={settings} contracts={contracts} onSave={c=>{setContracts(p=>[...p,c]);setPage("contracts");}} toast={toast}/>}
+        {page==="new" && <NewContractPage investors={investors} settings={settings} contracts={contracts} onSave={c=>{setContracts(p=>[...p,c]);setPage("contracts");}} toast={toast} setInvTxList={setInvTxList}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.filter(c=>c.id!==id))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert}/>}
         {page==="jard" && <JardPage contracts={contracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending}/>}
         {page==="accounts" && <AccountsPage contracts={contracts} investors={investors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments}/>}
