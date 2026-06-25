@@ -793,8 +793,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
   const completedCount = allFiltered.filter(c=>doneIds.includes(c.id)).length;
 
   // Investor report
-  const invReportContracts = invSearch.length>=2
-    ? contracts.filter(c=>(investors.find(i=>i.id===c.investorId)?.name||"").includes(invSearch) && !doneIds.includes(c.id))
+  const invReportContracts = invSearch
+    ? contracts.filter(c=>(investors.find(i=>i.id===c.investorId)?.name||"")===invSearch && !doneIds.includes(c.id))
     : [];
 
   const today2 = new Date().toISOString().split("T")[0];
@@ -805,14 +805,19 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
       <div style={{...styles.panel,marginBottom:16,padding:"14px 18px"}}>
         <div style={{fontWeight:800,fontSize:14,marginBottom:10}}>🔍 كشف المستثمر</div>
         <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
-          <input style={{...styles.input,flex:1,minWidth:180}} placeholder="اسم المستثمر..." value={invSearch} onChange={e=>setInvSearch(e.target.value)}/>
+          <select style={{...styles.input,flex:1,minWidth:180}} value={invSearch} onChange={e=>setInvSearch(e.target.value)}>
+            <option value="">-- اختاري المستثمر --</option>
+            {[...new Set(investors.map(i=>i.name))].sort().map(name=>(
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
           <button style={styles.btn(reportMode==="detailed"?C.teal:"#e5e7eb",reportMode==="detailed"?"#fff":C.ink)} onClick={()=>setReportMode("detailed")}>📊 مفصل</button>
           <button style={styles.btn(reportMode==="brief"?C.teal:"#e5e7eb",reportMode==="brief"?"#fff":C.ink)} onClick={()=>setReportMode("brief")}>📋 مختصر</button>
         </div>
-        {invSearch.length>=2 && invReportContracts.length===0 && (
+        {invSearch && invReportContracts.length===0 && (
           <div style={{color:"#9ca3af",fontSize:13,textAlign:"center",padding:16}}>لا توجد عقود</div>
         )}
-        {invReportContracts.length>0 && reportMode==="detailed" && (
+        {invSearch && invReportContracts.length>0 && reportMode==="detailed" && (
           <div style={{overflowX:"auto"}}>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
               <thead>
@@ -858,7 +863,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
             </table>
           </div>
         )}
-        {invReportContracts.length>0 && reportMode==="brief" && (
+        {invSearch && invReportContracts.length>0 && reportMode==="brief" && (
           <div style={{overflowX:"auto"}}>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
               <thead>
