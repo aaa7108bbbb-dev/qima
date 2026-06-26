@@ -130,27 +130,27 @@ const styles = {
   header:{background:"linear-gradient(135deg,#0f1923,#1a2e45)",color:"white",padding:"0 16px",display:"flex",alignItems:"center",justifyContent:"space-between",height:60,position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 20px rgba(0,0,0,0.25)"},
   logo:{width:44,height:44,borderRadius:8,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"},
   nav:{background:C.white,borderBottom:"1px solid "+C.border,display:"flex",overflowX:"auto",padding:"0 8px"},
-  navBtn:{padding:"12px 14px",fontFamily:"Tajawal,Arial,sans-serif",fontSize:12,fontWeight:700,color:"#6b7280",background:"none",border:"none",borderBottom:"3px solid transparent",cursor:"pointer",whiteSpace:"nowrap"},
+  navBtn:{padding:"12px 14px",fontFamily:"Tajawal,Arial,sans-serif",fontSize:15,fontWeight:700,color:"#6b7280",background:"none",border:"none",borderBottom:"3px solid transparent",cursor:"pointer",whiteSpace:"nowrap"},
   navBtnActive:{color:C.teal,borderBottomColor:C.teal},
   main:{maxWidth:1200,margin:"0 auto",padding:"20px 12px"},
   card:{background:C.white,borderRadius:12,padding:"16px 18px",boxShadow:"0 2px 12px rgba(0,0,0,0.07)"},
   panel:{background:C.white,borderRadius:12,boxShadow:"0 2px 12px rgba(0,0,0,0.07)",overflow:"hidden",marginBottom:20},
   panelHdr:{padding:"14px 20px",borderBottom:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"space-between",background:"#fafbfc"},
-  th:{background:C.ink,color:C.white,padding:"10px 12px",textAlign:"right",fontWeight:700,fontSize:12,whiteSpace:"nowrap"},
-  td:{padding:"9px 12px",borderBottom:"1px solid "+C.border,textAlign:"right",fontSize:12},
-  input:{fontFamily:"Tajawal,Arial,sans-serif",fontSize:13,padding:"9px 12px",border:"1.5px solid "+C.border,borderRadius:8,color:C.ink,background:C.white,width:"100%",boxSizing:"border-box",textAlign:"right"},
-  select:{fontFamily:"Tajawal,Arial,sans-serif",fontSize:13,padding:"9px 12px",border:"1.5px solid "+C.border,borderRadius:8,color:C.ink,background:C.white,width:"100%",textAlign:"right"},
-  btn:(bg,color="#fff")=>({fontFamily:"Tajawal,Arial,sans-serif",fontSize:12,fontWeight:700,padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",background:bg,color,display:"inline-flex",alignItems:"center",gap:4}),
-  badge:(bg,color)=>({display:"inline-block",padding:"2px 9px",borderRadius:20,fontSize:11,fontWeight:700,background:bg,color}),
+  th:{background:C.ink,color:C.white,padding:"10px 12px",textAlign:"right",fontWeight:700,fontSize:15,whiteSpace:"nowrap"},
+  td:{padding:"9px 12px",borderBottom:"1px solid "+C.border,textAlign:"right",fontSize:15},
+  input:{fontFamily:"Tajawal,Arial,sans-serif",fontSize:15,padding:"9px 12px",border:"1.5px solid "+C.border,borderRadius:8,color:C.ink,background:C.white,width:"100%",boxSizing:"border-box",textAlign:"right"},
+  select:{fontFamily:"Tajawal,Arial,sans-serif",fontSize:15,padding:"9px 12px",border:"1.5px solid "+C.border,borderRadius:8,color:C.ink,background:C.white,width:"100%",textAlign:"right"},
+  btn:(bg,color="#fff")=>({fontFamily:"Tajawal,Arial,sans-serif",fontSize:15,fontWeight:700,padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",background:bg,color,display:"inline-flex",alignItems:"center",gap:4}),
+  badge:(bg,color)=>({display:"inline-block",padding:"2px 9px",borderRadius:20,fontSize:14,fontWeight:700,background:bg,color}),
   calcBox:{background:"linear-gradient(135deg,#0f1923,#1a2e45)",borderRadius:12,padding:"16px 20px",marginTop:16,color:C.white},
-  goodsBtn:(active)=>({fontFamily:"Tajawal,Arial,sans-serif",fontSize:12,fontWeight:700,padding:"6px 14px",borderRadius:20,border:"2px solid "+(active?C.teal:C.border),background:active?C.teal:C.white,color:active?C.white:C.ink2,cursor:"pointer",margin:"3px 3px 3px 0"}),
+  goodsBtn:(active)=>({fontFamily:"Tajawal,Arial,sans-serif",fontSize:15,fontWeight:700,padding:"6px 14px",borderRadius:20,border:"2px solid "+(active?C.teal:C.border),background:active?C.teal:C.white,color:active?C.white:C.ink2,cursor:"pointer",margin:"3px 3px 3px 0"}),
 };
 
 // ─── Toast ──────────────────────────────────────────────────
 function Toast({msg,type}) {
   const bg = type==="error"?C.red:type==="warn"?C.gold:C.teal;
   return msg ? (
-    <div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",background:bg,color:"white",padding:"10px 22px",borderRadius:40,fontSize:13,fontWeight:700,zIndex:9999,boxShadow:"0 4px 20px rgba(0,0,0,0.2)",whiteSpace:"nowrap"}}>
+    <div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",background:bg,color:"white",padding:"10px 22px",borderRadius:40,fontSize:15,fontWeight:700,zIndex:9999,boxShadow:"0 4px 20px rgba(0,0,0,0.2)",whiteSpace:"nowrap"}}>
       {msg}
     </div>
   ) : null;
@@ -160,8 +160,8 @@ function Toast({msg,type}) {
 function KpiCard({label,value,color=C.teal}) {
   return (
     <div style={{background:"#fff",borderRadius:16,padding:"20px 18px",boxShadow:"0 4px 20px rgba(0,0,0,0.08)",borderBottom:"4px solid #000",minWidth:140}}>
-      <div style={{fontSize:12,fontWeight:700,color:"#1a1a2e",marginBottom:10}}>{label}</div>
-      <div style={{fontSize:22,fontWeight:900,color:C.green}}>{value}</div>
+      <div style={{fontSize:15,fontWeight:700,color:"#1a1a2e",marginBottom:10}}>{label}</div>
+      <div style={{fontSize:24,fontWeight:900,color:C.green}}>{value}</div>
     </div>
   );
 }
@@ -170,7 +170,7 @@ function KpiCard({label,value,color=C.teal}) {
 function CalcRow({label,value,color="#fff",bold=false,total=false}) {
   return (
     <div style={{display:"flex",justifyContent:"space-between",padding:total?"10px 0 0":"5px 0",borderBottom:total?"none":"1px solid rgba(255,255,255,0.07)",marginTop:total?6:0}}>
-      <span style={{color:"rgba(255,255,255,0.7)",fontSize:12}}>{label}</span>
+      <span style={{color:"rgba(255,255,255,0.7)",fontSize:15}}>{label}</span>
       <span style={{fontWeight:bold||total?800:600,color,fontSize:total?14:12}}>{value}</span>
     </div>
   );
@@ -184,7 +184,7 @@ function Modal({open,onClose,title,titleBg=C.ink,children,wide=false}) {
       style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:12}}>
       <div className="modal-box" style={{background:C.white,borderRadius:14,width:"100%",maxWidth:wide?820:680,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.3)"}}>
         <div style={{padding:"14px 20px",borderBottom:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"space-between",background:titleBg,borderRadius:"14px 14px 0 0"}}>
-          <h3 style={{margin:0,color:C.gold,fontSize:15,fontWeight:800}}>{title}</h3>
+          <h3 style={{margin:0,color:C.gold,fontSize:17,fontWeight:800}}>{title}</h3>
           <button onClick={onClose} style={{...styles.btn("rgba(255,255,255,0.1)"),border:"1px solid rgba(255,255,255,0.2)",color:"white",padding:"5px 12px"}}>✕</button>
         </div>
         <div style={{padding:0}}>{children}</div>
@@ -199,45 +199,45 @@ function BondContent({c,inv,r}) {
   const totalInst = c.totalInst || 0;
   const words = numToWords(Math.round(totalInst)) + " ريال سعودي";
   return (
-    <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",padding:"28px 32px",color:"#000",fontSize:13,lineHeight:1.9,border:"2px solid #000"}}>
+    <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",padding:"28px 32px",color:"#000",fontSize:15,lineHeight:1.9,border:"2px solid #000"}}>
       <div style={{textAlign:"center",marginBottom:18,borderBottom:"2px solid #000",paddingBottom:12}}>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:6}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginBottom:6}}>
           <span>رقم السند: <strong>{c.num||"—"}</strong></span>
           <span>رقم العقد: <strong>{c.num||"—"}</strong></span>
         </div>
-        <div style={{fontSize:22,fontWeight:900,letterSpacing:2}}>( سند الأمر )</div>
-        <div style={{fontSize:11,color:"#444",marginTop:3}}>صادر وفق نظام الأوراق التجارية السعودي</div>
+        <div style={{fontSize:24,fontWeight:900,letterSpacing:2}}>( سند الأمر )</div>
+        <div style={{fontSize:14,color:"#444",marginTop:3}}>صادر وفق نظام الأوراق التجارية السعودي</div>
       </div>
       <p>حرر بمدينة <u style={{padding:"0 40px"}}></u> بتاريخ <u style={{padding:"0 30px"}}></u> / <u style={{padding:"0 30px"}}></u> / 14<u style={{padding:"0 20px"}}></u> هـ الموافق <u style={{padding:"0 30px"}}></u> / <u style={{padding:"0 30px"}}></u> / 20<u style={{padding:"0 20px"}}></u> م</p>
       <p style={{display:"flex",alignItems:"flex-end",gap:4}}>
         <span>أتعهد أنا الموقع أدناه بأن أدفع بموجب هذا السند بدون قيد أو شرط لأمر</span>
         <span style={{flex:1,borderBottom:"1px solid #000",display:"inline-block",minHeight:20}}></span>
       </p>
-      <div style={{fontSize:16,fontWeight:900,margin:"10px 0 6px"}}>
+      <div style={{fontSize:18,fontWeight:900,margin:"10px 0 6px"}}>
         مبلغاً وقدره : {words} | ( {Math.round(totalInst).toLocaleString("ar-SA")} ريال )
       </div>
       <p>بتاريخ الاستحقاق <u style={{padding:"0 40px"}}></u> / <u style={{padding:"0 30px"}}></u> / 14<u style={{padding:"0 20px"}}></u> هـ</p>
-      <div style={{borderRight:"3px solid #000",paddingRight:10,fontSize:12,fontWeight:700,color:"#000",lineHeight:1.8,marginBottom:16}}>
+      <div style={{borderRight:"3px solid #000",paddingRight:10,fontSize:15,fontWeight:700,color:"#000",lineHeight:1.8,marginBottom:16}}>
         هذا السند واجب بدون تعلل بموجب قرار مجلس الوزراء الموقر رقم 692 وتاريخ 1383/09/26هـ والمتوج بالمرسوم الملكي رقم 37 بتاريخ 1383/10/11هـ من نظام الأوراق التجارية.<br/>
         * بموجب هذا السند يسقط المدين كافة حقوق التقديم والمطالبة والاحتجاج والإخطار بالامتناع عن الوفاء.
       </div>
       <div style={{fontWeight:800,marginBottom:8}}>محرر السند:</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px 20px",marginBottom:0}}>
-        <div style={{display:"flex",gap:6,borderBottom:"2px solid #000",paddingBottom:3,fontSize:12}}>
+        <div style={{display:"flex",gap:6,borderBottom:"2px solid #000",paddingBottom:3,fontSize:15}}>
           <span style={{fontWeight:800,whiteSpace:"nowrap"}}>اسم المدين:</span>
           <span style={{flex:1,fontWeight:700}}>{c.client}</span>
         </div>
-        <div style={{display:"flex",gap:6,borderBottom:"2px solid #000",paddingBottom:3,fontSize:12}}>
+        <div style={{display:"flex",gap:6,borderBottom:"2px solid #000",paddingBottom:3,fontSize:15}}>
           <span style={{fontWeight:800,whiteSpace:"nowrap"}}>رقم الهوية:</span>
           <span style={{flex:1,fontWeight:700}}>{c.idNum||"..............."}</span>
         </div>
-        <div style={{display:"flex",flexDirection:"column",borderBottom:"2px solid #000",paddingBottom:3,fontSize:12}}>
+        <div style={{display:"flex",flexDirection:"column",borderBottom:"2px solid #000",paddingBottom:3,fontSize:15}}>
           <div style={{display:"flex",gap:6}}>
             <span style={{fontWeight:800,whiteSpace:"nowrap"}}>العمل:</span>
             <span style={{flex:1,fontWeight:700}}>{c.job||"..............."}</span>
           </div>
         </div>
-        <div style={{display:"flex",flexDirection:"column",borderBottom:"2px solid #000",paddingBottom:3,fontSize:12}}>
+        <div style={{display:"flex",flexDirection:"column",borderBottom:"2px solid #000",paddingBottom:3,fontSize:15}}>
           <div style={{display:"flex",gap:6}}>
             <span style={{fontWeight:800,whiteSpace:"nowrap"}}>رقم الجوال:</span>
             <span style={{flex:1,fontWeight:700}}>{c.cPhone||"..............."}</span>
@@ -246,11 +246,11 @@ function BondContent({c,inv,r}) {
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginTop:20}}>
         <div style={{display:"flex",alignItems:"flex-end",gap:4,borderBottom:"2px solid #000",paddingBottom:4}}>
-          <span style={{fontWeight:800,whiteSpace:"nowrap",fontSize:13}}>التوقيع :</span>
+          <span style={{fontWeight:800,whiteSpace:"nowrap",fontSize:15}}>التوقيع :</span>
           <span style={{flex:1}}></span>
         </div>
         <div style={{display:"flex",alignItems:"flex-end",gap:4,borderBottom:"2px solid #000",paddingBottom:4}}>
-          <span style={{fontWeight:800,whiteSpace:"nowrap",fontSize:13}}>البصمة :</span>
+          <span style={{fontWeight:800,whiteSpace:"nowrap",fontSize:15}}>البصمة :</span>
           <span style={{flex:1}}></span>
         </div>
 
@@ -264,45 +264,45 @@ function BondGuarantorContent({c,inv,r}) {
   const totalInst = c.totalInst || 0;
   const words = numToWords(Math.round(totalInst)) + " ريال سعودي";
   return (
-    <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",padding:"28px 32px",color:"#000",fontSize:13,lineHeight:1.9,border:"2px solid #000"}}>
+    <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",padding:"28px 32px",color:"#000",fontSize:15,lineHeight:1.9,border:"2px solid #000"}}>
       <div style={{textAlign:"center",marginBottom:18,borderBottom:"2px solid #000",paddingBottom:12}}>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:6}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginBottom:6}}>
           <span>رقم السند: <strong>{c.num||"—"}</strong></span>
           <span>رقم العقد: <strong>{c.num||"—"}</strong></span>
         </div>
-        <div style={{fontSize:22,fontWeight:900,letterSpacing:2}}>( سند الأمر )</div>
-        <div style={{fontSize:11,color:"#444",marginTop:3}}>صادر وفق نظام الأوراق التجارية السعودي</div>
+        <div style={{fontSize:24,fontWeight:900,letterSpacing:2}}>( سند الأمر )</div>
+        <div style={{fontSize:14,color:"#444",marginTop:3}}>صادر وفق نظام الأوراق التجارية السعودي</div>
       </div>
       <p>حرر بمدينة <u style={{padding:"0 40px"}}></u> بتاريخ <u style={{padding:"0 30px"}}></u> / <u style={{padding:"0 30px"}}></u> / 14<u style={{padding:"0 20px"}}></u> هـ الموافق <u style={{padding:"0 30px"}}></u> / <u style={{padding:"0 30px"}}></u> / 20<u style={{padding:"0 20px"}}></u> م</p>
       <p style={{display:"flex",alignItems:"flex-end",gap:4}}>
         <span>أتعهد أنا الموقع أدناه بأن أدفع بموجب هذا السند بدون قيد أو شرط لأمر</span>
         <span style={{flex:1,borderBottom:"1px solid #000",display:"inline-block",minHeight:20}}></span>
       </p>
-      <div style={{fontSize:16,fontWeight:900,margin:"10px 0 6px"}}>
+      <div style={{fontSize:18,fontWeight:900,margin:"10px 0 6px"}}>
         مبلغاً وقدره : {words} | ( {Math.round(totalInst).toLocaleString("ar-SA")} ريال )
       </div>
       <p>بتاريخ الاستحقاق <u style={{padding:"0 40px"}}></u> / <u style={{padding:"0 30px"}}></u> / 14<u style={{padding:"0 20px"}}></u> هـ</p>
-      <div style={{borderRight:"3px solid #000",paddingRight:10,fontSize:12,fontWeight:700,color:"#000",lineHeight:1.8,marginBottom:16}}>
+      <div style={{borderRight:"3px solid #000",paddingRight:10,fontSize:15,fontWeight:700,color:"#000",lineHeight:1.8,marginBottom:16}}>
         هذا السند واجب بدون تعلل بموجب قرار مجلس الوزراء الموقر رقم 692 وتاريخ 1383/09/26هـ والمتوج بالمرسوم الملكي رقم 37 بتاريخ 1383/10/11هـ من نظام الأوراق التجارية.<br/>
         * بموجب هذا السند يسقط المدين كافة حقوق التقديم والمطالبة والاحتجاج والإخطار بالامتناع عن الوفاء.
       </div>
       <div style={{fontWeight:800,marginBottom:8}}>محرر السند:</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px 20px",marginBottom:0}}>
-        <div style={{display:"flex",gap:6,borderBottom:"2px solid #000",paddingBottom:3,fontSize:12}}>
+        <div style={{display:"flex",gap:6,borderBottom:"2px solid #000",paddingBottom:3,fontSize:15}}>
           <span style={{fontWeight:800,whiteSpace:"nowrap"}}>الاسم:</span>
           <span style={{flex:1,fontWeight:700}}>{c.gName||"..............."}</span>
         </div>
-        <div style={{display:"flex",gap:6,borderBottom:"2px solid #000",paddingBottom:3,fontSize:12}}>
+        <div style={{display:"flex",gap:6,borderBottom:"2px solid #000",paddingBottom:3,fontSize:15}}>
           <span style={{fontWeight:800,whiteSpace:"nowrap"}}>رقم الهوية:</span>
           <span style={{flex:1,fontWeight:700}}>{c.gId||"..............."}</span>
         </div>
-        <div style={{display:"flex",flexDirection:"column",borderBottom:"2px solid #000",paddingBottom:3,fontSize:12}}>
+        <div style={{display:"flex",flexDirection:"column",borderBottom:"2px solid #000",paddingBottom:3,fontSize:15}}>
           <div style={{display:"flex",gap:6}}>
             <span style={{fontWeight:800,whiteSpace:"nowrap"}}>العمل:</span>
             <span style={{flex:1,fontWeight:700}}>{c.gJob||"..............."}</span>
           </div>
         </div>
-        <div style={{display:"flex",flexDirection:"column",borderBottom:"2px solid #000",paddingBottom:3,fontSize:12}}>
+        <div style={{display:"flex",flexDirection:"column",borderBottom:"2px solid #000",paddingBottom:3,fontSize:15}}>
           <div style={{display:"flex",gap:6}}>
             <span style={{fontWeight:800,whiteSpace:"nowrap"}}>رقم الجوال:</span>
             <span style={{flex:1,fontWeight:700}}>{c.gPhone||"..............."}</span>
@@ -311,11 +311,11 @@ function BondGuarantorContent({c,inv,r}) {
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginTop:20}}>
         <div style={{display:"flex",alignItems:"flex-end",gap:4,borderBottom:"2px solid #000",paddingBottom:4}}>
-          <span style={{fontWeight:800,whiteSpace:"nowrap",fontSize:13}}>التوقيع :</span>
+          <span style={{fontWeight:800,whiteSpace:"nowrap",fontSize:15}}>التوقيع :</span>
           <span style={{flex:1}}></span>
         </div>
         <div style={{display:"flex",alignItems:"flex-end",gap:4,borderBottom:"2px solid #000",paddingBottom:4}}>
-          <span style={{fontWeight:800,whiteSpace:"nowrap",fontSize:13}}>البصمة :</span>
+          <span style={{fontWeight:800,whiteSpace:"nowrap",fontSize:15}}>البصمة :</span>
           <span style={{flex:1}}></span>
         </div>
       </div>
@@ -333,24 +333,24 @@ function ChequeContent({c,r,isGuarantor=false}) {
     <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",padding:"36px 40px",color:"#000",lineHeight:2.6,border:"2px solid #000"}}>
       <div style={{textAlign:"center",fontSize:24,fontWeight:900,letterSpacing:3,marginBottom:28,borderBottom:"3px double #000",paddingBottom:12}}>كمبيالة</div>
       {[["نعم أنا /",name],["هوية وطنية /",idNum],["عندي وفي ذمتي للمدعو /"," "]].map(([l,v])=>(
-        <div key={l} style={{display:"flex",gap:8,alignItems:"flex-end",marginBottom:4,fontSize:15}}>
+        <div key={l} style={{display:"flex",gap:8,alignItems:"flex-end",marginBottom:4,fontSize:17}}>
           <span style={{fontWeight:800,whiteSpace:"nowrap"}}>{l}</span>
           <span style={{borderBottom:"1.5px solid #000",flex:1,fontWeight:600,minHeight:22,paddingBottom:2}}>{v}</span>
         </div>
       ))}
-      <div style={{border:"2px solid #000",borderRadius:8,padding:"12px 18px",textAlign:"center",fontSize:17,fontWeight:800,margin:"14px 0",background:"#fffbf0"}}>
+      <div style={{border:"2px solid #000",borderRadius:8,padding:"12px 18px",textAlign:"center",fontSize:19,fontWeight:800,margin:"14px 0",background:"#fffbf0"}}>
         {words} | ( {total.toLocaleString("ar-SA")} ريال )
-        <div style={{fontSize:12,fontWeight:500,color:"#555",marginTop:4}}>وذلك قيمة ( قرض حسن )</div>
+        <div style={{fontSize:15,fontWeight:500,color:"#555",marginTop:4}}>وذلك قيمة ( قرض حسن )</div>
       </div>
-      <div style={{display:"flex",gap:8,alignItems:"flex-end",marginBottom:4,fontSize:15}}>
+      <div style={{display:"flex",gap:8,alignItems:"flex-end",marginBottom:4,fontSize:17}}>
         <span style={{fontWeight:800,whiteSpace:"nowrap"}}>ومستعد في سداده بتاريخ /</span>
         <span style={{borderBottom:"1.5px solid #000",flex:1,fontWeight:800,color:"#000",minHeight:22,paddingBottom:2}}>&nbsp;</span>
       </div>
-      <div style={{textAlign:"center",fontSize:18,fontWeight:800,margin:"24px 0 18px",letterSpacing:2}}>والله أعلم</div>
+      <div style={{textAlign:"center",fontSize:20,fontWeight:800,margin:"24px 0 18px",letterSpacing:2}}>والله أعلم</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:40,marginTop:16}}>
         {["التوقيع","البصمة"].map(s=>(
           <div key={s} style={{textAlign:"center"}}>
-            <div style={{borderTop:"1.5px solid #555",marginTop:50,paddingTop:8,fontSize:13,fontWeight:700,color:"#333"}}>{s}</div>
+            <div style={{borderTop:"1.5px solid #555",marginTop:50,paddingTop:8,fontSize:15,fontWeight:700,color:"#333"}}>{s}</div>
           </div>
         ))}
       </div>
@@ -372,25 +372,25 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
   const lineW = (w) => ({display:"inline-block", minWidth:w||80});
 
   return (
-    <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",color:"#000",fontSize:13,maxWidth:740,margin:"0 auto",background:"#fff",lineHeight:1.8,padding:"20px 30px",fontWeight:500,border:"2px solid #000"}}>
+    <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",color:"#000",fontSize:15,maxWidth:740,margin:"0 auto",background:"#fff",lineHeight:1.8,padding:"20px 30px",fontWeight:500,border:"2px solid #000"}}>
 
       {/* ══ HEADER ══ */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",borderBottom:"2px solid #000",paddingBottom:10,marginBottom:10}}>
         <div style={{textAlign:"right",lineHeight:1.8}}>
-          <div style={{fontSize:14,fontWeight:900}}>مؤسسة قمة الفرصة التجارية</div>
-          <div style={{fontSize:10}}>بريدة - شارع الثلاثين</div>
-          <div style={{fontSize:10}}>ج: 0555171283 &nbsp;&nbsp; ت: 0163839323</div>
-          <div style={{fontSize:10}}>سجل تجاري / {regNum}</div>
+          <div style={{fontSize:16,fontWeight:900}}>مؤسسة قمة الفرصة التجارية</div>
+          <div style={{fontSize:13}}>بريدة - شارع الثلاثين</div>
+          <div style={{fontSize:13}}>ج: 0555171283 &nbsp;&nbsp; ت: 0163839323</div>
+          <div style={{fontSize:13}}>سجل تجاري / {regNum}</div>
         </div>
         <div style={{textAlign:"left",lineHeight:1.8}}>
-          <div style={{fontSize:11}}>رقم العقد / <strong>{String(c.num||"").padStart(9,"0")}</strong></div>
-          <div style={{fontSize:10}}>التاريخ: {hijri} هـ</div>
-          <div style={{fontSize:10}}>الموافق: {c.date} م</div>
+          <div style={{fontSize:14}}>رقم العقد / <strong>{String(c.num||"").padStart(9,"0")}</strong></div>
+          <div style={{fontSize:13}}>التاريخ: {hijri} هـ</div>
+          <div style={{fontSize:13}}>الموافق: {c.date} م</div>
         </div>
       </div>
 
       {/* ══ TITLE ══ */}
-      <div style={{textAlign:"center",fontSize:14,fontWeight:900,marginBottom:12}}>
+      <div style={{textAlign:"center",fontSize:16,fontWeight:900,marginBottom:12}}>
         عقد بيع بالتقسيط
       </div>
 
@@ -444,7 +444,7 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
       </>)}
 
       {/* ══ الملاحظات ══ */}
-      <div style={{marginBottom:10,fontSize:10,lineHeight:1.8,borderTop:"1px solid #000",paddingTop:6}}>
+      <div style={{marginBottom:10,fontSize:13,lineHeight:1.8,borderTop:"1px solid #000",paddingTop:6}}>
         <div style={{fontWeight:800,marginBottom:4}}>الملاحظات:</div>
         <div>١- في حال الانقطاع أو تأخير المشتري عن سداد القسط الشهري في الموعد المحدد لمدة قسطين متتاليين أو ثلاثة أقساط
         متفرقة يحق للبائع مطالبة المشتري والكفيل بدفع كامل المبلغ المتبقي.</div>
@@ -480,14 +480,14 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
         </div>
         <div style={{textAlign:"center",lineHeight:2}}>
           <div style={{fontWeight:800}}>البائـــع</div>
-          <div style={{fontSize:10}}>الاسم / {inv?inv.name:"مؤسسة قمة الفرصة التجارية"}</div>
+          <div style={{fontSize:13}}>الاسم / {inv?inv.name:"مؤسسة قمة الفرصة التجارية"}</div>
           <div>التوقيع / <span style={lineW(80)}></span></div>
         </div>
       </div>
 
       {/* ملاحظة */}
       {(c.note || c.deductEnabled) && (
-        <div style={{marginTop:10,padding:"8px 14px",borderTop:"1px solid #000",fontSize:12}}>
+        <div style={{marginTop:10,padding:"8px 14px",borderTop:"1px solid #000",fontSize:15}}>
           {c.note && <div style={{marginBottom:4}}><strong>ملاحظة:</strong> {c.note}</div>}
           {c.deductEnabled && c.deductAmount && (
             <div><strong>يخصم مبلغ</strong> {parseFloat(c.deductAmount).toLocaleString("ar-SA")} ريال سداد للمستثمر {investors&&investors.find(i=>String(i.id)===String(c.deductInvestorId))?.name||""}</div>
@@ -496,7 +496,7 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
       )}
 
       {/* Footer */}
-      <div style={{textAlign:"center",fontSize:9,color:"#555",marginTop:12,borderTop:"1px solid #ccc",paddingTop:6}}>
+      <div style={{textAlign:"center",fontSize:12,color:"#555",marginTop:12,borderTop:"1px solid #ccc",paddingTop:6}}>
         مؤسسة قمة الفرصة التجارية | عقد رقم {c.num} | {c.date}
       </div>
 
@@ -577,7 +577,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
 
   return (
     <div>
-      <div style={{fontSize:17,fontWeight:800,marginBottom:16,display:"flex",alignItems:"center",gap:8}}>
+      <div style={{fontSize:19,fontWeight:800,marginBottom:16,display:"flex",alignItems:"center",gap:8}}>
         ➕ إضافة عقد جديد
         <span style={{flex:1,height:1,background:C.border,display:"block"}}></span>
       </div>
@@ -585,13 +585,13 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
         <div style={{padding:"16px 20px"}}>
           {/* رقم العقد */}
           <div style={{background:"linear-gradient(135deg,#c8922a,#a87520)",borderRadius:12,padding:"12px 20px",marginBottom:16,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <span style={{color:"rgba(255,255,255,0.8)",fontSize:12,fontWeight:600}}>📄 رقم العقد التلقائي</span>
+            <span style={{color:"rgba(255,255,255,0.8)",fontSize:15,fontWeight:600}}>📄 رقم العقد التلقائي</span>
             <span style={{color:"white",fontSize:28,fontWeight:900,letterSpacing:2}}>{form.num}</span>
           </div>
 
           {/* المستثمر */}
           <div style={{marginBottom:14}}>
-            <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المستثمر (الصندوق) *</label>
+            <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المستثمر (الصندوق) *</label>
             <select style={styles.select} value={form.investorId} onChange={e=>set("investorId",e.target.value)}>
               <option value="">— اختر المستثمر —</option>
               {investors.map(i=><option key={i.id} value={i.id}>{i.name} ({i.fund})</option>)}
@@ -602,12 +602,12 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:12,marginBottom:14}}>
             {fields1.map(f=>(
               <div key={f.key}>
-                <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{f.label}</label>
+                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{f.label}</label>
                 <input style={styles.input} type={f.type} placeholder={f.ph} value={form[f.key]} onChange={e=>set(f.key,e.target.value)}/>
               </div>
             ))}
             <div>
-              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>نوع الهوية</label>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>نوع الهوية</label>
               <select style={styles.select} value={form.idType} onChange={e=>set("idType",e.target.value)}>
                 <option value="هوية وطنية">هوية وطنية</option>
                 <option value="إقامة">إقامة</option>
@@ -617,7 +617,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
 
           {/* نوع البضاعة */}
           <div style={{marginBottom:14}}>
-            <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:6}}>نوع البضاعة *</label>
+            <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:6}}>نوع البضاعة *</label>
             <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
               {GOODS_LIST.map(g=>(
                 <button key={g} style={styles.goodsBtn(form.goods===g)} onClick={()=>set("goods",g)}>{g}</button>
@@ -630,11 +630,11 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
           {/* العدد والفئة */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
             <div>
-              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>العدد</label>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>العدد</label>
               <input style={styles.input} type="number" placeholder="مثال: 10" value={form.qty||""} onChange={e=>set("qty",e.target.value)} min="1"/>
             </div>
             <div>
-              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>الفئة / المواصفة</label>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>الفئة / المواصفة</label>
               <input style={styles.input} type="text" placeholder="مثال: 50 ريال / سامسونج A15" value={form.category||""} onChange={e=>set("category",e.target.value)}/>
             </div>
           </div>
@@ -643,7 +643,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12,marginBottom:14}}>
             {fields2.map(f=>(
               <div key={f.key}>
-                <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{f.label}</label>
+                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{f.label}</label>
                 <input style={{...styles.input,borderColor:["amount","instAmt"].includes(f.key)?C.teal:C.border,fontWeight:["amount","instAmt"].includes(f.key)?700:400}} type={f.type} placeholder={f.ph} value={form[f.key]} onChange={e=>set(f.key,e.target.value)}/>
               </div>
             ))}
@@ -653,23 +653,23 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
           {lastInst && (
             <div style={{background:"#f0fdf4",border:"2px solid "+C.green,borderRadius:10,padding:"12px 18px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div>
-                <div style={{fontSize:11,fontWeight:700,color:C.green,marginBottom:2}}>🏁 تاريخ آخر قسط (محسوب تلقائياً)</div>
-                <div style={{fontSize:11,color:"#555"}}>{numMonths} قسط شهري</div>
+                <div style={{fontSize:14,fontWeight:700,color:C.green,marginBottom:2}}>🏁 تاريخ آخر قسط (محسوب تلقائياً)</div>
+                <div style={{fontSize:14,color:"#555"}}>{numMonths} قسط شهري</div>
               </div>
-              <div style={{fontSize:18,fontWeight:900,color:C.green}}>{fmtDate(lastInst)}</div>
+              <div style={{fontSize:20,fontWeight:900,color:C.green}}>{fmtDate(lastInst)}</div>
             </div>
           )}
 
           {/* بيانات الكفيل */}
           <div style={{marginBottom:14}}>
             <div style={{background:"#fff8e1",border:"2px solid "+C.gold,borderRadius:10,padding:"10px 16px",marginBottom:10,display:"flex",alignItems:"center",gap:8}}>
-              <span style={{fontSize:14}}>🤝</span>
-              <span style={{fontSize:13,fontWeight:800,color:C.gold}}>بيانات الكفيل</span>
+              <span style={{fontSize:16}}>🤝</span>
+              <span style={{fontSize:15,fontWeight:800,color:C.gold}}>بيانات الكفيل</span>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:12}}>
               {[["اسم الكفيل","gName","text","الاسم الكامل"],["هوية الكفيل","gId","text","رقم الهوية"],["عمل الكفيل","gJob","text","جهة العمل"],["جوال الكفيل","gPhone","tel","05xxxxxxxx"]].map(([l,k,t,p])=>(
                 <div key={k}>
-                  <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
+                  <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
                   <input style={{...styles.input,borderColor:k==="gName"?C.gold:C.border}} type={t} placeholder={p} value={form[k]} onChange={e=>set(k,e.target.value)}/>
                 </div>
               ))}
@@ -679,8 +679,8 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
           {/* تاريخ آخر قسط */}
           {lastInst && (
             <div style={{background:C.greenLt,border:"2px solid "+C.green,borderRadius:10,padding:"10px 16px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <span style={{fontSize:12,fontWeight:700,color:C.green}}>🏁 تاريخ آخر قسط (تلقائي)</span>
-              <span style={{fontSize:15,fontWeight:800,color:C.green}}>{fmtDate(lastInst)}</span>
+              <span style={{fontSize:15,fontWeight:700,color:C.green}}>🏁 تاريخ آخر قسط (تلقائي)</span>
+              <span style={{fontSize:17,fontWeight:800,color:C.green}}>{fmtDate(lastInst)}</span>
             </div>
           )}
 
@@ -689,20 +689,20 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
             <>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:10}}>
                 <div style={{background:"linear-gradient(135deg,#c8922a,#a87520)",borderRadius:12,padding:"14px 16px",color:"white",textAlign:"center"}}>
-                  <div style={{fontSize:10,opacity:0.8,marginBottom:4,fontWeight:600}}>💵 القيمة النقدية</div>
-                  <div style={{fontSize:16,fontWeight:800}}>{SAR(parseFloat(form.amount)||0)}</div>
+                  <div style={{fontSize:13,opacity:0.8,marginBottom:4,fontWeight:600}}>💵 القيمة النقدية</div>
+                  <div style={{fontSize:18,fontWeight:800}}>{SAR(parseFloat(form.amount)||0)}</div>
                 </div>
                 <div style={{background:"linear-gradient(135deg,#1F3864,#2c4a7a)",borderRadius:12,padding:"14px 16px",color:"white",textAlign:"center"}}>
-                  <div style={{fontSize:10,opacity:0.8,marginBottom:4,fontWeight:600}}>📋 إجمالي الأقساط</div>
-                  <div style={{fontSize:16,fontWeight:800,color:C.goldLt}}>{SAR(parseFloat(form.totalInst)||0)}</div>
+                  <div style={{fontSize:13,opacity:0.8,marginBottom:4,fontWeight:600}}>📋 إجمالي الأقساط</div>
+                  <div style={{fontSize:18,fontWeight:800,color:C.goldLt}}>{SAR(parseFloat(form.totalInst)||0)}</div>
                 </div>
                 <div style={{background:"linear-gradient(135deg,#1a7a4a,#0f5233)",borderRadius:12,padding:"14px 16px",color:"white",textAlign:"center"}}>
-                  <div style={{fontSize:10,opacity:0.8,marginBottom:4,fontWeight:600}}>💳 القسط الشهري</div>
-                  <div style={{fontSize:16,fontWeight:800,color:"#a8f0c6"}}>{SAR(parseFloat(form.instAmt)||0)}</div>
+                  <div style={{fontSize:13,opacity:0.8,marginBottom:4,fontWeight:600}}>💳 القسط الشهري</div>
+                  <div style={{fontSize:18,fontWeight:800,color:"#a8f0c6"}}>{SAR(parseFloat(form.instAmt)||0)}</div>
                 </div>
               </div>
               <div style={styles.calcBox}>
-                <div style={{fontSize:12,fontWeight:700,color:C.gold,marginBottom:10}}>⚡ تفاصيل توزيع الربح</div>
+                <div style={{fontSize:15,fontWeight:700,color:C.gold,marginBottom:10}}>⚡ تفاصيل توزيع الربح</div>
                 <CalcRow label="قيمة العقد" value={SAR(amount)}/>
                 <CalcRow label="الربح (50%)" value={SAR(r.profit)} color="#5cd98a"/>
                 <CalcRow label="الرسوم الإدارية (2.5%)" value={SAR(r.admin)} color="#ff8080"/>
@@ -716,25 +716,25 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
           {/* ملاحظة + خصم مستثمر */}
           <div style={{marginTop:16,padding:"14px 16px",background:"#f8f8f8",borderRadius:10,border:"1px solid "+C.border}}>
             <div style={{marginBottom:12}}>
-              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>ملاحظة (اختياري)</label>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>ملاحظة (اختياري)</label>
               <textarea style={{...styles.input,height:60,resize:"vertical"}} placeholder="أكتب ملاحظة..." value={form.note||""} onChange={e=>set("note",e.target.value)}/>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:form.deductEnabled?12:0}}>
               <button
-                style={{...styles.btn(form.deductEnabled?C.gold:"#e5e7eb",form.deductEnabled?"#fff":C.ink),fontSize:12,padding:"8px 14px"}}
+                style={{...styles.btn(form.deductEnabled?C.gold:"#e5e7eb",form.deductEnabled?"#fff":C.ink),fontSize:15,padding:"8px 14px"}}
                 onClick={()=>set("deductEnabled",!form.deductEnabled)}>
                 {form.deductEnabled?"✅":"💰"} خصم سداد مستثمر
               </button>
-              {form.deductEnabled && <span style={{fontSize:11,color:"#888"}}>سيطلع في العقد المطبوع</span>}
+              {form.deductEnabled && <span style={{fontSize:14,color:"#888"}}>سيطلع في العقد المطبوع</span>}
             </div>
             {form.deductEnabled && (
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:8}}>
                 <div>
-                  <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المبلغ (ريال)</label>
+                  <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المبلغ (ريال)</label>
                   <input style={styles.input} type="number" placeholder="مثال: 3000" value={form.deductAmount||""} onChange={e=>set("deductAmount",e.target.value)}/>
                 </div>
                 <div>
-                  <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المستثمر</label>
+                  <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المستثمر</label>
                   <select style={styles.select} value={form.deductInvestorId||""} onChange={e=>set("deductInvestorId",e.target.value)}>
                     <option value="">اختر مستثمر</option>
                     {investors.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
@@ -803,7 +803,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
     <div>
       {/* Investor Report */}
       <div style={{...styles.panel,marginBottom:16,padding:"14px 18px"}}>
-        <div style={{fontWeight:800,fontSize:14,marginBottom:10}}>🔍 كشف المستثمر</div>
+        <div style={{fontWeight:800,fontSize:16,marginBottom:10}}>🔍 كشف المستثمر</div>
         <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
           <select style={{...styles.input,flex:1,minWidth:180}} value={invSearch} onChange={e=>setInvSearch(e.target.value)}>
             <option value="">-- اختاري المستثمر --</option>
@@ -815,11 +815,11 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
           <button style={styles.btn(reportMode==="brief"?C.teal:"#e5e7eb",reportMode==="brief"?"#fff":C.ink)} onClick={()=>setReportMode("brief")}>📋 مختصر</button>
         </div>
         {invSearch && invReportContracts.length===0 && (
-          <div style={{color:"#9ca3af",fontSize:13,textAlign:"center",padding:16}}>لا توجد عقود</div>
+          <div style={{color:"#9ca3af",fontSize:15,textAlign:"center",padding:16}}>لا توجد عقود</div>
         )}
         {invSearch && invReportContracts.length>0 && reportMode==="detailed" && (
           <div style={{overflowX:"auto"}}>
-            <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
               <thead>
                 <tr>{["#","اسم الزبون","الجوال","اسم الكفيل","جوال الكفيل","نقداً","أقساط","القسط","الواصل","المتأخر","المتبقي"].map(h=>(
                   <th key={h} style={{...styles.th,whiteSpace:"nowrap"}}>{h}</th>
@@ -865,7 +865,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
         )}
         {invSearch && invReportContracts.length>0 && reportMode==="brief" && (
           <div style={{overflowX:"auto"}}>
-            <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
               <thead>
                 <tr>{["اسم الزبون","القسط","ملاحظات"].map(h=>(
                   <th key={h} style={styles.th}>{h}</th>
@@ -893,20 +893,20 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
       </div>
 
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,flexWrap:"wrap",gap:8}}>
-        <div style={{fontSize:17,fontWeight:800}}>📋 العقود</div>
-        <input style={{...styles.input,width:200,fontSize:12}} placeholder="🔍 بحث..." value={search} onChange={e=>setSearch(e.target.value)}/>
+        <div style={{fontSize:19,fontWeight:800}}>📋 العقود</div>
+        <input style={{...styles.input,width:200,fontSize:15}} placeholder="🔍 بحث..." value={search} onChange={e=>setSearch(e.target.value)}/>
       </div>
       <div style={{display:"flex",gap:8,marginBottom:16}}>
-        <button onClick={()=>setStatusTab("active")} style={{...styles.btn(statusTab==="active"?C.teal:"#e5e7eb",statusTab==="active"?"#fff":C.ink),fontSize:12,padding:"6px 14px"}}>
+        <button onClick={()=>setStatusTab("active")} style={{...styles.btn(statusTab==="active"?C.teal:"#e5e7eb",statusTab==="active"?"#fff":C.ink),fontSize:15,padding:"6px 14px"}}>
           📋 مستمرة ({activeCount})
         </button>
-        <button onClick={()=>setStatusTab("done")} style={{...styles.btn(statusTab==="done"?C.green:"#e5e7eb",statusTab==="done"?"#fff":C.ink),fontSize:12,padding:"6px 14px"}}>
+        <button onClick={()=>setStatusTab("done")} style={{...styles.btn(statusTab==="done"?C.green:"#e5e7eb",statusTab==="done"?"#fff":C.ink),fontSize:15,padding:"6px 14px"}}>
           ✅ منتهية ({completedCount})
         </button>
       </div>
       <div style={styles.panel}>
         <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
             <thead>
               <tr>{["#","التاريخ","العميل","الهوية","العمل","الكفيل","البضاعة","العدد","الفئة","المستثمر","القيمة","القسط","محصّل","متبقي","أول قسط","آخر قسط","الربح","الرسوم","ع.محاسبين","ن.مؤسسة","صافي المستثمر",""].map(h=>(
                 <th key={h} style={styles.th}>{h}</th>
@@ -934,22 +934,22 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
                     <td style={{...styles.td,color:C.teal,fontWeight:800}}>{SAR(c.instAmt||0)}</td>
                     <td style={{...styles.td,color:C.green,fontWeight:700}}>{SAR(_getPaid(payments, c.id))}</td>
                     <td style={{...styles.td,color:(c.totalInst||0)-_getPaid(payments, c.id)<=0?C.green:C.red,fontWeight:700}}>{SAR(Math.max(0,(c.totalInst||0)-_getPaid(payments, c.id)))}</td>
-                    <td style={{...styles.td,color:C.green,fontSize:11}}>{c.firstInst||"—"}</td>
-                    <td style={{...styles.td,color:C.gold,fontSize:11}}>{c.lastInst||"—"}</td>
+                    <td style={{...styles.td,color:C.green,fontSize:14}}>{c.firstInst||"—"}</td>
+                    <td style={{...styles.td,color:C.gold,fontSize:14}}>{c.lastInst||"—"}</td>
                     <td style={{...styles.td,color:C.green}}>{SAR(r.profit)}</td>
                     <td style={{...styles.td,color:C.red}}>{SAR(r.admin)}</td>
                     <td style={{...styles.td,color:C.red}}>{SAR(r.acc)}</td>
                     <td style={{...styles.td,color:C.gold}}>{SAR(r.inst)}</td>
                     <td style={{...styles.td,color:C.teal,fontWeight:800}}>{SAR(r.net)}</td>
                     <td style={{...styles.td,whiteSpace:"nowrap"}}>
-                      <button style={{...styles.btn(C.green),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>{setPayModal(c);setPayAmount("");setPayNote("");}}>💳 سدّد</button>
-                      <button style={{...styles.btn(C.purple),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>setContractDoc(c)}>📄</button>
-                      <button style={{...styles.btn(C.gold),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>setBond(c)}>📜م</button>
-                      {c.gName&&<button style={{...styles.btn("#8b5cf6"),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>setBondG(c)}>📜ك</button>}
-                      <button style={{...styles.btn(C.ink),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>setCheque(c)}>📋م</button>
-                      {c.gName&&<button style={{...styles.btn("#6b7280"),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>setChequeG(c)}>📋ك</button>}
-                      <button style={{...styles.btn("#f59e0b"),marginLeft:3,fontSize:11,padding:"5px 10px"}} onClick={()=>{setEditC(c);setEditForm({client:c.client,cPhone:c.cPhone||"",gName:c.gName||"",gPhone:c.gPhone||"",note:c.note||"",date:c.date,firstInst:c.firstInst||""});}}>✏️</button>
-                      <button style={{...styles.btn(C.red),fontSize:11,padding:"5px 10px"}} onClick={()=>{if(confirm("حذف هذا العقد؟")){onDelete(c.id);toast("تم الحذف");}}}>🗑️</button>
+                      <button style={{...styles.btn(C.green),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>{setPayModal(c);setPayAmount("");setPayNote("");}}>💳 سدّد</button>
+                      <button style={{...styles.btn(C.purple),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>setContractDoc(c)}>📄</button>
+                      <button style={{...styles.btn(C.gold),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>setBond(c)}>📜م</button>
+                      {c.gName&&<button style={{...styles.btn("#8b5cf6"),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>setBondG(c)}>📜ك</button>}
+                      <button style={{...styles.btn(C.ink),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>setCheque(c)}>📋م</button>
+                      {c.gName&&<button style={{...styles.btn("#6b7280"),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>setChequeG(c)}>📋ك</button>}
+                      <button style={{...styles.btn("#f59e0b"),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>{setEditC(c);setEditForm({client:c.client,cPhone:c.cPhone||"",gName:c.gName||"",gPhone:c.gPhone||"",note:c.note||"",date:c.date,firstInst:c.firstInst||""});}}>✏️</button>
+                      <button style={{...styles.btn(C.red),fontSize:14,padding:"5px 10px"}} onClick={()=>{if(confirm("حذف هذا العقد؟")){onDelete(c.id);toast("تم الحذف");}}}>🗑️</button>
                     </td>
                   </tr>
                 );
@@ -966,16 +966,16 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
             {/* Summary */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
               <div style={{background:C.tealLt,borderRadius:8,padding:"10px 12px",textAlign:"center"}}>
-                <div style={{fontSize:10,color:"#555",marginBottom:3}}>الإجمالي</div>
-                <div style={{fontSize:15,fontWeight:800,color:C.teal}}>{SAR(payModal.totalInst||0)}</div>
+                <div style={{fontSize:13,color:"#555",marginBottom:3}}>الإجمالي</div>
+                <div style={{fontSize:17,fontWeight:800,color:C.teal}}>{SAR(payModal.totalInst||0)}</div>
               </div>
               <div style={{background:C.greenLt,borderRadius:8,padding:"10px 12px",textAlign:"center"}}>
-                <div style={{fontSize:10,color:"#555",marginBottom:3}}>محصّل</div>
-                <div style={{fontSize:15,fontWeight:800,color:C.green}}>{SAR(_getPaid(payments, payModal.id))}</div>
+                <div style={{fontSize:13,color:"#555",marginBottom:3}}>محصّل</div>
+                <div style={{fontSize:17,fontWeight:800,color:C.green}}>{SAR(_getPaid(payments, payModal.id))}</div>
               </div>
               <div style={{background:(payModal.totalInst||0)-_getPaid(payments, payModal.id)<=0?C.greenLt:C.redLt,borderRadius:8,padding:"10px 12px",textAlign:"center"}}>
-                <div style={{fontSize:10,color:"#555",marginBottom:3}}>متبقي</div>
-                <div style={{fontSize:15,fontWeight:800,color:(payModal.totalInst||0)-_getPaid(payments, payModal.id)<=0?C.green:C.red}}>
+                <div style={{fontSize:13,color:"#555",marginBottom:3}}>متبقي</div>
+                <div style={{fontSize:17,fontWeight:800,color:(payModal.totalInst||0)-_getPaid(payments, payModal.id)<=0?C.green:C.red}}>
                   {SAR(Math.max(0,(payModal.totalInst||0)-_getPaid(payments, payModal.id)))}
                 </div>
               </div>
@@ -983,16 +983,16 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
             {/* Add payment form */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
               <div>
-                <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المبلغ المحصّل (ر.س)</label>
-                <input style={{...styles.input,borderColor:C.green,fontWeight:700,fontSize:15}} type="number"
+                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المبلغ المحصّل (ر.س)</label>
+                <input style={{...styles.input,borderColor:C.green,fontWeight:700,fontSize:17}} type="number"
                   placeholder={SAR(payModal.instAmt||0)} value={payAmount} onChange={e=>setPayAmount(e.target.value)}/>
               </div>
               <div>
-                <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>تاريخ السداد</label>
+                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>تاريخ السداد</label>
                 <input style={styles.input} type="date" value={payDate} onChange={e=>setPayDate(e.target.value)}/>
               </div>
               <div style={{gridColumn:"1/-1"}}>
-                <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>ملاحظة</label>
+                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>ملاحظة</label>
                 <input style={styles.input} type="text" placeholder="اختياري" value={payNote} onChange={e=>setPayNote(e.target.value)}/>
               </div>
             </div>
@@ -1000,8 +1000,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
             {/* Payment history */}
             {(payments||[]).filter(p=>p.contractId===payModal.id).length>0 && (
               <div>
-                <div style={{fontSize:12,fontWeight:700,marginBottom:8,color:C.ink2}}>سجل المدفوعات:</div>
-                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                <div style={{fontSize:15,fontWeight:700,marginBottom:8,color:C.ink2}}>سجل المدفوعات:</div>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
                   <thead><tr>
                     <th style={styles.th}>التاريخ</th>
                     <th style={styles.th}>المبلغ</th>
@@ -1015,7 +1015,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
                         <td style={{...styles.td,color:C.green,fontWeight:700}}>{SAR(p.amount)}</td>
                         <td style={styles.td}>{p.note||"—"}</td>
                         <td style={styles.td}>
-                          <button style={{...styles.btn(C.red),fontSize:10,padding:"3px 8px"}}
+                          <button style={{...styles.btn(C.red),fontSize:13,padding:"3px 8px"}}
                             onClick={()=>setPayments(prev=>prev.filter(x=>x.id!==p.id))}>🗑️</button>
                         </td>
                       </tr>
@@ -1033,16 +1033,16 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
         <div style={{position:"fixed",top:0,left:0,width:"100%",height:"100%",background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center"}}>
           <div style={{background:"#fff",borderRadius:16,padding:32,maxWidth:340,width:"90%",textAlign:"center",boxShadow:"0 10px 40px rgba(0,0,0,0.3)"}}>
             <div style={{fontSize:48,marginBottom:12}}>🎉</div>
-            <div style={{fontSize:18,fontWeight:800,color:"#1a1a2e",marginBottom:8}}>اكتمل السداد!</div>
-            <div style={{fontSize:14,color:"#555",marginBottom:20}}>
+            <div style={{fontSize:20,fontWeight:800,color:"#1a1a2e",marginBottom:8}}>اكتمل السداد!</div>
+            <div style={{fontSize:16,color:"#555",marginBottom:20}}>
               عقد <strong>{completionAlert.client}</strong> تم سداده بالكامل.<br/>
               هل تريدين نقله لقائمة العقود المنتهية؟
             </div>
             <div style={{display:"flex",gap:10,justifyContent:"center"}}>
-              <button onClick={()=>{markDone(completionAlert.id);setCompletionAlert(null);toast("✅ تم نقل العقد للمنتهية");}} style={{...styles.btn(C.green),padding:"10px 20px",fontSize:14}}>
+              <button onClick={()=>{markDone(completionAlert.id);setCompletionAlert(null);toast("✅ تم نقل العقد للمنتهية");}} style={{...styles.btn(C.green),padding:"10px 20px",fontSize:16}}>
                 ✅ نعم، انقله
               </button>
-              <button onClick={()=>setCompletionAlert(null)} style={{...styles.btn("#e5e7eb",C.ink),padding:"10px 20px",fontSize:14}}>
+              <button onClick={()=>setCompletionAlert(null)} style={{...styles.btn("#e5e7eb",C.ink),padding:"10px 20px",fontSize:16}}>
                 لاحقاً
               </button>
             </div>
@@ -1054,12 +1054,12 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
             {[["اسم العميل","client","text"],["جوال العميل","cPhone","tel"],["اسم الكفيل","gName","text"],["جوال الكفيل","gPhone","tel"],["تاريخ العقد","date","date"],["تاريخ أول قسط","firstInst","date"]].map(([l,k,t])=>(
               <div key={k}>
-                <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>{l}</label>
+                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>{l}</label>
                 <input style={styles.input} type={t} value={editForm[k]||""} onChange={e=>setEditForm(f=>({...f,[k]:e.target.value}))}/>
               </div>
             ))}
             <div style={{gridColumn:"1/-1"}}>
-              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>ملاحظة</label>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>ملاحظة</label>
               <textarea style={{...styles.input,height:60}} value={editForm.note||""} onChange={e=>setEditForm(f=>({...f,note:e.target.value}))}/>
             </div>
           </div>
@@ -1125,9 +1125,9 @@ function PendingPage({pending, setPending}) {
 
   return (
     <div>
-      <div style={{fontSize:17,fontWeight:800,marginBottom:16}}>📌 المتبقي من الاستقطاعات</div>
+      <div style={{fontSize:19,fontWeight:800,marginBottom:16}}>📌 المتبقي من الاستقطاعات</div>
       <div style={{...styles.card,marginBottom:16,background:C.yellowLt||"#fffbf0",border:"1px solid "+C.gold}}>
-        <div style={{fontSize:12,color:"#8a6200"}}>أرصدة معلقة لأشخاص أو حوالات غير محددة المصدر</div>
+        <div style={{fontSize:15,color:"#8a6200"}}>أرصدة معلقة لأشخاص أو حوالات غير محددة المصدر</div>
       </div>
 
       {/* Summary */}
@@ -1138,7 +1138,7 @@ function PendingPage({pending, setPending}) {
 
       {/* Add */}
       <div style={{...styles.panel,marginBottom:16}}>
-        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:13,fontWeight:700}}>➕ إضافة مبلغ معلق</h3></div>
+        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>➕ إضافة مبلغ معلق</h3></div>
         <div style={{padding:"14px 18px"}}>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:12}}>
             {[["اسم الشخص / الجهة","name","text","الاسم أو وصف الحوالة"],
@@ -1146,7 +1146,7 @@ function PendingPage({pending, setPending}) {
               ["التاريخ","date","date",""],
               ["ملاحظة","note","text","اختياري"]].map(([l,k,t,p])=>(
               <div key={k}>
-                <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
+                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
                 <input style={styles.input} type={t} placeholder={p} value={form[k]} onChange={e=>set(k,e.target.value)}/>
               </div>
             ))}
@@ -1158,11 +1158,11 @@ function PendingPage({pending, setPending}) {
       {/* Table */}
       <div style={styles.panel}>
         <div style={styles.panelHdr}>
-          <h3 style={{margin:0,fontSize:13,fontWeight:700}}>📋 سجل المتبقي</h3>
-          <span style={{fontSize:13,fontWeight:800,color:C.red}}>{SAR(total)}</span>
+          <h3 style={{margin:0,fontSize:15,fontWeight:700}}>📋 سجل المتبقي</h3>
+          <span style={{fontSize:15,fontWeight:800,color:C.red}}>{SAR(total)}</span>
         </div>
         <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
             <thead>
               <tr>{["التاريخ","الاسم / الجهة","المبلغ","ملاحظة",""].map(h=>(
                 <th key={h} style={styles.th}>{h}</th>
@@ -1173,12 +1173,12 @@ function PendingPage({pending, setPending}) {
                 <tr><td colSpan={5} style={{...styles.td,textAlign:"center",padding:40,color:"#9ca3af"}}>لا توجد أرصدة معلقة</td></tr>
               ) : pending.map((p,i)=>(
                 <tr key={p.id} style={{background:i%2===0?C.white:C.gray}}>
-                  <td style={{...styles.td,fontSize:11,color:"#666"}}>{p.date}</td>
+                  <td style={{...styles.td,fontSize:14,color:"#666"}}>{p.date}</td>
                   <td style={{...styles.td,fontWeight:700}}>{p.name}</td>
                   <td style={{...styles.td,color:C.red,fontWeight:700}}>{SAR(p.amount)}</td>
                   <td style={styles.td}>{p.note||"—"}</td>
                   <td style={styles.td}>
-                    <button style={{...styles.btn(C.red),fontSize:11,padding:"4px 10px"}}
+                    <button style={{...styles.btn(C.red),fontSize:14,padding:"4px 10px"}}
                       onClick={()=>setPending(prev=>prev.filter(x=>x.id!==p.id))}>🗑️</button>
                   </td>
                 </tr>
@@ -1188,7 +1188,7 @@ function PendingPage({pending, setPending}) {
               <tfoot>
                 <tr style={{background:C.goldLt}}>
                   <td colSpan={2} style={{...styles.td,fontWeight:800}}>الإجمالي</td>
-                  <td style={{...styles.td,color:C.red,fontWeight:900,fontSize:14}}>{SAR(total)}</td>
+                  <td style={{...styles.td,color:C.red,fontWeight:900,fontSize:16}}>{SAR(total)}</td>
                   <td colSpan={2}></td>
                 </tr>
               </tfoot>
@@ -1231,7 +1231,7 @@ function LoansPage({loans, setLoans}) {
 
   return (
     <div>
-      <div style={{fontSize:17,fontWeight:800,marginBottom:16}}>🤝 السلف</div>
+      <div style={{fontSize:19,fontWeight:800,marginBottom:16}}>🤝 السلف</div>
 
       {/* Summary */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
@@ -1242,12 +1242,12 @@ function LoansPage({loans, setLoans}) {
 
       {/* Add loan */}
       <div style={{...styles.panel,marginBottom:16}}>
-        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:13,fontWeight:700}}>➕ تسجيل سلفة جديدة</h3></div>
+        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>➕ تسجيل سلفة جديدة</h3></div>
         <div style={{padding:"14px 18px"}}>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:12}}>
             {[["اسم الشخص","name","text","اسم المقترض"],["المبلغ الكلي (ر.س)","amount","number","مثال: 5000"],["القسط الشهري المقترح","monthly","number","مثال: 500"],["التاريخ","date","date",""],["ملاحظة","note","text","اختياري"]].map(([l,k,t,p])=>(
               <div key={k}>
-                <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
+                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
                 <input style={styles.input} type={t} placeholder={p} value={form[k]} onChange={e=>set(k,e.target.value)}/>
               </div>
             ))}
@@ -1270,14 +1270,14 @@ function LoansPage({loans, setLoans}) {
                 {/* Header */}
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
                   <div>
-                    <div style={{fontWeight:800,fontSize:15,color:C.ink,marginBottom:4}}>{l.name}</div>
-                    <div style={{fontSize:11,color:"#9ca3af"}}>{l.date} {l.note?"| "+l.note:""}</div>
+                    <div style={{fontWeight:800,fontSize:17,color:C.ink,marginBottom:4}}>{l.name}</div>
+                    <div style={{fontSize:14,color:"#9ca3af"}}>{l.date} {l.note?"| "+l.note:""}</div>
                   </div>
-                  <button style={{...styles.btn(C.red),fontSize:11,padding:"4px 10px"}}
+                  <button style={{...styles.btn(C.red),fontSize:14,padding:"4px 10px"}}
                     onClick={()=>setLoans(p=>p.filter(x=>x.id!==l.id))}>🗑️</button>
                 </div>
                 {/* Progress */}
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:6}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginBottom:6}}>
                   <span style={{color:"#555"}}>المبلغ الكلي: <strong>{SAR(l.amount)}</strong></span>
                   <span style={{color:C.green}}>مدفوع: <strong>{SAR(paid)}</strong></span>
                   <span style={{color:remaining>0?C.red:C.green}}>متبقي: <strong>{SAR(remaining)}</strong></span>
@@ -1285,20 +1285,20 @@ function LoansPage({loans, setLoans}) {
                 <div style={{background:"#f0f0f0",borderRadius:99,height:8,marginBottom:8}}>
                   <div style={{background:C.green,borderRadius:99,height:8,width:pct+"%",transition:"width 0.3s"}}></div>
                 </div>
-                {l.monthly>0 && <div style={{fontSize:11,color:"#9ca3af",marginBottom:10}}>القسط المقترح: {SAR(l.monthly)} / شهر</div>}
+                {l.monthly>0 && <div style={{fontSize:14,color:"#9ca3af",marginBottom:10}}>القسط المقترح: {SAR(l.monthly)} / شهر</div>}
                 {/* Payments history */}
                 {(l.payments||[]).length>0 && (
                   <div style={{marginBottom:12}}>
-                    <div style={{fontSize:12,fontWeight:700,marginBottom:6}}>سجل الدفعات:</div>
+                    <div style={{fontSize:15,fontWeight:700,marginBottom:6}}>سجل الدفعات:</div>
                     {(l.payments||[]).map(p=>{
                       const d = new Date(p.date);
                       const monthName = MONTHS[d.getMonth()]+" "+d.getFullYear();
                       return (
-                        <div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid #f0f0f0",fontSize:12}}>
+                        <div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid #f0f0f0",fontSize:15}}>
                           <span style={{color:"#555"}}>{monthName} — {p.date}{p.note?" | "+p.note:""}</span>
                           <div style={{display:"flex",alignItems:"center",gap:8}}>
                             <span style={{color:C.green,fontWeight:700}}>+{SAR(p.amount)}</span>
-                            <button style={{...styles.btn(C.red),fontSize:10,padding:"2px 7px"}}
+                            <button style={{...styles.btn(C.red),fontSize:13,padding:"2px 7px"}}
                               onClick={()=>setLoans(prev=>prev.map(x=>x.id===l.id?{...x,payments:(x.payments||[]).filter(pp=>pp.id!==p.id)}:x))}>🗑️</button>
                           </div>
                         </div>
@@ -1311,15 +1311,15 @@ function LoansPage({loans, setLoans}) {
                   <div style={{background:"#f8f8f8",borderRadius:10,padding:12}}>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:10}}>
                       <div>
-                        <label style={{fontSize:11,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المبلغ</label>
+                        <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المبلغ</label>
                         <input style={styles.input} type="number" placeholder={l.monthly||"المبلغ"} value={payForm.amount} onChange={e=>setPayForm(f=>({...f,amount:e.target.value}))}/>
                       </div>
                       <div>
-                        <label style={{fontSize:11,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>التاريخ</label>
+                        <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>التاريخ</label>
                         <input style={styles.input} type="date" value={payForm.date} onChange={e=>setPayForm(f=>({...f,date:e.target.value}))}/>
                       </div>
                       <div>
-                        <label style={{fontSize:11,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>ملاحظة</label>
+                        <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>ملاحظة</label>
                         <input style={styles.input} type="text" placeholder="اختياري" value={payForm.note} onChange={e=>setPayForm(f=>({...f,note:e.target.value}))}/>
                       </div>
                     </div>
@@ -1333,7 +1333,7 @@ function LoansPage({loans, setLoans}) {
                     💰 تسجيل دفعة
                   </button>
                 ) : (
-                  <div style={{color:C.green,fontWeight:700,fontSize:13}}>✅ تم السداد الكامل</div>
+                  <div style={{color:C.green,fontWeight:700,fontSize:15}}>✅ تم السداد الكامل</div>
                 )}
               </div>
             </div>
@@ -1363,7 +1363,7 @@ function ZakatPage({investors, contracts, settings, zakatTx, setZakatTx}) {
 
   return (
     <div>
-      <div style={{fontSize:17,fontWeight:800,marginBottom:16}}>🌙 صندوق الزكاة</div>
+      <div style={{fontSize:19,fontWeight:800,marginBottom:16}}>🌙 صندوق الزكاة</div>
 
       {/* Summary */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
@@ -1374,31 +1374,31 @@ function ZakatPage({investors, contracts, settings, zakatTx, setZakatTx}) {
 
       {/* Add transaction */}
       <div style={{...styles.panel,marginBottom:16}}>
-        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:13,fontWeight:700}}>➕ تسجيل حركة زكاة</h3></div>
+        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>➕ تسجيل حركة زكاة</h3></div>
         <div style={{padding:"14px 18px"}}>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:12}}>
             <div>
-              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>النوع</label>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>النوع</label>
               <select style={styles.select} value={form.type} onChange={e=>set("type",e.target.value)}>
                 <option value="collect">جمع زكاة من مستثمر</option>
                 <option value="pay">صرف زكاة لمستحق</option>
               </select>
             </div>
             <div>
-              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>
                 {form.type==="collect"?"اسم المستثمر":"اسم المستحق"}
               </label>
               <input style={styles.input} type="text" placeholder="الاسم"
                 value={form.name} onChange={e=>set("name",e.target.value)}/>
             </div>
             <div>
-              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المبلغ (ر.س)</label>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المبلغ (ر.س)</label>
               <input style={{...styles.input,borderColor:form.type==="collect"?C.green:C.red,fontWeight:700}}
                 type="number" placeholder="مثال: 1000"
                 value={form.amount} onChange={e=>set("amount",e.target.value)}/>
             </div>
             <div>
-              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>التاريخ</label>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>التاريخ</label>
               <input style={styles.input} type="date" value={form.date} onChange={e=>set("date",e.target.value)}/>
             </div>
           </div>
@@ -1410,9 +1410,9 @@ function ZakatPage({investors, contracts, settings, zakatTx, setZakatTx}) {
 
       {/* Zakat table */}
       <div style={styles.panel}>
-        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:13,fontWeight:700}}>📋 سجل الزكاة</h3></div>
+        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>📋 سجل الزكاة</h3></div>
         <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
             <thead>
               <tr>{["التاريخ","النوع","الاسم","المبلغ","الرصيد بعد",""].map(h=>(
                 <th key={h} style={styles.th}>{h}</th>
@@ -1427,7 +1427,7 @@ function ZakatPage({investors, contracts, settings, zakatTx, setZakatTx}) {
                   running += t.type==="collect" ? t.amount : -t.amount;
                   return (
                     <tr key={t.id} style={{background:i%2===0?C.white:C.gray}}>
-                      <td style={{...styles.td,fontSize:11,color:"#666"}}>{t.date}</td>
+                      <td style={{...styles.td,fontSize:14,color:"#666"}}>{t.date}</td>
                       <td style={styles.td}>
                         <span style={styles.badge(t.type==="collect"?C.greenLt:C.redLt, t.type==="collect"?C.green:C.red)}>
                           {t.type==="collect"?"جمع":"صرف"}
@@ -1437,7 +1437,7 @@ function ZakatPage({investors, contracts, settings, zakatTx, setZakatTx}) {
                       <td style={{...styles.td,color:t.type==="collect"?C.green:C.red,fontWeight:700}}>{SAR(t.amount)}</td>
                       <td style={{...styles.td,fontWeight:800,color:running>=0?C.teal:C.red}}>{SAR(running)}</td>
                       <td style={styles.td}>
-                        <button style={{...styles.btn(C.red),fontSize:11,padding:"4px 10px"}}
+                        <button style={{...styles.btn(C.red),fontSize:14,padding:"4px 10px"}}
                           onClick={()=>setZakatTx(p=>p.filter(x=>x.id!==t.id))}>🗑️</button>
                       </td>
                     </tr>
@@ -1449,7 +1449,7 @@ function ZakatPage({investors, contracts, settings, zakatTx, setZakatTx}) {
               <tfoot>
                 <tr style={{background:C.goldLt}}>
                   <td colSpan={3} style={{...styles.td,fontWeight:800}}>الرصيد الحالي</td>
-                  <td colSpan={3} style={{...styles.td,fontWeight:900,fontSize:14,color:balance>=0?C.teal:C.red}}>{SAR(balance)}</td>
+                  <td colSpan={3} style={{...styles.td,fontWeight:900,fontSize:16,color:balance>=0?C.teal:C.red}}>{SAR(balance)}</td>
                 </tr>
               </tfoot>
             )}
@@ -1506,7 +1506,7 @@ function CommissionsPage({contracts, investors, settings}) {
     <div>
       {/* Header */}
       <div style={{...styles.card,display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}}>
-        <label style={{fontWeight:700,fontSize:13,whiteSpace:"nowrap"}}>الشهر:</label>
+        <label style={{fontWeight:700,fontSize:15,whiteSpace:"nowrap"}}>الشهر:</label>
         <select style={{...styles.select,width:"auto",minWidth:160,borderColor:C.teal,color:C.teal,fontWeight:700,background:C.tealLt}}
           value={selMonth} onChange={e=>setSelMonth(e.target.value)}>
           {months.map(m=><option key={m} value={m}>{mLabel(m)}</option>)}
@@ -1521,7 +1521,7 @@ function CommissionsPage({contracts, investors, settings}) {
           {key:"inst", label:"🏛️ نسب المؤسسة",    color:C.purple},
         ].map(t=>(
           <button key={t.key} onClick={()=>setTab(t.key)}
-            style={{fontFamily:"Tajawal,Arial",fontSize:13,fontWeight:700,padding:"10px 22px",border:"none",
+            style={{fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:700,padding:"10px 22px",border:"none",
               cursor:"pointer",background:tab===t.key?t.color:C.white,color:tab===t.key?"white":C.ink2,
               transition:"all 0.2s"}}>
             {t.label}
@@ -1550,15 +1550,15 @@ function CommissionsPage({contracts, investors, settings}) {
       {/* Table */}
       <div style={styles.panel}>
         <div style={{background:tab==="acc"?C.teal:C.purple,padding:"12px 20px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{color:"white",fontWeight:800,fontSize:14}}>
+          <div style={{color:"white",fontWeight:800,fontSize:16}}>
             {tab==="acc" ? "📋 تفصيل نسب المحاسبين" : "🏛️ تفصيل نسب المؤسسة"} — {mLabel(selMonth)}
           </div>
-          <div style={{color:"rgba(255,255,255,0.8)",fontSize:13,fontWeight:700}}>
+          <div style={{color:"rgba(255,255,255,0.8)",fontSize:15,fontWeight:700}}>
             الإجمالي: {SAR(tab==="acc"?totalAcc:totalInstTotal)}
           </div>
         </div>
         <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
             <thead>
               <tr>
                 <th style={thS}>#</th>
@@ -1588,11 +1588,11 @@ function CommissionsPage({contracts, investors, settings}) {
                   <td style={tdS}>{SAR(row.amount)}</td>
                   <td style={{...tdS,color:C.green}}>{SAR(row.profit)}</td>
                   {tab==="acc" ? (
-                    <td style={{...tdS,color:C.teal,fontWeight:800,fontSize:13,textAlign:"center"}}>{SAR(row.acc)}</td>
+                    <td style={{...tdS,color:C.teal,fontWeight:800,fontSize:15,textAlign:"center"}}>{SAR(row.acc)}</td>
                   ) : (<>
                     <td style={{...tdS,color:C.purple,fontWeight:700,textAlign:"center"}}>{SAR(row.inst)}</td>
                     <td style={{...tdS,color:C.gold,fontWeight:700,textAlign:"center"}}>{SAR(row.admin)}</td>
-                    <td style={{...tdS,color:C.ink,fontWeight:800,fontSize:13,textAlign:"center"}}>{SAR(row.instTotal)}</td>
+                    <td style={{...tdS,color:C.ink,fontWeight:800,fontSize:15,textAlign:"center"}}>{SAR(row.instTotal)}</td>
                   </>)}
                 </tr>
               ))}
@@ -1603,11 +1603,11 @@ function CommissionsPage({contracts, investors, settings}) {
                   <td colSpan={4} style={{...tdS,fontWeight:800}}>الإجمالي</td>
                   <td style={{...tdS,color:C.green,fontWeight:800}}>{SAR(rows.reduce((s,r)=>s+r.profit,0))}</td>
                   {tab==="acc" ? (
-                    <td style={{...tdS,color:C.teal,fontWeight:900,fontSize:14,textAlign:"center"}}>{SAR(totalAcc)}</td>
+                    <td style={{...tdS,color:C.teal,fontWeight:900,fontSize:16,textAlign:"center"}}>{SAR(totalAcc)}</td>
                   ) : (<>
                     <td style={{...tdS,color:C.purple,fontWeight:800,textAlign:"center"}}>{SAR(totalInst)}</td>
                     <td style={{...tdS,color:C.gold,fontWeight:800,textAlign:"center"}}>{SAR(totalAdmin)}</td>
-                    <td style={{...tdS,color:C.ink,fontWeight:900,fontSize:14,textAlign:"center"}}>{SAR(totalInstTotal)}</td>
+                    <td style={{...tdS,color:C.ink,fontWeight:900,fontSize:16,textAlign:"center"}}>{SAR(totalInstTotal)}</td>
                   </>)}
                 </tr>
               </tfoot>
@@ -1720,13 +1720,13 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
 
   return (
     <div>
-      <div style={{fontSize:17,fontWeight:800,marginBottom:16}}>💰 الحسابات</div>
+      <div style={{fontSize:19,fontWeight:800,marginBottom:16}}>💰 الحسابات</div>
 
       {/* Sub tabs */}
       <div style={{display:"flex",gap:0,marginBottom:20,background:C.white,borderRadius:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",width:"fit-content"}}>
         {subTabs.map(t=>(
           <button key={t.key} onClick={()=>setSubTab(t.key)}
-            style={{fontFamily:"Tajawal,Arial",fontSize:12,fontWeight:700,padding:"10px 16px",border:"none",
+            style={{fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:700,padding:"10px 16px",border:"none",
               cursor:"pointer",background:subTab===t.key?C.teal:C.white,color:subTab===t.key?"white":C.ink2,
               transition:"all 0.2s",whiteSpace:"nowrap"}}>
             {t.label}
@@ -1746,7 +1746,7 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
 
       {/* Investor selector */}
       <div style={{...styles.card,marginBottom:16,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-        <label style={{fontWeight:700,fontSize:13,whiteSpace:"nowrap"}}>المستثمر:</label>
+        <label style={{fontWeight:700,fontSize:15,whiteSpace:"nowrap"}}>المستثمر:</label>
         <select style={{...styles.select,flex:1,maxWidth:300,borderColor:C.teal,color:C.teal,fontWeight:700}}
           value={selInv||""} onChange={e=>setSelInv(parseInt(e.target.value))}>
           {investors.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
@@ -1754,16 +1754,16 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
         {inv && (
           <div style={{display:"flex",gap:12,marginRight:"auto",flexWrap:"wrap"}}>
             <div style={{textAlign:"center",background:C.tealLt,borderRadius:8,padding:"6px 14px"}}>
-              <div style={{fontSize:10,color:"#555",marginBottom:2}}>رأس المال</div>
-              <div style={{fontSize:14,fontWeight:800,color:C.teal}}>{SAR(inv.capital||0)}</div>
+              <div style={{fontSize:13,color:"#555",marginBottom:2}}>رأس المال</div>
+              <div style={{fontSize:16,fontWeight:800,color:C.teal}}>{SAR(inv.capital||0)}</div>
             </div>
             <div style={{textAlign:"center",background:C.greenLt,borderRadius:8,padding:"6px 14px"}}>
-              <div style={{fontSize:10,color:"#555",marginBottom:2}}>الرصيد الحالي</div>
-              <div style={{fontSize:14,fontWeight:800,color:C.green}}>{SAR(finalBalance)}</div>
+              <div style={{fontSize:13,color:"#555",marginBottom:2}}>الرصيد الحالي</div>
+              <div style={{fontSize:16,fontWeight:800,color:C.green}}>{SAR(finalBalance)}</div>
             </div>
             <div style={{textAlign:"center",background:finalBalance>=0?C.greenLt:C.redLt,borderRadius:8,padding:"6px 14px"}}>
-              <div style={{fontSize:10,color:"#555",marginBottom:2}}>الفرق</div>
-              <div style={{fontSize:14,fontWeight:800,color:finalBalance>=(inv?.capital||0)?C.green:C.red}}>
+              <div style={{fontSize:13,color:"#555",marginBottom:2}}>الفرق</div>
+              <div style={{fontSize:16,fontWeight:800,color:finalBalance>=(inv?.capital||0)?C.green:C.red}}>
                 {SAR(finalBalance-(inv?.capital||0))}
               </div>
             </div>
@@ -1773,26 +1773,26 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
 
       {/* Add transaction */}
       <div style={{...styles.panel,marginBottom:16}}>
-        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:13,fontWeight:700}}>➕ إضافة حركة</h3></div>
+        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>➕ إضافة حركة</h3></div>
         <div style={{padding:"14px 18px"}}>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:12}}>
             <div>
-              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>نوع الحركة</label>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>نوع الحركة</label>
               <select style={styles.select} value={form.type} onChange={e=>set("type",e.target.value)}>
                 {TX_TYPES.map(t=><option key={t.key} value={t.key}>{t.label}</option>)}
               </select>
             </div>
             <div>
-              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المبلغ (ر.س)</label>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المبلغ (ر.س)</label>
               <input style={{...styles.input,borderColor:C.teal,fontWeight:700}} type="number"
                 placeholder="أدخل المبلغ" value={form.amount} onChange={e=>set("amount",e.target.value)}/>
             </div>
             <div>
-              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>التاريخ</label>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>التاريخ</label>
               <input style={styles.input} type="date" value={form.date} onChange={e=>set("date",e.target.value)}/>
             </div>
             <div>
-              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>ملاحظة</label>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>ملاحظة</label>
               <input style={styles.input} type="text" placeholder="اختياري"
                 value={form.note} onChange={e=>set("note",e.target.value)}/>
             </div>
@@ -1804,16 +1804,16 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
       {/* Transactions table */}
       <div style={styles.panel}>
         <div style={styles.panelHdr}>
-          <h3 style={{margin:0,fontSize:13,fontWeight:700}}>
+          <h3 style={{margin:0,fontSize:15,fontWeight:700}}>
             📋 كشف حساب — {inv?.name||""}
           </h3>
-          <div style={{display:"flex",gap:10,fontSize:12}}>
+          <div style={{display:"flex",gap:10,fontSize:15}}>
             <span style={{color:C.green,fontWeight:700}}>إجمالي الإيداعات: {SAR(totalDeposits)}</span>
             <span style={{color:C.red,fontWeight:700}}>إجمالي الخصومات: {SAR(totalWithdraws)}</span>
           </div>
         </div>
         <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
             <thead>
               <tr>
                 {["التاريخ","نوع الحركة","البيان","إيداع","خصم","الرصيد",""].map(h=>(
@@ -1824,7 +1824,7 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
             <tbody>
               {/* Opening balance row */}
               <tr style={{background:"#f0fdf4"}}>
-                <td style={{...styles.td,fontSize:11,color:"#888"}}>{inv?.date||"—"}</td>
+                <td style={{...styles.td,fontSize:14,color:"#888"}}>{inv?.date||"—"}</td>
                 <td style={styles.td}><span style={{...styles.badge(C.tealLt,C.teal)}}>رصيد افتتاحي</span></td>
                 <td style={styles.td}>رأس المال المبدئي</td>
                 <td style={{...styles.td,color:C.green,fontWeight:700}}>{SAR(inv?.capital||0)}</td>
@@ -1837,7 +1837,7 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
                 const isPos = tx.amount>0;
                 return (
                   <tr key={tx.id} style={{background:i%2===0?C.white:C.gray}}>
-                    <td style={{...styles.td,fontSize:11,color:"#666"}}>{tx.date}</td>
+                    <td style={{...styles.td,fontSize:14,color:"#666"}}>{tx.date}</td>
                     <td style={styles.td}>
                       <span style={{...styles.badge(txType.color+"22",txType.color)}}>{txType.label}</span>
                     </td>
@@ -1856,10 +1856,10 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
                     </td>
                     <td style={styles.td}>
                       {!tx.auto && (
-                        <button style={{...styles.btn(C.red),fontSize:10,padding:"3px 8px"}}
+                        <button style={{...styles.btn(C.red),fontSize:13,padding:"3px 8px"}}
                           onClick={()=>delTx(tx.id)}>🗑️</button>
                       )}
-                      {tx.auto && <span style={{fontSize:10,color:"#9ca3af"}}>تلقائي</span>}
+                      {tx.auto && <span style={{fontSize:13,color:"#9ca3af"}}>تلقائي</span>}
                     </td>
                   </tr>
                 );
@@ -1876,7 +1876,7 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
                   <td colSpan={3} style={{...styles.td,fontWeight:800}}>الرصيد النهائي</td>
                   <td style={{...styles.td,color:C.green,fontWeight:800}}>{SAR(totalDeposits+(inv?.capital||0))}</td>
                   <td style={{...styles.td,color:C.red,fontWeight:800}}>{SAR(totalWithdraws)}</td>
-                  <td style={{...styles.td,fontWeight:900,fontSize:14,color:finalBalance>=0?C.teal:C.red}}>{SAR(finalBalance)}</td>
+                  <td style={{...styles.td,fontWeight:900,fontSize:16,color:finalBalance>=0?C.teal:C.red}}>{SAR(finalBalance)}</td>
                   <td style={styles.td}></td>
                 </tr>
               </tfoot>
@@ -1954,14 +1954,14 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending}) {
 
   const thS = {...styles.th, padding:"10px 14px"};
   const tdS = {...styles.td, padding:"9px 12px", verticalAlign:"middle"};
-  const inpS = (color)=>({...styles.input,width:"100%",maxWidth:130,textAlign:"center",borderColor:color,color,fontWeight:700,padding:"6px 8px",fontSize:13});
+  const inpS = (color)=>({...styles.input,width:"100%",maxWidth:130,textAlign:"center",borderColor:color,color,fontWeight:700,padding:"6px 8px",fontSize:15});
 
   const Row = ({name,mojab,salib,onMojab,onSalib,auto,isInv,hint,i}) => (
     <tr style={{background:i%2===0?C.white:C.gray}}>
       <td style={tdS}>
         <span style={{fontWeight:700}}>{name}</span>
-        {hint && <div style={{fontSize:10,color:"#9ca3af",marginTop:2}}>{hint}</div>}
-        {isInv && <div style={{fontSize:10,color:"#9ca3af",marginTop:2}}>رصيد الحساب الجاري</div>}
+        {hint && <div style={{fontSize:13,color:"#9ca3af",marginTop:2}}>{hint}</div>}
+        {isInv && <div style={{fontSize:13,color:"#9ca3af",marginTop:2}}>رصيد الحساب الجاري</div>}
       </td>
       <td style={{...tdS,textAlign:"center"}}>
         <input type="number" value={mojab||""} onChange={e=>onMojab(e.target.value)}
@@ -1978,7 +1978,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending}) {
     <div>
       {/* Month + header */}
       <div style={{...styles.card,display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}}>
-        <label style={{fontWeight:700,fontSize:13,whiteSpace:"nowrap"}}>شهر الجرد:</label>
+        <label style={{fontWeight:700,fontSize:15,whiteSpace:"nowrap"}}>شهر الجرد:</label>
         <select style={{...styles.select,width:"auto",minWidth:160,borderColor:C.teal,color:C.teal,fontWeight:700,background:C.tealLt}}
           value={selMonth} onChange={e=>setSelMonth(e.target.value)}>
           {months.map(m=><option key={m} value={m}>{mLabel(m)}</option>)}
@@ -1989,29 +1989,29 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending}) {
       <div style={styles.panel}>
         {/* Panel header with totals */}
         <div style={{background:"#1e2235",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
-          <div style={{color:"white",fontWeight:900,fontSize:15}}>📊 الجرد — {mLabel(selMonth)}</div>
+          <div style={{color:"white",fontWeight:900,fontSize:17}}>📊 الجرد — {mLabel(selMonth)}</div>
           <div style={{display:"flex",gap:16,alignItems:"center"}}>
             <div style={{textAlign:"center"}}>
-              <div style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginBottom:2}}>الموجب</div>
-              <div style={{fontSize:16,fontWeight:900,color:"#5cd98a"}}>{totalMojab.toLocaleString("ar-SA")}</div>
+              <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",marginBottom:2}}>الموجب</div>
+              <div style={{fontSize:18,fontWeight:900,color:"#5cd98a"}}>{totalMojab.toLocaleString("ar-SA")}</div>
             </div>
             <div style={{textAlign:"center"}}>
-              <div style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginBottom:2}}>السالب</div>
-              <div style={{fontSize:16,fontWeight:900,color:"#ff8080"}}>{totalSalib.toLocaleString("ar-SA")}</div>
+              <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",marginBottom:2}}>السالب</div>
+              <div style={{fontSize:18,fontWeight:900,color:"#ff8080"}}>{totalSalib.toLocaleString("ar-SA")}</div>
             </div>
             <div style={{background:farq>=0?"rgba(92,217,138,0.2)":"rgba(255,128,128,0.2)",borderRadius:10,padding:"8px 16px",textAlign:"center"}}>
-              <div style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginBottom:2}}>الفرق</div>
-              <div style={{fontSize:20,fontWeight:900,color:farq>=0?"#5cd98a":"#ff8080"}}>
+              <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",marginBottom:2}}>الفرق</div>
+              <div style={{fontSize:22,fontWeight:900,color:farq>=0?"#5cd98a":"#ff8080"}}>
                 {farq>=0?"":"-"}{Math.abs(farq).toLocaleString("ar-SA")}
               </div>
-              <div style={{fontSize:10,color:farq>=0?"#5cd98a":"#ff8080"}}>{farq>=0?"✅ موجب":"⚠️ سالب"}</div>
+              <div style={{fontSize:13,color:farq>=0?"#5cd98a":"#ff8080"}}>{farq>=0?"✅ موجب":"⚠️ سالب"}</div>
             </div>
           </div>
         </div>
 
         {/* Single unified table */}
         <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
             <thead>
               <tr>
                 <th style={{...thS,width:"45%",textAlign:"right"}}>البند</th>
@@ -2022,7 +2022,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending}) {
             <tbody>
               {/* Section: أرصدة المستثمرين */}
               <tr>
-                <td colSpan={3} style={{background:C.tealLt,color:C.teal,fontWeight:800,fontSize:12,padding:"8px 14px",borderRight:"4px solid "+C.teal}}>
+                <td colSpan={3} style={{background:C.tealLt,color:C.teal,fontWeight:800,fontSize:15,padding:"8px 14px",borderRight:"4px solid "+C.teal}}>
                   أرصدة المستثمرين
                 </td>
               </tr>
@@ -2038,7 +2038,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending}) {
 
               {/* Section: الأصول والالتزامات */}
               <tr>
-                <td colSpan={3} style={{background:"#fff8e1",color:"#8a6200",fontWeight:800,fontSize:12,padding:"8px 14px",borderRight:"4px solid "+C.gold}}>
+                <td colSpan={3} style={{background:"#fff8e1",color:"#8a6200",fontWeight:800,fontSize:15,padding:"8px 14px",borderRight:"4px solid "+C.gold}}>
                   الأصول والالتزامات
                 </td>
               </tr>
@@ -2054,12 +2054,12 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending}) {
               {/* Total row */}
               <tr style={{background:"#1e2235"}}>
                 <td style={{...tdS,color:"white",fontWeight:800}}>المجموع</td>
-                <td style={{...tdS,textAlign:"center",color:"#5cd98a",fontWeight:900,fontSize:15}}>{totalMojab.toLocaleString("ar-SA")}</td>
-                <td style={{...tdS,textAlign:"center",color:"#ff8080",fontWeight:900,fontSize:15}}>{totalSalib.toLocaleString("ar-SA")}</td>
+                <td style={{...tdS,textAlign:"center",color:"#5cd98a",fontWeight:900,fontSize:17}}>{totalMojab.toLocaleString("ar-SA")}</td>
+                <td style={{...tdS,textAlign:"center",color:"#ff8080",fontWeight:900,fontSize:17}}>{totalSalib.toLocaleString("ar-SA")}</td>
               </tr>
               <tr style={{background:farq>=0?"#e3f5ec":C.redLt}}>
                 <td style={{...tdS,fontWeight:800,color:farq>=0?C.green:C.red}}>الفرق</td>
-                <td colSpan={2} style={{...tdS,textAlign:"center",fontWeight:900,fontSize:18,color:farq>=0?C.green:C.red}}>
+                <td colSpan={2} style={{...tdS,textAlign:"center",fontWeight:900,fontSize:20,color:farq>=0?C.green:C.red}}>
                   {farq>=0?"":"-"}{Math.abs(farq).toLocaleString("ar-SA")} ريال &nbsp;
                   {farq>=0?"✅":"⚠️"}
                 </td>
@@ -2074,7 +2074,8 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending}) {
 
 
 // ─── Dashboard ───────────────────────────────────────────────
-function Dashboard({contracts,investors,settings}) {
+function Dashboard({contracts,investors,settings,setInvestors}) {
+  const [editFund,setEditFund] = useState(null); // {inv, form}
   // Period: starts 21st of month, ends 20th of next month
   const getPeriod = (dateStr) => {
     const d = new Date(dateStr);
@@ -2099,14 +2100,14 @@ function Dashboard({contracts,investors,settings}) {
   return (
     <div>
       <div style={{...styles.card,display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}}>
-        <label style={{fontWeight:700,fontSize:13,whiteSpace:"nowrap"}}>عرض شهر:</label>
+        <label style={{fontWeight:700,fontSize:15,whiteSpace:"nowrap"}}>عرض شهر:</label>
         <select style={{...styles.select,width:"auto",minWidth:160}} value={sel} onChange={e=>setSel(e.target.value)}>
           {months.map(m=><option key={m} value={m}>{mLabel(m)}</option>)}
         </select>
         <button style={{...styles.btn(C.gold),marginRight:"auto"}} onClick={()=>window.print()}>🖨️ طباعة</button>
       </div>
 
-      <div style={{fontSize:18,fontWeight:900,marginBottom:16,color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12}}>ملخص الشهر</div>
+      <div style={{fontSize:20,fontWeight:900,marginBottom:16,color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12}}>ملخص الشهر</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:24}}>
         <KpiCard label="قيمة العقود" value={SAR(tot.amt)}/>
         <KpiCard label="أرباح العقود" value={SAR(tot.profit)}/>
@@ -2119,20 +2120,31 @@ function Dashboard({contracts,investors,settings}) {
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:16,marginBottom:20}}>
 
         <div style={styles.panel}>
-          <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:13,fontWeight:700}}>🏦 الصناديق</h3></div>
+          <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>🏦 الصناديق</h3></div>
           <div style={{padding:"14px 18px"}}>
             {[...new Set(investors.map(i=>i.fund))].map(fund=>{
               const cap=investors.filter(i=>i.fund===fund).reduce((s,i)=>s+i.capital,0);
               const fNet=mc.filter(c=>(investors.find(i=>i.id===c.investorId)?.fund)===fund).reduce((s,c)=>s+calcContract(c.amount,settings).net,0);
+              const fundInvs = investors.filter(i=>i.fund===fund);
               return (
-                <div key={fund} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 0",borderBottom:"1px solid "+C.border}}>
-                  <div style={{textAlign:"right"}}>
-                    <div style={{fontWeight:800,fontSize:15,color:"#1a1a2e",marginBottom:4}}>{fund}</div>
-                    <div style={{fontWeight:900,fontSize:22,color:cap>=0?C.green:C.red}}>{SAR(cap)}</div>
+                <div key={fund} style={{padding:"16px 0",borderBottom:"1px solid "+C.border}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{fontWeight:800,fontSize:17,color:"#1a1a2e",marginBottom:4}}>{fund}</div>
+                      <div style={{fontWeight:900,fontSize:24,color:cap>=0?C.green:C.red}}>{SAR(cap)}</div>
+                    </div>
+                    <div style={{textAlign:"left"}}>
+                      <div style={{fontSize:14,color:"#9ca3af",marginBottom:4}}>فوائد هذا الشهر</div>
+                      <div style={{fontWeight:900,fontSize:22,color:fNet>=0?C.green:C.red}}>{SAR(fNet)}</div>
+                    </div>
                   </div>
-                  <div style={{textAlign:"left"}}>
-                    <div style={{fontSize:11,color:"#9ca3af",marginBottom:4}}>فوائد هذا الشهر</div>
-                    <div style={{fontWeight:900,fontSize:20,color:fNet>=0?C.green:C.red}}>{SAR(fNet)}</div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                    {fundInvs.map(inv=>(
+                      <button key={inv.id} style={{...styles.btn("#f0f4ff","#3b82f6"),fontSize:14,padding:"4px 10px"}}
+                        onClick={()=>setEditFund({inv,form:{name:inv.name,fund:inv.fund,capital:String(inv.capital)}})}>
+                        ✏️ {inv.name}
+                      </button>
+                    ))}
                   </div>
                 </div>
               );
@@ -2141,13 +2153,39 @@ function Dashboard({contracts,investors,settings}) {
         </div>
       </div>
 
+      {/* Edit Fund Modal */}
+      <Modal open={!!editFund} onClose={()=>setEditFund(null)} title="✏️ تعديل المستثمر">
+        {editFund && (
+          <div style={{padding:"14px 18px"}}>
+            {[["الاسم","name","text"],["الصندوق","fund","text"],["رأس المال","capital","number"]].map(([l,k,t])=>(
+              <div key={k} style={{marginBottom:12}}>
+                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>{l}</label>
+                <input style={styles.input} type={t} value={editFund.form[k]} onChange={e=>setEditFund(f=>({...f,form:{...f.form,[k]:e.target.value}}))}/>
+              </div>
+            ))}
+            <div style={{display:"flex",gap:8,marginTop:8}}>
+              <button style={styles.btn(C.teal)} onClick={()=>{
+                setInvestors(p=>p.map(i=>i.id===editFund.inv.id?{...i,...editFund.form,capital:parseFloat(editFund.form.capital)||0}:i));
+                setEditFund(null);
+              }}>💾 حفظ</button>
+              <button style={styles.btn(C.red)} onClick={()=>{
+                if(confirm("حذف هذا المستثمر نهائياً؟")){
+                  setInvestors(p=>p.filter(i=>i.id!==editFund.inv.id));
+                  setEditFund(null);
+                }
+              }}>🗑️ حذف</button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
       <div style={styles.panel}>
-        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:13,fontWeight:700}}>📋 آخر العقود</h3></div>
+        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>📋 آخر العقود</h3></div>
         {mc.length===0 ? (
-          <div style={{padding:40,textAlign:"center",color:"#9ca3af",fontSize:13}}>لا توجد عقود هذا الشهر</div>
+          <div style={{padding:40,textAlign:"center",color:"#9ca3af",fontSize:15}}>لا توجد عقود هذا الشهر</div>
         ) : (
           <div style={{overflowX:"auto"}}>
-            <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
               <thead>
                 <tr>{["العميل","المستثمر","البضاعة","القيمة","الربح","صافي المستثمر","القسط"].map(h=>(
                   <th key={h} style={styles.th}>{h}</th>
@@ -2195,17 +2233,17 @@ function InvestorsPage({investors,contracts,settings,payments,onAdd,onDelete,toa
   return (
     <div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
-        <div style={{fontSize:17,fontWeight:800}}>👥 المستثمرون</div>
+        <div style={{fontSize:19,fontWeight:800}}>👥 المستثمرون</div>
         <button style={styles.btn(C.teal)} onClick={()=>setShow(s=>!s)}>➕ إضافة مستثمر</button>
       </div>
       {show && (
         <div style={{...styles.panel,marginBottom:16}}>
-          <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:13,fontWeight:700}}>إضافة مستثمر جديد</h3></div>
+          <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>إضافة مستثمر جديد</h3></div>
           <div style={{padding:"16px 20px"}}>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12,marginBottom:14}}>
               {[["اسم المستثمر *","name","text","الاسم الكامل"],["الصندوق","fund","text","اسم الصندوق"],["رأس المال (ر.س)","capital","number","مثال: 100000"],["تاريخ الدخول","date","date",""]].map(([l,k,t,p])=>(
                 <div key={k}>
-                  <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
+                  <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
                   <input style={styles.input} type={t} placeholder={p} value={form[k]} onChange={e=>set(k,e.target.value)}/>
                 </div>
               ))}
@@ -2226,37 +2264,37 @@ function InvestorsPage({investors,contracts,settings,payments,onAdd,onDelete,toa
             <div key={inv.id} style={{...styles.card,borderTop:"4px solid "+C.teal}}>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
                 <div>
-                  <div style={{fontSize:14,fontWeight:800}}>{inv.name}</div>
+                  <div style={{fontSize:16,fontWeight:800}}>{inv.name}</div>
     
                 </div>
                 <span style={styles.badge(C.tealLt,C.teal)}>{myCon.length} عقد</span>
               </div>
               {[["رأس المال",SAR(inv.capital)],["إجمالي العقود",SAR(totalAmt)],["تاريخ الدخول",inv.date||"—"]].map(([l,v])=>(
-                <div key={l} style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:6}}>
+                <div key={l} style={{display:"flex",justifyContent:"space-between",fontSize:15,marginBottom:6}}>
                   <span style={{color:"#9ca3af"}}>{l}</span><span style={{fontWeight:700}}>{v}</span>
                 </div>
               ))}
               <div style={{borderTop:"1px solid "+C.border,paddingTop:10,marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontSize:11,fontWeight:700,color:"#6b7280"}}>إجمالي صافي الربح</span>
-                <span style={{fontSize:17,fontWeight:800,color:C.green}}>{SAR(totalNet)}</span>
+                <span style={{fontSize:14,fontWeight:700,color:"#6b7280"}}>إجمالي صافي الربح</span>
+                <span style={{fontSize:19,fontWeight:800,color:C.green}}>{SAR(totalNet)}</span>
               </div>
               <div style={{background:C.redLt,borderRadius:8,padding:"8px 12px",marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontSize:11,fontWeight:700,color:C.red}}>💰 إجمالي المتبقي عند الزبائن</span>
-                <span style={{fontSize:16,fontWeight:900,color:C.red}}>{SAR(myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0))}</span>
+                <span style={{fontSize:14,fontWeight:700,color:C.red}}>💰 إجمالي المتبقي عند الزبائن</span>
+                <span style={{fontSize:18,fontWeight:900,color:C.red}}>{SAR(myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0))}</span>
               </div>
               {confirmId===inv.id ? (
-                <div style={{marginTop:10,background:C.redLt,borderRadius:8,padding:"8px 12px",fontSize:12}}>
+                <div style={{marginTop:10,background:C.redLt,borderRadius:8,padding:"8px 12px",fontSize:15}}>
                   <div style={{marginBottom:6,fontWeight:700,color:C.red}}>تأكيد الحذف؟</div>
                   <div style={{display:"flex",gap:8}}>
-                    <button style={{...styles.btn(C.red),fontSize:11,padding:"5px 12px"}} onClick={()=>{onDelete(inv.id);setConfirmId(null);toast("تم الحذف");}}>نعم، احذف</button>
-                    <button style={{...styles.btn(C.border,"#333"),fontSize:11,padding:"5px 12px"}} onClick={()=>setConfirmId(null)}>إلغاء</button>
+                    <button style={{...styles.btn(C.red),fontSize:14,padding:"5px 12px"}} onClick={()=>{onDelete(inv.id);setConfirmId(null);toast("تم الحذف");}}>نعم، احذف</button>
+                    <button style={{...styles.btn(C.border,"#333"),fontSize:14,padding:"5px 12px"}} onClick={()=>setConfirmId(null)}>إلغاء</button>
                   </div>
                 </div>
               ) : (
                 <div style={{display:"flex",gap:8,marginTop:10}}>
-                <button style={{...styles.btn(C.teal),fontSize:11,padding:"5px 12px"}} onClick={()=>{setStmtInv(inv);setStmtType("brief");}}>📄 مختصر</button>
-                <button style={{...styles.btn(C.ink),fontSize:11,padding:"5px 12px"}} onClick={()=>{setStmtInv(inv);setStmtType("detailed");}}>📋 مفصل</button>
-                <button style={{...styles.btn(C.red),fontSize:11,padding:"5px 10px"}} onClick={()=>setConfirmId(inv.id)}>🗑️</button>
+                <button style={{...styles.btn(C.teal),fontSize:14,padding:"5px 12px"}} onClick={()=>{setStmtInv(inv);setStmtType("brief");}}>📄 مختصر</button>
+                <button style={{...styles.btn(C.ink),fontSize:14,padding:"5px 12px"}} onClick={()=>{setStmtInv(inv);setStmtType("detailed");}}>📋 مفصل</button>
+                <button style={{...styles.btn(C.red),fontSize:14,padding:"5px 10px"}} onClick={()=>setConfirmId(inv.id)}>🗑️</button>
               </div>
               )}
             </div>
@@ -2277,41 +2315,41 @@ function InvestorsPage({investors,contracts,settings,payments,onAdd,onDelete,toa
               <div style={{display:"flex",gap:0,marginBottom:16,background:C.slate,borderRadius:8,overflow:"hidden",width:"fit-content"}}>
                 {[["brief","📄 مختصر"],["detailed","📋 مفصل"]].map(([k,l])=>(
                   <button key={k} onClick={()=>setStmtType(k)}
-                    style={{fontFamily:"Tajawal,Arial",fontSize:12,fontWeight:700,padding:"8px 18px",border:"none",
+                    style={{fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:700,padding:"8px 18px",border:"none",
                       cursor:"pointer",background:stmtType===k?C.ink:C.slate,color:stmtType===k?"white":C.ink2}}>
                     {l}
                   </button>
                 ))}
-                <button style={{...styles.btn(C.gold),fontSize:12,padding:"8px 16px",borderRadius:0}} onClick={()=>window.print()}>🖨️ طباعة</button>
+                <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px",borderRadius:0}} onClick={()=>window.print()}>🖨️ طباعة</button>
               </div>
 
               {/* Summary cards */}
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:10,marginBottom:16}}>
                 <div style={{background:C.tealLt,borderRadius:8,padding:"10px",textAlign:"center"}}>
-                  <div style={{fontSize:10,color:"#555",marginBottom:3}}>عدد العقود</div>
-                  <div style={{fontSize:18,fontWeight:800,color:C.teal}}>{myCon.length}</div>
+                  <div style={{fontSize:13,color:"#555",marginBottom:3}}>عدد العقود</div>
+                  <div style={{fontSize:20,fontWeight:800,color:C.teal}}>{myCon.length}</div>
                 </div>
                 <div style={{background:C.slate,borderRadius:8,padding:"10px",textAlign:"center"}}>
-                  <div style={{fontSize:10,color:"#555",marginBottom:3}}>إجمالي القيم</div>
-                  <div style={{fontSize:14,fontWeight:800}}>{SAR(totalAmt)}</div>
+                  <div style={{fontSize:13,color:"#555",marginBottom:3}}>إجمالي القيم</div>
+                  <div style={{fontSize:16,fontWeight:800}}>{SAR(totalAmt)}</div>
                 </div>
                 <div style={{background:C.greenLt,borderRadius:8,padding:"10px",textAlign:"center"}}>
-                  <div style={{fontSize:10,color:"#555",marginBottom:3}}>محصّل</div>
-                  <div style={{fontSize:14,fontWeight:800,color:C.green}}>{SAR(totalPaid)}</div>
+                  <div style={{fontSize:13,color:"#555",marginBottom:3}}>محصّل</div>
+                  <div style={{fontSize:16,fontWeight:800,color:C.green}}>{SAR(totalPaid)}</div>
                 </div>
                 <div style={{background:totalLeft===0?C.greenLt:C.redLt,borderRadius:8,padding:"10px",textAlign:"center"}}>
-                  <div style={{fontSize:10,color:"#555",marginBottom:3}}>متبقي</div>
-                  <div style={{fontSize:14,fontWeight:800,color:totalLeft===0?C.green:C.red}}>{SAR(totalLeft)}</div>
+                  <div style={{fontSize:13,color:"#555",marginBottom:3}}>متبقي</div>
+                  <div style={{fontSize:16,fontWeight:800,color:totalLeft===0?C.green:C.red}}>{SAR(totalLeft)}</div>
                 </div>
                 <div style={{background:C.purpleLt,borderRadius:8,padding:"10px",textAlign:"center"}}>
-                  <div style={{fontSize:10,color:"#555",marginBottom:3}}>صافي ربحه</div>
-                  <div style={{fontSize:14,fontWeight:800,color:C.purple}}>{SAR(totalProfit)}</div>
+                  <div style={{fontSize:13,color:"#555",marginBottom:3}}>صافي ربحه</div>
+                  <div style={{fontSize:16,fontWeight:800,color:C.purple}}>{SAR(totalProfit)}</div>
                 </div>
               </div>
 
               {/* Table */}
               <div style={{overflowX:"auto"}}>
-                <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
                   <thead>
                     {stmtType==="brief" ? (
                       <tr>{["#","العميل","قيمة العقد","الإجمالي","القسط","محصّل","متبقي","الحالة"].map(h=>(
@@ -2348,7 +2386,7 @@ function InvestorsPage({investors,contracts,settings,payments,onAdd,onDelete,toa
                         <tr key={c.id} style={{background:bg}}>
                           <td style={{...styles.td,color:"#9ca3af"}}>{c.num||i+1}</td>
                           <td style={{...styles.td,fontWeight:700}}>{c.client}</td>
-                          <td style={{...styles.td,fontSize:10}}>{c.idNum||"—"}</td>
+                          <td style={{...styles.td,fontSize:13}}>{c.idNum||"—"}</td>
                           <td style={styles.td}>{c.job||"—"}</td>
                           <td style={styles.td}>{c.gName||"—"}</td>
                           <td style={styles.td}><span style={styles.badge(C.tealLt,C.teal)}>{c.goods||"—"}</span></td>
@@ -2358,8 +2396,8 @@ function InvestorsPage({investors,contracts,settings,payments,onAdd,onDelete,toa
                           <td style={{...styles.td,color:C.teal,fontWeight:700}}>{SAR(c.instAmt||0)}</td>
                           <td style={{...styles.td,color:C.green,fontWeight:700}}>{SAR(paid)}</td>
                           <td style={{...styles.td,color:done?C.green:C.red,fontWeight:700}}>{SAR(left)}</td>
-                          <td style={{...styles.td,fontSize:10,color:C.green}}>{c.firstInst||"—"}</td>
-                          <td style={{...styles.td,fontSize:10,color:C.gold}}>{c.lastInst||"—"}</td>
+                          <td style={{...styles.td,fontSize:13,color:C.green}}>{c.firstInst||"—"}</td>
+                          <td style={{...styles.td,fontSize:13,color:C.gold}}>{c.lastInst||"—"}</td>
                           <td style={{...styles.td,color:C.green}}>{SAR(r.profit)}</td>
                           <td style={{...styles.td,color:C.red}}>{SAR(r.acc)}</td>
                           <td style={{...styles.td,color:C.gold}}>{SAR(r.inst)}</td>
@@ -2413,39 +2451,39 @@ function SettingsPage({settings,onSave,toast}) {
   const r=calcContract(10000,s);
   return (
     <div>
-      <div style={{fontSize:17,fontWeight:800,marginBottom:16}}>⚙️ الإعدادات</div>
+      <div style={{fontSize:19,fontWeight:800,marginBottom:16}}>⚙️ الإعدادات</div>
 
       <div style={{...styles.panel,marginBottom:16}}>
-        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:13,fontWeight:700}}>بيانات المؤسسة</h3></div>
-        <div style={{padding:"16px 20px"}}>          <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>رقم السجل التجاري</label>
+        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>بيانات المؤسسة</h3></div>
+        <div style={{padding:"16px 20px"}}>          <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>رقم السجل التجاري</label>
           <input style={{...styles.input,maxWidth:280,borderColor:C.gold,fontWeight:700}} type="text"
             placeholder="مثال: 1010xxxxxx"
             value={s.regNum||""} onChange={e=>setS(prev=>({...prev,regNum:e.target.value}))}/>
-          <div style={{fontSize:11,color:"#9ca3af",marginTop:5}}>يظهر هذا الرقم تلقائياً في كل عقد مطبوع</div>
+          <div style={{fontSize:14,color:"#9ca3af",marginTop:5}}>يظهر هذا الرقم تلقائياً في كل عقد مطبوع</div>
           <div style={{marginTop:16}}>
-            <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>بداية ترقيم العقود</label>
+            <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>بداية ترقيم العقود</label>
             <input style={{...styles.input,maxWidth:160,borderColor:C.teal,fontWeight:700}} type="number" min="1"
               placeholder="مثال: 1"
               value={s.startNum||1} onChange={e=>setS(prev=>({...prev,startNum:parseInt(e.target.value)||1}))}/>
-            <div style={{fontSize:11,color:"#9ca3af",marginTop:5}}>رقم أول عقد جديد (يُطبق فقط إذا لم توجد عقود)</div>
+            <div style={{fontSize:14,color:"#9ca3af",marginTop:5}}>رقم أول عقد جديد (يُطبق فقط إذا لم توجد عقود)</div>
           </div>
         </div>
       </div>
 
       <div style={styles.panel}>
-        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:13,fontWeight:700}}>نسب التوزيع</h3></div>
+        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>نسب التوزيع</h3></div>
         <div style={{padding:"16px 20px"}}>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:14,marginBottom:16}}>
             {[["نسبة ربح العقد %","profit","من قيمة العقد"],["الرسوم الإدارية %","admin","من قيمة العقد"],["عمولة المحاسبين %","acc","من الربح"],["نصيب المؤسسة %","inst","من الربح"]].map(([l,k,hint])=>(
               <div key={k}>
-                <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
+                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
                 <input style={styles.input} type="number" value={s[k]} onChange={e=>setS(prev=>({...prev,[k]:parseFloat(e.target.value)||0}))}/>
-                <div style={{fontSize:11,color:"#9ca3af",marginTop:3}}>{hint}</div>
+                <div style={{fontSize:14,color:"#9ca3af",marginTop:3}}>{hint}</div>
               </div>
             ))}
           </div>
           <div style={styles.calcBox}>
-            <div style={{fontSize:12,fontWeight:700,color:C.gold,marginBottom:10}}>مثال توضيحي — عقد 10,000 ريال</div>
+            <div style={{fontSize:15,fontWeight:700,color:C.gold,marginBottom:10}}>مثال توضيحي — عقد 10,000 ريال</div>
             <CalcRow label="الربح" value={SAR(r.profit)} color="#5cd98a"/>
             <CalcRow label="الرسوم الإدارية" value={SAR(r.admin)} color="#ff8080"/>
             <CalcRow label="عمولة المحاسبين" value={SAR(r.acc)} color="#ff8080"/>
@@ -2515,7 +2553,7 @@ function GoodsPage({investors, contracts, toast}) {
     <div>
       {/* Header */}
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}}>
-        <div style={{fontSize:17,fontWeight:800}}>📦 البضاعة</div>
+        <div style={{fontSize:19,fontWeight:800}}>📦 البضاعة</div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
 
           <button style={styles.btn(C.teal)} onClick={()=>setShowAdd(s=>!s)}>➕ إضافة دعم</button>
@@ -2525,22 +2563,22 @@ function GoodsPage({investors, contracts, toast}) {
       {/* Add manual row */}
       {showAdd && (
         <div style={{...styles.panel,marginBottom:16,padding:16}}>
-          <div style={{fontSize:13,fontWeight:700,marginBottom:12}}>إضافة دعم حساب</div>
+          <div style={{fontSize:15,fontWeight:700,marginBottom:12}}>إضافة دعم حساب</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:12}}>
             <div>
-              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>التاريخ</label>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>التاريخ</label>
               <input style={styles.input} type="date" value={newRow.date} onChange={e=>setNewRow(p=>({...p,date:e.target.value}))}/>
             </div>
             <div>
-              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>دعم الحساب (ر.س)</label>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>دعم الحساب (ر.س)</label>
               <input style={styles.input} type="number" placeholder="المبلغ" value={newRow.supportAcc} onChange={e=>setNewRow(p=>({...p,supportAcc:e.target.value}))}/>
             </div>
             <div>
-              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>سعر البطاقة</label>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>سعر البطاقة</label>
               <input style={styles.input} type="number" placeholder="اتركه فارغ للتعبئة التلقائية" value={newRow.price} onChange={e=>setNewRow(p=>({...p,price:e.target.value}))}/>
             </div>
             <div>
-              <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>ملاحظة</label>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>ملاحظة</label>
               <input style={styles.input} type="text" placeholder="اختياري" value={newRow.note} onChange={e=>setNewRow(p=>({...p,note:e.target.value}))}/>
             </div>
           </div>
@@ -2556,7 +2594,7 @@ function GoodsPage({investors, contracts, toast}) {
 
       {/* Table */}
       <div style={{overflowX:"auto",borderRadius:10,boxShadow:"0 2px 12px rgba(0,0,0,0.08)"}}>
-        <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:1000}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:14,minWidth:1000}}>
           <thead>
             <tr style={{background:C.ink,color:"#fff"}}>
               {["التاريخ","رقم العقد","قيمة العقد","اسم العميل","اسم المستثمر","دعم العميل","دعم الحساب","سعر البطاقة","البطاقات المدعومة","البطاقات المسحوبة","رصيد البطاقات","الرصيد النقدي",""].map(h=>(
@@ -2581,14 +2619,14 @@ function GoodsPage({investors, contracts, toast}) {
                   <input type="number" value={priceOverrides[row.id]||row.price||""}
                     placeholder={String(row.rowPrice||"")}
                     onChange={e=>savePriceOverride(row.id,e.target.value)}
-                    style={{width:65,border:"1px solid "+C.gold,borderRadius:4,padding:"3px 4px",fontSize:11,textAlign:"center",background:"#fffbf0"}}/>
+                    style={{width:65,border:"1px solid "+C.gold,borderRadius:4,padding:"3px 4px",fontSize:14,textAlign:"center",background:"#fffbf0"}}/>
                 </td>
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",background:"#f0faf5",fontWeight:700}}>{row.supported>0?row.supported:""}</td>
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",color:C.red,fontWeight:700}}>{row.withdrawn>0?row.withdrawn:""}</td>
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",background:"#f0f0ff",fontWeight:800,color:C.teal}}>{row.runningCards}</td>
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",background:"#fffbf0",fontWeight:800,color:row.cashBalance<0?C.red:C.gold}}>{row.rowPrice?row.cashBalance.toLocaleString("ar-SA"):""}</td>
                 <td style={{padding:"4px",borderBottom:"1px solid #eee",textAlign:"center"}}>
-                  {!row.fromContract&&<button style={{...styles.btn(C.red),fontSize:10,padding:"3px 8px"}} onClick={()=>saveManual(manualRows.filter(r=>r.id!==row.id))}>🗑️</button>}
+                  {!row.fromContract&&<button style={{...styles.btn(C.red),fontSize:13,padding:"3px 8px"}} onClick={()=>saveManual(manualRows.filter(r=>r.id!==row.id))}>🗑️</button>}
                 </td>
               </tr>
             ))}
@@ -2644,14 +2682,14 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
         <div style={{padding:"14px 18px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
             <div>
-              <div style={{fontWeight:800,fontSize:15,color:C.ink}}>{c.client}</div>
-              <div style={{fontSize:11,color:"#9ca3af"}}>عقد #{c.num} | {c.date} | {inv?.name||"—"}</div>
+              <div style={{fontWeight:800,fontSize:17,color:C.ink}}>{c.client}</div>
+              <div style={{fontSize:14,color:"#9ca3af"}}>عقد #{c.num} | {c.date} | {inv?.name||"—"}</div>
             </div>
             <span style={styles.badge(isDone?C.greenLt:C.tealLt, isDone?C.green:C.teal)}>
               {isDone?"✅ منتهي":"⏳ ساري"}
             </span>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:10,fontSize:12}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:10,fontSize:15}}>
             <div style={{background:"#f8f8f8",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
               <div style={{color:"#9ca3af",marginBottom:2}}>إجمالي العقد</div>
               <div style={{fontWeight:800,color:C.ink}}>{SAR(c.totalInst||0)}</div>
@@ -2692,16 +2730,16 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
 
   return (
     <div>
-      <div style={{fontSize:17,fontWeight:800,marginBottom:16}}>🔍 البحث</div>
+      <div style={{fontSize:19,fontWeight:800,marginBottom:16}}>🔍 البحث</div>
       <div style={{...styles.card,marginBottom:20}}>
         <input
-          style={{...styles.input,fontSize:15,padding:"12px 16px"}}
+          style={{...styles.input,fontSize:17,padding:"12px 16px"}}
           placeholder="ابحث باسم العميل، الكفيل، رقم الهوية، أو الجوال..."
           value={q}
           onChange={e=>setQ(e.target.value)}
           autoFocus
         />
-        {q.length===1 && <div style={{fontSize:12,color:"#9ca3af",marginTop:6}}>اكتب حرفين على الأقل للبحث</div>}
+        {q.length===1 && <div style={{fontSize:15,color:"#9ca3af",marginTop:6}}>اكتب حرفين على الأقل للبحث</div>}
       </div>
 
       {q.length>=2 && results.length===0 && (
@@ -2710,14 +2748,14 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
 
       {active.length>0 && (
         <div style={{marginBottom:20}}>
-          <div style={{fontSize:14,fontWeight:800,marginBottom:12,color:C.teal}}>⏳ العقود السارية ({active.length})</div>
+          <div style={{fontSize:16,fontWeight:800,marginBottom:12,color:C.teal}}>⏳ العقود السارية ({active.length})</div>
           {active.map(c=><ContractCard key={c.id} c={c} isDone={false}/>)}
         </div>
       )}
 
       {done.length>0 && (
         <div>
-          <div style={{fontSize:14,fontWeight:800,marginBottom:12,color:C.green}}>✅ العقود المنتهية ({done.length})</div>
+          <div style={{fontSize:16,fontWeight:800,marginBottom:12,color:C.green}}>✅ العقود المنتهية ({done.length})</div>
           {done.map(c=><ContractCard key={c.id} c={c} isDone={true}/>)}
         </div>
       )}
@@ -2727,14 +2765,14 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
         {payModal && (
           <div style={{padding:"14px 18px"}}>
             <div style={{fontWeight:700,marginBottom:4}}>{payModal.client}</div>
-            <div style={{fontSize:12,color:"#9ca3af",marginBottom:16}}>المتبقي: {SAR(Math.max(0,(payModal.totalInst||0)-_getPaid(payments,payModal.id)))}</div>
+            <div style={{fontSize:15,color:"#9ca3af",marginBottom:16}}>المتبقي: {SAR(Math.max(0,(payModal.totalInst||0)-_getPaid(payments,payModal.id)))}</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
               <div>
-                <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المبلغ</label>
+                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المبلغ</label>
                 <input style={styles.input} type="number" value={payAmount} onChange={e=>setPayAmount(e.target.value)} placeholder="المبلغ"/>
               </div>
               <div>
-                <label style={{fontSize:12,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>التاريخ</label>
+                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>التاريخ</label>
                 <input style={styles.input} type="date" value={payDate} onChange={e=>setPayDate(e.target.value)}/>
               </div>
             </div>
@@ -2843,17 +2881,17 @@ function App() {
           <img src="https://i.ibb.co/60DXm9xL/IMG-1696.png" alt="شعار قمة الفرصة" style={{height:44,width:"auto",objectFit:"contain",filter:"brightness(0) invert(1)"}}/>
 
           <div>
-            <div style={{fontWeight:700,fontSize:14}}>مؤسسة قمة الفرصة التجارية</div>
-            <div style={{fontSize:10,opacity:0.6}}>نظام إدارة التقسيط والمستثمرين</div>
+            <div style={{fontWeight:700,fontSize:16}}>مؤسسة قمة الفرصة التجارية</div>
+            <div style={{fontSize:13,opacity:0.6}}>نظام إدارة التقسيط والمستثمرين</div>
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,fontWeight:700,
+          <div style={{display:"flex",alignItems:"center",gap:5,fontSize:14,fontWeight:700,
             color: syncStatus==="error"?"#ff8080":syncStatus==="saving"?C.gold:syncStatus==="loading"?C.gold:"#5cd98a"}}>
-            <span style={{fontSize:9}}>●</span>
+            <span style={{fontSize:12}}>●</span>
             {syncStatus==="saving" ? "⏳ جارٍ الحفظ..." : syncStatus==="loading" ? "⏳ جارٍ التحميل..." : syncStatus==="error" ? "⚠️ خطأ بالحفظ" : "☁️ متصل"}
           </div>
-          <div style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:8,padding:"5px 12px",fontSize:12,fontWeight:700,color:C.gold}}>
+          <div style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:8,padding:"5px 12px",fontSize:15,fontWeight:700,color:C.gold}}>
             {contracts.length} عقد
           </div>
         </div>
@@ -2862,14 +2900,14 @@ function App() {
       <nav style={styles.nav}>
         {TABS.map(t=>(
           <button key={t.id} onClick={()=>setPage(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"8px 10px",border:"none",cursor:"pointer",background:"none",fontFamily:"Tajawal,Arial,sans-serif"}}>
-            <div style={{width:42,height:42,borderRadius:12,background:page===t.id?t.color:"#d1d5db",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,transition:"all 0.2s",boxShadow:page===t.id?"0 3px 10px rgba(0,0,0,0.25)":"none"}}>{t.label}</div>
-            <span style={{fontSize:10,fontWeight:700,color:"#111",whiteSpace:"nowrap"}}>{t.name}</span>
+            <div style={{width:42,height:42,borderRadius:12,background:page===t.id?t.color:"#d1d5db",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,transition:"all 0.2s",boxShadow:page===t.id?"0 3px 10px rgba(0,0,0,0.25)":"none"}}>{t.label}</div>
+            <span style={{fontSize:13,fontWeight:700,color:"#111",whiteSpace:"nowrap"}}>{t.name}</span>
           </button>
         ))}
       </nav>
 
       <div style={styles.main}>
-        {page==="dashboard" && <Dashboard contracts={contracts} investors={investors} settings={settings}/>}
+        {page==="dashboard" && <Dashboard contracts={contracts} investors={investors} settings={settings} setInvestors={setInvestors}/>}
         {page==="search" && <SearchPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast}/>}
         {page==="new" && <NewContractPage investors={investors} settings={settings} contracts={contracts} onSave={c=>{setContracts(p=>[...p,c]);setPage("contracts");}} toast={toast} setInvTxList={setInvTxList}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.filter(c=>c.id!==id))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert}/>}
