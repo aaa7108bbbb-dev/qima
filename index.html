@@ -1933,27 +1933,27 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     if(key==="zakat")   return (zakatTx||[]).reduce((s,t)=>s+(t.type==="collect"?t.amount:-t.amount),0);
     if(key==="deductions") return (pending||[]).reduce((s,p)=>s+p.amount,0);
     if(key==="cards") {
-      // Get last cashBalance from goods page (same calculation as GoodsPage)
-      const contractRows = contracts.map(c=>({
-        date:c.date,
+      // Match GoodsPage calculation exactly
+      const cRows = contracts.map(c=>({
+        id:"c_"+c.id, date:c.date,
         supportClient:c.deductEnabled?(parseFloat(c.deductAmount)||0):0,
         supportAcc:0,
-        withdrawnQty:parseFloat(c.qty)||0,
-        price:parseFloat(priceOv[c.id])||19.7,
-        fromContract:true
+        withdrawnQty:parseInt(c.qty)||0,
+        price:parseFloat(priceOv["c_"+c.id])||0,
       }));
-      const allRows2 = [...contractRows,...goodsData].sort((a,b)=>new Date(a.date)-new Date(b.date));
-      let runCards=0;
-      let lastCash=0;
-      allRows2.forEach(r=>{
-        const rowPrice = parseFloat(r.price)||19.7;
-        const sup=(parseFloat(r.supportClient)||0)+(parseFloat(r.supportAcc)||0);
-        const supp=rowPrice>0?sup/rowPrice:0;
-        const withdrawn=parseFloat(r.withdrawnQty)||0;
-        runCards+=supp-withdrawn;
-        lastCash=runCards*rowPrice;
+      const allR = [...cRows,...goodsData].sort((a,b)=>new Date(a.date)-new Date(b.date)||String(a.id).localeCompare(String(b.id)));
+      let runCards=0; let lastPrice2=0; let lastCash2=0;
+      allR.forEach(r=>{
+        const rowPrice=parseFloat(priceOv[r.id]||r.price)||lastPrice2||1;
+        if(rowPrice) lastPrice2=rowPrice;
+        const supC=parseFloat(r.supportClient)||0;
+        const supA=parseFloat(r.supportAcc)||0;
+        const supported=supC||supA?Math.floor((supC+supA)/rowPrice):0;
+        const withdrawn=parseInt(r.withdrawnQty)||0;
+        runCards=runCards+supported-withdrawn;
+        lastCash2=runCards*rowPrice;
       });
-      return lastCash;
+      return lastCash2;
     }
     return 0;
   };
