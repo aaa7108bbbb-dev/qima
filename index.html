@@ -1637,6 +1637,7 @@ const TX_TYPES = [
 
 function AccountsPage({contracts, investors, settings, txList, setTxList, loans, setLoans, zakatTx, setZakatTx, pending, setPending, payments}) {
   const [subTab, setSubTab] = useState("inv");
+  const [invSubTab, setInvSubTab] = useState("inv");
   const [selInv, setSelInv] = useState(investors[0]?.id||null);
   const [form, setForm] = useState({type:"deposit", amount:"", note:"", date:new Date().toISOString().split("T")[0]});
   const set = (k,v) => {
@@ -1721,8 +1722,6 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
   const subTabs = [
     {key:"inv",   label:"💰 حسابات المستثمرين"},
     {key:"loans", label:"🤝 السلف"},
-    {key:"zakat", label:"🌙 الزكاة"},
-    {key:"pending",label:"📌 المتبقي"},
   ];
 
   return (
@@ -1744,12 +1743,21 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
       {/* Loans sub-page */}
       {subTab==="loans" && <LoansPage loans={loans} setLoans={setLoans}/>}
       {/* Zakat sub-page */}
-      {subTab==="zakat" && <ZakatPage investors={investors} contracts={contracts} settings={settings} zakatTx={zakatTx} setZakatTx={setZakatTx}/>}
-      {/* Pending sub-page */}
-      {subTab==="pending" && <PendingPage pending={pending} setPending={setPending}/>}
+
 
       {/* Investor accounts sub-page */}
       {subTab==="inv" && <>
+      <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+        {[{k:"inv",l:"💰 حسابات المستثمرين"},{k:"zakat",l:"🌙 الزكاة"},{k:"pending",l:"📌 المتبقي"}].map(t=>(
+          <button key={t.k} onClick={()=>setInvSubTab(t.k)}
+            style={{...styles.btn(invSubTab===t.k?C.teal:"#f3f4f6",invSubTab===t.k?"#fff":C.ink),fontSize:14,padding:"8px 18px",border:"1px solid "+C.border}}>
+            {t.l}
+          </button>
+        ))}
+      </div>
+      {invSubTab==="zakat" && <ZakatPage investors={investors} contracts={contracts} settings={settings} zakatTx={zakatTx} setZakatTx={setZakatTx}/>}
+      {invSubTab==="pending" && <PendingPage pending={pending} setPending={setPending}/>}
+      {invSubTab==="inv" && <>
 
       {/* Investor selector */}
       <div style={{...styles.card,marginBottom:16,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
@@ -1891,7 +1899,10 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
           </table>
         </div>
       </div>
-      </>}
+      </>
+      }
+      </>
+      }
     </div>
   );
 }
