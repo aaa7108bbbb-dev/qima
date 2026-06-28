@@ -2120,10 +2120,10 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
               {otherRows.map((row,i)=>{
                 const v = getVal(row.key);
                 return <Row key={row.key} i={i} name={row.name} hint={row.hint}
-                  mojab={row.sign===1?v:""}
-                  salib={row.sign===-1?v:""}
-                  onMojab={v2=>setVal(row.key,v2)}
-                  onSalib={v2=>setVal(row.key,v2)}/>;
+                  mojab={v>=0?v:""}
+                  salib={v<0?Math.abs(v):""}
+                  onMojab={v2=>setVal(row.key,parseFloat(v2)||0)}
+                  onSalib={v2=>setVal(row.key,-(parseFloat(v2)||0))}/>;
               })}
 
               {/* Total row */}
