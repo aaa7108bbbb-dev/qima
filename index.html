@@ -57,6 +57,8 @@ window.addEventListener("DOMContentLoaded",function(){
 <div id="root"></div>
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useCallback } = React;
+const _arr = x => Array.isArray(x) ? x : [];
+
 
 function printContent(elementId) {
   window.print();
@@ -762,7 +764,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
 }
 
 // ─── Contracts Page ──────────────────────────────────────────
-const _getPaid = (payments, cid) => (Array.isArray(payments)?payments:[]).filter(p=>p.contractId===cid).reduce((s,p)=>s+p.amount,0);
+const _getPaid = (payments, cid) => (payments||[]).filter(p=>p.contractId===cid).reduce((s,p)=>s+p.amount,0);
 
 function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,setPayments,toast,completionAlert,setCompletionAlert}) {
   const [payModal,setPayModal]=useState(null);
@@ -836,7 +838,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
                 {invReportContracts.map((c,i)=>{
                   const paid = _getPaid(payments,c.id);
                   const left = Math.max(0,(c.totalInst||0)-paid);
-                  const lastPay = [...(Array.isArray(payments)?payments:[])].filter(p=>p.contractId===c.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+                  const lastPay = [...(payments||[])].filter(p=>p.contractId===c.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
                   const daysSince = lastPay ? Math.floor((new Date(today2)-new Date(lastPay.date))/(1000*60*60*24)) : 999;
                   const late = left>0 && daysSince>35 ? daysSince-30 : 0;
                   return (
@@ -1005,7 +1007,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
             </div>
             <button style={{...styles.btn(C.green),marginBottom:16}} onClick={addPayment}>💾 تسجيل السداد</button>
             {/* Payment history */}
-            {(Array.isArray(payments)?payments:[]).filter(p=>p.contractId===payModal.id).length>0 && (
+            {(payments||[]).filter(p=>p.contractId===payModal.id).length>0 && (
               <div>
                 <div style={{fontSize:15,fontWeight:700,marginBottom:8,color:C.ink2}}>سجل المدفوعات:</div>
                 <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
@@ -1016,7 +1018,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
                     <th style={styles.th}></th>
                   </tr></thead>
                   <tbody>
-                    {(Array.isArray(payments)?payments:[]).filter(p=>p.contractId===payModal.id).map((p,i)=>(
+                    {(payments||[]).filter(p=>p.contractId===payModal.id).map((p,i)=>(
                       <tr key={p.id} style={{background:i%2===0?C.white:C.gray}}>
                         <td style={styles.td}>{p.date}</td>
                         <td style={{...styles.td,color:C.green,fontWeight:700}}>{SAR(p.amount)}</td>
@@ -1673,7 +1675,7 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
 
   // Auto payments grouped by month
   const paysByMonth = {};
-  (Array.isArray(payments)?payments:[]).forEach(p=>{
+  (payments||[]).forEach(p=>{
     const c = myContracts.find(x=>x.id===p.contractId);
     if(!c) return;
     const d = new Date(p.date);
@@ -1925,13 +1927,13 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     if(overrides[selMonth+"_"+key]!==undefined) return overrides[selMonth+"_"+key];
     // سحب تلقائي من الصفحات المرتبطة
     if(key==="loans") {
-      return (Array.isArray(loans)?loans:[]).reduce((s,l)=>{
+      return (loans||[]).reduce((s,l)=>{
         const paid=(l.payments||[]).reduce((ss,p)=>ss+p.amount,0);
         return s+Math.max(0,(l.amount||0)-paid);
       },0);
     }
-    if(key==="zakat")   return (Array.isArray(zakatTx)?zakatTx:[]).reduce((s,t)=>s+(t.type==="collect"?t.amount:-t.amount),0);
-    if(key==="deductions") return (Array.isArray(pending)?pending:[]).reduce((s,p)=>s+p.amount,0);
+    if(key==="zakat")   return (zakatTx||[]).reduce((s,t)=>s+(t.type==="collect"?t.amount:-t.amount),0);
+    if(key==="deductions") return (pending||[]).reduce((s,p)=>s+p.amount,0);
     if(key==="cards") {
       // Match GoodsPage calculation exactly
       const cRows = contracts.map(c=>({
@@ -1974,7 +1976,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
       const r=calcContract(c.amount,settings);
       return s-(c.amount+r.acc+r.inst+r.admin);
     },0);
-    const autoPaid = (Array.isArray(payments)?payments:[]).filter(p=>myContracts.find(c=>c.id===p.contractId)).reduce((s,p)=>s+p.amount,0);
+    const autoPaid = (payments||[]).filter(p=>myContracts.find(c=>c.id===p.contractId)).reduce((s,p)=>s+p.amount,0);
     const manualTotal = myManualTx.reduce((s,t)=>s+t.amount,0);
     return capital + autoDeduct + autoPaid + manualTotal;
   };
@@ -2900,7 +2902,7 @@ function App() {
   };
 
   const [investors,setInvestorsRaw]=useState(()=>{const d=loadLS("qimma_investors",DEFAULT_INVESTORS);return d&&d.length?d:DEFAULT_INVESTORS;});
-  const [contracts,setContractsRaw]=useState(()=>loadLS("qimma_contracts",[]));
+  const [contracts,setContractsRaw]=useState(()=>_arr(loadLS("qimma_contracts",[])));
   const [settings,setSettingsRaw]=useState(()=>loadLS("qimma_settings",{profit:50,admin:2.5,acc:10,inst:10}));
 
   const setInvestors = v => { const d=typeof v==="function"?v(investors):v; setInvestorsRaw(d); saveLS("qimma_investors",d); gsWrite("investors",d); };
@@ -2908,14 +2910,14 @@ function App() {
   const setSettings  = v => { const d=typeof v==="function"?v(settings):v;  setSettingsRaw(d);  saveLS("qimma_settings",d); gsWrite("settings",d); };
   const [invTxList,setInvTxListRaw]=useState(()=>loadLS("qimma_txlist",{}));
   const setInvTxList = v => { const d=typeof v==="function"?v(invTxList):v; setInvTxListRaw(d); saveLS("qimma_txlist",d); gsWrite("txlist",d); };
-  const [loans,setLoansRaw]=useState(()=>loadLS("qimma_loans",[]));
-  const setLoans = v => { const d=typeof v==="function"?v(loans):v; setLoansRaw(d); saveLS("qimma_loans",d); gsWrite("loans",d); };
-  const [zakatTx,setZakatTxRaw]=useState(()=>loadLS("qimma_zakat",[]));
-  const setZakatTx = v => { const d=typeof v==="function"?v(zakatTx):v; setZakatTxRaw(d); saveLS("qimma_zakat",d); gsWrite("zakat",d); };
-  const [pending,setPendingRaw]=useState(()=>loadLS("qimma_pending",[]));
-  const setPending = v => { const d=typeof v==="function"?v(pending):v; setPendingRaw(d); saveLS("qimma_pending",d); gsWrite("pending",d); };
-  const [payments,setPaymentsRaw]=useState(()=>loadLS("qimma_payments",[]));
-  const setPayments = v => { const d=typeof v==="function"?v(payments):v; setPaymentsRaw(d); saveLS("qimma_payments",d); gsWrite("payments",d); };
+  const [loans,setLoansRaw]=useState(()=>_arr(loadLS("qimma_loans",[])));
+  const setLoans = v => { const d=_arr(typeof v==="function"?v(loans):v); setLoansRaw(d); saveLS("qimma_loans",d); gsWrite("loans",d); };
+  const [zakatTx,setZakatTxRaw]=useState(()=>_arr(loadLS("qimma_zakat",[])));
+  const setZakatTx = v => { const d=_arr(typeof v==="function"?v(zakatTx):v); setZakatTxRaw(d); saveLS("qimma_zakat",d); gsWrite("zakat",d); };
+  const [pending,setPendingRaw]=useState(()=>_arr(loadLS("qimma_pending",[])));
+  const setPending = v => { const d=_arr(typeof v==="function"?v(pending):v); setPendingRaw(d); saveLS("qimma_pending",d); gsWrite("pending",d); };
+  const [payments,setPaymentsRaw]=useState(()=>_arr(loadLS("qimma_payments",[])));
+  const setPayments = v => { const d=_arr(typeof v==="function"?v(payments):v); setPaymentsRaw(d); saveLS("qimma_payments",d); gsWrite("payments",d); };
   const [completionAlert,setCompletionAlert]=useState(null);
 
   const toast=(msg,type="success")=>{setToastMsg(msg);setToastType(type);setTimeout(()=>setToastMsg(null),3000);};
