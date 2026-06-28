@@ -957,7 +957,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
                       {c.gName&&<button style={{...styles.btn("#8b5cf6"),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>setBondG(c)}>📜ك</button>}
                       <button style={{...styles.btn(C.ink),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>setCheque(c)}>📋م</button>
                       {c.gName&&<button style={{...styles.btn("#6b7280"),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>setChequeG(c)}>📋ك</button>}
-                      <button style={{...styles.btn("#f59e0b"),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>{setEditC(c);setEditForm({client:c.client,cPhone:c.cPhone||"",gName:c.gName||"",gPhone:c.gPhone||"",note:c.note||"",date:c.date,firstInst:c.firstInst||""});}}>✏️</button>
+                      <button style={{...styles.btn("#f59e0b"),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>{setEditC(c);setEditForm({client:c.client,cPhone:c.cPhone||"",gName:c.gName||"",gPhone:c.gPhone||"",note:c.note||"",date:c.date,firstInst:c.firstInst||"",investorId:c.investorId!=null?String(c.investorId):""});}}>✏️</button>
                       <button style={{...styles.btn(C.red),fontSize:14,padding:"5px 10px"}} onClick={()=>{if(confirm("حذف هذا العقد؟")){onDelete(c.id);toast("تم الحذف");}}}>🗑️</button>
                     </td>
                   </tr>
@@ -1068,11 +1068,18 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
               </div>
             ))}
             <div style={{gridColumn:"1/-1"}}>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المستثمر (الصندوق)</label>
+              <select style={styles.input} value={editForm.investorId||""} onChange={e=>setEditForm(f=>({...f,investorId:e.target.value}))}>
+                <option value="">— اختر المستثمر —</option>
+                {investors.map(i=><option key={i.id} value={String(i.id)}>{i.name} ({i.fund})</option>)}
+              </select>
+            </div>
+            <div style={{gridColumn:"1/-1"}}>
               <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>ملاحظة</label>
               <textarea style={{...styles.input,height:60}} value={editForm.note||""} onChange={e=>setEditForm(f=>({...f,note:e.target.value}))}/>
             </div>
           </div>
-          <button style={styles.btn(C.teal)} onClick={()=>{onUpdate({...editC,...editForm});setEditC(null);toast("✅ تم التعديل");}}>💾 حفظ التعديل</button>
+          <button style={styles.btn(C.teal)} onClick={()=>{const ef={...editForm}; if(ef.investorId!==undefined&&ef.investorId!=="") ef.investorId=parseInt(ef.investorId); onUpdate({...editC,...ef});setEditC(null);toast("✅ تم التعديل");}}>💾 حفظ التعديل</button>
         </div>
       </Modal>
 
