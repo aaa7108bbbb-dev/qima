@@ -1931,8 +1931,9 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
   })();
 
   const getVal = (key) => {
-    // رصيد البطاقات: تلقائي دائماً من العقود (يتجاهل أي قيمة يدوية قديمة)
-    if(key!=="cards" && overrides[selMonth+"_"+key]!==undefined) return overrides[selMonth+"_"+key];
+    // البطاقات والزكاة والاستقطاعات: تلقائية دائماً (تتجاهل أي قيمة يدوية قديمة)
+    const alwaysAuto = ["cards","zakat","deductions"];
+    if(!alwaysAuto.includes(key) && overrides[selMonth+"_"+key]!==undefined) return overrides[selMonth+"_"+key];
     // سحب تلقائي من الصفحات المرتبطة
     if(key==="loans") {
       return (loans||[]).reduce((s,l)=>{
@@ -2030,6 +2031,8 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
   const thS = {...styles.th, padding:"10px 14px"};
   const tdS = {...styles.td, padding:"9px 12px", verticalAlign:"middle"};
   const inpS = (color)=>({...styles.input,width:"100%",maxWidth:130,textAlign:"center",borderColor:color,color,fontWeight:700,padding:"6px 8px",fontSize:15});
+  // مربع للعرض فقط (شكل جمالي مثل المربعات بدون إمكانية الكتابة)
+  const boxRO = (color)=>({display:"inline-block",width:"100%",maxWidth:130,textAlign:"center",border:"1.5px solid "+color,borderRadius:8,color,fontWeight:800,padding:"7px 8px",fontSize:15,background:"#fafafa"});
 
   const Row = ({name,mojab,salib,onMojab,onSalib,auto,isInv,hint,i,autoSalib,hideMojab}) => (
     <tr style={{background:i%2===0?C.white:C.gray}}>
@@ -2040,13 +2043,13 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
       </td>
       <td style={{...tdS,textAlign:"center"}}>
         {auto
-          ? <span style={{fontWeight:800,color:C.green,fontSize:16}}>{mojab?Number(mojab).toLocaleString("ar-SA"):""}</span>
+          ? <span style={boxRO(C.green)}>{mojab?Number(mojab).toLocaleString("ar-SA"):"٠"}</span>
           : (!hideMojab && <input type="number" value={mojab||""} onChange={e=>onMojab(e.target.value)}
               placeholder="0" style={inpS(C.green)}/>)}
       </td>
       <td style={{...tdS,textAlign:"center"}}>
         {(autoSalib||auto)
-          ? <span style={{fontWeight:800,color:C.red,fontSize:16}}>{salib?Number(salib).toLocaleString("ar-SA"):""}</span>
+          ? <span style={boxRO(C.red)}>{salib?Number(salib).toLocaleString("ar-SA"):"٠"}</span>
           : <input type="number" value={salib||""} onChange={e=>onSalib(e.target.value)}
               placeholder="0" style={inpS(C.red)}/>
         }
@@ -2107,30 +2110,21 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
                 </td>
               </tr>
               {investors.map((inv,i)=>{
-                const auto = mc.filter(c=>c.investorId===inv.id).reduce((s,c)=>s+calcContract(c.amount,settings).net,0);
                 const cur = getInv(inv.id);
                 const mojab = cur>0?cur:0;
                 const salib = cur<0?Math.abs(cur):0;
-                return <Row key={inv.id} i={i} name={inv.name} mojab={mojab||""} salib={salib||""} auto={auto} isInv
-                  onMojab={v=>setInv(inv.id,1,v)}
-                  onSalib={v=>setInv(inv.id,-1,v)}/>;
+                return <Row key={inv.id} i={i} name={inv.name} mojab={mojab||""} salib={salib||""} auto={true} isInv
+                  onMojab={()=>{}}
+                  onSalib={()=>{}}/>;
               })}
 
-              {/* invRows مع المستثمرين */}
+              {/* invRows مع المستثمرين - كلها تلقائية للعرض فقط */}
               {invRows.map((row,i)=>{
                 const v = getVal(row.key);
-                if(row.key==="cards"){
-                  // رصيد البطاقات: تلقائي للعرض فقط (لا إدخال يدوي)
-                  return <Row key={row.key} i={i} name={row.name} hint={row.hint}
-                    mojab={v>=0?v:""} salib={v<0?Math.abs(v):""}
-                    onMojab={()=>{}} onSalib={()=>{}}
-                    auto={true} hideMojab={false}/>;
-                }
                 return <Row key={row.key} i={i} name={row.name} hint={row.hint}
-                  mojab={v>=0?v:""}
-                  salib={v<0?Math.abs(v):""}
-                  onMojab={v2=>setVal(row.key,parseFloat(v2)||0)}
-                  onSalib={v2=>setVal(row.key,-(parseFloat(v2)||0))}/>;
+                  mojab={v>=0?v:""} salib={v<0?Math.abs(v):""}
+                  onMojab={()=>{}} onSalib={()=>{}}
+                  auto={true} hideMojab={false}/>;
               })}
 
               {/* Section: الأصول */}
