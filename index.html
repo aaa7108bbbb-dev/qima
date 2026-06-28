@@ -2218,7 +2218,7 @@ function Dashboard({contracts,investors,settings,setInvestors}) {
                 <div key={fund} style={{padding:"16px 0",borderBottom:"1px solid "+C.border}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                     <div style={{textAlign:"right"}}>
-                      <div style={{fontWeight:800,fontSize:17,color:"#1a1a2e",marginBottom:4}}>{fund}</div>
+                      <div style={{fontWeight:800,fontSize:17,color:"#1a1a2e",marginBottom:4}}>{fundInvs.map(x=>x.name).join("، ")}</div>
                       <div style={{fontWeight:900,fontSize:24,color:cap>=0?C.green:C.red}}>{SAR(cap)}</div>
                     </div>
                     <div style={{textAlign:"left"}}>
@@ -2230,7 +2230,7 @@ function Dashboard({contracts,investors,settings,setInvestors}) {
                     {fundInvs.map(inv=>(
                       <button key={inv.id} style={{...styles.btn("#f0f4ff","#3b82f6"),fontSize:14,padding:"4px 10px"}}
                         onClick={()=>setEditFund({inv,form:{name:inv.name,fund:inv.fund,capital:String(inv.capital)}})}>
-                        ✏️ {inv.name}
+                        ✏️ {inv.fund}
                       </button>
                     ))}
                   </div>
