@@ -2875,11 +2875,7 @@ function App() {
   const [syncStatus, setSyncStatus] = useState("idle"); // idle | saving | saved | error | loading
 
   const gsRead = async (sheet) => {
-    try {
-      const res = await fetch(`${GS_URL}?action=read&sheet=${sheet}`);
-      const json = await res.json();
-      return json.data;
-    } catch (e) { return null; }
+    return null;
   };
   const gsWrite = async (sheet, data) => {
     try {
