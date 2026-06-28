@@ -796,14 +796,14 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
   const [contractDoc,setContractDoc] = useState(null);
   const [invSearch,setInvSearch] = useState("");
   const [reportMode,setReportMode] = useState("detailed"); // detailed or brief
-  const allFiltered = contracts.filter(c=>c.client.includes(search)||(investors.find(i=>i.id===c.investorId)?.name||"").includes(search));
+  const allFiltered = contracts.filter(c=>c.client.includes(search)||(investors.find(i=>String(i.id)===String(c.investorId))?.name||"").includes(search));
   const filtered = allFiltered.filter(c=> statusTab==="active" ? !doneIds.includes(c.id) : doneIds.includes(c.id));
   const activeCount = allFiltered.filter(c=>!doneIds.includes(c.id)).length;
   const completedCount = allFiltered.filter(c=>doneIds.includes(c.id)).length;
 
   // Investor report
   const invReportContracts = invSearch
-    ? contracts.filter(c=>(investors.find(i=>i.id===c.investorId)?.name||"")===invSearch && !doneIds.includes(c.id))
+    ? contracts.filter(c=>(investors.find(i=>String(i.id)===String(c.investorId))?.name||"")===invSearch && !doneIds.includes(c.id))
     : [];
 
   const today2 = new Date().toISOString().split("T")[0];
@@ -925,7 +925,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
               {filtered.length===0 ? (
                 <tr><td colSpan={18} style={{...styles.td,textAlign:"center",padding:40,color:"#9ca3af"}}>لا توجد عقود — أضف عقداً جديداً</td></tr>
               ) : filtered.slice().reverse().map((c,i)=>{
-                const inv=investors.find(x=>x.id===c.investorId);
+                const inv=investors.find(x=>String(x.id)===String(c.investorId));
                 const r=calcContract(c.amount,settings);
                 return (
                   <tr key={c.id} style={{background:i%2===0?C.white:C.gray}}>
@@ -1080,7 +1080,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
         <div style={{padding:"10px 12px 0",textAlign:"left"}}>
           <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-print-area")}>🖨️ طباعة</button>
         </div>
-        <div id="bond-print-area">{bond && <BondContent c={bond} inv={investors.find(i=>i.id===bond.investorId)} r={calcContract(bond.amount,settings)}/>}</div>
+        <div id="bond-print-area">{bond && <BondContent c={bond} inv={investors.find(i=>String(i.id)===String(bond.investorId))} r={calcContract(bond.amount,settings)}/>}</div>
       </Modal>
 
       {/* Cheque Modal */}
@@ -1088,7 +1088,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
         <div style={{padding:"10px 12px 0",textAlign:"left"}}>
           <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-g-print-area")}>🖨️ طباعة</button>
         </div>
-        <div id="bond-g-print-area">{bondG && <BondGuarantorContent c={bondG} inv={investors.find(i=>i.id===bondG.investorId)} r={calcContract(bondG.amount,settings)}/>}</div>
+        <div id="bond-g-print-area">{bondG && <BondGuarantorContent c={bondG} inv={investors.find(i=>String(i.id)===String(bondG.investorId))} r={calcContract(bondG.amount,settings)}/>}</div>
       </Modal>
 
       <Modal open={!!cheque} onClose={()=>setCheque(null)} title="📋 الكمبيالة - المشتري">
@@ -1111,7 +1111,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
           <button style={styles.btn(C.gold)} onClick={()=>printContent("contract-print-area")}>🖨️ طباعة</button>
         </div>
         <div id="contract-print-area">
-          {contractDoc && <ContractContent c={contractDoc} inv={investors.find(i=>i.id===contractDoc.investorId)} r={calcContract(contractDoc.amount,settings)} settings={settings} investors={investors}/>}
+          {contractDoc && <ContractContent c={contractDoc} inv={investors.find(i=>String(i.id)===String(contractDoc.investorId))} r={calcContract(contractDoc.amount,settings)} settings={settings} investors={investors}/>}
         </div>
       </Modal>
     </div>
@@ -1488,7 +1488,7 @@ function CommissionsPage({contracts, investors, settings}) {
 
   const rows = mc.map(c=>{
     const r = calcContract(c.amount, settings);
-    const inv = investors.find(i=>i.id===c.investorId);
+    const inv = investors.find(i=>String(i.id)===String(c.investorId));
     return {
       num: c.num||"—",
       client: c.client,
@@ -2212,7 +2212,7 @@ function Dashboard({contracts,investors,settings,setInvestors}) {
           <div style={{padding:"14px 18px"}}>
             {[...new Set(investors.map(i=>i.fund))].map(fund=>{
               const cap=investors.filter(i=>i.fund===fund).reduce((s,i)=>s+i.capital,0);
-              const fNet=mc.filter(c=>(investors.find(i=>i.id===c.investorId)?.fund)===fund).reduce((s,c)=>s+calcContract(c.amount,settings).net,0);
+              const fNet=mc.filter(c=>(investors.find(i=>String(i.id)===String(c.investorId))?.fund)===fund).reduce((s,c)=>s+calcContract(c.amount,settings).net,0);
               const fundInvs = investors.filter(i=>i.fund===fund);
               return (
                 <div key={fund} style={{padding:"16px 0",borderBottom:"1px solid "+C.border}}>
@@ -2282,7 +2282,7 @@ function Dashboard({contracts,investors,settings,setInvestors}) {
               <tbody>
                 {mc.slice(0,8).map((c,i)=>{
                   const r=calcContract(c.amount,settings);
-                  const inv=investors.find(x=>x.id===c.investorId);
+                  const inv=investors.find(x=>String(x.id)===String(c.investorId));
                   return (
                     <tr key={c.id} style={{background:i%2===0?C.white:C.gray}}>
                       <td style={{...styles.td,fontWeight:700}}>{c.client}</td>
@@ -2761,7 +2761,7 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
   };
 
   const ContractCard = ({c, isDone}) => {
-    const inv = investors.find(i=>i.id===c.investorId);
+    const inv = investors.find(i=>String(i.id)===String(c.investorId));
     const paid = _getPaid(payments, c.id);
     const left = Math.max(0,(c.totalInst||0)-paid);
     const pct = c.totalInst>0 ? Math.min(100,Math.round(paid/c.totalInst*100)) : 0;
