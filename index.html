@@ -2023,7 +2023,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
   const tdS = {...styles.td, padding:"9px 12px", verticalAlign:"middle"};
   const inpS = (color)=>({...styles.input,width:"100%",maxWidth:130,textAlign:"center",borderColor:color,color,fontWeight:700,padding:"6px 8px",fontSize:15});
 
-  const Row = ({name,mojab,salib,onMojab,onSalib,auto,isInv,hint,i,autoSalib}) => (
+  const Row = ({name,mojab,salib,onMojab,onSalib,auto,isInv,hint,i,autoSalib,hideMojab}) => (
     <tr style={{background:i%2===0?C.white:C.gray}}>
       <td style={tdS}>
         <span style={{fontWeight:700}}>{name}</span>
@@ -2031,8 +2031,8 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
         {isInv && <div style={{fontSize:13,color:"#9ca3af",marginTop:2}}>رصيد الحساب الجاري</div>}
       </td>
       <td style={{...tdS,textAlign:"center"}}>
-        <input type="number" value={mojab||""} onChange={e=>onMojab(e.target.value)}
-          placeholder="0" style={inpS(C.green)}/>
+        {!hideMojab && <input type="number" value={mojab||""} onChange={e=>onMojab(e.target.value)}
+          placeholder="0" style={inpS(C.green)}/>}
       </td>
       <td style={{...tdS,textAlign:"center"}}>
         {autoSalib
@@ -2125,12 +2125,18 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
               {otherRows.map((row,i)=>{
                 const v = getVal(row.key);
                 const isAuto = row.key==="loans";
+                if(isAuto){
+                  // السلف: ثابتة في خانة السالب فقط (تلقائية)
+                  return <Row key={row.key} i={i} name={row.name} hint={row.hint}
+                    mojab={""} salib={Math.abs(v)}
+                    onMojab={()=>{}} onSalib={()=>{}}
+                    autoSalib={true} hideMojab={true}/>;
+                }
                 return <Row key={row.key} i={i} name={row.name} hint={row.hint}
                   mojab={v>=0?v:""}
                   salib={v<0?Math.abs(v):""}
-                  onMojab={isAuto?()=>{}:v2=>setVal(row.key,parseFloat(v2)||0)}
-                  onSalib={isAuto?()=>{}:v2=>setVal(row.key,-(parseFloat(v2)||0))}
-                  autoSalib={isAuto}/>;
+                  onMojab={v2=>setVal(row.key,parseFloat(v2)||0)}
+                  onSalib={v2=>setVal(row.key,-(parseFloat(v2)||0))}/>;
               })}
 
               {/* Total row */}
