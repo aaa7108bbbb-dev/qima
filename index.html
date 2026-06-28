@@ -2910,7 +2910,17 @@ function App() {
   const setSettings  = v => { const d=typeof v==="function"?v(settings):v;  setSettingsRaw(d);  saveLS("qimma_settings",d); gsWrite("settings",d); };
   const [invTxList,setInvTxListRaw]=useState(()=>loadLS("qimma_txlist",{}));
   const setInvTxList = v => { const d=typeof v==="function"?v(invTxList):v; setInvTxListRaw(d); saveLS("qimma_txlist",d); gsWrite("txlist",d); };
-  const [loans,setLoansRaw]=useState(()=>_arr(loadLS("qimma_loans",[])));
+  const [loans,setLoansRaw]=useState(()=>{
+    const raw=_arr(loadLS("qimma_loans",[]));
+    // تجاهل أي سلف قديمة بقيمة بدون تفاصيل حقيقية (تنظيف لمرة واحدة)
+    if(!localStorage.getItem("qimma_loans_cleaned")){
+      localStorage.setItem("qimma_loans_cleaned","1");
+      localStorage.removeItem("qimma_loans");
+      localStorage.removeItem("qimma_jard_ov");
+      return [];
+    }
+    return raw;
+  });
   const setLoans = v => { const d=_arr(typeof v==="function"?v(loans):v); setLoansRaw(d); saveLS("qimma_loans",d); gsWrite("loans",d); };
   const [zakatTx,setZakatTxRaw]=useState(()=>_arr(loadLS("qimma_zakat",[])));
   const setZakatTx = v => { const d=_arr(typeof v==="function"?v(zakatTx):v); setZakatTxRaw(d); saveLS("qimma_zakat",d); gsWrite("zakat",d); };
