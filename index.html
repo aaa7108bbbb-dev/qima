@@ -1902,13 +1902,13 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
 }
 
 // ─── Monthly Jard ────────────────────────────────────────────
-function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,payments}) {
+function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,payments,gsWrite}) {
   const today = new Date();
   const currentYM = today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0");
   const months = [...new Set(contracts.map(c=>{const d=new Date(c.date);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}))].sort().reverse();
   if(!months.includes(currentYM)) months.unshift(currentYM);
   const [selMonth,setSelMonth]=useState(months[0]);
-  const [overrides,setOverrides]=useState({});
+  const [overrides,setOverrides]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_jard_ov")||"{}");}catch{return {};}});
 
   const mLabel=ym=>{const[y,m]=ym.split("-");const ns=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];return(ns[parseInt(m)-1]||"")+" "+y;};
   const mc = contracts.filter(c=>{const d=new Date(c.date);return(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"))===selMonth;});
@@ -1957,7 +1957,12 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     }
     return 0;
   };
-  const setVal = (key,v) => setOverrides(p=>({...p,[selMonth+"_"+key]:parseFloat(v)||0}));
+  const setVal = (key,v) => setOverrides(p=>{
+    const newOv={...p,[selMonth+"_"+key]:parseFloat(v)||0};
+    localStorage.setItem("qimma_jard_ov",JSON.stringify(newOv));
+    gsWrite("jard_ov",newOv);
+    return newOv;
+  });
   const getInv = (id) => {
     const key = selMonth+"_inv_"+id;
     if(overrides[key]!==undefined) return overrides[key];
@@ -1975,7 +1980,12 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
   };
   const setInv = (id,sign,v) => {
     const key = selMonth+"_inv_"+id;
-    setOverrides(p=>({...p,[key]: sign===1 ? (parseFloat(v)||0) : -(parseFloat(v)||0)}));
+    setOverrides(p=>{
+      const newOv={...p,[key]: sign===1 ? (parseFloat(v)||0) : -(parseFloat(v)||0)};
+      localStorage.setItem("qimma_jard_ov",JSON.stringify(newOv));
+      gsWrite("jard_ov",newOv);
+      return newOv;
+    });
   };
 
   // مع المستثمرين (خصوم)
@@ -2909,10 +2919,10 @@ function App() {
   useEffect(()=>{
     (async ()=>{
       setSyncStatus("loading");
-      const [inv, con, set, tx, ln, zk, pd, pay, gd] = await Promise.all([
+      const [inv, con, set, tx, ln, zk, pd, pay, gd, jov] = await Promise.all([
         gsRead("investors"), gsRead("contracts"), gsRead("settings"),
         gsRead("txlist"), gsRead("loans"), gsRead("zakat"),
-        gsRead("pending"), gsRead("payments"), gsRead("goods3")
+        gsRead("pending"), gsRead("payments"), gsRead("goods3"), gsRead("jard_ov")
       ]);
       if (inv) { setInvestorsRaw(inv); saveLS("qimma_investors", inv); }
       if (con) { setContractsRaw(con); saveLS("qimma_contracts", con); }
@@ -2923,6 +2933,7 @@ function App() {
       if (pd)  { setPendingRaw(pd); saveLS("qimma_pending", pd); }
       if (pay) { setPaymentsRaw(pay); saveLS("qimma_payments", pay); }
       if (gd)  { localStorage.setItem("qimma_goods3", JSON.stringify(gd)); }
+      if (jov) { localStorage.setItem("qimma_jard_ov", JSON.stringify(jov)); }
       setSyncStatus("idle");
     })();
   }, []);
@@ -2977,7 +2988,7 @@ function App() {
         {page==="search" && <SearchPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast}/>}
         {page==="new" && <NewContractPage investors={investors} settings={settings} contracts={contracts} onSave={c=>{setContracts(p=>[...p,c]);setPage("contracts");}} toast={toast} setInvTxList={setInvTxList}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.filter(c=>c.id!==id))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert}/>}
-        {page==="jard" && <JardPage contracts={contracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments}/>}
+        {page==="jard" && <JardPage contracts={contracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite}/>}
         {page==="accounts" && <AccountsPage contracts={contracts} investors={investors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments}/>}
         {page==="commissions" && <CommissionsPage contracts={contracts} investors={investors} settings={settings}/>}
         {page==="investors" && <InvestorsPage investors={investors} contracts={contracts} settings={settings} payments={payments} onAdd={inv=>setInvestors(p=>[...p,inv])} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} toast={toast}/>}
