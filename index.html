@@ -113,15 +113,15 @@ function fmtDate(dateStr) {
 }
 
 const DEFAULT_INVESTORS = [
-  {id:1,  name:"عبدالله لفاء القديم 4",        fund:"عبدالله لفاء (القديم)",   capital:-607885, date:"2026-06-01"},
-  {id:2,  name:"عبدالله لفاء الأسهم 11",       fund:"عبدالله لفاء (الأسهم)",   capital:15077,   date:"2026-06-01"},
-  {id:3,  name:"عبدالله لفاء المصاريف 7",      fund:"عبدالله لفاء (المصاريف)", capital:-268733, date:"2026-06-01"},
-  {id:4,  name:"عبدالله لفاء المليون 8",       fund:"عبدالله لفاء (المليون)",  capital:555320,  date:"2026-06-01"},
-  {id:5,  name:"عبدالله لفاء الجيب 9",         fund:"عبدالله لفاء (الجيب)",    capital:26628,   date:"2026-06-01"},
-  {id:6,  name:"عبدالله لفاء المجموعه 10",     fund:"عبدالله لفاء (المجموعه)", capital:383451,  date:"2026-06-01"},
-  {id:7,  name:"حامد لفاء الحربي",             fund:"حامد لفاء الحربي",        capital:317100,  date:"2026-06-01"},
-  {id:8,  name:"لفاء نغموش الحربي",            fund:"لفاء نغموش الحربي",       capital:271770,  date:"2026-06-01"},
-  {id:9,  name:"مؤسسة قمة الفرصة التجارية 3", fund:"مؤسسة قمة الفرصة",        capital:295542,  date:"2026-06-01"},
+  {id:1,  name:"مؤسسة قمة الفرصة التجارية 4",   fund:"عبدالله لفاء (القديم)",   capital:-607885, date:"2026-06-01"},
+  {id:2,  name:"مؤسسة قمة الفرصة التجارية 11",  fund:"عبدالله لفاء (الأسهم)",   capital:382401,  date:"2026-06-01"},
+  {id:3,  name:"مؤسسة قمة الفرصة التجارية 7",   fund:"عبدالله لفاء (المصاريف)", capital:-269033, date:"2026-06-01"},
+  {id:4,  name:"مؤسسة قمة الفرصة التجارية 10",  fund:"عبدالله لفاء (المجموعة)", capital:382401,  date:"2026-06-01"},
+  {id:5,  name:"مؤسسة قمة الفرصة التجارية ل.ن", fund:"لفاء نغموش الحربي",       capital:271770,  date:"2026-06-01"},
+  {id:6,  name:"مؤسسة قمة الفرصة التجارية ح.ل", fund:"حامد لفاء الحربي",        capital:317100,  date:"2026-06-01"},
+  {id:7,  name:"مؤسسة قمة الفرصة التجارية 9",   fund:"عبدالله لفاء (الجيب)",    capital:295168,  date:"2026-06-01"},
+  {id:8,  name:"مؤسسة قمة الفرصة التجارية 8",   fund:"عبدالله لفاء (المليون)",  capital:555320,  date:"2026-06-01"},
+  {id:9,  name:"مؤسسة قمة الفرصة التجارية 3",   fund:"مؤسسة قمة الفرصة",        capital:295542,  date:"2026-06-01"},
 ];
 
 const GOODS_LIST = ["بطاقة سوا","بطاقة موبايلي","بطاقة زين","أسهم","سيارة","جوال"];
@@ -2907,7 +2907,14 @@ function App() {
     try { localStorage.setItem(key, JSON.stringify(val)); } catch{}
   };
 
-  const [investors,setInvestorsRaw]=useState(()=>{const d=loadLS("qimma_investors",DEFAULT_INVESTORS);return d&&d.length?d:DEFAULT_INVESTORS;});
+  const [investors,setInvestorsRaw]=useState(()=>{
+    // تنظيف لمرة واحدة: مسح أسماء المستثمرين القديمة المخزنة محلياً لإجبار القراءة الطازجة
+    if(!localStorage.getItem("qimma_inv_names_fixed")){
+      localStorage.setItem("qimma_inv_names_fixed","1");
+      localStorage.removeItem("qimma_investors");
+      return DEFAULT_INVESTORS;
+    }
+    const d=loadLS("qimma_investors",DEFAULT_INVESTORS);return d&&d.length?d:DEFAULT_INVESTORS;});
   const [contracts,setContractsRaw]=useState(()=>_arr(loadLS("qimma_contracts",[])));
   const [settings,setSettingsRaw]=useState(()=>loadLS("qimma_settings",{profit:50,admin:2.5,acc:10,inst:10}));
 
