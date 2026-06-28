@@ -2909,10 +2909,10 @@ function App() {
   useEffect(()=>{
     (async ()=>{
       setSyncStatus("loading");
-      const [inv, con, set, tx, ln, zk, pd, pay] = await Promise.all([
+      const [inv, con, set, tx, ln, zk, pd, pay, gd] = await Promise.all([
         gsRead("investors"), gsRead("contracts"), gsRead("settings"),
         gsRead("txlist"), gsRead("loans"), gsRead("zakat"),
-        gsRead("pending"), gsRead("payments")
+        gsRead("pending"), gsRead("payments"), gsRead("goods3")
       ]);
       if (inv) { setInvestorsRaw(inv); saveLS("qimma_investors", inv); }
       if (con) { setContractsRaw(con); saveLS("qimma_contracts", con); }
@@ -2922,6 +2922,7 @@ function App() {
       if (zk)  { setZakatTxRaw(zk); saveLS("qimma_zakat", zk); }
       if (pd)  { setPendingRaw(pd); saveLS("qimma_pending", pd); }
       if (pay) { setPaymentsRaw(pay); saveLS("qimma_payments", pay); }
+      if (gd)  { localStorage.setItem("qimma_goods3", JSON.stringify(gd)); }
       setSyncStatus("idle");
     })();
   }, []);
