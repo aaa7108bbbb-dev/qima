@@ -2126,9 +2126,9 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
                 const v = getVal(row.key);
                 const isAuto = row.key==="loans";
                 return <Row key={row.key} i={i} name={row.name} hint={row.hint}
-                  mojab={""}
-                  salib={Math.abs(v)}
-                  onMojab={()=>{}}
+                  mojab={v>=0?v:""}
+                  salib={v<0?Math.abs(v):""}
+                  onMojab={isAuto?()=>{}:v2=>setVal(row.key,parseFloat(v2)||0)}
                   onSalib={isAuto?()=>{}:v2=>setVal(row.key,-(parseFloat(v2)||0))}
                   autoSalib={isAuto}/>;
               })}
