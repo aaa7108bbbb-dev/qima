@@ -340,7 +340,7 @@ function ChequeContent({c,r,isGuarantor=false}) {
   const idNum = isGuarantor ? (c.gId||"...............") : (c.idNum||"...............");
   return (
     <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",padding:"36px 40px",color:"#000",lineHeight:2.6,border:"2px solid #000"}}>
-      <div style={{textAlign:"center",fontSize:24,fontWeight:900,letterSpacing:3,marginBottom:28,borderBottom:"3px double #000",paddingBottom:12}}>كمبيالة</div>
+      <div style={{textAlign:"center",fontSize:24,fontWeight:900,letterSpacing:3,marginBottom:28,borderBottom:"3px double #000",paddingBottom:12}}>عقد</div>
       {[["نعم أنا /",name],["هوية وطنية /",idNum],["عندي وفي ذمتي للمدعو /"," "]].map(([l,v])=>(
         <div key={l} style={{display:"flex",gap:8,alignItems:"flex-end",marginBottom:4,fontSize:17}}>
           <span style={{fontWeight:800,whiteSpace:"nowrap"}}>{l}</span>
@@ -349,7 +349,7 @@ function ChequeContent({c,r,isGuarantor=false}) {
       ))}
       <div style={{border:"2px solid #000",borderRadius:8,padding:"12px 18px",textAlign:"center",fontSize:19,fontWeight:800,margin:"14px 0",background:"#fffbf0"}}>
         {words} | ( {total.toLocaleString("ar-SA")} ريال )
-        <div style={{fontSize:15,fontWeight:500,color:"#555",marginTop:4}}>وذلك قيمة ( قرض حسن )</div>
+        <div style={{fontSize:15,fontWeight:500,color:"#555",marginTop:4}}>وذلك قيمة ( تحويل الى حسابه الشخصي )</div>
       </div>
       <div style={{display:"flex",gap:8,alignItems:"flex-end",marginBottom:4,fontSize:17}}>
         <span style={{fontWeight:800,whiteSpace:"nowrap"}}>ومستعد في سداده بتاريخ /</span>
@@ -1098,14 +1098,14 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
         <div id="bond-g-print-area">{bondG && <BondGuarantorContent c={bondG} inv={investors.find(i=>String(i.id)===String(bondG.investorId))} r={calcContract(bondG.amount,settings)}/>}</div>
       </Modal>
 
-      <Modal open={!!cheque} onClose={()=>setCheque(null)} title="📋 الكمبيالة - المشتري">
+      <Modal open={!!cheque} onClose={()=>setCheque(null)} title="📋 العقد - المشتري">
         <div style={{padding:"10px 12px 0",textAlign:"left"}}>
           <button style={styles.btn(C.gold)} onClick={()=>printContent("cheque-print-area")}>🖨️ طباعة</button>
         </div>
         <div id="cheque-print-area">{cheque && <ChequeContent c={cheque} r={calcContract(cheque.amount,settings)}/>}</div>
       </Modal>
 
-      <Modal open={!!chequeG} onClose={()=>setChequeG(null)} title="📋 الكمبيالة - الكفيل">
+      <Modal open={!!chequeG} onClose={()=>setChequeG(null)} title="📋 العقد - الكفيل">
         <div style={{padding:"10px 12px 0",textAlign:"left"}}>
           <button style={styles.btn(C.gold)} onClick={()=>printContent("cheque-g-print-area")}>🖨️ طباعة</button>
         </div>
