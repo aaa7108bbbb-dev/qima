@@ -762,7 +762,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
 }
 
 // ─── Contracts Page ──────────────────────────────────────────
-const _getPaid = (payments, cid) => (payments||[]).filter(p=>p.contractId===cid).reduce((s,p)=>s+p.amount,0);
+const _getPaid = (payments, cid) => (Array.isArray(payments) ? payments : []).filter(p=>p.contractId===cid).reduce((s,p)=>s+p.amount,0);
 
 function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,setPayments,toast,completionAlert,setCompletionAlert}) {
   const [payModal,setPayModal]=useState(null);
@@ -1005,7 +1005,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
             </div>
             <button style={{...styles.btn(C.green),marginBottom:16}} onClick={addPayment}>💾 تسجيل السداد</button>
             {/* Payment history */}
-            {(payments||[]).filter(p=>p.contractId===payModal.id).length>0 && (
+            {(Array.isArray(payments) ? payments : []).filter(p=>p.contractId===payModal.id).length>0 && (
               <div>
                 <div style={{fontSize:15,fontWeight:700,marginBottom:8,color:C.ink2}}>سجل المدفوعات:</div>
                 <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
@@ -1016,7 +1016,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
                     <th style={styles.th}></th>
                   </tr></thead>
                   <tbody>
-                    {(payments||[]).filter(p=>p.contractId===payModal.id).map((p,i)=>(
+                    {(Array.isArray(payments) ? payments : []).filter(p=>p.contractId===payModal.id).map((p,i)=>(
                       <tr key={p.id} style={{background:i%2===0?C.white:C.gray}}>
                         <td style={styles.td}>{p.date}</td>
                         <td style={{...styles.td,color:C.green,fontWeight:700}}>{SAR(p.amount)}</td>
@@ -1231,10 +1231,10 @@ function LoansPage({loans, setLoans}) {
   };
 
   const totalOut = loans.reduce((s,l)=>{
-    const paid = (l.payments||[]).reduce((ss,p)=>ss+p.amount,0);
+    const paid = (Array.isArray(l.payments) ? l.payments : []).reduce((ss,p)=>ss+p.amount,0);
     return s + Math.max(0, l.amount - paid);
   },0);
-  const totalPaid = loans.reduce((s,l)=>(l.payments||[]).reduce((ss,p)=>ss+p.amount,0)+s,0);
+  const totalPaid = loans.reduce((s,l)=>(Array.isArray(l.payments) ? l.payments : []).reduce((ss,p)=>ss+p.amount,0)+s,0);
 
   return (
     <div>
@@ -1268,7 +1268,7 @@ function LoansPage({loans, setLoans}) {
         {loans.length===0 ? (
           <div style={{...styles.panel,padding:40,textAlign:"center",color:"#9ca3af"}}>لا توجد سلف مسجلة</div>
         ) : loans.map(l=>{
-          const paid = (l.payments||[]).reduce((s,p)=>s+p.amount,0);
+          const paid = (Array.isArray(l.payments) ? l.payments : []).reduce((s,p)=>s+p.amount,0);
           const remaining = Math.max(0, l.amount - paid);
           const pct = l.amount>0 ? Math.min(100, Math.round(paid/l.amount*100)) : 0;
           return (
@@ -1974,7 +1974,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
       const r=calcContract(c.amount,settings);
       return s-(c.amount+r.acc+r.inst+r.admin);
     },0);
-    const autoPaid = (payments||[]).filter(p=>myContracts.find(c=>c.id===p.contractId)).reduce((s,p)=>s+p.amount,0);
+    const autoPaid = (Array.isArray(payments) ? payments : []).filter(p=>myContracts.find(c=>c.id===p.contractId)).reduce((s,p)=>s+p.amount,0);
     const manualTotal = myManualTx.reduce((s,t)=>s+t.amount,0);
     return capital + autoDeduct + autoPaid + manualTotal;
   };
