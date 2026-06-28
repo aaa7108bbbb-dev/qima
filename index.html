@@ -836,7 +836,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onUpdate,payments,
                 {invReportContracts.map((c,i)=>{
                   const paid = _getPaid(payments,c.id);
                   const left = Math.max(0,(c.totalInst||0)-paid);
-                  const lastPay = [...(payments||[])].filter(p=>p.contractId===c.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+                  const lastPay = [...(Array.isArray(payments) ? payments : [])].filter(p=>p.contractId===c.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
                   const daysSince = lastPay ? Math.floor((new Date(today2)-new Date(lastPay.date))/(1000*60*60*24)) : 999;
                   const late = left>0 && daysSince>35 ? daysSince-30 : 0;
                   return (
@@ -1231,10 +1231,10 @@ function LoansPage({loans, setLoans}) {
   };
 
   const totalOut = loans.reduce((s,l)=>{
-    const paid = (Array.isArray(l.payments) ? l.payments : []).reduce((ss,p)=>ss+p.amount,0);
+    const paid = (l.payments||[]).reduce((ss,p)=>ss+p.amount,0);
     return s + Math.max(0, l.amount - paid);
   },0);
-  const totalPaid = loans.reduce((s,l)=>(Array.isArray(l.payments) ? l.payments : []).reduce((ss,p)=>ss+p.amount,0)+s,0);
+  const totalPaid = loans.reduce((s,l)=>(l.payments||[]).reduce((ss,p)=>ss+p.amount,0)+s,0);
 
   return (
     <div>
@@ -1268,7 +1268,7 @@ function LoansPage({loans, setLoans}) {
         {loans.length===0 ? (
           <div style={{...styles.panel,padding:40,textAlign:"center",color:"#9ca3af"}}>لا توجد سلف مسجلة</div>
         ) : loans.map(l=>{
-          const paid = (Array.isArray(l.payments) ? l.payments : []).reduce((s,p)=>s+p.amount,0);
+          const paid = (l.payments||[]).reduce((s,p)=>s+p.amount,0);
           const remaining = Math.max(0, l.amount - paid);
           const pct = l.amount>0 ? Math.min(100, Math.round(paid/l.amount*100)) : 0;
           return (
@@ -1673,7 +1673,7 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
 
   // Auto payments grouped by month
   const paysByMonth = {};
-  (payments||[]).forEach(p=>{
+  (Array.isArray(payments) ? payments : []).forEach(p=>{
     const c = myContracts.find(x=>x.id===p.contractId);
     if(!c) return;
     const d = new Date(p.date);
@@ -1925,13 +1925,13 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     if(overrides[selMonth+"_"+key]!==undefined) return overrides[selMonth+"_"+key];
     // سحب تلقائي من الصفحات المرتبطة
     if(key==="loans") {
-      return (loans||[]).reduce((s,l)=>{
-        const paid=Array.isArray(l.payments)?(l.payments.reduce((ss,p)=>ss+(p.amount||0),0)):0;
+      return (Array.isArray(loans) ? loans : []).reduce((s,l)=>{
+        const paid=(l.payments||[]).reduce((ss,p)=>ss+p.amount,0);
         return s+Math.max(0,(l.amount||0)-paid);
       },0);
     }
-    if(key==="zakat")   return (zakatTx||[]).reduce((s,t)=>s+(t.type==="collect"?t.amount:-t.amount),0);
-    if(key==="deductions") return (pending||[]).reduce((s,p)=>s+p.amount,0);
+    if(key==="zakat")   return (Array.isArray(zakatTx) ? zakatTx : []).reduce((s,t)=>s+(t.type==="collect"?t.amount:-t.amount),0);
+    if(key==="deductions") return (Array.isArray(pending) ? pending : []).reduce((s,p)=>s+p.amount,0);
     if(key==="cards") {
       // Match GoodsPage calculation exactly
       const cRows = contracts.map(c=>({
@@ -2871,11 +2871,15 @@ function App() {
   const [toastType,setToastType]=useState("");
 
   // ═══ Google Sheets backend ═══
-  const SHEET_ID = "1-c9ltUYaw5N7sPvdIaWPAo-ioN3v3hoXktam6s0oY-g"; const GS_URL = "";
+  const GS_URL = "https://script.google.com/macros/s/AKfycbyAH-4t0dkfSpJ3Q-0M_j8tXRrZk1bOSilSaMm-8wDA8vrIBEF-K1RNDdGIRD4oWiUAyA/exec";
   const [syncStatus, setSyncStatus] = useState("idle"); // idle | saving | saved | error | loading
 
   const gsRead = async (sheet) => {
-    return null;
+    try {
+      const res = await fetch(`${GS_URL}?action=read&sheet=${sheet}`);
+      const json = await res.json();
+      return json.data;
+    } catch (e) { return null; }
   };
   const gsWrite = async (sheet, data) => {
     try {
