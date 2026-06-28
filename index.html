@@ -2031,8 +2031,8 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
         {isInv && <div style={{fontSize:13,color:"#9ca3af",marginTop:2}}>رصيد الحساب الجاري</div>}
       </td>
       <td style={{...tdS,textAlign:"center"}}>
-        {mojab!==""&&<input type="number" value={mojab||""} onChange={e=>onMojab(e.target.value)}
-          placeholder="0" style={inpS(C.green)}/>}
+        <input type="number" value={mojab||""} onChange={e=>onMojab(e.target.value)}
+          placeholder="0" style={inpS(C.green)}/>
       </td>
       <td style={{...tdS,textAlign:"center"}}>
         {autoSalib
