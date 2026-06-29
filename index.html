@@ -524,7 +524,7 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
 function NewContractPage({investors, settings, contracts, onSave, toast, setInvTxList}) {
   const today = new Date().toISOString().split("T")[0];
   const nextNum = contracts.length ? Math.max(...contracts.map(c=>parseInt(c.num)||0).filter(n=>n>0), 0) + 1 : (settings.startNum||1);
-  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:""});
+  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:"",contractType:"monthly",deferMonths:"12",deferPayments:"1"});
   const set = (k,v) => {
     setForm(f=>({...f,[k]:v}));
     // Auto-fill if idNum entered and matches existing contract
@@ -545,14 +545,37 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
   const lastInst = (form.firstInst && numMonths > 0) ? addMonths(form.firstInst, numMonths - 1) : "";
 
   const save = () => {
-    if(!form.client||!form.investorId||!amount||!form.totalInst||!form.instAmt||!form.date||!form.goods||!form.firstInst){
-      toast("⚠️ يرجى تعبئة جميع الحقول المطلوبة","warn"); return;
+    const isDefer = form.contractType==="defer";
+    // المؤجل: المبلغ والإجمالي يدوي، القسط يُحسب من الإجمالي ÷ عدد الدفعات
+    let saveForm = {...form};
+    if(isDefer){
+      const months = parseInt(form.deferMonths)||12;
+      const nPays = parseInt(form.deferPayments)||1;
+      if(!form.client||!form.investorId||!amount||!form.totalInst||!form.date||!form.goods){
+        toast("⚠️ يرجى تعبئة المبلغ النقدي والإجمالي وبقية الحقول","warn"); return;
+      }
+      const total = parseFloat(form.totalInst)||amount;  // الإجمالي اللي كتبه المستخدم (مع فائدته)
+      saveForm.totalInst = total;
+      saveForm.instAmt = Math.round(total/nPays);  // قيمة الدفعة
+      saveForm.firstInst = form.firstInst || addMonths(form.date, nPays===1?months:Math.round(months/2));
+      saveForm.numMonths = months;
+    } else {
+      if(!form.client||!form.investorId||!amount||!form.totalInst||!form.instAmt||!form.date||!form.goods||!form.firstInst){
+        toast("⚠️ يرجى تعبئة جميع الحقول المطلوبة","warn"); return;
+      }
     }
     const rr = calcContract(amount, settings);
     const id = Date.now();
-    const contract = {id, ...form, amount, totalInst:parseFloat(form.totalInst), instAmt:parseFloat(form.instAmt), lastInst, numMonths,
-      investorId:parseInt(form.investorId), lastInst,
-      profit:rr.profit, admin:rr.admin, acc:rr.acc, inst:rr.inst, net:rr.net, total:rr.total};
+    const _totalInst = parseFloat(saveForm.totalInst), _instAmt = parseFloat(saveForm.instAmt);
+    const _numMonths = isDefer ? saveForm.numMonths : numMonths;
+    const _lastInst = isDefer
+      ? addMonths(saveForm.firstInst, (parseInt(form.deferPayments)||1)===2 ? Math.round((parseInt(form.deferMonths)||12)/2) : 0)
+      : lastInst;
+    // للمؤجل: الربح = الإجمالي − النقدي (فائدة المستخدم)
+    const deferProfit = isDefer ? (_totalInst - amount) : rr.profit;
+    const contract = {id, ...saveForm, amount, totalInst:_totalInst, instAmt:_instAmt, lastInst:_lastInst, numMonths:_numMonths,
+      investorId:parseInt(form.investorId),
+      profit:deferProfit, admin:rr.admin, acc:rr.acc, inst:rr.inst, net:rr.net, total:rr.total};
     onSave(contract);
     // Add deduct to investor account
     if(form.deductEnabled && form.deductAmount && form.deductInvestorId && setInvTxList) {
@@ -656,15 +679,82 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
             </div>
           </div>
 
+          {/* نوع العقد */}
+          <div style={{marginBottom:14,background:"#f8fafc",border:"2px solid "+C.border,borderRadius:12,padding:"14px 16px"}}>
+            <label style={{fontSize:15,fontWeight:800,color:C.ink2,display:"block",marginBottom:8}}>📑 نوع العقد *</label>
+            <div style={{display:"flex",gap:8,marginBottom:form.contractType==="defer"?14:0}}>
+              <button type="button" onClick={()=>set("contractType","monthly")}
+                style={{flex:1,padding:"12px",borderRadius:10,border:"2px solid "+(form.contractType==="monthly"?C.teal:C.border),background:form.contractType==="monthly"?C.tealLt:"#fff",color:form.contractType==="monthly"?C.teal:C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"Tajawal,Arial"}}>
+                📅 شهري
+              </button>
+              <button type="button" onClick={()=>set("contractType","defer")}
+                style={{flex:1,padding:"12px",borderRadius:10,border:"2px solid "+(form.contractType==="defer"?C.gold:C.border),background:form.contractType==="defer"?"#fef9ec":"#fff",color:form.contractType==="defer"?"#a87520":C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"Tajawal,Arial"}}>
+                🕒 مؤجل
+              </button>
+            </div>
+            {form.contractType==="defer" && (
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                <div>
+                  <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>مدة التأجيل</label>
+                  <select style={styles.select} value={form.deferMonths} onChange={e=>set("deferMonths",e.target.value)}>
+                    <option value="3">3 شهور</option>
+                    <option value="4">4 شهور</option>
+                    <option value="5">5 شهور</option>
+                    <option value="6">6 شهور</option>
+                    <option value="7">7 شهور</option>
+                    <option value="8">8 شهور</option>
+                    <option value="9">9 شهور</option>
+                    <option value="12">سنة</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>عدد الدفعات</label>
+                  <select style={styles.select} value={form.deferPayments} onChange={e=>set("deferPayments",e.target.value)}>
+                    <option value="1">دفعة واحدة (نهاية المدة)</option>
+                    <option value="2">دفعتين (نصف ونهاية المدة)</option>
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* بيانات المبلغ */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12,marginBottom:14}}>
-            {fields2.map(f=>(
+            {fields2.filter(f=>{
+              // للمؤجل نخفي القسط الشهري وتاريخ أول قسط (يحسبوا تلقائياً)، ونبقي الإجمالي ليكتبه المستخدم
+              if(form.contractType==="defer" && (f.key==="instAmt"||f.key==="firstInst")) return false;
+              return true;
+            }).map(f=>(
               <div key={f.key}>
-                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{f.label}</label>
-                <input style={{...styles.input,borderColor:["amount","instAmt"].includes(f.key)?C.teal:C.border,fontWeight:["amount","instAmt"].includes(f.key)?700:400}} type={f.type} placeholder={f.ph} value={form[f.key]} onChange={e=>set(f.key,e.target.value)}/>
+                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{
+                  form.contractType==="defer" ? (f.key==="amount"?"المبلغ نقداً *":f.key==="totalInst"?"المبلغ الإجمالي (مع فائدتك) *":f.label) : f.label
+                }</label>
+                <input style={{...styles.input,borderColor:["amount","instAmt","totalInst"].includes(f.key)?C.teal:C.border,fontWeight:["amount","instAmt","totalInst"].includes(f.key)?700:400}} type={f.type} placeholder={f.key==="totalInst"&&form.contractType==="defer"?"اكتب الإجمالي مع الفائدة":f.ph} value={form[f.key]} onChange={e=>set(f.key,e.target.value)}/>
               </div>
             ))}
           </div>
+
+          {/* معاينة المؤجل */}
+          {form.contractType==="defer" && amount>0 && parseFloat(form.totalInst)>0 && (()=>{
+            const months=parseInt(form.deferMonths)||12, nPays=parseInt(form.deferPayments)||1;
+            const total=parseFloat(form.totalInst)||amount;
+            const profit=total-amount;
+            const profitPct=amount>0?Math.round((profit/amount)*100):0;
+            const perPay=Math.round(total/nPays);
+            const firstD=addMonths(form.date||today, nPays===1?months:Math.round(months/2));
+            const lastD=addMonths(form.date||today, months);
+            return (
+              <div style={{background:"#fef9ec",border:"2px solid #e0b85c",borderRadius:10,padding:"14px 18px",marginBottom:14}}>
+                <div style={{fontSize:14,fontWeight:800,color:"#a87520",marginBottom:8}}>🕒 ملخص العقد المؤجل</div>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span>المبلغ نقداً</span><span style={{fontWeight:800}}>{SAR(amount)}</span></div>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span>المبلغ الإجمالي</span><span style={{fontWeight:800}}>{SAR(total)}</span></div>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span>الفائدة</span><span style={{fontWeight:800,color:C.green}}>{SAR(profit)} ({profitPct}%)</span></div>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span>عدد الدفعات</span><span style={{fontWeight:800}}>{nPays} {nPays===1?"دفعة":"دفعتين"}</span></div>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span>قيمة كل دفعة</span><span style={{fontWeight:800,color:"#a87520"}}>{SAR(perPay)}</span></div>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:14}}><span>{nPays===1?"موعد الدفع":"موعد أول دفعة / آخر دفعة"}</span><span style={{fontWeight:800}}>{nPays===1?firstD:firstD+" / "+lastD}</span></div>
+              </div>
+            );
+          })()}
 
           {/* تاريخ آخر قسط — تلقائي */}
           {lastInst && (
@@ -807,9 +897,16 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   const [reportMode,setReportMode] = useState("detailed"); // detailed or brief
   const allFiltered = contracts.filter(c=>!c.deleted && (c.client.includes(search)||(investors.find(i=>String(i.id)===String(c.investorId))?.name||"").includes(search)));
   const deletedList = contracts.filter(c=>c.deleted && (c.client.includes(search)||(investors.find(i=>String(i.id)===String(c.investorId))?.name||"").includes(search)));
-  const filtered = statusTab==="deleted" ? deletedList : allFiltered.filter(c=> statusTab==="active" ? !doneIds.includes(c.id) : doneIds.includes(c.id));
-  const activeCount = allFiltered.filter(c=>!doneIds.includes(c.id)).length;
-  const completedCount = allFiltered.filter(c=>doneIds.includes(c.id)).length;
+  const isDefer = c => c.contractType==="defer";
+  const deferList = allFiltered.filter(isDefer);
+  // الشهري فقط في active/done، المؤجل في تبويبه
+  const monthlyFiltered = allFiltered.filter(c=>!isDefer(c));
+  const filtered = statusTab==="deleted" ? deletedList
+    : statusTab==="defer" ? deferList
+    : monthlyFiltered.filter(c=> statusTab==="active" ? !doneIds.includes(c.id) : doneIds.includes(c.id));
+  const activeCount = monthlyFiltered.filter(c=>!doneIds.includes(c.id)).length;
+  const completedCount = monthlyFiltered.filter(c=>doneIds.includes(c.id)).length;
+  const deferCount = deferList.length;
   const deletedCount = deletedList.length;
 
   // Investor report
@@ -945,6 +1042,9 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         </button>
         <button onClick={()=>setStatusTab("done")} style={{...styles.btn(statusTab==="done"?C.green:"#e5e7eb",statusTab==="done"?"#fff":C.ink),fontSize:15,padding:"6px 14px"}}>
           ✅ منتهية ({completedCount})
+        </button>
+        <button onClick={()=>setStatusTab("defer")} style={{...styles.btn(statusTab==="defer"?"#a87520":"#e5e7eb",statusTab==="defer"?"#fff":C.ink),fontSize:15,padding:"6px 14px"}}>
+          🕒 المؤجل ({deferCount})
         </button>
         <button onClick={()=>setStatusTab("deleted")} style={{...styles.btn(statusTab==="deleted"?C.red:"#e5e7eb",statusTab==="deleted"?"#fff":C.ink),fontSize:15,padding:"6px 14px"}}>
           🗑️ محذوفة ({deletedCount})
