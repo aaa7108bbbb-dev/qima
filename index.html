@@ -3161,7 +3161,6 @@ function App() {
 
   const TABS=[
     {id:"dashboard",label:"🏠",name:"الرئيسية",color:"#1e3a5f"},
-    {id:"search",label:"🔍",name:"البحث",color:"#dc2626"},
     {id:"new",label:"➕",name:"عقد جديد",color:"#16a34a"},
     {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
     {id:"jard",label:"📊",name:"الجرد",color:"#ea580c"},
@@ -3184,6 +3183,10 @@ function App() {
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <button onClick={()=>setPage("search")} title="بحث عن عميل"
+            style={{background:page==="search"?"#dc2626":"rgba(255,255,255,0.12)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:10,padding:"7px 12px",fontSize:18,cursor:"pointer",color:"#fff",display:"flex",alignItems:"center",gap:5}}>
+            🔍
+          </button>
           <div style={{display:"flex",alignItems:"center",gap:5,fontSize:14,fontWeight:700,
             color: syncStatus==="error"?"#ff8080":syncStatus==="saving"?C.gold:syncStatus==="loading"?C.gold:"#5cd98a"}}>
             <span style={{fontSize:12}}>●</span>
