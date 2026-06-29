@@ -524,7 +524,7 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
 function NewContractPage({investors, settings, contracts, onSave, toast, setInvTxList}) {
   const today = new Date().toISOString().split("T")[0];
   const nextNum = contracts.length ? Math.max(...contracts.map(c=>parseInt(c.num)||0).filter(n=>n>0), 0) + 1 : (settings.startNum||1);
-  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:"",contractType:"monthly",deferMonths:"12",deferPayments:"1"});
+  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:"",contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",bankAccount:""});
   const set = (k,v) => {
     setForm(f=>({...f,[k]:v}));
     // Auto-fill if idNum entered and matches existing contract
@@ -718,6 +718,27 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
             )}
           </div>
 
+          {/* نوع السداد */}
+          <div style={{marginBottom:14,background:"#f8fafc",border:"2px solid "+C.border,borderRadius:12,padding:"14px 16px"}}>
+            <label style={{fontSize:15,fontWeight:800,color:C.ink2,display:"block",marginBottom:8}}>💳 نوع السداد *</label>
+            <div style={{display:"flex",gap:8,marginBottom:form.payType==="deduction"?14:0}}>
+              <button type="button" onClick={()=>set("payType","normal")}
+                style={{flex:1,padding:"12px",borderRadius:10,border:"2px solid "+(form.payType==="normal"?C.teal:C.border),background:form.payType==="normal"?C.tealLt:"#fff",color:form.payType==="normal"?C.teal:C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"Tajawal,Arial"}}>
+                💵 نقدي
+              </button>
+              <button type="button" onClick={()=>set("payType","deduction")}
+                style={{flex:1,padding:"12px",borderRadius:10,border:"2px solid "+(form.payType==="deduction"?"#3b82f6":C.border),background:form.payType==="deduction"?"#eff6ff":"#fff",color:form.payType==="deduction"?"#3b82f6":C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"Tajawal,Arial"}}>
+                🏦 استقطاع
+              </button>
+            </div>
+            {form.payType==="deduction" && (
+              <div>
+                <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>رقم حساب الزبون (للمطابقة مع البنك)</label>
+                <input style={styles.input} type="text" placeholder="رقم الحساب / الآيبان" value={form.bankAccount} onChange={e=>set("bankAccount",e.target.value)}/>
+              </div>
+            )}
+          </div>
+
           {/* بيانات المبلغ */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12,marginBottom:14}}>
             {fields2.filter(f=>{
@@ -864,8 +885,13 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
 // ─── Contracts Page ──────────────────────────────────────────
 const _getPaid = (payments, cid) => (payments||[]).filter(p=>p.contractId===cid).reduce((s,p)=>s+p.amount,0);
 
-function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate,payments,setPayments,toast,completionAlert,setCompletionAlert,onSaveNew,setInvTxList}) {
+function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate,payments,setPayments,toast,completionAlert,setCompletionAlert,onSaveNew,setInvTxList,startCollect}) {
   const [showNew,setShowNew]=useState(false);
+  const [showCollect,setShowCollect]=useState(!!startCollect);
+  const [collectDate,setCollectDate]=useState(new Date().toISOString().split("T")[0]);
+  const [collectSearch,setCollectSearch]=useState("");
+  const [collectInv,setCollectInv]=useState("all");
+  const [collectAmounts,setCollectAmounts]=useState({});
   const [payModal,setPayModal]=useState(null);
   const [payAmount,setPayAmount]=useState("");
   const [payDate,setPayDate]=useState(new Date().toISOString().split("T")[0]);
@@ -923,6 +949,105 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         <button style={{...styles.btn("#e5e7eb",C.ink),marginBottom:16}} onClick={()=>setShowNew(false)}>← رجوع للعقود</button>
         <NewContractPage investors={investors} settings={settings} contracts={contracts.filter(c=>!c.deleted)}
           onSave={c=>{onSaveNew(c);setShowNew(false);}} toast={toast} setInvTxList={setInvTxList}/>
+      </div>
+    );
+  }
+
+  // شاشة التحصيل السريع
+  if(showCollect){
+    const activeForCollect = contracts.filter(c=>!c.deleted && !doneIds.includes(c.id))
+      .map(c=>{
+        const paid=_getPaid(payments,c.id);
+        const left=Math.max(0,(c.totalInst||0)-paid);
+        // المتأخر (مبلغ)
+        let lateAmt=0; const inst=c.instAmt||0;
+        if(left>0&&inst>0&&c.firstInst){
+          const fd=new Date(c.firstInst), nowd=new Date(collectDate);
+          let md=(nowd.getFullYear()-fd.getFullYear())*12+(nowd.getMonth()-fd.getMonth());
+          if(nowd.getDate()>=fd.getDate()) md+=1;
+          if(md<0) md=0;
+          lateAmt=Math.min(Math.max(0,md*inst-paid),left);
+        }
+        return {...c, paid, left, lateAmt};
+      })
+      .filter(c=>c.left>0)
+      .filter(c=>collectInv==="all" || String(c.investorId)===String(collectInv))
+      .filter(c=>!collectSearch || c.client.includes(collectSearch) || (c.cPhone||"").includes(collectSearch))
+      .sort((a,b)=>b.lateAmt-a.lateAmt);  // المتأخرين فوق
+
+    // سدادات اليوم (التحصيل الحالي)
+    const todayPaid = (payments||[]).filter(p=>p.date===collectDate);
+    const countToday = new Set(todayPaid.map(p=>p.contractId)).size;
+    const sumToday = todayPaid.reduce((s,p)=>s+p.amount,0);
+
+    const doCollect = (c) => {
+      const amt = parseFloat(collectAmounts[c.id]!=null?collectAmounts[c.id]:c.instAmt)||0;
+      if(amt<=0){toast("⚠️ المبلغ غير صحيح","warn");return;}
+      const realAmt = Math.min(amt, c.left);
+      const newPaid = c.paid + realAmt;
+      setPayments(p=>[...p,{id:Date.now()+Math.floor(Math.random()*1000),contractId:c.id,amount:realAmt,date:collectDate,note:"تحصيل"}]);
+      if(newPaid>=(c.totalInst||0)){ markDone(c.id); }
+      toast("✅ "+c.client+" — "+SAR(realAmt));
+    };
+
+    return (
+      <div>
+        {!startCollect && <button style={{...styles.btn("#e5e7eb",C.ink),marginBottom:16}} onClick={()=>setShowCollect(false)}>← رجوع للعقود</button>}
+        <div style={{...styles.card,marginBottom:16,borderTop:"4px solid "+C.green}}>
+          <div style={{fontSize:19,fontWeight:900,marginBottom:12}}>⚡ تحصيل سريع</div>
+          <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center",marginBottom:12}}>
+            <label style={{fontWeight:700,fontSize:15}}>تاريخ التحصيل:</label>
+            <input type="date" style={{...styles.input,width:"auto"}} value={collectDate} onChange={e=>setCollectDate(e.target.value)}/>
+          </div>
+          <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:140,background:C.tealLt,borderRadius:10,padding:"10px 14px",textAlign:"center"}}>
+              <div style={{fontSize:13,color:C.teal,fontWeight:700,marginBottom:2}}>سُدّد في هذا التاريخ</div>
+              <div style={{fontSize:22,fontWeight:900,color:C.teal}}>{countToday} زبون</div>
+            </div>
+            <div style={{flex:1,minWidth:140,background:"#ecfdf5",borderRadius:10,padding:"10px 14px",textAlign:"center"}}>
+              <div style={{fontSize:13,color:C.green,fontWeight:700,marginBottom:2}}>إجمالي المحصّل</div>
+              <div style={{fontSize:22,fontWeight:900,color:C.green}}>{SAR(sumToday)}</div>
+            </div>
+          </div>
+        </div>
+        <select style={{...styles.select,marginBottom:10}} value={collectInv} onChange={e=>setCollectInv(e.target.value)}>
+          <option value="all">👥 كل المستثمرين</option>
+          {investors.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
+        </select>
+        <input style={{...styles.input,marginBottom:14}} placeholder="🔍 بحث بالاسم أو الجوال..." value={collectSearch} onChange={e=>setCollectSearch(e.target.value)}/>
+        {activeForCollect.length===0 ? (
+          <div style={{...styles.card,textAlign:"center",color:"#9ca3af",padding:30}}>✅ لا يوجد زبائن عليهم متبقي</div>
+        ) : (
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {activeForCollect.map(c=>{
+              const inv=investors.find(i=>String(i.id)===String(c.investorId));
+              const amtVal = collectAmounts[c.id]!=null?collectAmounts[c.id]:String(c.instAmt||"");
+              return (
+                <div key={c.id} style={{...styles.card,padding:"12px 14px",borderRight:"5px solid "+(c.lateAmt>0?C.red:C.green)}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8,flexWrap:"wrap",gap:6}}>
+                    <div>
+                      <div style={{fontSize:16,fontWeight:800}}>{c.client} {c.contractType==="defer"&&<span style={{fontSize:12,color:"#a87520"}}>🕒 مؤجل</span>}</div>
+                      <div style={{fontSize:13,color:"#9ca3af"}}>{inv?inv.name:"—"} · عقد {c.num}</div>
+                    </div>
+                    {c.lateAmt>0
+                      ? <span style={styles.badge(C.redLt,C.red)}>🔴 متأخر {SAR(c.lateAmt)}</span>
+                      : <span style={styles.badge(C.tealLt,C.green)}>🟢 منتظم</span>}
+                  </div>
+                  <div style={{display:"flex",gap:10,fontSize:13,color:"#6b7280",marginBottom:10,flexWrap:"wrap"}}>
+                    <span>القسط: <b style={{color:C.ink}}>{SAR(c.instAmt||0)}</b></span>
+                    <span>المتبقي: <b style={{color:C.red}}>{SAR(c.left)}</b></span>
+                    <span>الواصل: <b style={{color:C.green}}>{SAR(c.paid)}</b></span>
+                  </div>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <input type="number" style={{...styles.input,flex:1,fontWeight:700,borderColor:C.green}} value={amtVal}
+                      onChange={e=>setCollectAmounts(p=>({...p,[c.id]:e.target.value}))}/>
+                    <button style={{...styles.btn(C.green),fontSize:15,padding:"10px 20px",whiteSpace:"nowrap"}} onClick={()=>doCollect(c)}>✅ سدّد</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   }
@@ -1783,6 +1908,70 @@ const TX_TYPES = [
   {key:"contract",  label:"خصم عقد",          color:"#7030A0", sign:-1},
 ];
 
+function DeductionsSheet({contracts, investors, payments}){
+  const [checked,setChecked]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_deduct_check")||"{}");}catch{return{};}});
+  const toggle=id=>{const n={...checked,[id]:!checked[id]};setChecked(n);localStorage.setItem("qimma_deduct_check",JSON.stringify(n));};
+  // كل العقود الاستقطاع (غير محذوفة)
+  const rows=contracts.filter(c=>!c.deleted && c.payType==="deduction").map(c=>{
+    const inv=investors.find(i=>String(i.id)===String(c.investorId));
+    const paid=_getPaid(payments,c.id);
+    const left=Math.max(0,(c.totalInst||0)-paid);
+    return {...c, invName:inv?inv.name:"—", paid, left};
+  });
+  const totalInst=rows.reduce((s,c)=>s+(c.instAmt||0),0);
+
+  const printSheet=()=>{
+    const fmt=n=>Math.round(+(n||0)).toLocaleString("ar-SA")+" ر.س";
+    let body=rows.map((c,i)=>`<tr><td>${i+1}</td><td>${c.client}</td><td>${c.bankAccount||"—"}</td><td>${c.invName}</td><td class="amt">${fmt(c.instAmt)}</td><td style="width:60px"></td></tr>`).join("");
+    const win=window.open("","_blank");
+    win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>كشف الاستقطاعات</title>
+    <style>body{font-family:Arial;padding:24px;color:#000}.header{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:14px}.org{font-size:18px;font-weight:900}.sub{font-size:13px}.title{text-align:center;font-size:20px;font-weight:900;border:2px solid #000;padding:10px;margin-bottom:14px}table{width:100%;border-collapse:collapse;font-size:15px;border:2px solid #000}th,td{border:1px solid #000;padding:9px 11px;text-align:right}th{font-weight:900;border-bottom:2px solid #000}td.amt{font-weight:bold;text-align:left}.foot{text-align:center;color:#444;font-size:12px;margin-top:18px;border-top:1px solid #000;padding-top:8px}@media print{button{display:none}}</style>
+    </head><body>
+    <div class="header"><div><div class="org">مؤسسة قمة الفرصة التجارية</div><div class="sub">بريدة - شارع الثلاثين</div><div class="sub">ج: 0555171283  ت: 0163839323</div></div>
+    <div style="text-align:left"><div class="sub">كشف الاستقطاعات</div><div class="sub">التاريخ: ${new Date().toLocaleDateString("ar-SA")}</div></div></div>
+    <div class="title">كشف حسابات الاستقطاع البنكي</div>
+    <table><thead><tr><th>#</th><th>اسم الزبون</th><th>رقم الحساب</th><th>المستثمر</th><th>القسط</th><th>نزل ✓</th></tr></thead>
+    <tbody>${body||'<tr><td colspan="6" style="text-align:center;color:#666">لا يوجد زبائن استقطاع</td></tr>'}
+    <tr style="font-weight:900;border-top:2px solid #000"><td colspan="4">الإجمالي</td><td class="amt">${fmt(totalInst)}</td><td></td></tr></tbody></table>
+    <div class="foot">طُبع بتاريخ ${new Date().toLocaleString("ar-SA")}</div>
+    <button onclick="window.print()" style="display:block;margin:20px auto;padding:10px 30px;font-size:16px;background:#333;color:#fff;border:none;border-radius:8px;cursor:pointer">🖨️ طباعة</button>
+    </body></html>`);
+    win.document.close(); setTimeout(()=>win.print(),400);
+  };
+
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:10}}>
+        <div style={{fontSize:18,fontWeight:800}}>🏦 كشف الاستقطاعات ({rows.length})</div>
+        <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px"}} onClick={printSheet}>🖨️ طباعة الكشف</button>
+      </div>
+      <div style={{fontSize:14,color:"#6b7280",marginBottom:12}}>أشّر على الزبون اللي نزل استقطاعه بعد مطابقته مع كشف البنك. (كل الزبائن من جميع المستثمرين)</div>
+      {rows.length===0 ? (
+        <div style={{...styles.card,textAlign:"center",color:"#9ca3af",padding:30}}>لا يوجد زبائن استقطاع</div>
+      ) : (
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
+            <thead><tr>{["✓","الزبون","رقم الحساب","المستثمر","القسط","المتبقي"].map(h=><th key={h} style={{...styles.th,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
+            <tbody>
+              {rows.map((c,i)=>(
+                <tr key={c.id} style={{background:checked[c.id]?"#ecfdf5":(i%2===0?"#fff":"#f8f8f8")}}>
+                  <td style={styles.td}><input type="checkbox" checked={!!checked[c.id]} onChange={()=>toggle(c.id)} style={{width:20,height:20,cursor:"pointer"}}/></td>
+                  <td style={{...styles.td,fontWeight:700,textDecoration:checked[c.id]?"line-through":"none"}}>{c.client}</td>
+                  <td style={{...styles.td,fontFamily:"monospace"}}>{c.bankAccount||"—"}</td>
+                  <td style={styles.td}>{c.invName}</td>
+                  <td style={{...styles.td,fontWeight:700}}>{SAR(c.instAmt||0)}</td>
+                  <td style={{...styles.td,color:C.red}}>{SAR(c.left)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot><tr style={{background:"#fffbf0",fontWeight:800}}><td colSpan={4} style={styles.td}>الإجمالي</td><td style={styles.td}>{SAR(totalInst)}</td><td style={styles.td}>—</td></tr></tfoot>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AccountsPage({contracts, investors, setInvestors, settings, txList, setTxList, loans, setLoans, zakatTx, setZakatTx, pending, setPending, payments, toast}) {
   const [subTab, setSubTab] = useState("inv");
   const [selInv, setSelInv] = useState(investors[0]?.id||null);
@@ -1871,6 +2060,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
     {key:"list",  label:"👥 المستثمرون"},
     {key:"inv",   label:"💰 الحسابات"},
     {key:"comm",  label:"📑 العمولات"},
+    {key:"deduct",label:"🏦 الاستقطاعات"},
   ];
 
   return (
@@ -1892,6 +2082,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
       {/* Commissions sub-page */}
       {subTab==="list" && <InvestorsPage investors={investors} contracts={contracts} settings={settings} payments={payments} txList={txList} onAdd={inv=>setInvestors(p=>[...p,inv])} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} toast={toast}/>}
       {subTab==="comm" && <CommissionsPage contracts={contracts} investors={investors} settings={settings}/>}
+      {subTab==="deduct" && <DeductionsSheet contracts={contracts} investors={investors} payments={payments}/>}
 
       {/* Investor accounts sub-page */}
       {subTab==="inv" && <>
@@ -3015,7 +3206,18 @@ function GoodsPage({investors, contracts, toast}) {
     };
   });
 
-  const allRows = [...contractRows, ...manualRows].sort((a,b)=>new Date(a.date)-new Date(b.date)||String(a.id).localeCompare(String(b.id)));
+  // ترتيب زمني: بالتاريخ، ثم بوقت الإنشاء (timestamp) — آخر عملية تكون آخر صف
+  const seqOf = r => {
+    // العقد id = "c_<timestamp>"، اليدوي id = <timestamp> رقمي
+    const raw = String(r.id).replace(/^c_/,"");
+    const n = parseInt(raw,10);
+    return isNaN(n) ? 0 : n;
+  };
+  const allRows = [...contractRows, ...manualRows].sort((a,b)=>{
+    const d = new Date(a.date)-new Date(b.date);
+    if(d!==0) return d;
+    return seqOf(a)-seqOf(b);  // نفس اليوم: الأقدم إنشاءً أولاً، الأحدث آخراً
+  });
 
   // Calculate running balance with per-row price
   let runningCards = 0;
@@ -3373,6 +3575,7 @@ function App() {
   const TABS=[
     {id:"dashboard",label:"🏠",name:"الرئيسية",color:"#1e3a5f"},
     {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
+    {id:"collect",label:"⚡",name:"التحصيل",color:"#0d9488"},
     {id:"goods",label:"📦",name:"البضاعة",color:"#78350f"},
     {id:"accounts",label:"💰",name:"الحسابات",color:"#b45309"},
     {id:"jard",label:"📊",name:"الجرد",color:"#ea580c"},
@@ -3414,6 +3617,7 @@ function App() {
       <div style={styles.main}>
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast}/>}
+        {page==="collect" && <ContractsPage startCollect={true} contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c))} onRestore={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);}} setInvTxList={setInvTxList}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c))} onRestore={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);}} setInvTxList={setInvTxList}/>}
         {page==="jard" && <JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
