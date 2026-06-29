@@ -106,6 +106,14 @@ function addMonths(dateStr, n) {
   return d.toISOString().split("T")[0];
 }
 
+// الشهر المالي يبدأ من يوم 21: أي يوم قبل 21 يُحسب على الشهر السابق
+function fiscalYM(dateInput){
+  const d = new Date(dateInput);
+  const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  if(dd.getDate() < 21){ dd.setMonth(dd.getMonth()-1); }
+  return dd.getFullYear()+"-"+String(dd.getMonth()+1).padStart(2,"0");
+}
+
 function fmtDate(dateStr) {
   if(!dateStr)return"—";
   try{return new Date(dateStr).toLocaleDateString("ar-SA",{year:"numeric",month:"long",day:"numeric"});}
@@ -1480,17 +1488,17 @@ function ZakatPage({investors, contracts, settings, zakatTx, setZakatTx}) {
 function CommissionsPage({contracts, investors, settings}) {
   const months = [...new Set(contracts.map(c=>{
     const d=new Date(c.date);
-    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+    return fiscalYM(d);
   }))].sort().reverse();
   if(!months.length){const n=new Date();months.push(n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0"));}
   const [selMonth,setSelMonth]=useState(months[0]);
   const [tab,setTab]=useState("acc"); // acc = محاسبين, inst = مؤسسة
 
-  const mLabel=ym=>{const[y,m]=ym.split("-");const ns=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];return(ns[parseInt(m)-1]||"")+" "+y;};
+  const mLabel=ym=>{const[y,m]=ym.split("-");return"شهر "+parseInt(m)+" - "+y;};
 
   const mc = contracts.filter(c=>{
     const d=new Date(c.date);
-    return(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"))===selMonth;
+    return fiscalYM(d)===selMonth;
   });
 
   const rows = mc.map(c=>{
@@ -1686,7 +1694,7 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
     const c = myContracts.find(x=>x.id===p.contractId);
     if(!c) return;
     const d = new Date(p.date);
-    const ym = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+    const ym = fiscalYM(d);
     if(!paysByMonth[ym]) paysByMonth[ym]={amount:0, count:0, date:ym+"-01"};
     paysByMonth[ym].amount += p.amount;
     paysByMonth[ym].count  += 1;
@@ -1913,14 +1921,14 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
 // ─── Monthly Jard ────────────────────────────────────────────
 function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,payments,gsWrite}) {
   const today = new Date();
-  const currentYM = today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0");
-  const months = [...new Set(contracts.map(c=>{const d=new Date(c.date);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}))].sort().reverse();
+  const currentYM = fiscalYM(today);
+  const months = [...new Set(contracts.map(c=>fiscalYM(c.date)))].sort().reverse();
   if(!months.includes(currentYM)) months.unshift(currentYM);
   const [selMonth,setSelMonth]=useState(months[0]);
   const [overrides,setOverrides]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_jard_ov")||"{}");}catch{return {};}});
 
-  const mLabel=ym=>{const[y,m]=ym.split("-");const ns=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];return(ns[parseInt(m)-1]||"")+" "+y;};
-  const mc = contracts.filter(c=>{const d=new Date(c.date);return(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"))===selMonth;});
+  const mLabel=ym=>{const[y,m]=ym.split("-");return"شهر "+parseInt(m)+" - "+y;};
+  const mc = contracts.filter(c=>fiscalYM(c.date)===selMonth);
 
   // Goods data for cards balance
   const goodsData = (() => {
@@ -2176,23 +2184,11 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
 function Dashboard({contracts,investors,settings,setInvestors}) {
   const [editFund,setEditFund] = useState(null); // {inv, form}
   // Period: starts 21st of month, ends 20th of next month
-  const getPeriod = (dateStr) => {
-    const d = new Date(dateStr);
-    const day = d.getDate();
-    // If day >= 21, belongs to this month's period
-    // If day <= 20, belongs to previous month's period
-    if(day >= 21) {
-      return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
-    } else {
-      // belongs to previous month
-      const prev = new Date(d.getFullYear(), d.getMonth()-1, 1);
-      return prev.getFullYear()+"-"+String(prev.getMonth()+1).padStart(2,"0");
-    }
-  };
+  const getPeriod = (dateStr) => fiscalYM(dateStr);
   const months=[...new Set(contracts.map(c=>getPeriod(c.date)))].sort().reverse();
   if(!months.length){const now=new Date();months.push(now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0"));}
   const [sel,setSel]=useState(months[0]||"");
-  const mLabel=ym=>{const[y,m]=ym.split("-");const ns=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];return(ns[parseInt(m)-1]||"")+" "+y;};
+  const mLabel=ym=>{const[y,m]=ym.split("-");return"شهر "+parseInt(m)+" - "+y;};
   const mc=contracts.filter(c=>getPeriod(c.date)===sel);
   const tot=mc.reduce((a,c)=>{const r=calcContract(c.amount,settings);return{amt:a.amt+c.amount,profit:a.profit+r.profit,admin:a.admin+r.admin,acc:a.acc+r.acc,inst:a.inst+r.inst,net:a.net+r.net};},{amt:0,profit:0,admin:0,acc:0,inst:0,net:0});
 
