@@ -774,7 +774,8 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
 // ─── Contracts Page ──────────────────────────────────────────
 const _getPaid = (payments, cid) => (payments||[]).filter(p=>p.contractId===cid).reduce((s,p)=>s+p.amount,0);
 
-function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate,payments,setPayments,toast,completionAlert,setCompletionAlert}) {
+function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate,payments,setPayments,toast,completionAlert,setCompletionAlert,onSaveNew,setInvTxList}) {
+  const [showNew,setShowNew]=useState(false);
   const [payModal,setPayModal]=useState(null);
   const [payAmount,setPayAmount]=useState("");
   const [payDate,setPayDate]=useState(new Date().toISOString().split("T")[0]);
@@ -818,8 +819,20 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
 
   const today2 = new Date().toISOString().split("T")[0];
 
+  // وضع إنشاء عقد جديد
+  if(showNew){
+    return (
+      <div>
+        <button style={{...styles.btn("#e5e7eb",C.ink),marginBottom:16}} onClick={()=>setShowNew(false)}>← رجوع للعقود</button>
+        <NewContractPage investors={investors} settings={settings} contracts={contracts.filter(c=>!c.deleted)}
+          onSave={c=>{onSaveNew(c);setShowNew(false);}} toast={toast} setInvTxList={setInvTxList}/>
+      </div>
+    );
+  }
+
   return (
     <div>
+      <button style={{...styles.btn(C.green),marginBottom:16,fontSize:16,padding:"10px 20px",width:"100%"}} onClick={()=>setShowNew(true)}>➕ عقد جديد</button>
       {/* Investor Report */}
       <div style={{...styles.panel,marginBottom:16,padding:"14px 18px"}}>
         <div style={{fontWeight:800,fontSize:16,marginBottom:10}}>🔍 كشف المستثمر</div>
@@ -3185,7 +3198,6 @@ function App() {
 
   const TABS=[
     {id:"dashboard",label:"🏠",name:"الرئيسية",color:"#1e3a5f"},
-    {id:"new",label:"➕",name:"عقد جديد",color:"#16a34a"},
     {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
     {id:"jard",label:"📊",name:"الجرد",color:"#ea580c"},
     {id:"accounts",label:"💰",name:"الحسابات",color:"#b45309"},
@@ -3229,8 +3241,7 @@ function App() {
       <div style={styles.main}>
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast}/>}
-        {page==="new" && <NewContractPage investors={investors} settings={settings} contracts={activeContracts} onSave={c=>{setContracts(p=>[...p,c]);setPage("contracts");}} toast={toast} setInvTxList={setInvTxList}/>}
-        {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c))} onRestore={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert}/>}
+        {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c))} onRestore={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);}} setInvTxList={setInvTxList}/>}
         {page==="jard" && <JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments}/>}
         {page==="investors" && <InvestorsPage investors={investors} contracts={activeContracts} settings={settings} payments={payments} txList={invTxList} onAdd={inv=>setInvestors(p=>[...p,inv])} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} toast={toast}/>}
