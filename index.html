@@ -1748,6 +1748,7 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
     {key:"loans", label:"🤝 السلف"},
     {key:"zakat", label:"🌙 الزكاة"},
     {key:"pending",label:"📌 المتبقي"},
+    {key:"comm",  label:"📑 العمولات"},
   ];
 
   return (
@@ -1772,6 +1773,8 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
       {subTab==="zakat" && <ZakatPage investors={investors} contracts={contracts} settings={settings} zakatTx={zakatTx} setZakatTx={setZakatTx}/>}
       {/* Pending sub-page */}
       {subTab==="pending" && <PendingPage pending={pending} setPending={setPending}/>}
+      {/* Commissions sub-page */}
+      {subTab==="comm" && <CommissionsPage contracts={contracts} investors={investors} settings={settings}/>}
 
       {/* Investor accounts sub-page */}
       {subTab==="inv" && <>
@@ -3180,7 +3183,6 @@ function App() {
     {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
     {id:"jard",label:"📊",name:"الجرد",color:"#ea580c"},
     {id:"accounts",label:"💰",name:"الحسابات",color:"#b45309"},
-    {id:"commissions",label:"📑",name:"العمولات",color:"#0891b2"},
     {id:"investors",label:"👥",name:"المستثمرون",color:"#3b82f6"},
     {id:"goods",label:"📦",name:"البضاعة",color:"#78350f"},
     {id:"settings",label:"⚙️",name:"الإعدادات",color:"#4b5563"},
@@ -3225,7 +3227,6 @@ function App() {
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c))} onRestore={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert}/>}
         {page==="jard" && <JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments}/>}
-        {page==="commissions" && <CommissionsPage contracts={activeContracts} investors={investors} settings={settings}/>}
         {page==="investors" && <InvestorsPage investors={investors} contracts={activeContracts} settings={settings} payments={payments} txList={invTxList} onAdd={inv=>setInvestors(p=>[...p,inv])} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast}/>}
         {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast}/>}
