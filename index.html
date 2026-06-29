@@ -3106,6 +3106,21 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
                   )}
                 </table>
               </div>
+              {/* الإجمالي: النقدي + المتبقي */}
+              <div style={{marginTop:16,border:"2px solid "+C.teal,borderRadius:10,overflow:"hidden"}}>
+                <div style={{display:"flex",justifyContent:"space-between",padding:"10px 16px",fontSize:15,borderBottom:"1px solid "+C.border}}>
+                  <span style={{color:"#6b7280",fontWeight:700}}>💵 النقدي (رأس المال)</span>
+                  <span style={{fontWeight:800}}>{SAR(stmtInv.capital||0)}</span>
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between",padding:"10px 16px",fontSize:15,borderBottom:"2px solid "+C.teal}}>
+                  <span style={{color:"#6b7280",fontWeight:700}}>💰 المتبقي عند الزبائن</span>
+                  <span style={{fontWeight:800,color:C.red}}>{SAR(totalLeft)}</span>
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between",padding:"12px 16px",fontSize:17,background:C.tealLt}}>
+                  <span style={{fontWeight:900,color:C.teal}}>📊 الإجمالي (النقدي + المتبقي)</span>
+                  <span style={{fontWeight:900,color:C.teal}}>{SAR((stmtInv.capital||0)+totalLeft)}</span>
+                </div>
+              </div>
             </div>
           );
         })()}
