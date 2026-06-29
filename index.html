@@ -848,9 +848,20 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                 {invReportContracts.map((c,i)=>{
                   const paid = _getPaid(payments,c.id);
                   const left = Math.max(0,(c.totalInst||0)-paid);
-                  const lastPay = [...(payments||[])].filter(p=>p.contractId===c.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
-                  const daysSince = lastPay ? Math.floor((new Date(today2)-new Date(lastPay.date))/(1000*60*60*24)) : 999;
-                  const late = left>0 && daysSince>35 ? daysSince-30 : 0;
+                  // المتأخر = (الأقساط المستحقة حتى اليوم − الأقساط المدفوعة) × قيمة القسط
+                  const inst = c.instAmt||0;
+                  let lateAmount = 0;
+                  if(left>0 && inst>0 && c.firstInst){
+                    const fd = new Date(c.firstInst);
+                    const nowd = new Date(today2);
+                    // عدد الشهور المنقضية من أول قسط حتى اليوم
+                    let monthsDue = (nowd.getFullYear()-fd.getFullYear())*12 + (nowd.getMonth()-fd.getMonth());
+                    if(nowd.getDate() >= fd.getDate()) monthsDue += 1; // القسط الحالي استحق
+                    if(monthsDue<0) monthsDue=0;
+                    const dueAmount = monthsDue*inst;           // المفروض دفعه حتى الآن
+                    lateAmount = Math.max(0, dueAmount - paid);  // المتأخر = المستحق − المدفوع
+                    lateAmount = Math.min(lateAmount, left);     // لا يتجاوز المتبقي
+                  }
                   return (
                     <tr key={c.id} style={{background:i%2===0?"#fff":"#f8f8f8"}}>
                       <td style={styles.td}>{c.num}</td>
@@ -862,7 +873,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                       <td style={styles.td}>{SAR(c.totalInst||0)}</td>
                       <td style={styles.td}>{SAR(c.instAmt||0)}</td>
                       <td style={{...styles.td,color:C.green,fontWeight:700}}>{SAR(paid)}</td>
-                      <td style={{...styles.td,color:late>0?C.red:"#9ca3af"}}>{late>0?late+" يوم":"—"}</td>
+                      <td style={{...styles.td,color:lateAmount>0?C.red:"#9ca3af",fontWeight:700}}>{lateAmount>0?SAR(lateAmount):"—"}</td>
                       <td style={{...styles.td,color:left>0?C.red:C.green,fontWeight:700}}>{SAR(left)}</td>
                     </tr>
                   );
