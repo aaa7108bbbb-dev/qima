@@ -2942,15 +2942,15 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
                 </div>
               )}
               {(()=>{
-                const leftMonthly = myCon.filter(c=>c.contractType!=="defer").reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
-                const leftDefer = myCon.filter(c=>c.contractType==="defer").reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
+                // المتبقي من كل العقود (شهري + مؤجل) — نفس المعروض أعلاه
+                const leftAll = myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
                 const autoDeduct = myCon.reduce((s,c)=>{const r=calcContract(c.amount,settings);return s-(c.amount+r.acc+r.inst+r.admin);},0);
                 const autoPaid = myCon.reduce((s,c)=>s+_getPaid(payments,c.id),0);
                 const cashBalance = (inv.capital||0) + autoDeduct + autoPaid;
-                const grand = cashBalance + leftMonthly + leftDefer;
+                const grand = cashBalance + leftAll;
                 return (
                   <div style={{background:C.tealLt,borderRadius:8,padding:"10px 12px",marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center",border:"2px solid "+C.teal}}>
-                    <span style={{fontSize:14,fontWeight:800,color:C.teal}}>📊 الإجمالي (النقدي + المتبقي + المؤجل)</span>
+                    <span style={{fontSize:14,fontWeight:800,color:C.teal}}>📊 الإجمالي (النقدي + المتبقي)</span>
                     <span style={{fontSize:19,fontWeight:900,color:grand>=0?C.teal:C.red}}>{SAR(grand)}</span>
                   </div>
                 );
