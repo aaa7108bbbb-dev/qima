@@ -2742,17 +2742,24 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
               </div>
               <div style={{background:C.redLt,borderRadius:8,padding:"8px 12px",marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <span style={{fontSize:14,fontWeight:700,color:C.red}}>💰 إجمالي المتبقي عند الزبائن</span>
-                <span style={{fontSize:18,fontWeight:900,color:C.red}}>{SAR(myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0))}</span>
+                <span style={{fontSize:18,fontWeight:900,color:C.red}}>{SAR(myCon.filter(c=>c.contractType!=="defer").reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0))}</span>
               </div>
+              {myCon.some(c=>c.contractType==="defer") && (
+                <div style={{background:"#fef9ec",borderRadius:8,padding:"8px 12px",marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span style={{fontSize:14,fontWeight:700,color:"#a87520"}}>🕒 المتبقي من المؤجل</span>
+                  <span style={{fontSize:18,fontWeight:900,color:"#a87520"}}>{SAR(myCon.filter(c=>c.contractType==="defer").reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0))}</span>
+                </div>
+              )}
               {(()=>{
-                const leftClients = myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
+                const leftMonthly = myCon.filter(c=>c.contractType!=="defer").reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
+                const leftDefer = myCon.filter(c=>c.contractType==="defer").reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
                 const autoDeduct = myCon.reduce((s,c)=>{const r=calcContract(c.amount,settings);return s-(c.amount+r.acc+r.inst+r.admin);},0);
                 const autoPaid = myCon.reduce((s,c)=>s+_getPaid(payments,c.id),0);
                 const cashBalance = (inv.capital||0) + autoDeduct + autoPaid;
-                const grand = cashBalance + leftClients;
+                const grand = cashBalance + leftMonthly + leftDefer;
                 return (
                   <div style={{background:C.tealLt,borderRadius:8,padding:"10px 12px",marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center",border:"2px solid "+C.teal}}>
-                    <span style={{fontSize:14,fontWeight:800,color:C.teal}}>📊 الإجمالي (النقدي + المتبقي)</span>
+                    <span style={{fontSize:14,fontWeight:800,color:C.teal}}>📊 الإجمالي (النقدي + المتبقي + المؤجل)</span>
                     <span style={{fontSize:19,fontWeight:900,color:grand>=0?C.teal:C.red}}>{SAR(grand)}</span>
                   </div>
                 );
@@ -3366,9 +3373,9 @@ function App() {
   const TABS=[
     {id:"dashboard",label:"🏠",name:"الرئيسية",color:"#1e3a5f"},
     {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
-    {id:"jard",label:"📊",name:"الجرد",color:"#ea580c"},
-    {id:"accounts",label:"💰",name:"الحسابات",color:"#b45309"},
     {id:"goods",label:"📦",name:"البضاعة",color:"#78350f"},
+    {id:"accounts",label:"💰",name:"الحسابات",color:"#b45309"},
+    {id:"jard",label:"📊",name:"الجرد",color:"#ea580c"},
     {id:"settings",label:"⚙️",name:"الإعدادات",color:"#4b5563"},
   ];
 
