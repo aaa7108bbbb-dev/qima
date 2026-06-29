@@ -2942,12 +2942,9 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
                 </div>
               )}
               {(()=>{
-                // المتبقي من كل العقود (شهري + مؤجل) — نفس المعروض أعلاه
+                // الإجمالي = رأس المال (النقدي المتوفر) + المتبقي عند الزبائن
                 const leftAll = myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
-                const autoDeduct = myCon.reduce((s,c)=>{const r=calcContract(c.amount,settings);return s-(c.amount+r.acc+r.inst+r.admin);},0);
-                const autoPaid = myCon.reduce((s,c)=>s+_getPaid(payments,c.id),0);
-                const cashBalance = (inv.capital||0) + autoDeduct + autoPaid;
-                const grand = cashBalance + leftAll;
+                const grand = (inv.capital||0) + leftAll;
                 return (
                   <div style={{background:C.tealLt,borderRadius:8,padding:"10px 12px",marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center",border:"2px solid "+C.teal}}>
                     <span style={{fontSize:14,fontWeight:800,color:C.teal}}>📊 الإجمالي (النقدي + المتبقي)</span>
