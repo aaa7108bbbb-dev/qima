@@ -3078,7 +3078,6 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
 // ─── Main App ────────────────────────────────────────────────
 function App() {
   const [page,setPage]=useState("dashboard");
-  const activeContracts = contracts.filter(c=>!c.deleted);
   const [toastMsg,setToastMsg]=useState(null);
   const [toastType,setToastType]=useState("");
 
@@ -3124,6 +3123,7 @@ function App() {
 
   const setInvestors = v => { const d=typeof v==="function"?v(investors):v; setInvestorsRaw(d); saveLS("qimma_investors",d); gsWrite("investors",d); };
   const setContracts = v => { const d=typeof v==="function"?v(contracts):v; setContractsRaw(d); saveLS("qimma_contracts",d); gsWrite("contracts",d); };
+  const activeContracts = contracts.filter(c=>!c.deleted);
   const setSettings  = v => { const d=typeof v==="function"?v(settings):v;  setSettingsRaw(d);  saveLS("qimma_settings",d); gsWrite("settings",d); };
   const [invTxList,setInvTxListRaw]=useState(()=>loadLS("qimma_txlist",{}));
   const setInvTxList = v => { const d=typeof v==="function"?v(invTxList):v; setInvTxListRaw(d); saveLS("qimma_txlist",d); gsWrite("txlist",d); };
