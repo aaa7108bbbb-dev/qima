@@ -2316,7 +2316,7 @@ function Dashboard({contracts,investors,settings,setInvestors}) {
 }
 
 // ─── Investors Page ──────────────────────────────────────────
-function InvestorsPage({investors,contracts,settings,payments,onAdd,onDelete,toast}) {
+function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,onDelete,toast}) {
   const [show,setShow]=useState(false);
   const [confirmId,setConfirmId]=useState(null);
   const [stmtInv,setStmtInv]=useState(null);
@@ -2381,6 +2381,19 @@ function InvestorsPage({investors,contracts,settings,payments,onAdd,onDelete,toa
                 <span style={{fontSize:14,fontWeight:700,color:C.red}}>💰 إجمالي المتبقي عند الزبائن</span>
                 <span style={{fontSize:18,fontWeight:900,color:C.red}}>{SAR(myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0))}</span>
               </div>
+              {(()=>{
+                const leftClients = myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
+                const autoDeduct = myCon.reduce((s,c)=>{const r=calcContract(c.amount,settings);return s-(c.amount+r.acc+r.inst+r.admin);},0);
+                const autoPaid = myCon.reduce((s,c)=>s+_getPaid(payments,c.id),0);
+                const cashBalance = (inv.capital||0) + autoDeduct + autoPaid;
+                const grand = cashBalance + leftClients;
+                return (
+                  <div style={{background:C.tealLt,borderRadius:8,padding:"10px 12px",marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center",border:"2px solid "+C.teal}}>
+                    <span style={{fontSize:14,fontWeight:800,color:C.teal}}>📊 الإجمالي (النقدي + المتبقي)</span>
+                    <span style={{fontSize:19,fontWeight:900,color:grand>=0?C.teal:C.red}}>{SAR(grand)}</span>
+                  </div>
+                );
+              })()}
               {confirmId===inv.id ? (
                 <div style={{marginTop:10,background:C.redLt,borderRadius:8,padding:"8px 12px",fontSize:15}}>
                   <div style={{marginBottom:6,fontWeight:700,color:C.red}}>تأكيد الحذف؟</div>
@@ -3032,7 +3045,7 @@ function App() {
         {page==="jard" && <JardPage contracts={contracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite}/>}
         {page==="accounts" && <AccountsPage contracts={contracts} investors={investors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments}/>}
         {page==="commissions" && <CommissionsPage contracts={contracts} investors={investors} settings={settings}/>}
-        {page==="investors" && <InvestorsPage investors={investors} contracts={contracts} settings={settings} payments={payments} onAdd={inv=>setInvestors(p=>[...p,inv])} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} toast={toast}/>}
+        {page==="investors" && <InvestorsPage investors={investors} contracts={contracts} settings={settings} payments={payments} txList={invTxList} onAdd={inv=>setInvestors(p=>[...p,inv])} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={contracts} toast={toast}/>}
         {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast}/>}
       </div>
