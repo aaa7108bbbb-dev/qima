@@ -1769,7 +1769,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
 
   const subTabs = [
     {key:"list",  label:"👥 المستثمرون"},
-    {key:"inv",   label:"💰 حسابات المستثمرين"},
+    {key:"inv",   label:"💰 الحسابات"},
     {key:"comm",  label:"📑 العمولات"},
   ];
 
@@ -2317,6 +2317,51 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
 }
 
 // ─── Daily Cashbook Page ─────────────────────────────────────
+function printDailyReport(day, rows, opening, closing, sumByType){
+  const dLabel = ymd => { if(!ymd) return ""; const [y,m,d]=ymd.split("-"); return d+"/"+parseInt(m)+"/"+y; };
+  const fmt = n => Math.round(+(n||0)).toLocaleString("ar-SA")+" ر.س";
+  const labels = {sadad:"سداد",masroof:"مصروف",sahb:"سحب",estilam:"استلمت نقدي",mgr:"استلام مدير",acc:"استلام محاسب"};
+  const signs = {sadad:"+",masroof:"−",sahb:"−",estilam:"−",mgr:"−",acc:"−"};
+  let rowsHtml = rows.map(r=>`<tr><td>${labels[r.type]||r.type}</td><td>${r.desc||"—"}</td><td style="text-align:left">${signs[r.type]||""}${fmt(r.amount)}</td></tr>`).join("");
+  const win = window.open("","_blank");
+  win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>يومية ${dLabel(day)}</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:24px;color:#222;direction:rtl}
+      h1{text-align:center;font-size:22px;margin:0 0 4px}
+      h2{text-align:center;font-size:16px;color:#666;margin:0 0 20px;font-weight:normal}
+      table{width:100%;border-collapse:collapse;margin:16px 0;font-size:15px}
+      th,td{border:1px solid #ccc;padding:9px 12px;text-align:right}
+      th{background:#1e3a5f;color:#fff}
+      tr:nth-child(even){background:#f5f5f5}
+      .summary{display:flex;justify-content:space-between;gap:16px;margin-top:20px;flex-wrap:wrap}
+      .box{flex:1;min-width:140px;border:2px solid #0d9488;border-radius:8px;padding:12px;text-align:center}
+      .box .lbl{font-size:13px;color:#666;margin-bottom:4px}
+      .box .val{font-size:19px;font-weight:bold;color:#0d9488}
+      .open{border-color:#64748b}.open .val{color:#334155}
+      @media print{button{display:none}}
+    </style></head><body>
+    <h1>مؤسسة قمة الفرصة التجارية</h1>
+    <h2>دفتر اليومية — ${dLabel(day)}</h2>
+    <table>
+      <thead><tr><th>النوع</th><th>الوصف</th><th>المبلغ</th></tr></thead>
+      <tbody>
+        <tr style="background:#eef"><td><b>رصيد افتتاحي</b></td><td>متبقي أمس</td><td style="text-align:left"><b>${fmt(opening)}</b></td></tr>
+        ${rowsHtml||'<tr><td colspan="3" style="text-align:center;color:#999">لا توجد حركات</td></tr>'}
+      </tbody>
+    </table>
+    <div class="summary">
+      <div class="box open"><div class="lbl">الرصيد الافتتاحي</div><div class="val">${fmt(opening)}</div></div>
+      <div class="box"><div class="lbl">سدادات اليوم</div><div class="val">${fmt(sumByType("sadad"))}</div></div>
+      <div class="box"><div class="lbl">المصروفات + السحوبات</div><div class="val">${fmt(sumByType("masroof")+sumByType("sahb")+sumByType("estilam")+sumByType("mgr")+sumByType("acc"))}</div></div>
+      <div class="box"><div class="lbl">المتبقي في الصندوق</div><div class="val">${fmt(closing)}</div></div>
+    </div>
+    <p style="text-align:center;color:#999;font-size:12px;margin-top:24px">طُبع بتاريخ ${new Date().toLocaleString("ar-SA")}</p>
+    <button onclick="window.print()" style="display:block;margin:20px auto;padding:10px 30px;font-size:16px;background:#0d9488;color:#fff;border:none;border-radius:8px;cursor:pointer">🖨️ طباعة</button>
+    </body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(), 400);
+}
+
 const DAILY_TYPES = [
   {key:"sadad",   label:"سداد",          sign:1,  color:"#16a34a"},
   {key:"masroof", label:"مصروف",         sign:-1, color:"#dc2626"},
@@ -2382,9 +2427,10 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
     <div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:10}}>
         <div style={{fontSize:19,fontWeight:800}}>📒 دفتر اليومية</div>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
           <label style={{fontWeight:700,fontSize:15}}>اليوم:</label>
           <input type="date" style={{...styles.input,width:"auto"}} value={selDay} onChange={e=>setSelDay(e.target.value)}/>
+          <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px"}} onClick={()=>printDailyReport(selDay,dayRows,openingBalance,closingBalance,sumByType)}>🖨️ طباعة اليوم</button>
         </div>
       </div>
 
