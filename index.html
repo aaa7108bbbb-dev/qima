@@ -2317,6 +2317,8 @@ const DAILY_TYPES = [
   {key:"masroof", label:"مصروف",         sign:-1, color:"#dc2626"},
   {key:"sahb",    label:"سحب",           sign:-1, color:"#ea580c"},
   {key:"estilam", label:"استلمت نقدي",   sign:-1, color:"#7c3aed"},
+  {key:"mgr",     label:"استلام مدير",   sign:-1, color:"#b45309"},
+  {key:"acc",     label:"استلام محاسب",  sign:-1, color:"#0891b2"},
 ];
 function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, settings, toast}) {
   const today = new Date().toISOString().split("T")[0];
@@ -2349,6 +2351,14 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   const dayContracts = contracts.filter(c=>c.date===selDay);
   const mgrShare = dayContracts.reduce((s,c)=>s+calcContract(c.amount,settings).inst,0);
   const accShare = dayContracts.reduce((s,c)=>s+calcContract(c.amount,settings).acc,0);
+
+  // الحساب الكامل: المستحق من كل العقود - المستلم من اليومية
+  const mgrEarnedAll = contracts.reduce((s,c)=>s+calcContract(c.amount,settings).inst,0);
+  const accEarnedAll = contracts.reduce((s,c)=>s+calcContract(c.amount,settings).acc,0);
+  const mgrTakenAll = daily.filter(d=>d.type==="mgr").reduce((s,d)=>s+(d.amount||0),0);
+  const accTakenAll = daily.filter(d=>d.type==="acc").reduce((s,d)=>s+(d.amount||0),0);
+  const mgrLeft = mgrEarnedAll - mgrTakenAll;
+  const accLeft = accEarnedAll - accTakenAll;
 
   const addRow=()=>{
     if(!form.amount||parseFloat(form.amount)<=0){toast("أدخل مبلغ صحيح","warn");return;}
@@ -2392,15 +2402,19 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
         </div>
       </div>
 
-      {/* نصيب المدير والمحاسب من عقود اليوم */}
+      {/* حساب المدير والمحاسب */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
         <div style={{...styles.card,borderTop:"4px solid #b45309"}}>
-          <div style={{fontSize:14,color:"#9ca3af",marginBottom:6}}>نصيب المدير (عقود اليوم)</div>
-          <div style={{fontSize:19,fontWeight:900,color:"#b45309"}}>{SAR(mgrShare)}</div>
+          <div style={{fontSize:15,fontWeight:800,color:"#b45309",marginBottom:8}}>👔 حساب المدير</div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#9ca3af"}}>المستحق (كل العقود)</span><span style={{fontWeight:700}}>{SAR(mgrEarnedAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#9ca3af"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(mgrTakenAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginTop:6,paddingTop:6,borderTop:"1px solid "+C.border}}><span style={{fontWeight:800}}>الباقي له</span><span style={{fontWeight:900,color:mgrLeft>=0?"#b45309":C.red}}>{SAR(mgrLeft)}</span></div>
         </div>
         <div style={{...styles.card,borderTop:"4px solid #0891b2"}}>
-          <div style={{fontSize:14,color:"#9ca3af",marginBottom:6}}>نصيب المحاسب (عقود اليوم)</div>
-          <div style={{fontSize:19,fontWeight:900,color:"#0891b2"}}>{SAR(accShare)}</div>
+          <div style={{fontSize:15,fontWeight:800,color:"#0891b2",marginBottom:8}}>🧮 حساب المحاسب</div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#9ca3af"}}>المستحق (كل العقود)</span><span style={{fontWeight:700}}>{SAR(accEarnedAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#9ca3af"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(accTakenAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginTop:6,paddingTop:6,borderTop:"1px solid "+C.border}}><span style={{fontWeight:800}}>الباقي له</span><span style={{fontWeight:900,color:accLeft>=0?"#0891b2":C.red}}>{SAR(accLeft)}</span></div>
         </div>
       </div>
 
