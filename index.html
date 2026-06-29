@@ -3239,8 +3239,24 @@ function App() {
   );
 }
 
+class ErrorBoundary extends React.Component {
+  constructor(props){super(props);this.state={err:null,info:null};}
+  static getDerivedStateFromError(err){return {err};}
+  componentDidCatch(err,info){this.setState({err,info});}
+  render(){
+    if(this.state.err){
+      return React.createElement('div',{style:{padding:20,fontFamily:'monospace',direction:'ltr',textAlign:'left',background:'#fff',color:'#b00',fontSize:13,whiteSpace:'pre-wrap',lineHeight:1.6}},
+        '⚠️ خطأ في البرنامج:\n\n'+(this.state.err&&this.state.err.toString())+'\n\n'+
+        (this.state.err&&this.state.err.stack?this.state.err.stack.split('\n').slice(0,8).join('\n'):'')+'\n\n'+
+        (this.state.info&&this.state.info.componentStack?this.state.info.componentStack.split('\n').slice(0,8).join('\n'):'')
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+root.render(<ErrorBoundary><App /></ErrorBoundary>);
 </script>
 </body>
 </html>
