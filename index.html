@@ -1683,7 +1683,7 @@ const TX_TYPES = [
   {key:"contract",  label:"خصم عقد",          color:"#7030A0", sign:-1},
 ];
 
-function AccountsPage({contracts, investors, settings, txList, setTxList, loans, setLoans, zakatTx, setZakatTx, pending, setPending, payments}) {
+function AccountsPage({contracts, investors, setInvestors, settings, txList, setTxList, loans, setLoans, zakatTx, setZakatTx, pending, setPending, payments, toast}) {
   const [subTab, setSubTab] = useState("inv");
   const [selInv, setSelInv] = useState(investors[0]?.id||null);
   const [invSubTab, setInvSubTab] = useState("inv");
@@ -1768,6 +1768,7 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
   const totalWithdraws = allTx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
 
   const subTabs = [
+    {key:"list",  label:"👥 المستثمرون"},
     {key:"inv",   label:"💰 حسابات المستثمرين"},
     {key:"comm",  label:"📑 العمولات"},
   ];
@@ -1789,6 +1790,7 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
       </div>
 
       {/* Commissions sub-page */}
+      {subTab==="list" && <InvestorsPage investors={investors} contracts={contracts} settings={settings} payments={payments} txList={txList} onAdd={inv=>setInvestors(p=>[...p,inv])} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} toast={toast}/>}
       {subTab==="comm" && <CommissionsPage contracts={contracts} investors={investors} settings={settings}/>}
 
       {/* Investor accounts sub-page */}
@@ -3201,7 +3203,6 @@ function App() {
     {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
     {id:"jard",label:"📊",name:"الجرد",color:"#ea580c"},
     {id:"accounts",label:"💰",name:"الحسابات",color:"#b45309"},
-    {id:"investors",label:"👥",name:"المستثمرون",color:"#3b82f6"},
     {id:"goods",label:"📦",name:"البضاعة",color:"#78350f"},
     {id:"settings",label:"⚙️",name:"الإعدادات",color:"#4b5563"},
   ];
@@ -3243,8 +3244,7 @@ function App() {
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c))} onRestore={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);}} setInvTxList={setInvTxList}/>}
         {page==="jard" && <JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite}/>}
-        {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments}/>}
-        {page==="investors" && <InvestorsPage investors={investors} contracts={activeContracts} settings={settings} payments={payments} txList={invTxList} onAdd={inv=>setInvestors(p=>[...p,inv])} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} toast={toast}/>}
+        {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast}/>}
         {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast}/>}
       </div>
