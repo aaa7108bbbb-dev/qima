@@ -23,6 +23,14 @@
     #cheque-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
     #bond-g-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
     #cheque-g-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
+    /* ضغط عقد البيع ليدخل كاملاً بالشهود في ورقة واحدة */
+    #contract-print-area { font-size: 12px !important; }
+    #contract-print-area * { line-height: 1.45 !important; }
+    #contract-print-area > div { padding: 0 !important; }
+    #contract-print-area div[style*="lineHeight: 2"],
+    #contract-print-area div[style*="line-height:2"] { line-height: 1.5 !important; }
+    #contract-print-area div[style*="marginBottom"] { margin-bottom: 5px !important; }
+    #contract-print-area { page-break-inside: avoid; }
   }
   body { margin: 0; font-family: 'Tajawal', Arial, sans-serif; background: #f4f4f6; }
 </style>
