@@ -1745,9 +1745,6 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
 
   const subTabs = [
     {key:"inv",   label:"💰 حسابات المستثمرين"},
-    {key:"loans", label:"🤝 السلف"},
-    {key:"zakat", label:"🌙 الزكاة"},
-    {key:"pending",label:"📌 المتبقي"},
     {key:"comm",  label:"📑 العمولات"},
   ];
 
@@ -1767,17 +1764,12 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
         ))}
       </div>
 
-      {/* Loans sub-page */}
-      {subTab==="loans" && <LoansPage loans={loans} setLoans={setLoans}/>}
-      {/* Zakat sub-page */}
-      {subTab==="zakat" && <ZakatPage investors={investors} contracts={contracts} settings={settings} zakatTx={zakatTx} setZakatTx={setZakatTx}/>}
-      {/* Pending sub-page */}
-      {subTab==="pending" && <PendingPage pending={pending} setPending={setPending}/>}
       {/* Commissions sub-page */}
       {subTab==="comm" && <CommissionsPage contracts={contracts} investors={investors} settings={settings}/>}
 
       {/* Investor accounts sub-page */}
       {subTab==="inv" && <>
+      {invSubTab==="loans" && <LoansPage loans={loans} setLoans={setLoans}/>}
       {invSubTab==="zakat" && <ZakatPage investors={investors} contracts={contracts} settings={settings} zakatTx={zakatTx} setZakatTx={setZakatTx}/>}
       {invSubTab==="pending" && <PendingPage pending={pending} setPending={setPending}/>}
 
@@ -1785,8 +1777,9 @@ function AccountsPage({contracts, investors, settings, txList, setTxList, loans,
       <div style={{...styles.card,marginBottom:16,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
         <label style={{fontWeight:700,fontSize:15,whiteSpace:"nowrap"}}>المستثمر:</label>
         <select style={{...styles.select,flex:1,maxWidth:300,borderColor:C.teal,color:C.teal,fontWeight:700}}
-          value={selInv||""} onChange={e=>{const v=e.target.value;setInvSubTab(v==="zakat"||v==="pending"?v:"inv");setSelInv(v==="zakat"||v==="pending"?v:parseInt(v));}}>
+          value={selInv||""} onChange={e=>{const v=e.target.value;const special=(v==="zakat"||v==="pending"||v==="loans");setInvSubTab(special?v:"inv");setSelInv(special?v:parseInt(v));}}>
           {investors.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
+          <option value="loans">🤝 السلف</option>
           <option value="zakat">🌙 صندوق الزكاة</option>
           <option value="pending">📌 المتبقي</option>
         </select>
