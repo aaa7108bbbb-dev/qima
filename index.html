@@ -2311,6 +2311,187 @@ function Dashboard({contracts,investors,settings,setInvestors}) {
   );
 }
 
+// ─── Daily Cashbook Page ─────────────────────────────────────
+const DAILY_TYPES = [
+  {key:"sadad",   label:"سداد",          sign:1,  color:"#16a34a"},
+  {key:"masroof", label:"مصروف",         sign:-1, color:"#dc2626"},
+  {key:"sahb",    label:"سحب",           sign:-1, color:"#ea580c"},
+  {key:"estilam", label:"استلمت نقدي",   sign:-1, color:"#7c3aed"},
+];
+function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, settings, toast}) {
+  const today = new Date().toISOString().split("T")[0];
+  const [selDay,setSelDay] = useState(today);
+  const [form,setForm] = useState({type:"sadad", amount:"", desc:""});
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+
+  // حركات اليوم المحدد
+  const dayRows = daily.filter(d=>d.date===selDay).sort((a,b)=>a.id-b.id);
+
+  // حساب الرصيد الافتتاحي: متبقي اليوم السابق (تراكمي من كل الأيام قبله)
+  const prevDays = daily.filter(d=>d.date < selDay);
+  const manualOpen = dailyOpen[selDay];
+  // الرصيد الافتتاحي = (رصيد افتتاحي يدوي لأول يوم) + صافي كل الحركات قبل هذا اليوم
+  const firstOpenKey = Object.keys(dailyOpen).sort()[0];
+  const baseOpen = firstOpenKey ? (dailyOpen[firstOpenKey]||0) : 0;
+  const baseDate = firstOpenKey || "0000-00-00";
+  const prevNet = daily.filter(d=>d.date < selDay && d.date >= baseDate)
+    .reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
+  const openingBalance = baseOpen + prevNet;
+
+  // صافي حركات اليوم
+  const dayNet = dayRows.reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
+  const closingBalance = openingBalance + dayNet;
+
+  // إجماليات حسب النوع لهذا اليوم
+  const sumByType = (k)=>dayRows.filter(d=>d.type===k).reduce((s,d)=>s+(d.amount||0),0);
+
+  // نصيب المدير والمحاسب من عقود هذا اليوم
+  const dayContracts = contracts.filter(c=>c.date===selDay);
+  const mgrShare = dayContracts.reduce((s,c)=>s+calcContract(c.amount,settings).inst,0);
+  const accShare = dayContracts.reduce((s,c)=>s+calcContract(c.amount,settings).acc,0);
+
+  const addRow=()=>{
+    if(!form.amount||parseFloat(form.amount)<=0){toast("أدخل مبلغ صحيح","warn");return;}
+    setDaily(p=>[...p,{id:Date.now(),date:selDay,type:form.type,amount:parseFloat(form.amount),desc:form.desc||""}]);
+    setForm({type:form.type,amount:"",desc:""});
+    toast("✅ تمت الإضافة");
+  };
+  const delRow=(id)=>setDaily(p=>p.filter(d=>d.id!==id));
+
+  const isFirstDay = !firstOpenKey || selDay <= firstOpenKey;
+  const dLabel = ymd => { if(!ymd) return ""; const [y,m,d]=ymd.split("-"); return d+"/"+parseInt(m)+"/"+y; };
+
+  return (
+    <div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:10}}>
+        <div style={{fontSize:19,fontWeight:800}}>📒 دفتر اليومية</div>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <label style={{fontWeight:700,fontSize:15}}>اليوم:</label>
+          <input type="date" style={{...styles.input,width:"auto"}} value={selDay} onChange={e=>setSelDay(e.target.value)}/>
+        </div>
+      </div>
+
+      {/* ملخص اليوم */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
+        <div style={{...styles.card,borderTop:"4px solid #64748b"}}>
+          <div style={{fontSize:14,color:"#9ca3af",marginBottom:6}}>الرصيد الافتتاحي</div>
+          <div style={{fontSize:20,fontWeight:900,color:"#334155"}}>{SAR(openingBalance)}</div>
+          <div style={{fontSize:13,color:"#9ca3af",marginTop:4}}>متبقي أمس</div>
+        </div>
+        <div style={{...styles.card,borderTop:"4px solid #16a34a"}}>
+          <div style={{fontSize:14,color:"#9ca3af",marginBottom:6}}>سدادات اليوم</div>
+          <div style={{fontSize:20,fontWeight:900,color:"#16a34a"}}>{SAR(sumByType("sadad"))}</div>
+        </div>
+        <div style={{...styles.card,borderTop:"4px solid #dc2626"}}>
+          <div style={{fontSize:14,color:"#9ca3af",marginBottom:6}}>المصروفات + السحوبات</div>
+          <div style={{fontSize:20,fontWeight:900,color:"#dc2626"}}>{SAR(sumByType("masroof")+sumByType("sahb")+sumByType("estilam"))}</div>
+        </div>
+        <div style={{...styles.card,borderTop:"4px solid #0d9488",background:"#f0fdfa"}}>
+          <div style={{fontSize:14,color:"#0d9488",marginBottom:6,fontWeight:700}}>💰 المتبقي في الصندوق</div>
+          <div style={{fontSize:22,fontWeight:900,color:closingBalance>=0?"#0d9488":"#dc2626"}}>{SAR(closingBalance)}</div>
+        </div>
+      </div>
+
+      {/* نصيب المدير والمحاسب من عقود اليوم */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
+        <div style={{...styles.card,borderTop:"4px solid #b45309"}}>
+          <div style={{fontSize:14,color:"#9ca3af",marginBottom:6}}>نصيب المدير (عقود اليوم)</div>
+          <div style={{fontSize:19,fontWeight:900,color:"#b45309"}}>{SAR(mgrShare)}</div>
+        </div>
+        <div style={{...styles.card,borderTop:"4px solid #0891b2"}}>
+          <div style={{fontSize:14,color:"#9ca3af",marginBottom:6}}>نصيب المحاسب (عقود اليوم)</div>
+          <div style={{fontSize:19,fontWeight:900,color:"#0891b2"}}>{SAR(accShare)}</div>
+        </div>
+      </div>
+
+      {/* رصيد افتتاحي يدوي (يظهر فقط لأول يوم أو إذا لم يُحدد) */}
+      <div style={{...styles.card,marginBottom:16,background:"#fffbf0",border:"1px solid "+C.gold}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+          <span style={{fontSize:14,fontWeight:700,color:"#8a6200"}}>تعيين رصيد افتتاحي يدوي لهذا اليوم (للبداية فقط):</span>
+          <input type="number" placeholder="مثال: 15000" style={{...styles.input,width:140}}
+            value={manualOpen!==undefined?manualOpen:""}
+            onChange={e=>setDailyOpen(p=>({...p,[selDay]:parseFloat(e.target.value)||0}))}/>
+          {manualOpen!==undefined && <button style={{...styles.btn(C.red),fontSize:13,padding:"4px 10px"}}
+            onClick={()=>setDailyOpen(p=>{const n={...p};delete n[selDay];return n;})}>إلغاء</button>}
+        </div>
+        <div style={{fontSize:13,color:"#9ca3af",marginTop:6}}>اتركه فارغاً ليُحسب تلقائياً من متبقي اليوم السابق</div>
+      </div>
+
+      {/* إضافة حركة */}
+      <div style={{...styles.panel,marginBottom:16}}>
+        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>➕ إضافة حركة</h3></div>
+        <div style={{padding:"14px 18px"}}>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
+            {DAILY_TYPES.map(t=>(
+              <button key={t.key} onClick={()=>set("type",t.key)}
+                style={{fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:700,padding:"8px 16px",borderRadius:8,cursor:"pointer",
+                  border:"2px solid "+t.color,background:form.type===t.key?t.color:"#fff",color:form.type===t.key?"#fff":t.color}}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:12}}>
+            <div>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المبلغ (ر.س)</label>
+              <input style={styles.input} type="number" placeholder="مثال: 1000" value={form.amount} onChange={e=>set("amount",e.target.value)}/>
+            </div>
+            <div>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>الوصف / الاسم</label>
+              <input style={styles.input} type="text" placeholder="اسم الشخص أو نوع المصروف" value={form.desc} onChange={e=>set("desc",e.target.value)}/>
+            </div>
+          </div>
+          <button style={styles.btn(C.teal)} onClick={addRow}>💾 إضافة الحركة</button>
+        </div>
+      </div>
+
+      {/* جدول حركات اليوم */}
+      <div style={styles.panel}>
+        <div style={styles.panelHdr}>
+          <h3 style={{margin:0,fontSize:15,fontWeight:700}}>📋 حركات يوم {dLabel(selDay)}</h3>
+          <span style={{fontSize:15,fontWeight:800,color:closingBalance>=0?C.teal:C.red}}>المتبقي: {SAR(closingBalance)}</span>
+        </div>
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
+            <thead>
+              <tr>{["النوع","الوصف","المبلغ",""].map(h=>(<th key={h} style={styles.th}>{h}</th>))}</tr>
+            </thead>
+            <tbody>
+              <tr style={{background:"#f8fafc"}}>
+                <td style={{...styles.td,fontWeight:700,color:"#334155"}}>رصيد افتتاحي</td>
+                <td style={{...styles.td,color:"#9ca3af"}}>متبقي أمس</td>
+                <td style={{...styles.td,fontWeight:800,color:"#334155"}}>{SAR(openingBalance)}</td>
+                <td style={styles.td}></td>
+              </tr>
+              {dayRows.length===0 ? (
+                <tr><td colSpan={4} style={{...styles.td,textAlign:"center",padding:30,color:"#9ca3af"}}>لا توجد حركات اليوم</td></tr>
+              ) : dayRows.map((d,i)=>{
+                const t=DAILY_TYPES.find(x=>x.key===d.type);
+                return (
+                  <tr key={d.id} style={{background:i%2===0?C.white:C.gray}}>
+                    <td style={styles.td}><span style={styles.badge((t?.color||"#999")+"22",t?.color||"#999")}>{t?.label||d.type}</span></td>
+                    <td style={{...styles.td,fontWeight:700}}>{d.desc||"—"}</td>
+                    <td style={{...styles.td,fontWeight:700,color:t?.color}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
+                    <td style={styles.td}>
+                      <button style={{...styles.btn(C.red),fontSize:14,padding:"4px 10px"}} onClick={()=>delRow(d.id)}>🗑️</button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr style={{background:"#f0fdfa"}}>
+                <td colSpan={2} style={{...styles.td,fontWeight:800,color:"#0d9488"}}>المتبقي في الصندوق</td>
+                <td style={{...styles.td,fontWeight:900,fontSize:16,color:closingBalance>=0?"#0d9488":C.red}}>{SAR(closingBalance)}</td>
+                <td style={styles.td}></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Investors Page ──────────────────────────────────────────
 function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,onDelete,toast}) {
   const [show,setShow]=useState(false);
@@ -2961,6 +3142,10 @@ function App() {
   const setPending = v => { const d=_arr(typeof v==="function"?v(pending):v); setPendingRaw(d); saveLS("qimma_pending",d); gsWrite("pending",d); };
   const [payments,setPaymentsRaw]=useState(()=>_arr(loadLS("qimma_payments",[])));
   const setPayments = v => { const d=_arr(typeof v==="function"?v(payments):v); setPaymentsRaw(d); saveLS("qimma_payments",d); gsWrite("payments",d); };
+  const [daily,setDailyRaw]=useState(()=>_arr(loadLS("qimma_daily",[])));
+  const setDaily = v => { const d=_arr(typeof v==="function"?v(daily):v); setDailyRaw(d); saveLS("qimma_daily",d); gsWrite("daily",d); };
+  const [dailyOpen,setDailyOpenRaw]=useState(()=>loadLS("qimma_daily_open",{}));
+  const setDailyOpen = v => { const d=typeof v==="function"?v(dailyOpen):v; setDailyOpenRaw(d); saveLS("qimma_daily_open",d); gsWrite("daily_open",d); };
   const [completionAlert,setCompletionAlert]=useState(null);
 
   const toast=(msg,type="success")=>{setToastMsg(msg);setToastType(type);setTimeout(()=>setToastMsg(null),3000);};
@@ -2969,10 +3154,11 @@ function App() {
   useEffect(()=>{
     (async ()=>{
       setSyncStatus("loading");
-      const [inv, con, set, tx, ln, zk, pd, pay, gd, jov] = await Promise.all([
+      const [inv, con, set, tx, ln, zk, pd, pay, gd, jov, dly, dlyo] = await Promise.all([
         gsRead("investors"), gsRead("contracts"), gsRead("settings"),
         gsRead("txlist"), gsRead("loans"), gsRead("zakat"),
-        gsRead("pending"), gsRead("payments"), gsRead("goods3"), gsRead("jard_ov")
+        gsRead("pending"), gsRead("payments"), gsRead("goods3"), gsRead("jard_ov"),
+        gsRead("daily"), gsRead("daily_open")
       ]);
       if (inv) { setInvestorsRaw(inv); saveLS("qimma_investors", inv); }
       if (con) { setContractsRaw(con); saveLS("qimma_contracts", con); }
@@ -2984,6 +3170,8 @@ function App() {
       if (pay) { setPaymentsRaw(pay); saveLS("qimma_payments", pay); }
       if (gd)  { localStorage.setItem("qimma_goods3", JSON.stringify(gd)); }
       if (jov) { localStorage.setItem("qimma_jard_ov", JSON.stringify(jov)); }
+      if (dly) { setDailyRaw(_arr(dly)); saveLS("qimma_daily", _arr(dly)); }
+      if (dlyo && !Array.isArray(dlyo)) { setDailyOpenRaw(dlyo); saveLS("qimma_daily_open", dlyo); }
       setSyncStatus("idle");
     })();
   }, []);
@@ -2995,6 +3183,7 @@ function App() {
     {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
     {id:"jard",label:"📊",name:"الجرد",color:"#ea580c"},
     {id:"accounts",label:"💰",name:"الحسابات",color:"#b45309"},
+    {id:"daily",label:"📒",name:"اليومية",color:"#0d9488"},
     {id:"commissions",label:"📑",name:"العمولات",color:"#0891b2"},
     {id:"investors",label:"👥",name:"المستثمرون",color:"#3b82f6"},
     {id:"goods",label:"📦",name:"البضاعة",color:"#78350f"},
@@ -3040,6 +3229,7 @@ function App() {
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.filter(c=>c.id!==id))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert}/>}
         {page==="jard" && <JardPage contracts={contracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite}/>}
         {page==="accounts" && <AccountsPage contracts={contracts} investors={investors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments}/>}
+        {page==="daily" && <DailyPage daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} contracts={contracts} settings={settings} toast={toast}/>}
         {page==="commissions" && <CommissionsPage contracts={contracts} investors={investors} settings={settings}/>}
         {page==="investors" && <InvestorsPage investors={investors} contracts={contracts} settings={settings} payments={payments} txList={invTxList} onAdd={inv=>setInvestors(p=>[...p,inv])} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={contracts} toast={toast}/>}
