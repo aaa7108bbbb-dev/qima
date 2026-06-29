@@ -11,13 +11,18 @@
 <style>
   * { box-sizing: border-box; }
   @media print {
-    @page { size: A4 landscape; margin: 5mm; }
-    body { background: white !important; font-size: 12px !important; }
-    header, nav, footer, .no-print { display: none !important; }
-    main { margin: 0 !important; padding: 0 !important; }
-    table { font-size: 11px !important; }
-    * { box-shadow: none !important; page-break-inside: avoid !important; }
-    a { color: #000 !important; text-decoration: none !important; }
+    @page { size: A4; margin: 10mm; }
+    body * { visibility: hidden; }
+    #contract-print-area, #contract-print-area * { visibility: visible; }
+    #bond-print-area, #bond-print-area * { visibility: visible; }
+    #cheque-print-area, #cheque-print-area * { visibility: visible; }
+    #bond-g-print-area, #bond-g-print-area * { visibility: visible; }
+    #cheque-g-print-area, #cheque-g-print-area * { visibility: visible; }
+    #contract-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
+    #bond-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
+    #cheque-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
+    #bond-g-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
+    #cheque-g-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
   }
   body { margin: 0; font-family: 'Tajawal', Arial, sans-serif; background: #f4f4f6; }
 </style>
@@ -56,7 +61,22 @@ const _arr = x => Array.isArray(x) ? x : [];
 
 
 function printContent(elementId) {
-  window.print();
+  const el = document.getElementById(elementId);
+  if(!el){ window.print(); return; }
+  const win = window.open("","_blank");
+  win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>طباعة</title>
+    <style>
+      *{box-sizing:border-box;font-family:Arial,sans-serif}
+      body{padding:18px;color:#000;direction:rtl}
+      table{width:100%;border-collapse:collapse;font-size:13px;border:2px solid #000}
+      th,td{border:1px solid #000;padding:7px 9px;text-align:right;white-space:nowrap}
+      th{font-weight:900;border-bottom:2px solid #000}
+      button{display:none !important}
+      .print-only-header{display:block !important}
+      @page{size:A4 landscape;margin:10mm}
+    </style></head><body>${el.innerHTML}</body></html>`);
+  win.document.close();
+  setTimeout(()=>{win.print();}, 400);
 }
 
 
@@ -2975,7 +2995,15 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
           const totalLeft  = myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
           const totalProfit= myCon.reduce((s,c)=>s+calcContract(c.amount,settings).net,0);
           return (
-            <div style={{padding:"16px 20px"}}>
+            <div id="stmt-print-area" style={{padding:"16px 20px"}}>
+              {/* رأس الطباعة (يظهر فقط عند الطباعة) */}
+              <div className="print-only-header" style={{display:"none"}}>
+                <div style={{textAlign:"center",borderBottom:"2px solid #000",paddingBottom:10,marginBottom:14}}>
+                  <div style={{fontSize:18,fontWeight:900}}>مؤسسة قمة الفرصة التجارية</div>
+                  <div style={{fontSize:13}}>كشف حساب — {stmtInv.name}</div>
+                  <div style={{fontSize:12,color:"#555"}}>التاريخ: {new Date().toLocaleDateString("ar-SA")}</div>
+                </div>
+              </div>
               {/* Type switcher */}
               <div style={{display:"flex",gap:0,marginBottom:16,background:C.slate,borderRadius:8,overflow:"hidden",width:"fit-content"}}>
                 {[["brief","📄 مختصر"],["detailed","📋 مفصل"]].map(([k,l])=>(
@@ -2985,7 +3013,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
                     {l}
                   </button>
                 ))}
-                <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px",borderRadius:0}} onClick={()=>window.print()}>🖨️ طباعة</button>
+                <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px",borderRadius:0}} onClick={()=>printContent("stmt-print-area")}>🖨️ طباعة</button>
               </div>
 
               {/* Summary cards */}
