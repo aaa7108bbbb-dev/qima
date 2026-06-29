@@ -2313,16 +2313,18 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
 
   // حركات اليوم المحدد
-  const dayRows = daily.filter(d=>d.date===selDay).sort((a,b)=>a.id-b.id);
+  const dayRows = (Array.isArray(daily)?daily:[]).filter(d=>d.date===selDay).sort((a,b)=>a.id-b.id);
 
   // حساب الرصيد الافتتاحي: متبقي اليوم السابق (تراكمي من كل الأيام قبله)
-  const prevDays = daily.filter(d=>d.date < selDay);
-  const manualOpen = dailyOpen[selDay];
+  const _daily = Array.isArray(daily) ? daily : [];
+  const _dailyOpen = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
+  const prevDays = _daily.filter(d=>d.date < selDay);
+  const manualOpen = _dailyOpen[selDay];
   // الرصيد الافتتاحي = (رصيد افتتاحي يدوي لأول يوم) + صافي كل الحركات قبل هذا اليوم
-  const firstOpenKey = Object.keys(dailyOpen).sort()[0];
-  const baseOpen = firstOpenKey ? (dailyOpen[firstOpenKey]||0) : 0;
+  const firstOpenKey = Object.keys(_dailyOpen).sort()[0];
+  const baseOpen = firstOpenKey ? (_dailyOpen[firstOpenKey]||0) : 0;
   const baseDate = firstOpenKey || "0000-00-00";
-  const prevNet = daily.filter(d=>d.date < selDay && d.date >= baseDate)
+  const prevNet = _daily.filter(d=>d.date < selDay && d.date >= baseDate)
     .reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
   const openingBalance = baseOpen + prevNet;
 
@@ -2341,8 +2343,8 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   // الحساب الكامل: المستحق من كل العقود - المستلم من اليومية
   const mgrEarnedAll = contracts.reduce((s,c)=>s+calcContract(c.amount,settings).inst,0);
   const accEarnedAll = contracts.reduce((s,c)=>s+calcContract(c.amount,settings).acc,0);
-  const mgrTakenAll = daily.filter(d=>d.type==="mgr").reduce((s,d)=>s+(d.amount||0),0);
-  const accTakenAll = daily.filter(d=>d.type==="acc").reduce((s,d)=>s+(d.amount||0),0);
+  const mgrTakenAll = _daily.filter(d=>d.type==="mgr").reduce((s,d)=>s+(d.amount||0),0);
+  const accTakenAll = _daily.filter(d=>d.type==="acc").reduce((s,d)=>s+(d.amount||0),0);
   const mgrLeft = mgrEarnedAll - mgrTakenAll;
   const accLeft = accEarnedAll - accTakenAll;
 
@@ -3145,7 +3147,7 @@ function App() {
   const setPayments = v => { const d=_arr(typeof v==="function"?v(payments):v); setPaymentsRaw(d); saveLS("qimma_payments",d); gsWrite("payments",d); };
   const [daily,setDailyRaw]=useState(()=>_arr(loadLS("qimma_daily",[])));
   const setDaily = v => { const d=_arr(typeof v==="function"?v(daily):v); setDailyRaw(d); saveLS("qimma_daily",d); gsWrite("daily",d); };
-  const [dailyOpen,setDailyOpenRaw]=useState(()=>loadLS("qimma_daily_open",{}));
+  const [dailyOpen,setDailyOpenRaw]=useState(()=>{const v=loadLS("qimma_daily_open",{});return (v&&typeof v==="object"&&!Array.isArray(v))?v:{};});
   const setDailyOpen = v => { const d=typeof v==="function"?v(dailyOpen):v; setDailyOpenRaw(d); saveLS("qimma_daily_open",d); gsWrite("daily_open",d); };
   const [completionAlert,setCompletionAlert]=useState(null);
 
