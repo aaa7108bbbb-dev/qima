@@ -2328,24 +2328,24 @@ function printDailyReport(day, rows, opening, closing, sumByType){
     <style>
       *{box-sizing:border-box}
       body{font-family:Arial,sans-serif;padding:24px;color:#000;direction:rtl}
-      .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:4px solid #000;padding-bottom:12px;margin-bottom:0}
+      .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:14px}
       .header .right{text-align:right;line-height:1.9}
       .header .left{text-align:left;line-height:1.9}
       .org{font-size:18px;font-weight:900}
       .sub{font-size:13px}
-      .title{text-align:center;font-size:20px;font-weight:900;background:#000;color:#fff;padding:10px;margin:0 0 0 0;letter-spacing:1px}
-      table{width:100%;border-collapse:collapse;font-size:15px;border:3px solid #000}
-      th,td{border:2px solid #000;padding:10px 12px;text-align:right}
-      th{background:#000;color:#fff;font-size:16px;font-weight:900}
+      .title{text-align:center;font-size:20px;font-weight:900;padding:10px;margin:0 0 14px 0;border:2px solid #000;letter-spacing:1px}
+      table{width:100%;border-collapse:collapse;font-size:15px;border:2px solid #000}
+      th,td{border:1px solid #000;padding:10px 12px;text-align:right}
+      th{font-size:16px;font-weight:900;border-bottom:2px solid #000}
       td.amt{text-align:left;font-weight:bold;font-family:monospace;font-size:16px}
-      .open-row{background:#e8e8e8;font-weight:900}
-      .total-row td{background:#000;color:#fff;font-weight:900;font-size:17px;border:2px solid #000}
-      .summary{display:flex;gap:0;margin-top:16px;border:3px solid #000}
-      .box{flex:1;padding:12px;text-align:center;border-left:2px solid #000}
+      .open-row{font-weight:900;border-bottom:1px solid #000}
+      .total-row td{font-weight:900;font-size:17px;border-top:2px solid #000}
+      .summary{display:flex;gap:0;margin-top:16px;border:2px solid #000}
+      .box{flex:1;padding:12px;text-align:center;border-left:1px solid #000}
       .box:last-child{border-left:none}
       .box .lbl{font-size:13px;font-weight:bold;margin-bottom:6px}
       .box .val{font-size:18px;font-weight:900}
-      .foot{text-align:center;color:#444;font-size:12px;margin-top:20px;border-top:2px solid #000;padding-top:8px}
+      .foot{text-align:center;color:#444;font-size:12px;margin-top:20px;border-top:1px solid #000;padding-top:8px}
       @media print{button{display:none}body{padding:10px}}
     </style></head><body>
     <div class="header">
