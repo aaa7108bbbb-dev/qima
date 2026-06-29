@@ -2322,41 +2322,60 @@ function printDailyReport(day, rows, opening, closing, sumByType){
   const fmt = n => Math.round(+(n||0)).toLocaleString("ar-SA")+" ر.س";
   const labels = {sadad:"سداد",masroof:"مصروف",sahb:"سحب",estilam:"استلمت نقدي",mgr:"استلام مدير",acc:"استلام محاسب"};
   const signs = {sadad:"+",masroof:"−",sahb:"−",estilam:"−",mgr:"−",acc:"−"};
-  let rowsHtml = rows.map(r=>`<tr><td>${labels[r.type]||r.type}</td><td>${r.desc||"—"}</td><td style="text-align:left">${signs[r.type]||""}${fmt(r.amount)}</td></tr>`).join("");
+  let rowsHtml = rows.map(r=>`<tr><td>${labels[r.type]||r.type}</td><td>${r.desc||"—"}</td><td class="amt">${signs[r.type]||""}${fmt(r.amount)}</td></tr>`).join("");
   const win = window.open("","_blank");
-  win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>يومية ${dLabel(day)}</title>
+  win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>كشف يومية ${dLabel(day)}</title>
     <style>
-      body{font-family:Arial,sans-serif;padding:24px;color:#222;direction:rtl}
-      h1{text-align:center;font-size:22px;margin:0 0 4px}
-      h2{text-align:center;font-size:16px;color:#666;margin:0 0 20px;font-weight:normal}
-      table{width:100%;border-collapse:collapse;margin:16px 0;font-size:15px}
-      th,td{border:1px solid #ccc;padding:9px 12px;text-align:right}
-      th{background:#1e3a5f;color:#fff}
-      tr:nth-child(even){background:#f5f5f5}
-      .summary{display:flex;justify-content:space-between;gap:16px;margin-top:20px;flex-wrap:wrap}
-      .box{flex:1;min-width:140px;border:2px solid #0d9488;border-radius:8px;padding:12px;text-align:center}
-      .box .lbl{font-size:13px;color:#666;margin-bottom:4px}
-      .box .val{font-size:19px;font-weight:bold;color:#0d9488}
-      .open{border-color:#64748b}.open .val{color:#334155}
-      @media print{button{display:none}}
+      *{box-sizing:border-box}
+      body{font-family:Arial,sans-serif;padding:24px;color:#000;direction:rtl}
+      .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:4px solid #000;padding-bottom:12px;margin-bottom:0}
+      .header .right{text-align:right;line-height:1.9}
+      .header .left{text-align:left;line-height:1.9}
+      .org{font-size:18px;font-weight:900}
+      .sub{font-size:13px}
+      .title{text-align:center;font-size:20px;font-weight:900;background:#000;color:#fff;padding:10px;margin:0 0 0 0;letter-spacing:1px}
+      table{width:100%;border-collapse:collapse;font-size:15px;border:3px solid #000}
+      th,td{border:2px solid #000;padding:10px 12px;text-align:right}
+      th{background:#000;color:#fff;font-size:16px;font-weight:900}
+      td.amt{text-align:left;font-weight:bold;font-family:monospace;font-size:16px}
+      .open-row{background:#e8e8e8;font-weight:900}
+      .total-row td{background:#000;color:#fff;font-weight:900;font-size:17px;border:2px solid #000}
+      .summary{display:flex;gap:0;margin-top:16px;border:3px solid #000}
+      .box{flex:1;padding:12px;text-align:center;border-left:2px solid #000}
+      .box:last-child{border-left:none}
+      .box .lbl{font-size:13px;font-weight:bold;margin-bottom:6px}
+      .box .val{font-size:18px;font-weight:900}
+      .foot{text-align:center;color:#444;font-size:12px;margin-top:20px;border-top:2px solid #000;padding-top:8px}
+      @media print{button{display:none}body{padding:10px}}
     </style></head><body>
-    <h1>مؤسسة قمة الفرصة التجارية</h1>
-    <h2>دفتر اليومية — ${dLabel(day)}</h2>
+    <div class="header">
+      <div class="right">
+        <div class="org">مؤسسة قمة الفرصة التجارية</div>
+        <div class="sub">بريدة - شارع الثلاثين</div>
+        <div class="sub">ج: 0555171283 &nbsp; ت: 0163839323</div>
+      </div>
+      <div class="left">
+        <div class="sub">كشف يومية</div>
+        <div class="sub">التاريخ: ${dLabel(day)}</div>
+      </div>
+    </div>
+    <div class="title">كشف حركة الصندوق اليومي</div>
     <table>
-      <thead><tr><th>النوع</th><th>الوصف</th><th>المبلغ</th></tr></thead>
+      <thead><tr><th>النوع</th><th>الوصف / الاسم</th><th>المبلغ</th></tr></thead>
       <tbody>
-        <tr style="background:#eef"><td><b>رصيد افتتاحي</b></td><td>متبقي أمس</td><td style="text-align:left"><b>${fmt(opening)}</b></td></tr>
-        ${rowsHtml||'<tr><td colspan="3" style="text-align:center;color:#999">لا توجد حركات</td></tr>'}
+        <tr class="open-row"><td>رصيد افتتاحي</td><td>متبقي أمس</td><td class="amt">${fmt(opening)}</td></tr>
+        ${rowsHtml||'<tr><td colspan="3" style="text-align:center;color:#666">لا توجد حركات</td></tr>'}
+        <tr class="total-row"><td colspan="2">المتبقي في الصندوق</td><td class="amt">${fmt(closing)}</td></tr>
       </tbody>
     </table>
     <div class="summary">
-      <div class="box open"><div class="lbl">الرصيد الافتتاحي</div><div class="val">${fmt(opening)}</div></div>
+      <div class="box"><div class="lbl">الرصيد الافتتاحي</div><div class="val">${fmt(opening)}</div></div>
       <div class="box"><div class="lbl">سدادات اليوم</div><div class="val">${fmt(sumByType("sadad"))}</div></div>
-      <div class="box"><div class="lbl">المصروفات + السحوبات</div><div class="val">${fmt(sumByType("masroof")+sumByType("sahb")+sumByType("estilam")+sumByType("mgr")+sumByType("acc"))}</div></div>
+      <div class="box"><div class="lbl">مصروفات + سحوبات</div><div class="val">${fmt(sumByType("masroof")+sumByType("sahb")+sumByType("estilam")+sumByType("mgr")+sumByType("acc"))}</div></div>
       <div class="box"><div class="lbl">المتبقي في الصندوق</div><div class="val">${fmt(closing)}</div></div>
     </div>
-    <p style="text-align:center;color:#999;font-size:12px;margin-top:24px">طُبع بتاريخ ${new Date().toLocaleString("ar-SA")}</p>
-    <button onclick="window.print()" style="display:block;margin:20px auto;padding:10px 30px;font-size:16px;background:#0d9488;color:#fff;border:none;border-radius:8px;cursor:pointer">🖨️ طباعة</button>
+    <div class="foot">طُبع بتاريخ ${new Date().toLocaleString("ar-SA")}</div>
+    <button onclick="window.print()" style="display:block;margin:20px auto;padding:10px 30px;font-size:16px;background:#000;color:#fff;border:none;border-radius:8px;cursor:pointer">🖨️ طباعة</button>
     </body></html>`);
   win.document.close();
   setTimeout(()=>win.print(), 400);
