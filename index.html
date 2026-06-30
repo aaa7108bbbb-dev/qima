@@ -83,7 +83,23 @@
 function createStars(){const container=document.getElementById('stars-container');for(let i=0;i<50;i++){const star=document.createElement('div');star.className='star';star.style.left=Math.random()*100+'%';star.style.top=Math.random()*100+'%';star.style.animationDelay=Math.random()*3+'s';container.appendChild(star);}}
 function showPasswordSection(){document.getElementById('login-section').style.display='none';document.getElementById('pwd-section').style.display='block';document.getElementById('pwd-input').focus();}
 function showLoginSection(){document.getElementById('pwd-section').style.display='none';document.getElementById('login-section').style.display='block';document.getElementById('pwd-error').style.display='none';document.getElementById('pwd-input').value='';}
-function checkPwd(){var p=document.getElementById("pwd-input").value;if(p==="2231245"){document.getElementById("lock-screen").style.display="none";sessionStorage.setItem("auth","1");}else{document.getElementById("pwd-error").style.display="block";document.getElementById("pwd-input").value="";document.getElementById("pwd-input").focus();}}
+async function checkPwd(){
+  var p=document.getElementById("pwd-input").value;
+  try{
+    const buf=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(p));
+    const hash=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+    if(hash==="42d17ba3e305cc212a5b52968a777b733420d41adf7f500f351b30077638abee"){
+      document.getElementById("lock-screen").style.display="none";
+      sessionStorage.setItem("auth","1");
+    } else {
+      document.getElementById("pwd-error").style.display="block";
+      document.getElementById("pwd-input").value="";
+      document.getElementById("pwd-input").focus();
+    }
+  }catch(e){
+    document.getElementById("pwd-error").style.display="block";
+  }
+}
 window.addEventListener("DOMContentLoaded",function(){createStars();if(sessionStorage.getItem("auth")==="1"){document.getElementById("lock-screen").style.display="none";}});
 </script>
 </head>
@@ -1302,7 +1318,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
             <tbody>
               {filtered.length===0 ? (
                 <tr><td colSpan={18} style={{...styles.td,textAlign:"center",padding:40,color:"#1f2937"}}>لا توجد عقود — أضف عقداً جديداً</td></tr>
-              ) : filtered.slice().reverse().map((c,i)=>{
+              ) : filtered.map((c,i)=>{
                 const inv=investors.find(x=>String(x.id)===String(c.investorId));
                 const r=calcContract(c.amount,settings);
                 return (
@@ -1405,7 +1421,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                         <td style={styles.td}>{p.note||"—"}</td>
                         <td style={styles.td}>
                           <button style={{...styles.btn(C.red),fontSize:13,padding:"3px 8px"}}
-                            onClick={()=>setPayments(prev=>prev.filter(x=>x.id!==p.id))}>🗑️</button>
+                            onClick={()=>{if(window.confirm("حذف هذا السداد؟"))setPayments(prev=>prev.filter(x=>x.id!==p.id));}}>🗑️</button>
                         </td>
                       </tr>
                     ))}
@@ -1575,7 +1591,7 @@ function PendingPage({pending, setPending}) {
                   <td style={styles.td}>{p.note||"—"}</td>
                   <td style={styles.td}>
                     <button style={{...styles.btn(C.red),fontSize:14,padding:"4px 10px"}}
-                      onClick={()=>setPending(prev=>prev.filter(x=>x.id!==p.id))}>🗑️</button>
+                      onClick={()=>{if(window.confirm("حذف هذا العنصر؟"))setPending(prev=>prev.filter(x=>x.id!==p.id));}}>🗑️</button>
                   </td>
                 </tr>
               ))}
@@ -1670,7 +1686,7 @@ function LoansPage({loans, setLoans}) {
                     <div style={{fontSize:14,color:"#1f2937"}}>{l.date} {l.note?"| "+l.note:""}</div>
                   </div>
                   <button style={{...styles.btn(C.red),fontSize:14,padding:"4px 10px"}}
-                    onClick={()=>setLoans(p=>p.filter(x=>x.id!==l.id))}>🗑️</button>
+                    onClick={()=>{if(window.confirm("حذف هذه السلفة؟"))setLoans(p=>p.filter(x=>x.id!==l.id));}}>🗑️</button>
                 </div>
                 {/* Progress */}
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginBottom:6}}>
@@ -1695,7 +1711,7 @@ function LoansPage({loans, setLoans}) {
                           <div style={{display:"flex",alignItems:"center",gap:8}}>
                             <span style={{color:C.green,fontWeight:700}}>+{SAR(p.amount)}</span>
                             <button style={{...styles.btn(C.red),fontSize:13,padding:"2px 7px"}}
-                              onClick={()=>setLoans(prev=>prev.map(x=>x.id===l.id?{...x,payments:(x.payments||[]).filter(pp=>pp.id!==p.id)}:x))}>🗑️</button>
+                              onClick={()=>{if(window.confirm("حذف هذه الدفعة؟"))setLoans(prev=>prev.map(x=>x.id===l.id?{...x,payments:(x.payments||[]).filter(pp=>pp.id!==p.id)}:x));}}>🗑️</button>
                           </div>
                         </div>
                       );
@@ -1834,7 +1850,7 @@ function ZakatPage({investors, contracts, settings, zakatTx, setZakatTx}) {
                       <td style={{...styles.td,fontWeight:800,color:running>=0?C.teal:C.red}}>{SAR(running)}</td>
                       <td style={styles.td}>
                         <button style={{...styles.btn(C.red),fontSize:14,padding:"4px 10px"}}
-                          onClick={()=>setZakatTx(p=>p.filter(x=>x.id!==t.id))}>🗑️</button>
+                          onClick={()=>{if(window.confirm("حذف هذه الحركة؟"))setZakatTx(p=>p.filter(x=>x.id!==t.id));}}>🗑️</button>
                       </td>
                     </tr>
                   );
@@ -2166,7 +2182,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
     setForm(f=>({...f, amount:"", note:""}));
   };
 
-  const delTx = (id) => setTxList(p=>({...p,[selInv]:(p[selInv]||[]).filter(t=>t.id!==id)}));
+  const delTx = (id) => { if(!window.confirm("حذف هذه الحركة؟"))return; setTxList(p=>({...p,[selInv]:(p[selInv]||[]).filter(t=>t.id!==id)})); };
 
   const finalBalance = rows.length>0 ? rows[rows.length-1].balance : (inv?.capital||0);
   const totalDeposits = allTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
@@ -2844,7 +2860,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
     setForm({type:form.type,amount:"",desc:""});
     toast("✅ تمت الإضافة");
   };
-  const delRow=(id)=>setDaily(p=>p.filter(d=>d.id!==id));
+  const delRow=(id)=>{ if(!window.confirm("حذف هذا السطر؟"))return; setDaily(p=>p.filter(d=>d.id!==id)); };
 
   const isFirstDay = !firstOpenKey || selDay <= firstOpenKey;
   const dLabel = ymd => { if(!ymd) return ""; const [y,m,d]=ymd.split("-"); return d+"/"+parseInt(m)+"/"+y; };
@@ -3255,7 +3271,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
 }
 
 // ─── Settings Page ───────────────────────────────────────────
-function SettingsPage({settings,onSave,toast}) {
+function SettingsPage({settings,onSave,toast,exportBackup,importBackup}) {
   const [s,setS]=useState({...settings});
   const r=calcContract(10000,s);
   return (
@@ -3304,11 +3320,28 @@ function SettingsPage({settings,onSave,toast}) {
           </div>
         </div>
       </div>
+
+      <div style={{...styles.panel,marginTop:16}}>
+        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>💾 النسخة الاحتياطية</h3></div>
+        <div style={{padding:"16px 20px"}}>
+          <div style={{fontSize:14,color:C.ink,marginBottom:14,lineHeight:1.7}}>
+            احفظ نسخة من كل بياناتك (المستثمرين، العقود، السدادات، البضاعة...) في ملف على جهازك. احتفظ به في مكان آمن — يحميك لو صار أي خطأ أو حذف بالغلط.
+          </div>
+          <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+            <button style={styles.btn(C.green)} onClick={exportBackup}>⬇️ تنزيل نسخة احتياطية</button>
+            <label style={{...styles.btn(C.gold),cursor:"pointer",margin:0}}>
+              ⬆️ استرجاع من ملف
+              <input type="file" accept=".json,application/json" style={{display:"none"}}
+                onChange={e=>{ const f=e.target.files&&e.target.files[0]; if(f){ if(window.confirm("سيتم استبدال كل البيانات الحالية بالنسخة المستوردة. متأكد؟")){ importBackup(f); } } e.target.value=""; }}/>
+            </label>
+          </div>
+          <div style={{fontSize:13,color:C.red,marginTop:12,fontWeight:700}}>⚠️ الاسترجاع يستبدل كل البيانات الحالية بالكامل.</div>
+        </div>
+      </div>
     </div>
   );
 }
 
-// ─── Goods Page ─────────────────────────────────────────────
 // ─── Goods Page ─────────────────────────────────────────────
 function GoodsPage({investors, contracts, toast}) {
   const [priceOverrides, setPriceOverrides] = useState(()=>{
@@ -3446,7 +3479,7 @@ function GoodsPage({investors, contracts, toast}) {
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",background:"#f0f0ff",fontWeight:800,color:C.teal}}>{row.runningCards}</td>
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",background:"#fffbf0",fontWeight:800,color:row.cashBalance<0?C.red:C.gold}}>{row.rowPrice?row.cashBalance.toLocaleString("en-US"):""}</td>
                 <td style={{padding:"4px",borderBottom:"1px solid #eee",textAlign:"center"}}>
-                  {!row.fromContract&&<button style={{...styles.btn(C.red),fontSize:13,padding:"3px 8px"}} onClick={()=>saveManual(manualRows.filter(r=>r.id!==row.id))}>🗑️</button>}
+                  {!row.fromContract&&<button style={{...styles.btn(C.red),fontSize:13,padding:"3px 8px"}} onClick={()=>{if(window.confirm("حذف هذا السطر؟"))saveManual(manualRows.filter(r=>r.id!==row.id));}}>🗑️</button>}
                 </td>
               </tr>
             ))}
@@ -3849,6 +3882,46 @@ function App() {
     try { localStorage.setItem(key, JSON.stringify(val)); } catch{}
   };
 
+  // ═══ النسخة الاحتياطية ═══
+  // ربط مفاتيح التخزين بأوراق السحابة
+  const BACKUP_MAP = {
+    "qimma_investors":"investors", "qimma_contracts":"contracts", "qimma_settings":"settings",
+    "qimma_txlist":"txlist", "qimma_loans":"loans", "qimma_zakat":"zakat",
+    "qimma_pending":"pending", "qimma_payments":"payments", "qimma_goods3":"goods3",
+    "qimma_jard_ov":"jard_ov", "qimma_daily":"daily", "qimma_daily_open":"daily_open"
+  };
+  const exportBackup = () => {
+    try {
+      const out = {};
+      Object.keys(localStorage).forEach(k=>{ if(k.indexOf("qimma_")===0){ try{ out[k]=JSON.parse(localStorage.getItem(k)); }catch{ out[k]=localStorage.getItem(k); } } });
+      const blob = new Blob([JSON.stringify({_backup:"qima", _date:new Date().toISOString(), data:out},null,2)], {type:"application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const d=new Date();
+      a.href = url;
+      a.download = `qima-backup-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast("✅ تم تنزيل النسخة الاحتياطية");
+    } catch(e){ toast("⚠️ تعذّر التصدير","error"); }
+  };
+  const importBackup = async (file) => {
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const data = parsed && parsed.data ? parsed.data : parsed;
+      if(!data || typeof data!=="object"){ toast("⚠️ ملف غير صالح","error"); return; }
+      // اكتب في الجهاز
+      Object.keys(data).forEach(k=>{ if(k.indexOf("qimma_")===0){ try{ localStorage.setItem(k, JSON.stringify(data[k])); }catch{} } });
+      // ادفع للسحابة (المفاتيح المعروفة فقط)
+      const jobs = [];
+      Object.keys(BACKUP_MAP).forEach(k=>{ if(data[k]!=null){ jobs.push(gsWrite(BACKUP_MAP[k], data[k])); } });
+      await Promise.all(jobs);
+      toast("✅ تم استرجاع النسخة... جارٍ التحديث");
+      setTimeout(()=>window.location.reload(), 1200);
+    } catch(e){ toast("⚠️ تعذّر الاستيراد - تأكد من الملف","error"); }
+  };
+
   const [investors,setInvestorsRaw]=useState(()=>{
     // تنظيف لمرة واحدة: مسح أسماء المستثمرين القديمة المخزنة محلياً لإجبار القراءة الطازجة
     if(!localStorage.getItem("qimma_inv_names_fixed")){
@@ -3976,7 +4049,7 @@ function App() {
         {page==="jard" && <JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast}/>}
-        {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast}/>}
+        {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup}/>}
       </div>
 
       <Toast msg={toastMsg} type={toastType}/>
