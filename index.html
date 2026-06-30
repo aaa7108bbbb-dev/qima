@@ -3930,6 +3930,120 @@ function ClientsPage({contracts, investors, payments, goCollect}) {
   );
 }
 
+// ─── Overdue Page (المتأخرون) ───────────────────────────────────
+function OverduePage({contracts, investors, payments, goCollect}) {
+  const active = (contracts||[]).filter(c => !c.deleted);
+
+  const calcOverdue = (c) => {
+    const instAmt = +c.instAmt || 0;
+    const totalInst = +c.totalInst || +c.amount || 0;
+    if(instAmt <= 0 || !c.firstInst) return null;
+    const ps = (payments||[]).filter(p => p.contractId === c.id);
+    const paidTotal = ps.reduce((s,p)=>s+(+p.amount||0), 0);
+    const remaining = Math.max(0, totalInst - paidTotal);
+    if(remaining <= 0) return null; // مكتمل السداد
+    const totalCount = Math.max(1, Math.round(totalInst / instAmt));
+    const first = new Date(c.firstInst);
+    const now = new Date();
+    let monthsElapsed = (now.getFullYear()-first.getFullYear())*12 + (now.getMonth()-first.getMonth());
+    if(now.getDate() >= first.getDate()) monthsElapsed += 1;
+    monthsElapsed = Math.max(0, monthsElapsed);
+    const due = Math.min(monthsElapsed, totalCount);
+    const paidCount = Math.floor(paidTotal / instAmt);
+    const monthsBehind = Math.max(0, due - paidCount);
+    const overdueAmt = monthsBehind * instAmt;
+    const dates = ps.map(p=>new Date(p.date)).sort((a,b)=>b-a);
+    const lastPay = dates.length ? dates[0] : null;
+    const monthsSinceLast = lastPay ? ((now.getFullYear()-lastPay.getFullYear())*12 + (now.getMonth()-lastPay.getMonth())) : 999;
+    return {monthsBehind, overdueAmt, remaining, monthsSinceLast, hasPaid: ps.length>0, lastPay};
+  };
+
+  const rows = active.map(c => ({c, o: calcOverdue(c)})).filter(x => x.o && x.o.monthsBehind >= 3);
+  // متصلة: توقّف عن الدفع (آخر دفعة قبل 3 أشهر أو أكثر، أو لم يدفع)
+  const consecutive = rows.filter(x => !x.o.hasPaid || x.o.monthsSinceLast >= 3).sort((a,b)=>b.o.monthsBehind-a.o.monthsBehind);
+  // متقطعة: يدفع أحياناً لكن متراكم عليه
+  const intermittent = rows.filter(x => x.o.hasPaid && x.o.monthsSinceLast < 3).sort((a,b)=>b.o.monthsBehind-a.o.monthsBehind);
+
+  const invName = (id) => (investors.find(i=>String(i.id)===String(id))||{}).name || "—";
+
+  const Card = ({c, o, accent}) => (
+    <div style={{...styles.card, borderRight:"5px solid "+accent, marginBottom:12}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
+        <div>
+          <div style={{fontWeight:900,fontSize:16,color:C.ink}}>👤 {c.client||"غير محدد"}</div>
+          <div style={{fontSize:13,color:"#1f2937",marginTop:3}}>عقد #{c.num} — {invName(c.investorId)}</div>
+          <div style={{fontSize:13,color:"#1f2937",marginTop:3}}>📱 {c.cPhone||"—"}</div>
+        </div>
+        <div style={{textAlign:"left"}}>
+          <div style={{display:"inline-block",background:accent,color:"#fff",borderRadius:8,padding:"4px 12px",fontWeight:900,fontSize:15}}>متأخر {o.monthsBehind} شهر</div>
+        </div>
+      </div>
+      <div style={{display:"flex",gap:10,marginTop:12,flexWrap:"wrap"}}>
+        <div style={{flex:1,minWidth:120,background:C.redLt,borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+          <div style={{fontSize:12,color:"#1f2937"}}>المبلغ المتأخر</div>
+          <div style={{fontSize:17,fontWeight:900,color:C.red}}>{NUM(o.overdueAmt)}</div>
+        </div>
+        <div style={{flex:1,minWidth:120,background:C.gray,borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+          <div style={{fontSize:12,color:"#1f2937"}}>إجمالي الباقي</div>
+          <div style={{fontSize:17,fontWeight:900,color:C.ink}}>{NUM(o.remaining)}</div>
+        </div>
+        <div style={{flex:1,minWidth:120,background:C.gray,borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+          <div style={{fontSize:12,color:"#1f2937"}}>القسط</div>
+          <div style={{fontSize:17,fontWeight:900,color:C.ink}}>{NUM(c.instAmt||0)}</div>
+        </div>
+      </div>
+      <div style={{fontSize:12,color:"#1f2937",marginTop:8}}>
+        {o.lastPay ? "آخر سداد: "+fmtDate(o.lastPay) : "لم يُسجّل أي سداد"}
+      </div>
+      {goCollect && (
+        <button onClick={()=>goCollect()} style={{...styles.btn(C.green,"#fff"),marginTop:10,width:"100%",justifyContent:"center",padding:"10px"}}>💵 تسجيل سداد</button>
+      )}
+    </div>
+  );
+
+  return (
+    <div style={styles.main}>
+      <div style={styles.panel}>
+        <div style={styles.panelHdr}>
+          <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>⚠️ المتأخرون (3 أشهر فأكثر)</h2>
+        </div>
+        <div style={{padding:"14px 20px",display:"flex",gap:12,flexWrap:"wrap"}}>
+          <div style={{flex:1,minWidth:140,background:"#fde8e8",borderRadius:10,padding:12,textAlign:"center"}}>
+            <div style={{fontSize:13,color:"#1f2937"}}>متأخرون متصل (انقطعوا)</div>
+            <div style={{fontSize:24,fontWeight:900,color:C.red}}>{consecutive.length}</div>
+          </div>
+          <div style={{flex:1,minWidth:140,background:"#fff4e0",borderRadius:10,padding:12,textAlign:"center"}}>
+            <div style={{fontSize:13,color:"#1f2937"}}>متأخرون متقطّع</div>
+            <div style={{fontSize:24,fontWeight:900,color:C.gold}}>{intermittent.length}</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={styles.panel}>
+        <div style={styles.panelHdr}>
+          <h2 style={{margin:0,fontSize:16,fontWeight:900,color:C.red}}>🔴 متأخر متصل — انقطعوا عن السداد ({consecutive.length})</h2>
+        </div>
+        <div style={{padding:16}}>
+          {consecutive.length===0
+            ? <div style={{textAlign:"center",padding:24,color:"#1f2937"}}>لا يوجد</div>
+            : consecutive.map(x => <Card key={x.c.id} c={x.c} o={x.o} accent={C.red}/>)}
+        </div>
+      </div>
+
+      <div style={styles.panel}>
+        <div style={styles.panelHdr}>
+          <h2 style={{margin:0,fontSize:16,fontWeight:900,color:C.gold}}>🟡 متأخر متقطّع — يسددون أحياناً ({intermittent.length})</h2>
+        </div>
+        <div style={{padding:16}}>
+          {intermittent.length===0
+            ? <div style={{textAlign:"center",padding:24,color:"#1f2937"}}>لا يوجد</div>
+            : intermittent.map(x => <Card key={x.c.id} c={x.c} o={x.o} accent={C.gold}/>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main App ────────────────────────────────────────────────
 function App() {
   const [page,setPage]=useState("dashboard");
@@ -4077,6 +4191,7 @@ function App() {
   const TABS=[
     {id:"dashboard",label:"🏠",name:"الرئيسية",color:"#1e3a5f"},
     {id:"clients",label:"👥",name:"العملاء",color:"#0891b2"},
+    {id:"overdue",label:"⚠️",name:"المتأخرون",color:"#b91c1c"},
     {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
     {id:"collect",label:"⚡",name:"التحصيل",color:"#0d9488"},
     {id:"goods",label:"📦",name:"البضاعة",color:"#78350f"},
@@ -4125,6 +4240,7 @@ function App() {
 
       <div style={styles.main}>
         {page==="clients" && <ClientsPage contracts={contracts} investors={investors} payments={payments} goCollect={()=>setPage("collect")} />}
+        {page==="overdue" && <OverduePage contracts={contracts} investors={investors} payments={payments} goCollect={()=>setPage("collect")} />}
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast}/>}
         {page==="collect" && <ContractsPage startCollect={true} contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c))} onRestore={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);}} setInvTxList={setInvTxList}/>}
