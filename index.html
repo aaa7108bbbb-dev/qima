@@ -3684,6 +3684,7 @@ function App() {
 
   const TABS=[
     {id:"dashboard",label:"🏠",name:"الرئيسية",color:"#1e3a5f"},
+    {id:"clients",label:"👥",name:"العملاء",color:"#0891b2"},
     {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
     {id:"collect",label:"⚡",name:"التحصيل",color:"#0d9488"},
     {id:"goods",label:"📦",name:"البضاعة",color:"#78350f"},
@@ -3725,6 +3726,7 @@ function App() {
       </nav>
 
       <div style={styles.main}>
+        {page==="clients" && <div style={{...styles.main}}><div style={{...styles.panel}}><div style={{...styles.panelHdr}}><h2 style={{margin:0,fontSize:20,fontWeight:900,color:C.ink}}>👥 العملاء والعقود</h2></div><div style={{padding:20}}><div style={{marginBottom:20}}><h3 style={{color:C.ink,fontWeight:900,marginBottom:15}}>📋 جميع العقود</h3><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr style={{background:C.ink,color:C.white}}><th style={{...styles.th}}>رقم العقد</th><th style={{...styles.th}}>اسم الزبون</th><th style={{...styles.th}}>المبلغ</th><th style={{...styles.th}}>المدفوع</th><th style={{...styles.th}}>المتبقي</th></tr></thead><tbody>{activeContracts.map((c,i)=><tr key={c.id} style={{background:i%2?C.gray:C.white}}><td style={{...styles.td,fontWeight:700}}>#{c.num}</td><td style={{...styles.td}}>{c.client||"غير محدد"}</td><td style={{...styles.td}}>{NUM(c.amount||0)}</td><td style={{...styles.td,color:C.green,fontWeight:700}}>{NUM(c.paid||0)}</td><td style={{...styles.td,color:C.red,fontWeight:700}}>{NUM((c.amount||0)-(c.paid||0))}</td></tr>)}</tbody></table></div></div></div></div></div>}
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast}/>}
         {page==="collect" && <ContractsPage startCollect={true} contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c))} onRestore={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);}} setInvTxList={setInvTxList}/>}
