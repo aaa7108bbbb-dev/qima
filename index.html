@@ -3048,6 +3048,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
   const [show,setShow]=useState(false);
   const [confirmId,setConfirmId]=useState(null);
   const [stmtInv,setStmtInv]=useState(null);
+  const [yearInv,setYearInv]=useState(null);
   const [stmtType,setStmtType]=useState("brief"); // brief | detailed
   const [form,setForm]=useState({name:"",fund:"",capital:"",date:""});
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
@@ -3138,6 +3139,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
                 <div style={{display:"flex",gap:8,marginTop:10}}>
                 <button style={{...styles.btn(C.teal),fontSize:14,padding:"5px 12px"}} onClick={()=>{setStmtInv(inv);setStmtType("brief");}}>📄 مختصر</button>
                 <button style={{...styles.btn(C.ink),fontSize:14,padding:"5px 12px"}} onClick={()=>{setStmtInv(inv);setStmtType("detailed");}}>📋 مفصل</button>
+                <button style={{...styles.btn(C.gold),fontSize:14,padding:"5px 12px"}} onClick={()=>setYearInv(inv)}>📅 سنوي</button>
                 <button style={{...styles.btn(C.red),fontSize:14,padding:"5px 10px"}} onClick={()=>setConfirmId(inv.id)}>🗑️</button>
               </div>
               )}
@@ -3145,6 +3147,82 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
           );
         })}
       </div>
+      {/* Statement Modal */}
+      <Modal open={!!yearInv} onClose={()=>setYearInv(null)} title={"📅 كشف سنوي — "+(yearInv?.name||"")} titleBg={C.gold} wide>
+        {yearInv && (()=>{
+          const myCon = contracts.filter(c=>c.investorId===yearInv.id);
+          const myTx = (txList[yearInv.id]||[]);
+          const capital = yearInv.capital||0;
+          // النقدي حتى نهاية تاريخ معيّن
+          const cashUpto = (end) => {
+            let v = capital;
+            myCon.forEach(c=>{ if(new Date(c.date) <= end){ const r=calcContract(c.amount,settings); v -= (c.amount + r.acc + r.inst + r.admin); } });
+            (payments||[]).forEach(p=>{ if(myCon.find(c=>c.id===p.contractId) && new Date(p.date) <= end){ v += (+p.amount||0); } });
+            myTx.forEach(t=>{ if(t.date && new Date(t.date) <= end){ v += (+t.amount||0); } });
+            return v;
+          };
+          // المتبقي عند الناس حتى نهاية تاريخ
+          const remainUpto = (end) => {
+            let v = 0;
+            myCon.forEach(c=>{ if(new Date(c.date) <= end){
+              const tot = +c.totalInst || +c.amount || 0;
+              const paid = (payments||[]).filter(p=>p.contractId===c.id && new Date(p.date)<=end).reduce((s,p)=>s+(+p.amount||0),0);
+              v += Math.max(0, tot - paid);
+            }});
+            return v;
+          };
+          // نطاق الشهور: من أقدم عقد إلى اليوم
+          let earliest = new Date();
+          myCon.forEach(c=>{ const d=new Date(c.date); if(d<earliest) earliest=d; });
+          if(myCon.length===0) earliest = new Date();
+          const now = new Date();
+          const months = [];
+          let y=earliest.getFullYear(), m=earliest.getMonth();
+          while(y<now.getFullYear() || (y===now.getFullYear() && m<=now.getMonth())){
+            const isCurrent = (y===now.getFullYear() && m===now.getMonth());
+            const end = isCurrent ? now : new Date(y, m+1, 0, 23,59,59); // الشهر الحالي: لحظي حتى اليوم، غيره: آخر الشهر
+            months.push({label:`${String(m+1).padStart(2,"0")}/${y}`+(isCurrent?" • حتى اليوم":""), cash:cashUpto(end), remain:remainUpto(end), total:cashUpto(end)+remainUpto(end)});
+            m++; if(m>11){m=0;y++;}
+          }
+          const totals = months.map(x=>x.total);
+          const maxT = Math.max(...totals), minT = Math.min(...totals);
+          const avgT = totals.reduce((s,v)=>s+v,0)/(totals.length||1);
+          const maxMonth = months.find(x=>x.total===maxT), minMonth = months.find(x=>x.total===minT);
+          return (
+            <div style={{padding:16}}>
+              <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
+                <div style={{flex:1,minWidth:110,background:C.greenLt,borderRadius:8,padding:10,textAlign:"center"}}><div style={{fontSize:12,color:"#1f2937"}}>أعلى شهر</div><div style={{fontWeight:900,color:C.green,fontSize:16}}>{NUM(maxT)}</div><div style={{fontSize:11,color:"#1f2937"}}>{maxMonth?.label}</div></div>
+                <div style={{flex:1,minWidth:110,background:C.redLt,borderRadius:8,padding:10,textAlign:"center"}}><div style={{fontSize:12,color:"#1f2937"}}>أقل شهر</div><div style={{fontWeight:900,color:C.red,fontSize:16}}>{NUM(minT)}</div><div style={{fontSize:11,color:"#1f2937"}}>{minMonth?.label}</div></div>
+                <div style={{flex:1,minWidth:110,background:C.gray,borderRadius:8,padding:10,textAlign:"center"}}><div style={{fontSize:12,color:"#1f2937"}}>المتوسط</div><div style={{fontWeight:900,color:C.ink,fontSize:16}}>{NUM(Math.round(avgT))}</div></div>
+              </div>
+              <div style={{overflowX:"auto"}}>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
+                  <thead><tr style={{background:C.ink,color:"#fff"}}>
+                    <th style={styles.th}>الشهر</th><th style={styles.th}>النقدي</th><th style={styles.th}>المتبقي</th><th style={styles.th}>الإجمالي</th><th style={styles.th}>التغيّر %</th>
+                  </tr></thead>
+                  <tbody>
+                    {months.map((x,i)=>{
+                      const prev = i>0 ? months[i-1].total : null;
+                      const pct = (prev!=null && prev!==0) ? ((x.total-prev)/Math.abs(prev)*100) : null;
+                      const up = pct!=null && pct>=0;
+                      return (
+                        <tr key={i} style={{background:i%2?C.gray:"#fff"}}>
+                          <td style={{...styles.td,fontWeight:700}}>{x.label}</td>
+                          <td style={styles.td}>{NUM(Math.round(x.cash))}</td>
+                          <td style={{...styles.td,color:C.red}}>{NUM(Math.round(x.remain))}</td>
+                          <td style={{...styles.td,fontWeight:800,color:C.ink}}>{NUM(Math.round(x.total))}</td>
+                          <td style={{...styles.td,fontWeight:800,color: pct==null?"#999":(up?C.green:C.red)}}>{pct==null?"—":(up?"▲ ":"▼ ")+Math.abs(pct).toFixed(1)+"%"}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })()}
+      </Modal>
+
       {/* Statement Modal */}
       <Modal open={!!stmtInv} onClose={()=>setStmtInv(null)} title={"📋 كشف حساب — "+(stmtInv?.name||"")} titleBg={C.ink} wide>
         {stmtInv && (()=>{
@@ -3932,6 +4010,7 @@ function ClientsPage({contracts, investors, payments, goCollect}) {
 
 // ─── Overdue Page (المتأخرون) ───────────────────────────────────
 function OverduePage({contracts, investors, payments, goCollect}) {
+  const [view, setView] = React.useState("consecutive"); // consecutive | intermittent
   const active = (contracts||[]).filter(c => !c.deleted);
 
   const calcOverdue = (c) => {
@@ -4007,37 +4086,39 @@ function OverduePage({contracts, investors, payments, goCollect}) {
         <div style={styles.panelHdr}>
           <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>⚠️ المتأخرون (3 أشهر فأكثر)</h2>
         </div>
-        <div style={{padding:"14px 20px",display:"flex",gap:12,flexWrap:"wrap"}}>
-          <div style={{flex:1,minWidth:140,background:"#fde8e8",borderRadius:10,padding:12,textAlign:"center"}}>
-            <div style={{fontSize:13,color:"#1f2937"}}>متأخرون متصل (انقطعوا)</div>
-            <div style={{fontSize:24,fontWeight:900,color:C.red}}>{consecutive.length}</div>
-          </div>
-          <div style={{flex:1,minWidth:140,background:"#fff4e0",borderRadius:10,padding:12,textAlign:"center"}}>
-            <div style={{fontSize:13,color:"#1f2937"}}>متأخرون متقطّع</div>
-            <div style={{fontSize:24,fontWeight:900,color:C.gold}}>{intermittent.length}</div>
-          </div>
+        <div style={{padding:"16px 20px",display:"flex",gap:12,flexWrap:"wrap"}}>
+          <button onClick={()=>setView("consecutive")}
+            style={{flex:1,minWidth:150,border:"none",cursor:"pointer",borderRadius:12,padding:"16px 12px",textAlign:"center",
+              background: view==="consecutive" ? C.red : "#fde8e8",
+              color: view==="consecutive" ? "#fff" : C.red,
+              boxShadow: view==="consecutive" ? "0 4px 12px rgba(185,28,28,0.3)" : "none", transition:"all 0.2s"}}>
+            <div style={{fontSize:28,fontWeight:900}}>{consecutive.length}</div>
+            <div style={{fontSize:14,fontWeight:800,marginTop:4}}>🔴 متأخر متصل</div>
+            <div style={{fontSize:12,marginTop:2,opacity:0.85}}>انقطعوا عن السداد</div>
+          </button>
+          <button onClick={()=>setView("intermittent")}
+            style={{flex:1,minWidth:150,border:"none",cursor:"pointer",borderRadius:12,padding:"16px 12px",textAlign:"center",
+              background: view==="intermittent" ? C.gold : "#fff4e0",
+              color: view==="intermittent" ? "#fff" : "#9a6a00",
+              boxShadow: view==="intermittent" ? "0 4px 12px rgba(200,146,42,0.3)" : "none", transition:"all 0.2s"}}>
+            <div style={{fontSize:28,fontWeight:900}}>{intermittent.length}</div>
+            <div style={{fontSize:14,fontWeight:800,marginTop:4}}>🟡 متأخر متقطّع</div>
+            <div style={{fontSize:12,marginTop:2,opacity:0.85}}>يسددون أحياناً</div>
+          </button>
         </div>
       </div>
 
       <div style={styles.panel}>
         <div style={styles.panelHdr}>
-          <h2 style={{margin:0,fontSize:16,fontWeight:900,color:C.red}}>🔴 متأخر متصل — انقطعوا عن السداد ({consecutive.length})</h2>
+          <h2 style={{margin:0,fontSize:16,fontWeight:900,color: view==="consecutive"?C.red:C.gold}}>
+            {view==="consecutive" ? "🔴 متأخر متصل — انقطعوا عن السداد ("+consecutive.length+")" : "🟡 متأخر متقطّع — يسددون أحياناً ("+intermittent.length+")"}
+          </h2>
         </div>
         <div style={{padding:16}}>
-          {consecutive.length===0
-            ? <div style={{textAlign:"center",padding:24,color:"#1f2937"}}>لا يوجد</div>
-            : consecutive.map(x => <Card key={x.c.id} c={x.c} o={x.o} accent={C.red}/>)}
-        </div>
-      </div>
-
-      <div style={styles.panel}>
-        <div style={styles.panelHdr}>
-          <h2 style={{margin:0,fontSize:16,fontWeight:900,color:C.gold}}>🟡 متأخر متقطّع — يسددون أحياناً ({intermittent.length})</h2>
-        </div>
-        <div style={{padding:16}}>
-          {intermittent.length===0
-            ? <div style={{textAlign:"center",padding:24,color:"#1f2937"}}>لا يوجد</div>
-            : intermittent.map(x => <Card key={x.c.id} c={x.c} o={x.o} accent={C.gold}/>)}
+          {(view==="consecutive" ? consecutive : intermittent).length===0
+            ? <div style={{textAlign:"center",padding:30,color:"#1f2937"}}>لا يوجد</div>
+            : (view==="consecutive" ? consecutive : intermittent).map(x =>
+                <Card key={x.c.id} c={x.c} o={x.o} accent={view==="consecutive"?C.red:C.gold}/>)}
         </div>
       </div>
     </div>
