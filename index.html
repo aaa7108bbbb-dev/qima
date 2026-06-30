@@ -32,6 +32,8 @@
     #bond-gg-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
     #bond-gg-print-area .doc-half { font-size: 9px !important; }
     #bond-gg-print-area .doc-half * { line-height: 1.25 !important; }
+    #statement-print-area, #statement-print-area * { visibility: visible; }
+    #statement-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
     #contract-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
     #bond-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
     #cheque-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
@@ -3677,6 +3679,44 @@ function ClientsPage({contracts, investors, payments, goCollect}) {
   // دفعات عقد مرتبة بالتاريخ
   const paymentsOf = (cid) => (payments||[]).filter(p => p.contractId === cid).slice().sort((a,b)=> new Date(a.date)-new Date(b.date));
 
+  // طباعة كشف حساب الزبون
+  const printStatement = (c, list, tot, paid, left, invName) => {
+    const today = (()=>{const d=new Date();return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0");})();
+    const rows = (list||[]).map((p,i)=>`<tr><td style="border:1px solid #000;padding:6px;text-align:center">${i+1}</td><td style="border:1px solid #000;padding:6px;text-align:center">${fmtDate(p.date)}</td><td style="border:1px solid #000;padding:6px;text-align:center">${NUM(p.amount)}</td><td style="border:1px solid #000;padding:6px;text-align:center">${p.note||"—"}</td></tr>`).join("");
+    const html = `
+      <div style="font-family:Tajawal,Arial,sans-serif;direction:rtl;color:#000;padding:20px 28px;max-width:760px;margin:0 auto">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:14px">
+          <div><div style="font-size:18px;font-weight:900">مؤسسة قمة الفرصة التجارية</div><div style="font-size:13px">بريدة - شارع الثلاثين</div><div style="font-size:13px">ج: 0555171283 &nbsp; ت: 0163839323</div></div>
+          <div style="text-align:left"><div style="font-size:13px">التاريخ: ${today}</div><div style="font-size:13px">رقم العقد: ${c.num||"—"}</div></div>
+        </div>
+        <div style="text-align:center;font-size:20px;font-weight:900;margin-bottom:16px;letter-spacing:1px">كشف حساب العميل</div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:16px;font-size:14px">
+          <tr><td style="border:1px solid #000;padding:7px;font-weight:800;background:#f2f2f2;width:25%">اسم العميل</td><td style="border:1px solid #000;padding:7px">${c.client||"—"}</td><td style="border:1px solid #000;padding:7px;font-weight:800;background:#f2f2f2;width:25%">رقم الهوية</td><td style="border:1px solid #000;padding:7px">${c.idNum||"—"}</td></tr>
+          <tr><td style="border:1px solid #000;padding:7px;font-weight:800;background:#f2f2f2">الجوال</td><td style="border:1px solid #000;padding:7px">${c.cPhone||"—"}</td><td style="border:1px solid #000;padding:7px;font-weight:800;background:#f2f2f2">المستثمر</td><td style="border:1px solid #000;padding:7px">${invName||"—"}</td></tr>
+          <tr><td style="border:1px solid #000;padding:7px;font-weight:800;background:#f2f2f2">أول قسط</td><td style="border:1px solid #000;padding:7px">${c.firstInst?fmtDate(c.firstInst):"—"}</td><td style="border:1px solid #000;padding:7px;font-weight:800;background:#f2f2f2">آخر قسط</td><td style="border:1px solid #000;padding:7px">${c.lastInst?fmtDate(c.lastInst):"—"}</td></tr>
+        </table>
+        <div style="display:flex;gap:10px;margin-bottom:16px;text-align:center">
+          <div style="flex:1;border:1px solid #000;padding:10px;border-radius:6px"><div style="font-size:13px">الإجمالي</div><div style="font-size:18px;font-weight:900">${NUM(tot)}</div></div>
+          <div style="flex:1;border:1px solid #000;padding:10px;border-radius:6px"><div style="font-size:13px">الواصل</div><div style="font-size:18px;font-weight:900">${NUM(paid)}</div></div>
+          <div style="flex:1;border:1px solid #000;padding:10px;border-radius:6px"><div style="font-size:13px">المتبقي</div><div style="font-size:18px;font-weight:900">${NUM(left)}</div></div>
+        </div>
+        <div style="font-size:16px;font-weight:800;margin-bottom:8px">📋 تفاصيل السدادات</div>
+        <table style="width:100%;border-collapse:collapse;font-size:14px">
+          <thead><tr style="background:#000;color:#fff"><th style="border:1px solid #000;padding:7px">#</th><th style="border:1px solid #000;padding:7px">التاريخ</th><th style="border:1px solid #000;padding:7px">المبلغ</th><th style="border:1px solid #000;padding:7px">ملاحظة</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="4" style="border:1px solid #000;padding:12px;text-align:center">لا توجد سدادات</td></tr>'}</tbody>
+          <tfoot><tr style="background:#f2f2f2;font-weight:900"><td colspan="2" style="border:1px solid #000;padding:7px;text-align:center">إجمالي المسدّد</td><td style="border:1px solid #000;padding:7px;text-align:center">${NUM(paid)}</td><td style="border:1px solid #000;padding:7px"></td></tr></tfoot>
+        </table>
+        <div style="display:flex;justify-content:space-between;margin-top:50px;font-size:14px">
+          <div>توقيع المسؤول: ____________</div>
+          <div>ختم المؤسسة</div>
+        </div>
+      </div>`;
+    const w = window.open("", "_blank");
+    if(!w){ alert("الرجاء السماح بالنوافذ المنبثقة للطباعة"); return; }
+    w.document.write(`<html><head><title>كشف حساب ${c.client||""}</title><meta charset="utf-8"></head><body onload="window.print()">${html}</body></html>`);
+    w.document.close();
+  };
+
   // نتائج بحث الزبون
   const clientResults = q.trim()
     ? active.filter(c => (c.client||"").includes(q.trim()) || String(c.num||"").includes(q.trim()) || (c.cPhone||"").includes(q.trim()))
@@ -3802,7 +3842,10 @@ function ClientsPage({contracts, investors, payments, goCollect}) {
           <div style={styles.panel}>
             <div style={styles.panelHdr}>
               <h2 style={{margin:0,fontSize:17,fontWeight:900,color:C.ink}}>👤 {c.client||"غير محدد"} — عقد #{c.num}</h2>
-              <button onClick={()=>setSelContract(null)} style={styles.btn(C.red,"#fff")}>✕ إغلاق</button>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>printStatement(c, list, tot, paid, left, invName)} style={styles.btn(C.gold,"#fff")}>🖨️ كشف حساب</button>
+                <button onClick={()=>setSelContract(null)} style={styles.btn(C.red,"#fff")}>✕ إغلاق</button>
+              </div>
             </div>
             <div style={{padding:20}}>
               {/* بطاقات الملخص */}
