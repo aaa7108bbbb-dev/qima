@@ -24,6 +24,14 @@
     #cheque-print-area, #cheque-print-area * { visibility: visible; }
     #bond-g-print-area, #bond-g-print-area * { visibility: visible; }
     #cheque-g-print-area, #cheque-g-print-area * { visibility: visible; }
+    #bond-cl-print-area, #bond-cl-print-area * { visibility: visible; }
+    #bond-cl-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
+    #bond-cl-print-area .doc-half { font-size: 9px !important; }
+    #bond-cl-print-area .doc-half * { line-height: 1.25 !important; }
+    #bond-gg-print-area, #bond-gg-print-area * { visibility: visible; }
+    #bond-gg-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
+    #bond-gg-print-area .doc-half { font-size: 9px !important; }
+    #bond-gg-print-area .doc-half * { line-height: 1.25 !important; }
     #contract-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
     #bond-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
     #cheque-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
@@ -339,6 +347,7 @@ function BondContent({c,inv,r}) {
         مبلغاً وقدره : {words} | ( {Math.round(totalInst).toLocaleString("en-US")} ريال )
       </div>
       <p>بتاريخ الاستحقاق <u style={{padding:"0 40px"}}></u> / <u style={{padding:"0 30px"}}></u> / 14<u style={{padding:"0 20px"}}></u> هـ</p>
+      <p style={{fontWeight:800,textAlign:"center",margin:"6px 0"}}>( ولحامله حق الرجوع بدون مصروفات أو احتجاج )</p>
       <div style={{borderRight:"3px solid #000",paddingRight:10,fontSize:15,fontWeight:700,color:"#000",lineHeight:1.8,marginBottom:16}}>
         هذا السند واجب بدون تعلل بموجب قرار مجلس الوزراء الموقر رقم 692 وتاريخ 1383/09/26هـ والمتوج بالمرسوم الملكي رقم 37 بتاريخ 1383/10/11هـ من نظام الأوراق التجارية.<br/>
         * بموجب هذا السند يسقط المدين كافة حقوق التقديم والمطالبة والاحتجاج والإخطار بالامتناع عن الوفاء.
@@ -404,6 +413,7 @@ function BondGuarantorContent({c,inv,r}) {
         مبلغاً وقدره : {words} | ( {Math.round(totalInst).toLocaleString("en-US")} ريال )
       </div>
       <p>بتاريخ الاستحقاق <u style={{padding:"0 40px"}}></u> / <u style={{padding:"0 30px"}}></u> / 14<u style={{padding:"0 20px"}}></u> هـ</p>
+      <p style={{fontWeight:800,textAlign:"center",margin:"6px 0"}}>( ولحامله حق الرجوع بدون مصروفات أو احتجاج )</p>
       <div style={{borderRight:"3px solid #000",paddingRight:10,fontSize:15,fontWeight:700,color:"#000",lineHeight:1.8,marginBottom:16}}>
         هذا السند واجب بدون تعلل بموجب قرار مجلس الوزراء الموقر رقم 692 وتاريخ 1383/09/26هـ والمتوج بالمرسوم الملكي رقم 37 بتاريخ 1383/10/11هـ من نظام الأوراق التجارية.<br/>
         * بموجب هذا السند يسقط المدين كافة حقوق التقديم والمطالبة والاحتجاج والإخطار بالامتناع عن الوفاء.
@@ -453,7 +463,7 @@ function ChequeContent({c,r,isGuarantor=false}) {
   const idNum = isGuarantor ? (c.gId||"...............") : (c.idNum||"...............");
   return (
     <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",padding:"36px 40px",color:"#000",lineHeight:2.6,border:"2px solid #000"}}>
-      <div style={{textAlign:"center",fontSize:24,fontWeight:900,letterSpacing:3,marginBottom:28,borderBottom:"3px double #000",paddingBottom:12}}>عقد</div>
+      <div style={{textAlign:"center",fontSize:24,fontWeight:900,letterSpacing:3,marginBottom:28,borderBottom:"3px double #000",paddingBottom:12}}>( اثبات مديونية )</div>
       {[["نعم أنا /",name],["هوية وطنية /",idNum],["عندي وفي ذمتي للمدعو /"," "]].map(([l,v])=>(
         <div key={l} style={{display:"flex",gap:8,alignItems:"flex-end",marginBottom:4,fontSize:17}}>
           <span style={{fontWeight:800,whiteSpace:"nowrap"}}>{l}</span>
@@ -1482,18 +1492,30 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       </Modal>
 
       <Modal open={!!bond} onClose={()=>setBond(null)} title="📜 سند الأمر">
-        <div style={{padding:"10px 12px 0",textAlign:"left"}}>
-          <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-print-area")}>🖨️ طباعة</button>
+        <div style={{padding:"10px 12px 0",textAlign:"left",display:"flex",gap:8,flexWrap:"wrap"}}>
+          <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-print-area")}>🖨️ سند الزبون فقط</button>
+          <button style={styles.btn(C.teal)} onClick={()=>printContent("bond-cl-print-area")}>🖨️ سند الزبون + إثبات المديونية</button>
         </div>
         <div id="bond-print-area">{bond && <BondContent c={bond} inv={investors.find(i=>String(i.id)===String(bond.investorId))} r={calcContract(bond.amount,settings)}/>}</div>
+        <div id="bond-cl-print-area" style={{position:"absolute",left:"-9999px",top:0}}>
+          {bond && <div className="doc-half"><BondContent c={bond} inv={investors.find(i=>String(i.id)===String(bond.investorId))} r={calcContract(bond.amount,settings)}/></div>}
+          {bond && <div style={{borderTop:"2px dashed #000",margin:"12px 0"}}></div>}
+          {bond && <div className="doc-half"><ChequeContent c={bond} r={calcContract(bond.amount,settings)}/></div>}
+        </div>
       </Modal>
 
       {/* Cheque Modal */}
       <Modal open={!!bondG} onClose={()=>setBondG(null)} title="📜 سند الأمر">
-        <div style={{padding:"10px 12px 0",textAlign:"left"}}>
-          <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-g-print-area")}>🖨️ طباعة</button>
+        <div style={{padding:"10px 12px 0",textAlign:"left",display:"flex",gap:8,flexWrap:"wrap"}}>
+          <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-g-print-area")}>🖨️ سند الكفيل فقط</button>
+          <button style={styles.btn(C.teal)} onClick={()=>printContent("bond-gg-print-area")}>🖨️ سند الكفيل + إثبات المديونية</button>
         </div>
         <div id="bond-g-print-area">{bondG && <BondGuarantorContent c={bondG} inv={investors.find(i=>String(i.id)===String(bondG.investorId))} r={calcContract(bondG.amount,settings)}/>}</div>
+        <div id="bond-gg-print-area" style={{position:"absolute",left:"-9999px",top:0}}>
+          {bondG && <div className="doc-half"><BondGuarantorContent c={bondG} inv={investors.find(i=>String(i.id)===String(bondG.investorId))} r={calcContract(bondG.amount,settings)}/></div>}
+          {bondG && <div style={{borderTop:"2px dashed #000",margin:"12px 0"}}></div>}
+          {bondG && <div className="doc-half"><ChequeContent c={bondG} r={calcContract(bondG.amount,settings)} isGuarantor={true}/></div>}
+        </div>
       </Modal>
 
       <Modal open={!!cheque} onClose={()=>setCheque(null)} title="📋 العقد - المشتري">
