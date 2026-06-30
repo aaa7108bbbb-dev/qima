@@ -3586,13 +3586,35 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
 
 // ─── Clients Page ────────────────────────────────────────────────
 function ClientsPage({contracts, investors}) {
-  const [searchType, setSearchType] = useState("investor"); // investor or client
+  const [searchType, setSearchType] = useState("investor");
   const [searchValue, setSearchValue] = useState("");
+  const [selectedInvestor, setSelectedInvestor] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
   const [selectedContract, setSelectedContract] = useState(null);
 
-  const getInvestorClients = (invId) => {
+  // البحث عن المستثمرين
+  const searchInvestors = (query) => {
+    if(!query) return [];
+    return investors.filter(inv => 
+      inv.name.toLowerCase().includes(query.toLowerCase()) ||
+      inv.fund.toLowerCase().includes(query.toLowerCase())
+    );
+  };
+
+  // الحصول على عقود المستثمر
+  const getInvestorContracts = (invId) => {
     return contracts.filter(c => String(c.invId) === String(invId) && !c.deleted);
+  };
+
+  // البحث عن العملاء (الزبائن)
+  const searchClients = (query) => {
+    if(!query) return [];
+    return contracts.filter(c => 
+      !c.deleted && (
+        (c.client && c.client.toLowerCase().includes(query.toLowerCase())) ||
+        (c.num && c.num.toString().includes(query))
+      )
+    );
   };
 
   const getContractPayments = (contractId) => {
@@ -3632,56 +3654,126 @@ function ClientsPage({contracts, investors}) {
         </div>
         <div style={{padding:20}}>
           <div style={{display:"flex",gap:10,marginBottom:20}}>
-            <button onClick={()=>{setSearchType("investor");setSearchValue("");setSelectedClient(null);}} style={{...styles.btn(searchType==="investor"?C.teal:"#ccc"),flex:1}}>بحث بالمستثمر</button>
-            <button onClick={()=>{setSearchType("client");setSearchValue("");setSelectedClient(null);}} style={{...styles.btn(searchType==="client"?C.teal:"#ccc"),flex:1}}>بحث بالعقد</button>
+            <button onClick={()=>{setSearchType("investor");setSearchValue("");setSelectedInvestor(null);setSelectedClient(null);}} style={{...styles.btn(searchType==="investor"?C.teal:"#999"),flex:1}}>🏢 بحث بالمستثمر</button>
+            <button onClick={()=>{setSearchType("client");setSearchValue("");setSelectedInvestor(null);setSelectedClient(null);}} style={{...styles.btn(searchType==="client"?C.teal:"#999"),flex:1}}>👤 بحث بالزبون</button>
           </div>
 
           {searchType==="investor" && (
             <div>
-              <input type="text" placeholder="ابحث عن المستثمر..." value={searchValue} onChange={e=>setSearchValue(e.target.value)} style={{...styles.input,marginBottom:15}}/>
-              {searchValue && filteredInvestors.length > 0 && (
+              <input type="text" placeholder="اكتب اسم المستثمر أو الصندوق..." value={searchValue} onChange={e=>setSearchValue(e.target.value)} style={{...styles.input,marginBottom:15}}/>
+              {searchValue && searchInvestors(searchValue).length > 0 && (
                 <div style={{border:"1px solid "+C.border,borderRadius:8,maxHeight:300,overflowY:"auto"}}>
-                  {filteredInvestors.map(inv=>(
-                    <div key={inv.id} onClick={()=>{setSelectedClient(inv);setSearchValue("");}} style={{padding:12,borderBottom:"1px solid "+C.border,cursor:"pointer",background:selectedClient?.id===inv.id?"#e8f4f8":"white"}}>
-                      <div style={{fontWeight:700,color:C.ink}}>{inv.name}</div>
-                      <div style={{fontSize:13,color:"#666"}}>{inv.fund}</div>
-                      <div style={{fontSize:12,color:C.teal,marginTop:4}}>📋 {getInvestorClients(inv.id).length} عقود</div>
+                  {searchInvestors(searchValue).map(inv=>(
+                    <div key={inv.id} onClick={()=>{setSelectedInvestor(inv);setSearchValue("");}} style={{padding:12,borderBottom:"1px solid "+C.border,cursor:"pointer",background:selectedInvestor?.id===inv.id?"#e8f4f8":"white",transition:"all 0.2s"}}>
+                      <div style={{fontWeight:700,color:C.ink,fontSize:15}}>🏢 {inv.name}</div>
+                      <div style={{fontSize:13,color:"#666",marginTop:4}}>{inv.fund}</div>
+                      <div style={{fontSize:12,color:C.teal,marginTop:4,fontWeight:700}}>📋 {getInvestorContracts(inv.id).length} عقود</div>
+                      <div style={{fontSize:12,color:C.green,marginTop:2}}>💰 رأس المال: {NUM(Math.abs(inv.capital || 0))}</div>
                     </div>
                   ))}
                 </div>
+              )}
+              {searchValue && searchInvestors(searchValue).length === 0 && (
+                <div style={{padding:15,textAlign:"center",color:"#999"}}>❌ لم يتم العثور على مستثمرين</div>
+              )}
+            </div>
+          )}
+
+          {searchType==="client" && (
+            <div>
+              <input type="text" placeholder="اكتب اسم الزبون أو رقم العقد..." value={searchValue} onChange={e=>setSearchValue(e.target.value)} style={{...styles.input,marginBottom:15}}/>
+              {searchValue && searchClients(searchValue).length > 0 && (
+                <div style={{border:"1px solid "+C.border,borderRadius:8,maxHeight:300,overflowY:"auto"}}>
+                  {searchClients(searchValue).map(contract=>(
+                    <div key={contract.id} onClick={()=>{setSelectedClient(contract);setSearchValue("");}} style={{padding:12,borderBottom:"1px solid "+C.border,cursor:"pointer",background:selectedClient?.id===contract.id?"#e8f4f8":"white",transition:"all 0.2s"}}>
+                      <div style={{fontWeight:700,color:C.ink,fontSize:15}}>👤 {contract.client}</div>
+                      <div style={{fontSize:13,color:"#666",marginTop:4}}>📋 العقد: #{contract.num}</div>
+                      <div style={{fontSize:12,color:C.teal,marginTop:4,fontWeight:700}}>💰 {NUM(contract.amount || 0)} ريال</div>
+                      <div style={{fontSize:12,color:C.green,marginTop:2}}>✓ مدفوع: {NUM(contract.paid || 0)}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {searchValue && searchClients(searchValue).length === 0 && (
+                <div style={{padding:15,textAlign:"center",color:"#999"}}>❌ لم يتم العثور على زبائن</div>
               )}
             </div>
           )}
         </div>
       </div>
 
-      {selectedClient && (
+      {selectedInvestor && (
         <div style={{...styles.panel}}>
           <div style={{...styles.panelHdr}}>
-            <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>📋 عقود {selectedClient.name}</h2>
-            <button onClick={()=>setSelectedClient(null)} style={{...styles.btn(C.red,"white")}}>✕</button>
+            <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>🏢 عقود {selectedInvestor.name}</h2>
+            <button onClick={()=>setSelectedInvestor(null)} style={{...styles.btn(C.red,"white")}}>✕</button>
           </div>
           <div style={{padding:20}}>
-            {filteredContracts.length === 0 ? (
-              <div style={{textAlign:"center",padding:20,color:"#999"}}>لا توجد عقود</div>
+            {getInvestorContracts(selectedInvestor.id).length === 0 ? (
+              <div style={{textAlign:"center",padding:40,color:"#999",fontSize:16}}>❌ لا توجد عقود لهذا المستثمر</div>
             ) : (
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:15}}>
-                {filteredContracts.map(contract=>(
-                  <div key={contract.id} onClick={()=>setSelectedContract(contract.id)} style={{...styles.card,cursor:"pointer",borderLeft:"4px solid "+C.teal}}>
-                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
-                      <div style={{fontWeight:900,fontSize:16,color:C.ink}}>العقد #{contract.num}</div>
-                      <div style={{fontSize:12,background:C.greenLt,color:C.green,padding:"4px 8px",borderRadius:6}}>✅ نشط</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:15}}>
+                {getInvestorContracts(selectedInvestor.id).map(contract=>(
+                  <div key={contract.id} onClick={()=>setSelectedContract(contract.id)} style={{...styles.card,cursor:"pointer",borderLeft:"4px solid "+C.teal,hover:{transform:"translateY(-2px)"}}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                      <div style={{fontWeight:900,fontSize:16,color:C.ink}}>📋 #{contract.num}</div>
+                      <div style={{fontSize:11,background:C.greenLt,color:C.green,padding:"4px 8px",borderRadius:6,fontWeight:700}}>✅ نشط</div>
                     </div>
-                    <div style={{fontSize:13,color:"#666",marginBottom:8}}>
-                      <div>💰 المبلغ: {NUM(contract.amount)}</div>
-                      <div>📅 البداية: {fmtDate(contract.firstInst)}</div>
-                      <div>⏳ المدة: {contract.instNum || 0} شهور</div>
-                      <div style={{marginTop:8,fontWeight:700,color:C.teal}}>✓ مدفوع: {NUM(contract.paid || 0)}</div>
+                    <div style={{fontSize:13,color:"#333",marginBottom:12,paddingBottom:10,borderBottom:"1px solid #eee"}}>
+                      <div style={{fontWeight:700,fontSize:14,marginBottom:6}}>👤 {contract.client || "غير محدد"}</div>
+                    </div>
+                    <div style={{fontSize:12,color:"#666"}}>
+                      <div style={{marginBottom:6}}>💰 المبلغ: <span style={{fontWeight:700,color:C.ink}}>{NUM(contract.amount)}</span></div>
+                      <div style={{marginBottom:6}}>📅 البداية: <span style={{fontWeight:700}}>{fmtDate(contract.firstInst)}</span></div>
+                      <div style={{marginBottom:6}}>⏳ المدة: <span style={{fontWeight:700}}>{contract.instNum || 0}</span> شهور</div>
+                      <div style={{marginTop:10,paddingTop:10,borderTop:"1px solid #eee"}}>
+                        <div style={{fontWeight:700,color:C.green}}>✓ المدفوع: {NUM(contract.paid || 0)}</div>
+                        <div style={{fontWeight:700,color:C.red,marginTop:4}}>المتبقي: {NUM((contract.amount || 0) - (contract.paid || 0))}</div>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {selectedClient && (
+        <div style={{...styles.panel}}>
+          <div style={{...styles.panelHdr}}>
+            <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>👤 بيانات العقد</h2>
+            <button onClick={()=>setSelectedClient(null)} style={{...styles.btn(C.red,"white")}}>✕</button>
+          </div>
+          <div style={{padding:20}}>
+            <div style={{...styles.card,marginBottom:20,background:"#f9f9f9"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,fontSize:14}}>
+                <div>
+                  <div style={{color:"#666",fontSize:12,marginBottom:4}}>رقم العقد</div>
+                  <div style={{fontWeight:900,fontSize:16,color:C.ink}}>#{selectedClient.num}</div>
+                </div>
+                <div>
+                  <div style={{color:"#666",fontSize:12,marginBottom:4}}>اسم الزبون</div>
+                  <div style={{fontWeight:900,fontSize:16,color:C.ink}}>{selectedClient.client}</div>
+                </div>
+                <div>
+                  <div style={{color:"#666",fontSize:12,marginBottom:4}}>المبلغ الكلي</div>
+                  <div style={{fontWeight:900,fontSize:16,color:C.green}}>{NUM(selectedClient.amount)}</div>
+                </div>
+                <div>
+                  <div style={{color:"#666",fontSize:12,marginBottom:4}}>المبلغ المدفوع</div>
+                  <div style={{fontWeight:900,fontSize:16,color:C.green}}>{NUM(selectedClient.paid || 0)}</div>
+                </div>
+                <div>
+                  <div style={{color:"#666",fontSize:12,marginBottom:4}}>المبلغ المتبقي</div>
+                  <div style={{fontWeight:900,fontSize:16,color:C.red}}>{NUM((selectedClient.amount || 0) - (selectedClient.paid || 0))}</div>
+                </div>
+                <div>
+                  <div style={{color:"#666",fontSize:12,marginBottom:4}}>عدد الأقساط</div>
+                  <div style={{fontWeight:900,fontSize:16,color:C.ink}}>{selectedClient.instNum || 0}</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
