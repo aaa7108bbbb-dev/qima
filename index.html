@@ -1125,6 +1125,35 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                       onChange={e=>setCollectAmounts(p=>({...p,[c.id]:e.target.value}))}/>
                     <button style={{...styles.btn(C.green),fontSize:15,padding:"10px 20px",whiteSpace:"nowrap"}} onClick={()=>doCollect(c)}>✅ سدّد</button>
                   </div>
+                  {(()=>{
+                    const hist=(payments||[]).filter(p=>p.contractId===c.id).slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+                    if(hist.length===0) return null;
+                    return (
+                      <div style={{marginTop:10,borderTop:"1px dashed "+C.border,paddingTop:8}}>
+                        <div style={{fontSize:13,fontWeight:800,color:C.ink,marginBottom:6}}>📋 السدادات السابقة ({hist.length})</div>
+                        {hist.map((p,idx)=>(
+                          <div key={p.id||idx} style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:13,padding:"6px 0",borderBottom:"1px solid #f0f0f0",flexWrap:"wrap",gap:6}}>
+                            <span style={{color:C.ink}}>{idx+1}. {fmtDate(p.date)} — <b style={{color:C.green}}>{SAR(p.amount)}</b></span>
+                            <span style={{display:"flex",gap:6}}>
+                              <button style={{...styles.btn("#e5e7eb",C.ink),fontSize:12,padding:"4px 10px"}} onClick={()=>{
+                                const v=window.prompt("تعديل مبلغ السداد:",p.amount);
+                                if(v===null) return;
+                                const n=parseFloat(v);
+                                if(isNaN(n)||n<=0){toast("⚠️ مبلغ غير صحيح","warn");return;}
+                                setPayments(arr=>arr.map(x=>x.id===p.id?{...x,amount:n}:x));
+                                toast("✅ تم تعديل السداد");
+                              }}>✏️ تعديل</button>
+                              <button style={{...styles.btn(C.redLt,C.red),fontSize:12,padding:"4px 10px"}} onClick={()=>{
+                                if(!window.confirm("حذف هذا السداد نهائياً؟")) return;
+                                setPayments(arr=>arr.filter(x=>x.id!==p.id));
+                                toast("🗑 تم حذف السداد");
+                              }}>🗑 حذف</button>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })}
