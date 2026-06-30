@@ -17,7 +17,7 @@
 <style>
   * { box-sizing: border-box; }
   @media print {
-    @page { size: A4; margin: 10mm; }
+    @page { size: A4; margin: 7mm; }
     body * { visibility: hidden; }
     #contract-print-area, #contract-print-area * { visibility: visible; }
     #bond-print-area, #bond-print-area * { visibility: visible; }
@@ -29,8 +29,10 @@
     #cheque-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
     #bond-g-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
     #cheque-g-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
-    #contract-print-area { font-size: 12.5px !important; }
-    #contract-print-area * { line-height: 1.6 !important; }
+    #contract-print-area { font-size: 10.5px !important; }
+    #contract-print-area * { line-height: 1.35 !important; }
+    #contract-print-area h1, #contract-print-area h2, #contract-print-area h3 { margin: 4px 0 !important; }
+    #contract-print-area p, #contract-print-area div { margin-top: 2px !important; margin-bottom: 2px !important; }
   }
   body { margin: 0; font-family: 'Tajawal', 'Poppins', Arial, sans-serif; background: #f4f4f6; }
   /* LOGIN PAGE STYLES */
