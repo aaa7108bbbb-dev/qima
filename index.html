@@ -152,7 +152,23 @@ const _arr = x => Array.isArray(x) ? x : [];
 
 
 function printContent(elementId) {
+  var areas = ["contract-print-area","bond-print-area","cheque-print-area","bond-g-print-area","cheque-g-print-area","bond-cl-print-area","bond-gg-print-area"];
+  var saved = {};
+  areas.forEach(function(id){
+    var el = document.getElementById(id);
+    if(el){
+      saved[id] = {display:el.style.display, left:el.style.left, position:el.style.position};
+      if(id!==elementId){ el.style.display="none"; }
+      else { el.style.display="block"; el.style.left="0"; el.style.position="static"; }
+    }
+  });
   window.print();
+  setTimeout(function(){
+    areas.forEach(function(id){
+      var el = document.getElementById(id);
+      if(el && saved[id]){ el.style.display=saved[id].display; el.style.left=saved[id].left; el.style.position=saved[id].position; }
+    });
+  }, 300);
 }
 function printStatement(elementId) {
   const el = document.getElementById(elementId);
