@@ -3570,6 +3570,216 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
   );
 }
 
+// ─── Clients Page ────────────────────────────────────────────────
+function ClientsPage({contracts, investors, payments, goCollect}) {
+  const [mode, setMode] = React.useState("client"); // client | investor
+  const [q, setQ] = React.useState("");
+  const [selContract, setSelContract] = React.useState(null);
+  const [selInvestor, setSelInvestor] = React.useState(null);
+
+  const active = contracts.filter(c => !c.deleted);
+
+  // مدفوع عقد معيّن من مصفوفة الدفعات
+  const paidOf = (cid) => (payments||[]).filter(p => p.contractId === cid).reduce((s,p)=>s+(+p.amount||0), 0);
+  // الإجمالي الصحيح = totalInst (مع الفائدة) وإلا amount
+  const totalOf = (c) => (+c.totalInst || +c.amount || 0);
+  // دفعات عقد مرتبة بالتاريخ
+  const paymentsOf = (cid) => (payments||[]).filter(p => p.contractId === cid).slice().sort((a,b)=> new Date(a.date)-new Date(b.date));
+
+  // نتائج بحث الزبون
+  const clientResults = q.trim()
+    ? active.filter(c => (c.client||"").includes(q.trim()) || String(c.num||"").includes(q.trim()) || (c.cPhone||"").includes(q.trim()))
+    : [];
+
+  // نتائج بحث المستثمر
+  const investorResults = q.trim()
+    ? investors.filter(i => (i.name||"").includes(q.trim()) || (i.fund||"").includes(q.trim()))
+    : [];
+
+  const investorContracts = selInvestor
+    ? active.filter(c => String(c.investorId) === String(selInvestor.id))
+    : [];
+
+  const reset = () => { setSelContract(null); setSelInvestor(null); };
+
+  return (
+    <div style={styles.main}>
+      <div style={styles.panel}>
+        <div style={styles.panelHdr}>
+          <h2 style={{margin:0,fontSize:20,fontWeight:900,color:C.ink}}>👥 العملاء</h2>
+        </div>
+        <div style={{padding:20}}>
+          {/* أزرار الوضع */}
+          <div style={{display:"flex",gap:10,marginBottom:16}}>
+            <button onClick={()=>{setMode("client");setQ("");reset();}}
+              style={{...styles.btn(mode==="client"?C.teal:"#e5e7eb", mode==="client"?"#fff":"#374151"),flex:1}}>🔍 بحث بالزبون</button>
+            <button onClick={()=>{setMode("investor");setQ("");reset();}}
+              style={{...styles.btn(mode==="investor"?C.teal:"#e5e7eb", mode==="investor"?"#fff":"#374151"),flex:1}}>🏢 بحث بالمستثمر</button>
+          </div>
+
+          {/* صندوق البحث */}
+          <input value={q} onChange={e=>{setQ(e.target.value);reset();}}
+            placeholder={mode==="client" ? "اكتب اسم الزبون أو رقم العقد أو الجوال..." : "اكتب اسم المستثمر أو الصندوق..."}
+            style={{...styles.input, marginBottom:14}}/>
+
+          {/* نتائج بحث الزبون */}
+          {mode==="client" && q.trim() && !selContract && (
+            clientResults.length === 0
+              ? <div style={{padding:14,textAlign:"center",color:"#999"}}>لا توجد نتائج</div>
+              : <div style={{border:"1px solid "+C.border,borderRadius:8,overflow:"hidden"}}>
+                  {clientResults.map(c=>(
+                    <div key={c.id} onClick={()=>setSelContract(c)}
+                      style={{padding:12,borderBottom:"1px solid "+C.border,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <div>
+                        <div style={{fontWeight:700,color:C.ink}}>👤 {c.client||"غير محدد"}</div>
+                        <div style={{fontSize:13,color:"#666",marginTop:3}}>عقد #{c.num} — إجمالي {NUM(totalOf(c))}</div>
+                      </div>
+                      <span style={{color:C.teal,fontWeight:700}}>عرض ›</span>
+                    </div>
+                  ))}
+                </div>
+          )}
+
+          {/* نتائج بحث المستثمر */}
+          {mode==="investor" && q.trim() && !selInvestor && (
+            investorResults.length === 0
+              ? <div style={{padding:14,textAlign:"center",color:"#999"}}>لا توجد نتائج</div>
+              : <div style={{border:"1px solid "+C.border,borderRadius:8,overflow:"hidden"}}>
+                  {investorResults.map(i=>(
+                    <div key={i.id} onClick={()=>setSelInvestor(i)}
+                      style={{padding:12,borderBottom:"1px solid "+C.border,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <div>
+                        <div style={{fontWeight:700,color:C.ink}}>🏢 {i.name}</div>
+                        <div style={{fontSize:13,color:"#666",marginTop:3}}>{i.fund} — {active.filter(c=>String(c.investorId)===String(i.id)).length} عقود</div>
+                      </div>
+                      <span style={{color:C.teal,fontWeight:700}}>عرض ›</span>
+                    </div>
+                  ))}
+                </div>
+          )}
+        </div>
+      </div>
+
+      {/* قائمة عقود المستثمر المختار */}
+      {selInvestor && (
+        <div style={styles.panel}>
+          <div style={styles.panelHdr}>
+            <h2 style={{margin:0,fontSize:17,fontWeight:900,color:C.ink}}>🏢 عقود {selInvestor.name}</h2>
+            <button onClick={()=>setSelInvestor(null)} style={styles.btn(C.red,"#fff")}>✕ إغلاق</button>
+          </div>
+          <div style={{padding:20}}>
+            {investorContracts.length === 0
+              ? <div style={{textAlign:"center",padding:30,color:"#999"}}>لا توجد عقود لهذا المستثمر</div>
+              : <div style={{overflowX:"auto"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse"}}>
+                    <thead><tr>
+                      <th style={styles.th}>العقد</th><th style={styles.th}>الزبون</th>
+                      <th style={styles.th}>الإجمالي</th><th style={styles.th}>الواصل</th>
+                      <th style={styles.th}>المتبقي</th><th style={styles.th}></th>
+                    </tr></thead>
+                    <tbody>
+                      {investorContracts.map((c,idx)=>{
+                        const paid=paidOf(c.id), tot=totalOf(c), left=Math.max(0,tot-paid);
+                        return (
+                          <tr key={c.id} style={{background:idx%2?C.gray:"#fff"}}>
+                            <td style={{...styles.td,fontWeight:700}}>#{c.num}</td>
+                            <td style={styles.td}>{c.client||"—"}</td>
+                            <td style={styles.td}>{NUM(tot)}</td>
+                            <td style={{...styles.td,color:C.green,fontWeight:700}}>{NUM(paid)}</td>
+                            <td style={{...styles.td,color:C.red,fontWeight:700}}>{NUM(left)}</td>
+                            <td style={styles.td}><button onClick={()=>{setSelContract(c);setSelInvestor(null);}} style={styles.btn(C.teal,"#fff")}>تفاصيل</button></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+            }
+          </div>
+        </div>
+      )}
+
+      {/* تفاصيل العقد/الزبون المختار */}
+      {selContract && (()=> {
+        const c = selContract;
+        const paid = paidOf(c.id);
+        const tot = totalOf(c);
+        const left = Math.max(0, tot - paid);
+        const invName = (investors.find(i=>String(i.id)===String(c.investorId))||{}).name || c.invName || "—";
+        const list = paymentsOf(c.id);
+        return (
+          <div style={styles.panel}>
+            <div style={styles.panelHdr}>
+              <h2 style={{margin:0,fontSize:17,fontWeight:900,color:C.ink}}>👤 {c.client||"غير محدد"} — عقد #{c.num}</h2>
+              <button onClick={()=>setSelContract(null)} style={styles.btn(C.red,"#fff")}>✕ إغلاق</button>
+            </div>
+            <div style={{padding:20}}>
+              {/* بطاقات الملخص */}
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:18}}>
+                <div style={{...styles.card,textAlign:"center"}}><div style={{fontSize:12,color:"#666"}}>الإجمالي</div><div style={{fontSize:18,fontWeight:900,color:C.ink}}>{NUM(tot)}</div></div>
+                <div style={{...styles.card,textAlign:"center"}}><div style={{fontSize:12,color:"#666"}}>الواصل</div><div style={{fontSize:18,fontWeight:900,color:C.green}}>{NUM(paid)}</div></div>
+                <div style={{...styles.card,textAlign:"center"}}><div style={{fontSize:12,color:"#666"}}>المتبقي</div><div style={{fontSize:18,fontWeight:900,color:C.red}}>{NUM(left)}</div></div>
+                <div style={{...styles.card,textAlign:"center"}}><div style={{fontSize:12,color:"#666"}}>القسط</div><div style={{fontSize:18,fontWeight:900,color:C.ink}}>{NUM(c.instAmt||0)}</div></div>
+              </div>
+
+              {/* بيانات العقد */}
+              <div style={{...styles.card,marginBottom:18}}>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px 20px",fontSize:14}}>
+                  <div><span style={{color:"#666"}}>المستثمر: </span><b>{invName}</b></div>
+                  <div><span style={{color:"#666"}}>الجوال: </span><b>{c.cPhone||"—"}</b></div>
+                  <div><span style={{color:"#666"}}>أول قسط: </span><b>{c.firstInst?fmtDate(c.firstInst):"—"}</b></div>
+                  <div><span style={{color:"#666"}}>آخر قسط: </span><b>{c.lastInst?fmtDate(c.lastInst):"—"}</b></div>
+                  <div><span style={{color:"#666"}}>رقم الهوية: </span><b>{c.idNum||"—"}</b></div>
+                  <div><span style={{color:"#666"}}>نوع العقد: </span><b>{c.contractType||"—"}</b></div>
+                </div>
+              </div>
+
+              {/* زر السداد */}
+              {goCollect && left>0 && (
+                <button onClick={()=>goCollect()} style={{...styles.btn(C.green,"#fff"),width:"100%",justifyContent:"center",fontSize:16,padding:"12px",marginBottom:18}}>💵 تسجيل سداد جديد</button>
+              )}
+              {left<=0 && (
+                <div style={{background:C.greenLt,color:C.green,borderRadius:8,padding:12,textAlign:"center",fontWeight:700,marginBottom:18}}>✅ تم سداد العقد بالكامل</div>
+              )}
+
+              {/* جدول السدادات السابقة */}
+              <h3 style={{color:C.ink,fontWeight:900,marginBottom:10,fontSize:16}}>📋 السدادات السابقة</h3>
+              {list.length===0
+                ? <div style={{textAlign:"center",padding:20,color:"#999",border:"1px dashed "+C.border,borderRadius:8}}>لا توجد سدادات مسجلة بعد</div>
+                : <div style={{overflowX:"auto"}}>
+                    <table style={{width:"100%",borderCollapse:"collapse"}}>
+                      <thead><tr>
+                        <th style={styles.th}>#</th><th style={styles.th}>التاريخ</th>
+                        <th style={styles.th}>المبلغ</th><th style={styles.th}>ملاحظة</th>
+                      </tr></thead>
+                      <tbody>
+                        {list.map((p,idx)=>(
+                          <tr key={p.id||idx} style={{background:idx%2?C.gray:"#fff"}}>
+                            <td style={{...styles.td,fontWeight:700}}>{idx+1}</td>
+                            <td style={styles.td}>{fmtDate(p.date)}</td>
+                            <td style={{...styles.td,color:C.green,fontWeight:700}}>{NUM(p.amount)}</td>
+                            <td style={styles.td}>{p.note||"—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr style={{background:C.ink}}>
+                          <td style={{...styles.td,color:"#fff",fontWeight:900}} colSpan={2}>الإجمالي</td>
+                          <td style={{...styles.td,color:"#fff",fontWeight:900}}>{NUM(paid)}</td>
+                          <td style={styles.td}></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+              }
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
 // ─── Main App ────────────────────────────────────────────────
 function App() {
   const [page,setPage]=useState("dashboard");
@@ -3718,7 +3928,7 @@ function App() {
       </nav>
 
       <div style={styles.main}>
-        {page==="clients" && <div style={{...styles.main}}><div style={{...styles.panel}}><div style={{...styles.panelHdr}}><h2 style={{margin:0,fontSize:20,fontWeight:900,color:C.ink}}>👥 العملاء والعقود</h2></div><div style={{padding:20}}><div style={{marginBottom:20}}><h3 style={{color:C.ink,fontWeight:900,marginBottom:15}}>📋 جميع العقود</h3><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr style={{background:C.ink,color:C.white}}><th style={{...styles.th}}>رقم العقد</th><th style={{...styles.th}}>اسم الزبون</th><th style={{...styles.th}}>المبلغ</th><th style={{...styles.th}}>المدفوع</th><th style={{...styles.th}}>المتبقي</th></tr></thead><tbody>{activeContracts.map((c,i)=><tr key={c.id} style={{background:i%2?C.gray:C.white}}><td style={{...styles.td,fontWeight:700}}>#{c.num}</td><td style={{...styles.td}}>{c.client||"غير محدد"}</td><td style={{...styles.td}}>{NUM(c.amount||0)}</td><td style={{...styles.td,color:C.green,fontWeight:700}}>{NUM(c.paid||0)}</td><td style={{...styles.td,color:C.red,fontWeight:700}}>{NUM((c.amount||0)-(c.paid||0))}</td></tr>)}</tbody></table></div></div></div></div></div>}
+        {page==="clients" && <ClientsPage contracts={contracts} investors={investors} payments={payments} goCollect={()=>setPage("collect")} />}
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast}/>}
         {page==="collect" && <ContractsPage startCollect={true} contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c))} onRestore={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);}} setInvTxList={setInvTxList}/>}
