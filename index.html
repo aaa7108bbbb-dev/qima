@@ -3584,6 +3584,146 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
   );
 }
 
+// ─── Clients Page ────────────────────────────────────────────────
+function ClientsPage({contracts, investors}) {
+  const [searchType, setSearchType] = useState("investor"); // investor or client
+  const [searchValue, setSearchValue] = useState("");
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedContract, setSelectedContract] = useState(null);
+
+  const getInvestorClients = (invId) => {
+    return contracts.filter(c => String(c.invId) === String(invId) && !c.deleted);
+  };
+
+  const getContractPayments = (contractId) => {
+    const c = contracts.find(x => x.id === contractId);
+    if(!c) return [];
+    const payments = [];
+    const inst = c.instAmt || 0;
+    const firstDate = new Date(c.firstInst || new Date());
+    let paid = 0;
+    
+    for(let i = 0; i < (c.instNum || 0); i++) {
+      const dueDate = new Date(firstDate);
+      dueDate.setMonth(dueDate.getMonth() + i);
+      const isPaid = paid < (c.paid || 0);
+      payments.push({
+        month: i + 1,
+        dueDate: dueDate.toISOString().split('T')[0],
+        amount: inst,
+        paid: isPaid
+      });
+      if(isPaid) paid += inst;
+    }
+    return payments;
+  };
+
+  const filteredInvestors = searchValue ? investors.filter(i => 
+    i.name.includes(searchValue) || i.fund.includes(searchValue)
+  ) : [];
+
+  const filteredContracts = selectedClient ? getInvestorClients(selectedClient.id) : [];
+
+  return (
+    <div>
+      <div style={{...styles.panel}}>
+        <div style={{...styles.panelHdr}}>
+          <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>🔍 بحث العملاء</h2>
+        </div>
+        <div style={{padding:20}}>
+          <div style={{display:"flex",gap:10,marginBottom:20}}>
+            <button onClick={()=>{setSearchType("investor");setSearchValue("");setSelectedClient(null);}} style={{...styles.btn(searchType==="investor"?C.teal:"#ccc"),flex:1}}>بحث بالمستثمر</button>
+            <button onClick={()=>{setSearchType("client");setSearchValue("");setSelectedClient(null);}} style={{...styles.btn(searchType==="client"?C.teal:"#ccc"),flex:1}}>بحث بالعقد</button>
+          </div>
+
+          {searchType==="investor" && (
+            <div>
+              <input type="text" placeholder="ابحث عن المستثمر..." value={searchValue} onChange={e=>setSearchValue(e.target.value)} style={{...styles.input,marginBottom:15}}/>
+              {searchValue && filteredInvestors.length > 0 && (
+                <div style={{border:"1px solid "+C.border,borderRadius:8,maxHeight:300,overflowY:"auto"}}>
+                  {filteredInvestors.map(inv=>(
+                    <div key={inv.id} onClick={()=>{setSelectedClient(inv);setSearchValue("");}} style={{padding:12,borderBottom:"1px solid "+C.border,cursor:"pointer",background:selectedClient?.id===inv.id?"#e8f4f8":"white"}}>
+                      <div style={{fontWeight:700,color:C.ink}}>{inv.name}</div>
+                      <div style={{fontSize:13,color:"#666"}}>{inv.fund}</div>
+                      <div style={{fontSize:12,color:C.teal,marginTop:4}}>📋 {getInvestorClients(inv.id).length} عقود</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {selectedClient && (
+        <div style={{...styles.panel}}>
+          <div style={{...styles.panelHdr}}>
+            <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>📋 عقود {selectedClient.name}</h2>
+            <button onClick={()=>setSelectedClient(null)} style={{...styles.btn(C.red,"white")}}>✕</button>
+          </div>
+          <div style={{padding:20}}>
+            {filteredContracts.length === 0 ? (
+              <div style={{textAlign:"center",padding:20,color:"#999"}}>لا توجد عقود</div>
+            ) : (
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:15}}>
+                {filteredContracts.map(contract=>(
+                  <div key={contract.id} onClick={()=>setSelectedContract(contract.id)} style={{...styles.card,cursor:"pointer",borderLeft:"4px solid "+C.teal}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
+                      <div style={{fontWeight:900,fontSize:16,color:C.ink}}>العقد #{contract.num}</div>
+                      <div style={{fontSize:12,background:C.greenLt,color:C.green,padding:"4px 8px",borderRadius:6}}>✅ نشط</div>
+                    </div>
+                    <div style={{fontSize:13,color:"#666",marginBottom:8}}>
+                      <div>💰 المبلغ: {NUM(contract.amount)}</div>
+                      <div>📅 البداية: {fmtDate(contract.firstInst)}</div>
+                      <div>⏳ المدة: {contract.instNum || 0} شهور</div>
+                      <div style={{marginTop:8,fontWeight:700,color:C.teal}}>✓ مدفوع: {NUM(contract.paid || 0)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {selectedContract && (
+        <div style={{...styles.panel}}>
+          <div style={{...styles.panelHdr}}>
+            <h2 style={{margin:0,fontSize:16,fontWeight:900,color:C.ink}}>📊 تفاصيل السداد</h2>
+            <button onClick={()=>setSelectedContract(null)} style={{...styles.btn(C.red,"white")}}>✕</button>
+          </div>
+          <div style={{padding:20,overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse"}}>
+              <thead>
+                <tr style={{background:C.ink,color:"white"}}>
+                  <th style={{...styles.th}}>الشهر</th>
+                  <th style={{...styles.th}}>تاريخ الاستحقاق</th>
+                  <th style={{...styles.th}}>المبلغ</th>
+                  <th style={{...styles.th}}>الحالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                {getContractPayments(selectedContract).map((pay,i)=>(
+                  <tr key={i} style={{background:i%2?C.gray:"white"}}>
+                    <td style={{...styles.td,fontWeight:700}}>{pay.month}</td>
+                    <td style={{...styles.td}}>{fmtDate(pay.dueDate)}</td>
+                    <td style={{...styles.td,fontWeight:700}}>{NUM(pay.amount)}</td>
+                    <td style={{...styles.td}}>
+                      <span style={{...styles.badge(pay.paid?C.green:C.red,pay.paid?"white":"white")}}>
+                        {pay.paid?"✓ مدفوع":"⏳ متأخر"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main App ────────────────────────────────────────────────
 function App() {
   const [page,setPage]=useState("dashboard");
@@ -3690,6 +3830,7 @@ function App() {
 
   const TABS=[
     {id:"dashboard",label:"🏠",name:"الرئيسية",color:"#1e3a5f"},
+    {id:"clients",label:"👥",name:"العملاء",color:"#0891b2"},
     {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
     {id:"collect",label:"⚡",name:"التحصيل",color:"#0d9488"},
     {id:"goods",label:"📦",name:"البضاعة",color:"#78350f"},
@@ -3731,6 +3872,7 @@ function App() {
       </nav>
 
       <div style={styles.main}>
+        {page==="clients" && <ClientsPage contracts={contracts} investors={investors}/>}
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast}/>}
         {page==="collect" && <ContractsPage startCollect={true} contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c))} onRestore={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);}} setInvTxList={setInvTxList}/>}
