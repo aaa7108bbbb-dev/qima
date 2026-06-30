@@ -229,7 +229,7 @@ const styles = {
   header:{background:"linear-gradient(135deg,#0f1923,#1a2e45)",color:"white",padding:"0 16px",display:"flex",alignItems:"center",justifyContent:"space-between",height:60,position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 20px rgba(0,0,0,0.25)"},
   logo:{width:44,height:44,borderRadius:8,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"},
   nav:{background:C.white,borderBottom:"1px solid "+C.border,display:"flex",overflowX:"auto",padding:"0 8px"},
-  navBtn:{padding:"12px 14px",fontFamily:"Tajawal,Arial,sans-serif",fontSize:15,fontWeight:700,color:"#6b7280",background:"none",border:"none",borderBottom:"3px solid transparent",cursor:"pointer",whiteSpace:"nowrap"},
+  navBtn:{padding:"12px 14px",fontFamily:"Tajawal,Arial,sans-serif",fontSize:15,fontWeight:700,color:"#1f2937",background:"none",border:"none",borderBottom:"3px solid transparent",cursor:"pointer",whiteSpace:"nowrap"},
   navBtnActive:{color:C.teal,borderBottomColor:C.teal},
   main:{maxWidth:1200,margin:"0 auto",padding:"20px 12px"},
   card:{background:C.white,borderRadius:12,padding:"16px 18px",boxShadow:"0 2px 12px rgba(0,0,0,0.07)"},
@@ -439,7 +439,7 @@ function ChequeContent({c,r,isGuarantor=false}) {
       ))}
       <div style={{border:"2px solid #000",borderRadius:8,padding:"12px 18px",textAlign:"center",fontSize:19,fontWeight:800,margin:"14px 0",background:"#fffbf0"}}>
         {words} | ( {total.toLocaleString("en-US")} ريال )
-        <div style={{fontSize:15,fontWeight:500,color:"#555",marginTop:4}}>وذلك قيمة ( تحويل الى حسابه الشخصي )</div>
+        <div style={{fontSize:15,fontWeight:500,color:"#1f2937",marginTop:4}}>وذلك قيمة ( تحويل الى حسابه الشخصي )</div>
       </div>
       <div style={{display:"flex",gap:8,alignItems:"flex-end",marginBottom:4,fontSize:17}}>
         <span style={{fontWeight:800,whiteSpace:"nowrap"}}>ومستعد في سداده بتاريخ /</span>
@@ -595,7 +595,7 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
       )}
 
       {/* Footer */}
-      <div style={{textAlign:"center",fontSize:12,color:"#555",marginTop:12,borderTop:"1px solid #ccc",paddingTop:6}}>
+      <div style={{textAlign:"center",fontSize:12,color:"#1f2937",marginTop:12,borderTop:"1px solid #ccc",paddingTop:6}}>
         مؤسسة قمة الفرصة التجارية | عقد رقم {c.num} | {c.date}
       </div>
 
@@ -864,7 +864,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
             <div style={{background:"#f0fdf4",border:"2px solid "+C.green,borderRadius:10,padding:"12px 18px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div>
                 <div style={{fontSize:14,fontWeight:700,color:C.green,marginBottom:2}}>🏁 تاريخ آخر قسط (محسوب تلقائياً)</div>
-                <div style={{fontSize:14,color:"#555"}}>{numMonths} قسط شهري</div>
+                <div style={{fontSize:14,color:"#1f2937"}}>{numMonths} قسط شهري</div>
               </div>
               <div style={{fontSize:20,fontWeight:900,color:C.green}}>{fmtDate(lastInst)}</div>
             </div>
@@ -935,7 +935,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
                 onClick={()=>set("deductEnabled",!form.deductEnabled)}>
                 {form.deductEnabled?"✅":"💰"} خصم سداد مستثمر
               </button>
-              {form.deductEnabled && <span style={{fontSize:14,color:"#888"}}>سيطلع في العقد المطبوع</span>}
+              {form.deductEnabled && <span style={{fontSize:14,color:"#333"}}>سيطلع في العقد المطبوع</span>}
             </div>
             {form.deductEnabled && (
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:8}}>
@@ -1098,7 +1098,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         </select>
         <input style={{...styles.input,marginBottom:14}} placeholder="🔍 بحث بالاسم أو الجوال..." value={collectSearch} onChange={e=>setCollectSearch(e.target.value)}/>
         {activeForCollect.length===0 ? (
-          <div style={{...styles.card,textAlign:"center",color:"#9ca3af",padding:30}}>✅ لا يوجد زبائن عليهم متبقي</div>
+          <div style={{...styles.card,textAlign:"center",color:"#1f2937",padding:30}}>✅ لا يوجد زبائن عليهم متبقي</div>
         ) : (
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {activeForCollect.map(c=>{
@@ -1109,13 +1109,13 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8,flexWrap:"wrap",gap:6}}>
                     <div>
                       <div style={{fontSize:16,fontWeight:800}}>{c.client} {c.contractType==="defer"&&<span style={{fontSize:12,color:"#a87520"}}>🕒 مؤجل</span>}</div>
-                      <div style={{fontSize:13,color:"#9ca3af"}}>{inv?inv.name:"—"} · عقد {c.num}</div>
+                      <div style={{fontSize:13,color:"#1f2937"}}>{inv?inv.name:"—"} · عقد {c.num}</div>
                     </div>
                     {c.lateAmt>0
                       ? <span style={styles.badge(C.redLt,C.red)}>🔴 متأخر {SAR(c.lateAmt)}</span>
                       : <span style={styles.badge(C.tealLt,C.green)}>🟢 منتظم</span>}
                   </div>
-                  <div style={{display:"flex",gap:10,fontSize:13,color:"#6b7280",marginBottom:10,flexWrap:"wrap"}}>
+                  <div style={{display:"flex",gap:10,fontSize:13,color:"#1f2937",marginBottom:10,flexWrap:"wrap"}}>
                     <span>القسط: <b style={{color:C.ink}}>{SAR(c.instAmt||0)}</b></span>
                     <span>المتبقي: <b style={{color:C.red}}>{SAR(c.left)}</b></span>
                     <span>الواصل: <b style={{color:C.green}}>{SAR(c.paid)}</b></span>
@@ -1151,7 +1151,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           <button style={styles.btn(reportMode==="brief"?C.teal:"#e5e7eb",reportMode==="brief"?"#fff":C.ink)} onClick={()=>setReportMode("brief")}>📋 مختصر</button>
         </div>
         {invSearch && invReportContracts.length===0 && (
-          <div style={{color:"#9ca3af",fontSize:15,textAlign:"center",padding:16}}>لا توجد عقود</div>
+          <div style={{color:"#1f2937",fontSize:15,textAlign:"center",padding:16}}>لا توجد عقود</div>
         )}
         {invSearch && invReportContracts.length>0 && reportMode==="detailed" && (
           <div style={{overflowX:"auto"}}>
@@ -1267,18 +1267,18 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
             </thead>
             <tbody>
               {filtered.length===0 ? (
-                <tr><td colSpan={18} style={{...styles.td,textAlign:"center",padding:40,color:"#9ca3af"}}>لا توجد عقود — أضف عقداً جديداً</td></tr>
+                <tr><td colSpan={18} style={{...styles.td,textAlign:"center",padding:40,color:"#1f2937"}}>لا توجد عقود — أضف عقداً جديداً</td></tr>
               ) : filtered.slice().reverse().map((c,i)=>{
                 const inv=investors.find(x=>String(x.id)===String(c.investorId));
                 const r=calcContract(c.amount,settings);
                 return (
                   <tr key={c.id} style={{background:i%2===0?C.white:C.gray}}>
-                    <td style={{...styles.td,color:"#9ca3af"}}>{c.num||i+1}</td>
-                    <td style={{...styles.td,color:"#6b7280"}}>{c.date}</td>
-                    <td style={{...styles.td,fontWeight:700}}>{c.client}</td>
-                    <td style={{...styles.td,color:"#6b7280"}}>{c.idNum||"—"}</td>
+                    <td style={{...styles.td,color:"#1f2937"}}>{c.num||i+1}</td>
+                    <td style={{...styles.td,color:"#1f2937"}}>{c.date}</td>
+                    <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}>{c.client}</td>
+                    <td style={{...styles.td,color:"#1f2937"}}>{c.idNum||"—"}</td>
                     <td style={styles.td}>{c.job||"—"}</td>
-                    <td style={{...styles.td,color:C.gold,fontWeight:600}}>{c.gName||"—"}</td>
+                    <td style={{...styles.td,color:C.gold,fontWeight:600,whiteSpace:"nowrap"}}>{c.gName||"—"}</td>
                     <td style={styles.td}><span style={styles.badge(C.tealLt,C.teal)}>{c.goods||"—"}</span></td>
                     <td style={{...styles.td,textAlign:"center",fontWeight:700}}>{c.qty||"—"}</td>
                     <td style={styles.td}>{c.category||"—"}</td>
@@ -1321,15 +1321,15 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
             {/* Summary */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
               <div style={{background:C.tealLt,borderRadius:8,padding:"10px 12px",textAlign:"center"}}>
-                <div style={{fontSize:13,color:"#555",marginBottom:3}}>الإجمالي</div>
+                <div style={{fontSize:13,color:"#1f2937",marginBottom:3}}>الإجمالي</div>
                 <div style={{fontSize:17,fontWeight:800,color:C.teal}}>{SAR(payModal.totalInst||0)}</div>
               </div>
               <div style={{background:C.greenLt,borderRadius:8,padding:"10px 12px",textAlign:"center"}}>
-                <div style={{fontSize:13,color:"#555",marginBottom:3}}>محصّل</div>
+                <div style={{fontSize:13,color:"#1f2937",marginBottom:3}}>محصّل</div>
                 <div style={{fontSize:17,fontWeight:800,color:C.green}}>{SAR(_getPaid(payments, payModal.id))}</div>
               </div>
               <div style={{background:(payModal.totalInst||0)-_getPaid(payments, payModal.id)<=0?C.greenLt:C.redLt,borderRadius:8,padding:"10px 12px",textAlign:"center"}}>
-                <div style={{fontSize:13,color:"#555",marginBottom:3}}>متبقي</div>
+                <div style={{fontSize:13,color:"#1f2937",marginBottom:3}}>متبقي</div>
                 <div style={{fontSize:17,fontWeight:800,color:(payModal.totalInst||0)-_getPaid(payments, payModal.id)<=0?C.green:C.red}}>
                   {SAR(Math.max(0,(payModal.totalInst||0)-_getPaid(payments, payModal.id)))}
                 </div>
@@ -1389,7 +1389,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           <div style={{background:"#fff",borderRadius:16,padding:32,maxWidth:340,width:"90%",textAlign:"center",boxShadow:"0 10px 40px rgba(0,0,0,0.3)"}}>
             <div style={{fontSize:48,marginBottom:12}}>🎉</div>
             <div style={{fontSize:20,fontWeight:800,color:"#1a1a2e",marginBottom:8}}>اكتمل السداد!</div>
-            <div style={{fontSize:16,color:"#555",marginBottom:20}}>
+            <div style={{fontSize:16,color:"#1f2937",marginBottom:20}}>
               عقد <strong>{completionAlert.client}</strong> تم سداده بالكامل.<br/>
               هل تريدين نقله لقائمة العقود المنتهية؟
             </div>
@@ -1532,10 +1532,10 @@ function PendingPage({pending, setPending}) {
             </thead>
             <tbody>
               {pending.length===0 ? (
-                <tr><td colSpan={5} style={{...styles.td,textAlign:"center",padding:40,color:"#9ca3af"}}>لا توجد أرصدة معلقة</td></tr>
+                <tr><td colSpan={5} style={{...styles.td,textAlign:"center",padding:40,color:"#1f2937"}}>لا توجد أرصدة معلقة</td></tr>
               ) : pending.map((p,i)=>(
                 <tr key={p.id} style={{background:i%2===0?C.white:C.gray}}>
-                  <td style={{...styles.td,fontSize:14,color:"#666"}}>{p.date}</td>
+                  <td style={{...styles.td,fontSize:14,color:"#1f2937"}}>{p.date}</td>
                   <td style={{...styles.td,fontWeight:700}}>{p.name}</td>
                   <td style={{...styles.td,color:C.red,fontWeight:700}}>{SAR(p.amount)}</td>
                   <td style={styles.td}>{p.note||"—"}</td>
@@ -1621,7 +1621,7 @@ function LoansPage({loans, setLoans}) {
       {/* Loans list */}
       <div>
         {loans.length===0 ? (
-          <div style={{...styles.panel,padding:40,textAlign:"center",color:"#9ca3af"}}>لا توجد سلف مسجلة</div>
+          <div style={{...styles.panel,padding:40,textAlign:"center",color:"#1f2937"}}>لا توجد سلف مسجلة</div>
         ) : loans.map(l=>{
           const paid = (l.payments||[]).reduce((s,p)=>s+p.amount,0);
           const remaining = Math.max(0, l.amount - paid);
@@ -1633,21 +1633,21 @@ function LoansPage({loans, setLoans}) {
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
                   <div>
                     <div style={{fontWeight:800,fontSize:17,color:C.ink,marginBottom:4}}>{l.name}</div>
-                    <div style={{fontSize:14,color:"#9ca3af"}}>{l.date} {l.note?"| "+l.note:""}</div>
+                    <div style={{fontSize:14,color:"#1f2937"}}>{l.date} {l.note?"| "+l.note:""}</div>
                   </div>
                   <button style={{...styles.btn(C.red),fontSize:14,padding:"4px 10px"}}
                     onClick={()=>setLoans(p=>p.filter(x=>x.id!==l.id))}>🗑️</button>
                 </div>
                 {/* Progress */}
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginBottom:6}}>
-                  <span style={{color:"#555"}}>المبلغ الكلي: <strong>{SAR(l.amount)}</strong></span>
+                  <span style={{color:"#1f2937"}}>المبلغ الكلي: <strong>{SAR(l.amount)}</strong></span>
                   <span style={{color:C.green}}>مدفوع: <strong>{SAR(paid)}</strong></span>
                   <span style={{color:remaining>0?C.red:C.green}}>متبقي: <strong>{SAR(remaining)}</strong></span>
                 </div>
                 <div style={{background:"#f0f0f0",borderRadius:99,height:8,marginBottom:8}}>
                   <div style={{background:C.green,borderRadius:99,height:8,width:pct+"%",transition:"width 0.3s"}}></div>
                 </div>
-                {l.monthly>0 && <div style={{fontSize:14,color:"#9ca3af",marginBottom:10}}>القسط المقترح: {SAR(l.monthly)} / شهر</div>}
+                {l.monthly>0 && <div style={{fontSize:14,color:"#1f2937",marginBottom:10}}>القسط المقترح: {SAR(l.monthly)} / شهر</div>}
                 {/* Payments history */}
                 {(l.payments||[]).length>0 && (
                   <div style={{marginBottom:12}}>
@@ -1657,7 +1657,7 @@ function LoansPage({loans, setLoans}) {
                       const monthName = MONTHS[d.getMonth()]+" "+d.getFullYear();
                       return (
                         <div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid #f0f0f0",fontSize:15}}>
-                          <span style={{color:"#555"}}>{monthName} — {p.date}{p.note?" | "+p.note:""}</span>
+                          <span style={{color:"#1f2937"}}>{monthName} — {p.date}{p.note?" | "+p.note:""}</span>
                           <div style={{display:"flex",alignItems:"center",gap:8}}>
                             <span style={{color:C.green,fontWeight:700}}>+{SAR(p.amount)}</span>
                             <button style={{...styles.btn(C.red),fontSize:13,padding:"2px 7px"}}
@@ -1782,14 +1782,14 @@ function ZakatPage({investors, contracts, settings, zakatTx, setZakatTx}) {
             </thead>
             <tbody>
               {zakatTx.length===0 ? (
-                <tr><td colSpan={6} style={{...styles.td,textAlign:"center",padding:40,color:"#9ca3af"}}>لا توجد حركات</td></tr>
+                <tr><td colSpan={6} style={{...styles.td,textAlign:"center",padding:40,color:"#1f2937"}}>لا توجد حركات</td></tr>
               ) : (()=>{
                 let running=0;
                 return zakatTx.map((t,i)=>{
                   running += t.type==="collect" ? t.amount : -t.amount;
                   return (
                     <tr key={t.id} style={{background:i%2===0?C.white:C.gray}}>
-                      <td style={{...styles.td,fontSize:14,color:"#666"}}>{t.date}</td>
+                      <td style={{...styles.td,fontSize:14,color:"#1f2937"}}>{t.date}</td>
                       <td style={styles.td}>
                         <span style={styles.badge(t.type==="collect"?C.greenLt:C.redLt, t.type==="collect"?C.green:C.red)}>
                           {t.type==="collect"?"جمع":"صرف"}
@@ -1939,12 +1939,12 @@ function CommissionsPage({contracts, investors, settings}) {
             </thead>
             <tbody>
               {rows.length===0 ? (
-                <tr><td colSpan={tab==="acc"?7:9} style={{...tdS,textAlign:"center",padding:40,color:"#9ca3af"}}>
+                <tr><td colSpan={tab==="acc"?7:9} style={{...tdS,textAlign:"center",padding:40,color:"#1f2937"}}>
                   لا توجد عقود هذا الشهر
                 </td></tr>
               ) : rows.map((row,i)=>(
                 <tr key={i} style={{background:i%2===0?C.white:C.gray}}>
-                  <td style={{...tdS,color:"#9ca3af"}}>{row.num}</td>
+                  <td style={{...tdS,color:"#1f2937"}}>{row.num}</td>
                   <td style={{...tdS,fontWeight:700}}>{row.client}</td>
                   <td style={tdS}>{row.investor}</td>
                   <td style={tdS}>{SAR(row.amount)}</td>
@@ -2027,9 +2027,9 @@ function DeductionsSheet({contracts, investors, payments}){
         <div style={{fontSize:18,fontWeight:800}}>🏦 كشف الاستقطاعات ({rows.length})</div>
         <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px"}} onClick={printSheet}>🖨️ طباعة الكشف</button>
       </div>
-      <div style={{fontSize:14,color:"#6b7280",marginBottom:12}}>أشّر على الزبون اللي نزل استقطاعه بعد مطابقته مع كشف البنك. (كل الزبائن من جميع المستثمرين)</div>
+      <div style={{fontSize:14,color:"#1f2937",marginBottom:12}}>أشّر على الزبون اللي نزل استقطاعه بعد مطابقته مع كشف البنك. (كل الزبائن من جميع المستثمرين)</div>
       {rows.length===0 ? (
-        <div style={{...styles.card,textAlign:"center",color:"#9ca3af",padding:30}}>لا يوجد زبائن استقطاع</div>
+        <div style={{...styles.card,textAlign:"center",color:"#1f2937",padding:30}}>لا يوجد زبائن استقطاع</div>
       ) : (
         <div style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
@@ -2185,15 +2185,15 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
         {invSubTab==="inv" && inv && (
           <div style={{display:"flex",gap:12,marginRight:"auto",flexWrap:"wrap"}}>
             <div style={{textAlign:"center",background:C.tealLt,borderRadius:8,padding:"6px 14px"}}>
-              <div style={{fontSize:13,color:"#555",marginBottom:2}}>رأس المال</div>
+              <div style={{fontSize:13,color:"#1f2937",marginBottom:2}}>رأس المال</div>
               <div style={{fontSize:16,fontWeight:800,color:C.teal}}>{SAR(inv.capital||0)}</div>
             </div>
             <div style={{textAlign:"center",background:C.greenLt,borderRadius:8,padding:"6px 14px"}}>
-              <div style={{fontSize:13,color:"#555",marginBottom:2}}>الرصيد الحالي</div>
+              <div style={{fontSize:13,color:"#1f2937",marginBottom:2}}>الرصيد الحالي</div>
               <div style={{fontSize:16,fontWeight:800,color:C.green}}>{SAR(finalBalance)}</div>
             </div>
             <div style={{textAlign:"center",background:finalBalance>=0?C.greenLt:C.redLt,borderRadius:8,padding:"6px 14px"}}>
-              <div style={{fontSize:13,color:"#555",marginBottom:2}}>الفرق</div>
+              <div style={{fontSize:13,color:"#1f2937",marginBottom:2}}>الفرق</div>
               <div style={{fontSize:16,fontWeight:800,color:finalBalance>=(inv?.capital||0)?C.green:C.red}}>
                 {SAR(finalBalance-(inv?.capital||0))}
               </div>
@@ -2255,7 +2255,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
             <tbody>
               {/* Opening balance row */}
               <tr style={{background:"#f0fdf4"}}>
-                <td style={{...styles.td,fontSize:14,color:"#888"}}>{inv?.date||"—"}</td>
+                <td style={{...styles.td,fontSize:14,color:"#333"}}>{inv?.date||"—"}</td>
                 <td style={styles.td}><span style={{...styles.badge(C.tealLt,C.teal)}}>رصيد افتتاحي</span></td>
                 <td style={styles.td}>رأس المال المبدئي</td>
                 <td style={{...styles.td,color:C.green,fontWeight:700}}>{SAR(inv?.capital||0)}</td>
@@ -2268,7 +2268,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                 const isPos = tx.amount>0;
                 return (
                   <tr key={tx.id} style={{background:i%2===0?C.white:C.gray}}>
-                    <td style={{...styles.td,fontSize:14,color:"#666"}}>{tx.date}</td>
+                    <td style={{...styles.td,fontSize:14,color:"#1f2937"}}>{tx.date}</td>
                     <td style={styles.td}>
                       <span style={{...styles.badge(txType.color+"22",txType.color)}}>{txType.label}</span>
                     </td>
@@ -2290,13 +2290,13 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                         <button style={{...styles.btn(C.red),fontSize:13,padding:"3px 8px"}}
                           onClick={()=>delTx(tx.id)}>🗑️</button>
                       )}
-                      {tx.auto && <span style={{fontSize:13,color:"#9ca3af"}}>تلقائي</span>}
+                      {tx.auto && <span style={{fontSize:13,color:"#1f2937"}}>تلقائي</span>}
                     </td>
                   </tr>
                 );
               })}
               {rows.length===0 && (
-                <tr><td colSpan={7} style={{...styles.td,textAlign:"center",padding:40,color:"#9ca3af"}}>
+                <tr><td colSpan={7} style={{...styles.td,textAlign:"center",padding:40,color:"#1f2937"}}>
                   لا توجد حركات — ابدأ بإضافة حركة
                 </td></tr>
               )}
@@ -2448,8 +2448,8 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     <tr style={{background:i%2===0?C.white:C.gray}}>
       <td style={tdS}>
         <span style={{fontWeight:700}}>{name}</span>
-        {hint && <div style={{fontSize:13,color:"#9ca3af",marginTop:2}}>{hint}</div>}
-        {isInv && <div style={{fontSize:13,color:"#9ca3af",marginTop:2}}>رصيد الحساب الجاري</div>}
+        {hint && <div style={{fontSize:13,color:"#1f2937",marginTop:2}}>{hint}</div>}
+        {isInv && <div style={{fontSize:13,color:"#1f2937",marginTop:2}}>رصيد الحساب الجاري</div>}
       </td>
       <td style={{...tdS,textAlign:"center"}}>
         {auto
@@ -2600,7 +2600,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
       <button onClick={()=>setPage&&setPage("search")}
         style={{width:"100%",display:"flex",alignItems:"center",gap:10,background:"#fff",border:"2px solid "+C.border,borderRadius:12,padding:"12px 16px",marginBottom:16,cursor:"pointer",fontFamily:"Tajawal,Arial,sans-serif",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
         <span style={{fontSize:20}}>🔍</span>
-        <span style={{fontSize:15,color:"#9ca3af",fontWeight:600}}>بحث عن عميل بالاسم أو الجوال أو الهوية...</span>
+        <span style={{fontSize:15,color:"#1f2937",fontWeight:600}}>بحث عن عميل بالاسم أو الجوال أو الهوية...</span>
       </button>
 
       {/* دفتر اليومية مدمج في الرئيسية */}
@@ -2641,7 +2641,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
                       <div style={{fontWeight:900,fontSize:22,color:cap>=0?C.green:C.red}}>{SAR(cap)}</div>
                     </div>
                     <div style={{textAlign:"left"}}>
-                      <div style={{fontSize:13,color:"#9ca3af",marginBottom:4}}>فوائد هذا الشهر</div>
+                      <div style={{fontSize:13,color:"#1f2937",marginBottom:4}}>فوائد هذا الشهر</div>
                       <div style={{fontWeight:900,fontSize:19,color:fNet>=0?C.green:C.red}}>{SAR(fNet)}</div>
                     </div>
                   </div>
@@ -2829,16 +2829,16 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
       {/* ملخص اليوم */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
         <div style={{...styles.card,borderTop:"4px solid #64748b"}}>
-          <div style={{fontSize:14,color:"#9ca3af",marginBottom:6}}>الرصيد الافتتاحي</div>
+          <div style={{fontSize:14,color:"#1f2937",marginBottom:6}}>الرصيد الافتتاحي</div>
           <div style={{fontSize:20,fontWeight:900,color:"#334155"}}>{SAR(openingBalance)}</div>
-          <div style={{fontSize:13,color:"#9ca3af",marginTop:4}}>متبقي أمس</div>
+          <div style={{fontSize:13,color:"#1f2937",marginTop:4}}>متبقي أمس</div>
         </div>
         <div style={{...styles.card,borderTop:"4px solid #16a34a"}}>
-          <div style={{fontSize:14,color:"#9ca3af",marginBottom:6}}>سدادات اليوم</div>
+          <div style={{fontSize:14,color:"#1f2937",marginBottom:6}}>سدادات اليوم</div>
           <div style={{fontSize:20,fontWeight:900,color:"#16a34a"}}>{SAR(sumByType("sadad"))}</div>
         </div>
         <div style={{...styles.card,borderTop:"4px solid #dc2626"}}>
-          <div style={{fontSize:14,color:"#9ca3af",marginBottom:6}}>المصروفات + السحوبات</div>
+          <div style={{fontSize:14,color:"#1f2937",marginBottom:6}}>المصروفات + السحوبات</div>
           <div style={{fontSize:20,fontWeight:900,color:"#dc2626"}}>{SAR(sumByType("masroof")+sumByType("sahb")+sumByType("estilam"))}</div>
         </div>
         <div style={{...styles.card,borderTop:"4px solid #0d9488",background:"#f0fdfa"}}>
@@ -2851,14 +2851,14 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
         <div style={{...styles.card,borderTop:"4px solid #b45309"}}>
           <div style={{fontSize:15,fontWeight:800,color:"#b45309",marginBottom:8}}>👔 حساب المدير</div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#9ca3af"}}>المستحق (كل العقود)</span><span style={{fontWeight:700}}>{SAR(mgrEarnedAll)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#9ca3af"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(mgrTakenAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستحق (كل العقود)</span><span style={{fontWeight:700}}>{SAR(mgrEarnedAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(mgrTakenAll)}</span></div>
           <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginTop:6,paddingTop:6,borderTop:"1px solid "+C.border}}><span style={{fontWeight:800}}>الباقي له</span><span style={{fontWeight:900,color:mgrLeft>=0?"#b45309":C.red}}>{SAR(mgrLeft)}</span></div>
         </div>
         <div style={{...styles.card,borderTop:"4px solid #0891b2"}}>
           <div style={{fontSize:15,fontWeight:800,color:"#0891b2",marginBottom:8}}>🧮 حساب المحاسب</div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#9ca3af"}}>المستحق (كل العقود)</span><span style={{fontWeight:700}}>{SAR(accEarnedAll)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#9ca3af"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(accTakenAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستحق (كل العقود)</span><span style={{fontWeight:700}}>{SAR(accEarnedAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(accTakenAll)}</span></div>
           <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginTop:6,paddingTop:6,borderTop:"1px solid "+C.border}}><span style={{fontWeight:800}}>الباقي له</span><span style={{fontWeight:900,color:accLeft>=0?"#0891b2":C.red}}>{SAR(accLeft)}</span></div>
         </div>
       </div>
@@ -2873,7 +2873,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
           {manualOpen!==undefined && <button style={{...styles.btn(C.red),fontSize:13,padding:"4px 10px"}}
             onClick={()=>setDailyOpen(p=>{const n={...p};delete n[selDay];return n;})}>إلغاء</button>}
         </div>
-        <div style={{fontSize:13,color:"#9ca3af",marginTop:6}}>اتركه فارغاً ليُحسب تلقائياً من متبقي اليوم السابق</div>
+        <div style={{fontSize:13,color:"#1f2937",marginTop:6}}>اتركه فارغاً ليُحسب تلقائياً من متبقي اليوم السابق</div>
       </div>
 
       {/* إضافة حركة */}
@@ -2917,12 +2917,12 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
             <tbody>
               <tr style={{background:"#f8fafc"}}>
                 <td style={{...styles.td,fontWeight:700,color:"#334155"}}>رصيد افتتاحي</td>
-                <td style={{...styles.td,color:"#9ca3af"}}>متبقي أمس</td>
+                <td style={{...styles.td,color:"#1f2937"}}>متبقي أمس</td>
                 <td style={{...styles.td,fontWeight:800,color:"#334155"}}>{SAR(openingBalance)}</td>
                 <td style={styles.td}></td>
               </tr>
               {dayRows.length===0 ? (
-                <tr><td colSpan={4} style={{...styles.td,textAlign:"center",padding:30,color:"#9ca3af"}}>لا توجد حركات اليوم</td></tr>
+                <tr><td colSpan={4} style={{...styles.td,textAlign:"center",padding:30,color:"#1f2937"}}>لا توجد حركات اليوم</td></tr>
               ) : dayRows.map((d,i)=>{
                 const t=DAILY_TYPES.find(x=>x.key===d.type);
                 return (
@@ -3006,11 +3006,11 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
               </div>
               {[["رأس المال",SAR(inv.capital)],["إجمالي العقود",SAR(totalAmt)],["تاريخ الدخول",inv.date||"—"]].map(([l,v])=>(
                 <div key={l} style={{display:"flex",justifyContent:"space-between",fontSize:15,marginBottom:6}}>
-                  <span style={{color:"#9ca3af"}}>{l}</span><span style={{fontWeight:700}}>{v}</span>
+                  <span style={{color:"#1f2937"}}>{l}</span><span style={{fontWeight:700}}>{v}</span>
                 </div>
               ))}
               <div style={{borderTop:"1px solid "+C.border,paddingTop:10,marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontSize:14,fontWeight:700,color:"#6b7280"}}>إجمالي صافي الربح</span>
+                <span style={{fontSize:14,fontWeight:700,color:"#1f2937"}}>إجمالي صافي الربح</span>
                 <span style={{fontSize:19,fontWeight:800,color:C.green}}>{SAR(totalNet)}</span>
               </div>
               <div style={{background:C.redLt,borderRadius:8,padding:"8px 12px",marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -3068,7 +3068,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
                 <div style={{textAlign:"center",borderBottom:"2px solid #000",paddingBottom:10,marginBottom:14}}>
                   <div style={{fontSize:18,fontWeight:900}}>مؤسسة قمة الفرصة التجارية</div>
                   <div style={{fontSize:13}}>كشف حساب — {stmtInv.name}</div>
-                  <div style={{fontSize:12,color:"#555"}}>التاريخ: {fmtDate(new Date())}</div>
+                  <div style={{fontSize:12,color:"#1f2937"}}>التاريخ: {fmtDate(new Date())}</div>
                 </div>
               </div>
               {/* Type switcher */}
@@ -3086,23 +3086,23 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
               {/* Summary cards */}
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:10,marginBottom:16}}>
                 <div style={{background:C.tealLt,borderRadius:8,padding:"10px",textAlign:"center"}}>
-                  <div style={{fontSize:13,color:"#555",marginBottom:3}}>عدد العقود</div>
+                  <div style={{fontSize:13,color:"#1f2937",marginBottom:3}}>عدد العقود</div>
                   <div style={{fontSize:20,fontWeight:800,color:C.teal}}>{myCon.length}</div>
                 </div>
                 <div style={{background:C.slate,borderRadius:8,padding:"10px",textAlign:"center"}}>
-                  <div style={{fontSize:13,color:"#555",marginBottom:3}}>إجمالي القيم</div>
+                  <div style={{fontSize:13,color:"#1f2937",marginBottom:3}}>إجمالي القيم</div>
                   <div style={{fontSize:16,fontWeight:800}}>{SAR(totalAmt)}</div>
                 </div>
                 <div style={{background:C.greenLt,borderRadius:8,padding:"10px",textAlign:"center"}}>
-                  <div style={{fontSize:13,color:"#555",marginBottom:3}}>محصّل</div>
+                  <div style={{fontSize:13,color:"#1f2937",marginBottom:3}}>محصّل</div>
                   <div style={{fontSize:16,fontWeight:800,color:C.green}}>{SAR(totalPaid)}</div>
                 </div>
                 <div style={{background:totalLeft===0?C.greenLt:C.redLt,borderRadius:8,padding:"10px",textAlign:"center"}}>
-                  <div style={{fontSize:13,color:"#555",marginBottom:3}}>متبقي</div>
+                  <div style={{fontSize:13,color:"#1f2937",marginBottom:3}}>متبقي</div>
                   <div style={{fontSize:16,fontWeight:800,color:totalLeft===0?C.green:C.red}}>{SAR(totalLeft)}</div>
                 </div>
                 <div style={{background:C.purpleLt,borderRadius:8,padding:"10px",textAlign:"center"}}>
-                  <div style={{fontSize:13,color:"#555",marginBottom:3}}>صافي ربحه</div>
+                  <div style={{fontSize:13,color:"#1f2937",marginBottom:3}}>صافي ربحه</div>
                   <div style={{fontSize:16,fontWeight:800,color:C.purple}}>{SAR(totalProfit)}</div>
                 </div>
               </div>
@@ -3123,7 +3123,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
                   </thead>
                   <tbody>
                     {myCon.length===0 ? (
-                      <tr><td colSpan={20} style={{...styles.td,textAlign:"center",padding:30,color:"#9ca3af"}}>لا توجد عقود</td></tr>
+                      <tr><td colSpan={20} style={{...styles.td,textAlign:"center",padding:30,color:"#1f2937"}}>لا توجد عقود</td></tr>
                     ) : myCon.map((c,i)=>{
                       const r = calcContract(c.amount,settings);
                       const paid = _getPaid(payments,c.id);
@@ -3132,7 +3132,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
                       const bg = i%2===0?C.white:C.gray;
                       if(stmtType==="brief") return (
                         <tr key={c.id} style={{background:bg}}>
-                          <td style={{...styles.td,color:"#9ca3af"}}>{c.num||i+1}</td>
+                          <td style={{...styles.td,color:"#1f2937"}}>{c.num||i+1}</td>
                           <td style={{...styles.td,fontWeight:700}}>{c.client}</td>
                           <td style={styles.td}>{SAR(c.amount)}</td>
                           <td style={styles.td}>{SAR(c.totalInst||0)}</td>
@@ -3144,7 +3144,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
                       );
                       return (
                         <tr key={c.id} style={{background:bg}}>
-                          <td style={{...styles.td,color:"#9ca3af"}}>{c.num||i+1}</td>
+                          <td style={{...styles.td,color:"#1f2937"}}>{c.num||i+1}</td>
                           <td style={{...styles.td,fontWeight:700}}>{c.client}</td>
                           <td style={{...styles.td,fontSize:13}}>{c.idNum||"—"}</td>
                           <td style={styles.td}>{c.job||"—"}</td>
@@ -3199,11 +3199,11 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
               {/* الإجمالي: النقدي + المتبقي */}
               <div style={{marginTop:16,border:"2px solid "+C.teal,borderRadius:10,overflow:"hidden"}}>
                 <div style={{display:"flex",justifyContent:"space-between",padding:"10px 16px",fontSize:15,borderBottom:"1px solid "+C.border}}>
-                  <span style={{color:"#6b7280",fontWeight:700}}>💵 النقدي (رأس المال)</span>
+                  <span style={{color:"#1f2937",fontWeight:700}}>💵 النقدي (رأس المال)</span>
                   <span style={{fontWeight:800}}>{SAR(stmtInv.capital||0)}</span>
                 </div>
                 <div style={{display:"flex",justifyContent:"space-between",padding:"10px 16px",fontSize:15,borderBottom:"2px solid "+C.teal}}>
-                  <span style={{color:"#6b7280",fontWeight:700}}>💰 المتبقي عند الزبائن</span>
+                  <span style={{color:"#1f2937",fontWeight:700}}>💰 المتبقي عند الزبائن</span>
                   <span style={{fontWeight:800,color:C.red}}>{SAR(totalLeft)}</span>
                 </div>
                 <div style={{display:"flex",justifyContent:"space-between",padding:"12px 16px",fontSize:17,background:C.tealLt}}>
@@ -3234,13 +3234,13 @@ function SettingsPage({settings,onSave,toast}) {
           <input style={{...styles.input,maxWidth:280,borderColor:C.gold,fontWeight:700}} type="text"
             placeholder="مثال: 1010xxxxxx"
             value={s.regNum||""} onChange={e=>setS(prev=>({...prev,regNum:e.target.value}))}/>
-          <div style={{fontSize:14,color:"#9ca3af",marginTop:5}}>يظهر هذا الرقم تلقائياً في كل عقد مطبوع</div>
+          <div style={{fontSize:14,color:"#1f2937",marginTop:5}}>يظهر هذا الرقم تلقائياً في كل عقد مطبوع</div>
           <div style={{marginTop:16}}>
             <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>بداية ترقيم العقود</label>
             <input style={{...styles.input,maxWidth:160,borderColor:C.teal,fontWeight:700}} type="number" min="1"
               placeholder="مثال: 1"
               value={s.startNum||1} onChange={e=>setS(prev=>({...prev,startNum:parseInt(e.target.value)||1}))}/>
-            <div style={{fontSize:14,color:"#9ca3af",marginTop:5}}>رقم أول عقد جديد (يُطبق فقط إذا لم توجد عقود)</div>
+            <div style={{fontSize:14,color:"#1f2937",marginTop:5}}>رقم أول عقد جديد (يُطبق فقط إذا لم توجد عقود)</div>
           </div>
         </div>
       </div>
@@ -3253,7 +3253,7 @@ function SettingsPage({settings,onSave,toast}) {
               <div key={k}>
                 <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
                 <input style={styles.input} type="number" value={s[k]} onChange={e=>setS(prev=>({...prev,[k]:parseFloat(e.target.value)||0}))}/>
-                <div style={{fontSize:14,color:"#9ca3af",marginTop:3}}>{hint}</div>
+                <div style={{fontSize:14,color:"#1f2937",marginTop:3}}>{hint}</div>
               </div>
             ))}
           </div>
@@ -3391,7 +3391,7 @@ function GoodsPage({investors, contracts, toast}) {
           </thead>
           <tbody>
             {display.length===0?(
-              <tr><td colSpan={12} style={{textAlign:"center",padding:40,color:"#9ca3af"}}>لا توجد بيانات</td></tr>
+              <tr><td colSpan={12} style={{textAlign:"center",padding:40,color:"#1f2937"}}>لا توجد بيانات</td></tr>
             ):display.map((row,i)=>(
               <tr key={row.id||i} style={{background:i%2===0?"#fff":"#f8f8f8"}}>
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center"}}>{row.date}</td>
@@ -3469,7 +3469,7 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
             <div>
               <div style={{fontWeight:800,fontSize:17,color:C.ink}}>{c.client}</div>
-              <div style={{fontSize:14,color:"#9ca3af"}}>عقد #{c.num} | {c.date} | {inv?.name||"—"}</div>
+              <div style={{fontSize:14,color:"#1f2937"}}>عقد #{c.num} | {c.date} | {inv?.name||"—"}</div>
             </div>
             <span style={styles.badge(isDone?C.greenLt:C.tealLt, isDone?C.green:C.teal)}>
               {isDone?"✅ منتهي":"⏳ ساري"}
@@ -3477,27 +3477,27 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:10,fontSize:15}}>
             <div style={{background:"#f8f8f8",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
-              <div style={{color:"#9ca3af",marginBottom:2}}>إجمالي العقد</div>
+              <div style={{color:"#1f2937",marginBottom:2}}>إجمالي العقد</div>
               <div style={{fontWeight:800,color:C.ink}}>{SAR(c.totalInst||0)}</div>
             </div>
             <div style={{background:"#f8f8f8",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
-              <div style={{color:"#9ca3af",marginBottom:2}}>رأس المال</div>
+              <div style={{color:"#1f2937",marginBottom:2}}>رأس المال</div>
               <div style={{fontWeight:800,color:C.ink}}>{SAR(c.amount||0)}</div>
             </div>
             <div style={{background:"#f8f8f8",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
-              <div style={{color:"#9ca3af",marginBottom:2}}>القسط</div>
+              <div style={{color:"#1f2937",marginBottom:2}}>القسط</div>
               <div style={{fontWeight:800,color:C.ink}}>{SAR(c.instAmt||0)}</div>
             </div>
             <div style={{background:C.greenLt,borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
-              <div style={{color:"#9ca3af",marginBottom:2}}>الواصل</div>
+              <div style={{color:"#1f2937",marginBottom:2}}>الواصل</div>
               <div style={{fontWeight:800,color:C.green}}>{SAR(paid)}</div>
             </div>
             <div style={{background:left<=0?C.greenLt:C.redLt,borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
-              <div style={{color:"#9ca3af",marginBottom:2}}>المتبقي</div>
+              <div style={{color:"#1f2937",marginBottom:2}}>المتبقي</div>
               <div style={{fontWeight:800,color:left<=0?C.green:C.red}}>{SAR(left)}</div>
             </div>
             <div style={{background:"#f8f8f8",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
-              <div style={{color:"#9ca3af",marginBottom:2}}>نسبة السداد</div>
+              <div style={{color:"#1f2937",marginBottom:2}}>نسبة السداد</div>
               <div style={{fontWeight:800,color:C.teal}}>{pct}%</div>
             </div>
           </div>
@@ -3525,11 +3525,11 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
           onChange={e=>setQ(e.target.value)}
           autoFocus
         />
-        {q.length===1 && <div style={{fontSize:15,color:"#9ca3af",marginTop:6}}>اكتب حرفين على الأقل للبحث</div>}
+        {q.length===1 && <div style={{fontSize:15,color:"#1f2937",marginTop:6}}>اكتب حرفين على الأقل للبحث</div>}
       </div>
 
       {q.length>=2 && results.length===0 && (
-        <div style={{...styles.panel,padding:40,textAlign:"center",color:"#9ca3af"}}>لا توجد نتائج</div>
+        <div style={{...styles.panel,padding:40,textAlign:"center",color:"#1f2937"}}>لا توجد نتائج</div>
       )}
 
       {active.length>0 && (
@@ -3551,7 +3551,7 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
         {payModal && (
           <div style={{padding:"14px 18px"}}>
             <div style={{fontWeight:700,marginBottom:4}}>{payModal.client}</div>
-            <div style={{fontSize:15,color:"#9ca3af",marginBottom:16}}>المتبقي: {SAR(Math.max(0,(payModal.totalInst||0)-_getPaid(payments,payModal.id)))}</div>
+            <div style={{fontSize:15,color:"#1f2937",marginBottom:16}}>المتبقي: {SAR(Math.max(0,(payModal.totalInst||0)-_getPaid(payments,payModal.id)))}</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
               <div>
                 <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المبلغ</label>
@@ -3625,14 +3625,14 @@ function ClientsPage({contracts, investors, payments, goCollect}) {
           {/* نتائج بحث الزبون */}
           {mode==="client" && q.trim() && !selContract && (
             clientResults.length === 0
-              ? <div style={{padding:14,textAlign:"center",color:"#999"}}>لا توجد نتائج</div>
+              ? <div style={{padding:14,textAlign:"center",color:"#333"}}>لا توجد نتائج</div>
               : <div style={{border:"1px solid "+C.border,borderRadius:8,overflow:"hidden"}}>
                   {clientResults.map(c=>(
                     <div key={c.id} onClick={()=>setSelContract(c)}
                       style={{padding:12,borderBottom:"1px solid "+C.border,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                       <div>
                         <div style={{fontWeight:700,color:C.ink}}>👤 {c.client||"غير محدد"}</div>
-                        <div style={{fontSize:13,color:"#666",marginTop:3}}>عقد #{c.num} — إجمالي {NUM(totalOf(c))}</div>
+                        <div style={{fontSize:13,color:"#1f2937",marginTop:3}}>عقد #{c.num} — إجمالي {NUM(totalOf(c))}</div>
                       </div>
                       <span style={{color:C.teal,fontWeight:700}}>عرض ›</span>
                     </div>
@@ -3643,14 +3643,14 @@ function ClientsPage({contracts, investors, payments, goCollect}) {
           {/* نتائج بحث المستثمر */}
           {mode==="investor" && q.trim() && !selInvestor && (
             investorResults.length === 0
-              ? <div style={{padding:14,textAlign:"center",color:"#999"}}>لا توجد نتائج</div>
+              ? <div style={{padding:14,textAlign:"center",color:"#333"}}>لا توجد نتائج</div>
               : <div style={{border:"1px solid "+C.border,borderRadius:8,overflow:"hidden"}}>
                   {investorResults.map(i=>(
                     <div key={i.id} onClick={()=>setSelInvestor(i)}
                       style={{padding:12,borderBottom:"1px solid "+C.border,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                       <div>
                         <div style={{fontWeight:700,color:C.ink}}>🏢 {i.name}</div>
-                        <div style={{fontSize:13,color:"#666",marginTop:3}}>{i.fund} — {active.filter(c=>String(c.investorId)===String(i.id)).length} عقود</div>
+                        <div style={{fontSize:13,color:"#1f2937",marginTop:3}}>{i.fund} — {active.filter(c=>String(c.investorId)===String(i.id)).length} عقود</div>
                       </div>
                       <span style={{color:C.teal,fontWeight:700}}>عرض ›</span>
                     </div>
@@ -3669,7 +3669,7 @@ function ClientsPage({contracts, investors, payments, goCollect}) {
           </div>
           <div style={{padding:20}}>
             {investorContracts.length === 0
-              ? <div style={{textAlign:"center",padding:30,color:"#999"}}>لا توجد عقود لهذا المستثمر</div>
+              ? <div style={{textAlign:"center",padding:30,color:"#333"}}>لا توجد عقود لهذا المستثمر</div>
               : <div style={{overflowX:"auto"}}>
                   <table style={{width:"100%",borderCollapse:"collapse"}}>
                     <thead><tr>
@@ -3716,21 +3716,21 @@ function ClientsPage({contracts, investors, payments, goCollect}) {
             <div style={{padding:20}}>
               {/* بطاقات الملخص */}
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:18}}>
-                <div style={{...styles.card,textAlign:"center"}}><div style={{fontSize:12,color:"#666"}}>الإجمالي</div><div style={{fontSize:18,fontWeight:900,color:C.ink}}>{NUM(tot)}</div></div>
-                <div style={{...styles.card,textAlign:"center"}}><div style={{fontSize:12,color:"#666"}}>الواصل</div><div style={{fontSize:18,fontWeight:900,color:C.green}}>{NUM(paid)}</div></div>
-                <div style={{...styles.card,textAlign:"center"}}><div style={{fontSize:12,color:"#666"}}>المتبقي</div><div style={{fontSize:18,fontWeight:900,color:C.red}}>{NUM(left)}</div></div>
-                <div style={{...styles.card,textAlign:"center"}}><div style={{fontSize:12,color:"#666"}}>القسط</div><div style={{fontSize:18,fontWeight:900,color:C.ink}}>{NUM(c.instAmt||0)}</div></div>
+                <div style={{...styles.card,textAlign:"center"}}><div style={{fontSize:12,color:"#1f2937"}}>الإجمالي</div><div style={{fontSize:18,fontWeight:900,color:C.ink}}>{NUM(tot)}</div></div>
+                <div style={{...styles.card,textAlign:"center"}}><div style={{fontSize:12,color:"#1f2937"}}>الواصل</div><div style={{fontSize:18,fontWeight:900,color:C.green}}>{NUM(paid)}</div></div>
+                <div style={{...styles.card,textAlign:"center"}}><div style={{fontSize:12,color:"#1f2937"}}>المتبقي</div><div style={{fontSize:18,fontWeight:900,color:C.red}}>{NUM(left)}</div></div>
+                <div style={{...styles.card,textAlign:"center"}}><div style={{fontSize:12,color:"#1f2937"}}>القسط</div><div style={{fontSize:18,fontWeight:900,color:C.ink}}>{NUM(c.instAmt||0)}</div></div>
               </div>
 
               {/* بيانات العقد */}
               <div style={{...styles.card,marginBottom:18}}>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px 20px",fontSize:14}}>
-                  <div><span style={{color:"#666"}}>المستثمر: </span><b>{invName}</b></div>
-                  <div><span style={{color:"#666"}}>الجوال: </span><b>{c.cPhone||"—"}</b></div>
-                  <div><span style={{color:"#666"}}>أول قسط: </span><b>{c.firstInst?fmtDate(c.firstInst):"—"}</b></div>
-                  <div><span style={{color:"#666"}}>آخر قسط: </span><b>{c.lastInst?fmtDate(c.lastInst):"—"}</b></div>
-                  <div><span style={{color:"#666"}}>رقم الهوية: </span><b>{c.idNum||"—"}</b></div>
-                  <div><span style={{color:"#666"}}>نوع العقد: </span><b>{c.contractType||"—"}</b></div>
+                  <div><span style={{color:"#1f2937"}}>المستثمر: </span><b>{invName}</b></div>
+                  <div><span style={{color:"#1f2937"}}>الجوال: </span><b>{c.cPhone||"—"}</b></div>
+                  <div><span style={{color:"#1f2937"}}>أول قسط: </span><b>{c.firstInst?fmtDate(c.firstInst):"—"}</b></div>
+                  <div><span style={{color:"#1f2937"}}>آخر قسط: </span><b>{c.lastInst?fmtDate(c.lastInst):"—"}</b></div>
+                  <div><span style={{color:"#1f2937"}}>رقم الهوية: </span><b>{c.idNum||"—"}</b></div>
+                  <div><span style={{color:"#1f2937"}}>نوع العقد: </span><b>{c.contractType||"—"}</b></div>
                 </div>
               </div>
 
@@ -3745,7 +3745,7 @@ function ClientsPage({contracts, investors, payments, goCollect}) {
               {/* جدول السدادات السابقة */}
               <h3 style={{color:C.ink,fontWeight:900,marginBottom:10,fontSize:16}}>📋 السدادات السابقة</h3>
               {list.length===0
-                ? <div style={{textAlign:"center",padding:20,color:"#999",border:"1px dashed "+C.border,borderRadius:8}}>لا توجد سدادات مسجلة بعد</div>
+                ? <div style={{textAlign:"center",padding:20,color:"#333",border:"1px dashed "+C.border,borderRadius:8}}>لا توجد سدادات مسجلة بعد</div>
                 : <div style={{overflowX:"auto"}}>
                     <table style={{width:"100%",borderCollapse:"collapse"}}>
                       <thead><tr>
