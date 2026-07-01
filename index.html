@@ -1077,7 +1077,26 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
 
   const today2 = new Date().toISOString().split("T")[0];
 
-  // وضع إنشاء عقد جديد
+  // تصدير العقود المعروضة إلى Excel (CSV)
+  const exportExcel = () => {
+    const rowsX = filtered.map(c=>{
+      const inv = investors.find(i=>String(i.id)===String(c.investorId));
+      const paid = (payments||[]).filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
+      const tot = +c.totalInst||+c.amount||0;
+      return [c.num||"", c.client||"", c.idNum||"", c.cPhone||"", inv?inv.name:"", c.amount||0, tot, c.instAmt||0, paid, Math.max(0,tot-paid), c.firstInst?fmtDate(c.firstInst):"", c.gName||""];
+    });
+    const head = ["رقم العقد","العميل","الهوية","الجوال","المستثمر","النقدي","الإجمالي","القسط","الواصل","المتبقي","أول قسط","الكفيل"];
+    const esc = v => '"'+String(v).replace(/"/g,'""')+'"';
+    const csv = "\uFEFF" + [head.map(esc).join(","), ...rowsX.map(r=>r.map(esc).join(","))].join("\r\n");
+    const blob = new Blob([csv],{type:"text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href=url; a.download=`عقود-${today2}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast("✅ تم تصدير "+rowsX.length+" عقد");
+  };
+
+
   if(showNew){
     return (
       <div>
@@ -1329,6 +1348,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           {investors.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
         </select>
         {filterInv && <button style={{...styles.btn(C.red,"#fff"),fontSize:13,padding:"6px 10px"}} onClick={()=>setFilterInv("")}>✕ إلغاء الفلتر</button>}
+        <button style={{...styles.btn(C.green,"#fff"),fontSize:14,padding:"6px 12px"}} onClick={exportExcel}>⬇️ تصدير Excel</button>
       </div>
       <div style={{display:"flex",gap:8,marginBottom:16}}>
         <button onClick={()=>setStatusTab("active")} style={{...styles.btn(statusTab==="active"?C.teal:"#e5e7eb",statusTab==="active"?"#fff":C.ink),fontSize:15,padding:"6px 14px"}}>
@@ -3699,9 +3719,24 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
             <div style={{background:isDone?C.green:C.teal,borderRadius:99,height:6,width:pct+"%"}}></div>
           </div>
           {!isDone && (
-            <button style={styles.btn(C.teal)} onClick={()=>{setPayModal(c);setPayAmount("");}}>
-              💰 تسجيل دفعة
-            </button>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+              <button style={{...styles.btn(C.teal),flex:1}} onClick={()=>{setPayModal(c);setPayAmount("");}}>
+                💰 تسجيل دفعة
+              </button>
+              {(c.instAmt||0)>0 && (
+                <button style={{...styles.btn(C.green),flex:1}} onClick={()=>{
+                  const amt = parseFloat(c.instAmt)||0;
+                  if(amt<=0) return;
+                  const rem = Math.max(0,(c.totalInst||0)-paid);
+                  const pay = Math.min(amt, rem);
+                  if(!window.confirm("تسجيل سداد قسط "+SAR(pay)+" للعميل "+c.client+" بتاريخ اليوم؟")) return;
+                  setPayments(p=>[...p,{id:Date.now(),contractId:c.id,amount:pay,date:new Date().toISOString().split("T")[0],note:"قسط"}]);
+                  toast("✅ تم تسجيل القسط");
+                }}>
+                  ⚡ سدّد القسط
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
