@@ -2938,7 +2938,20 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
         </div>
       )}
 
-      {/* مؤشرات المحفظة اللحظية */}      <div style={{fontSize:20,fontWeight:900,margin:"8px 0 16px",color:C.ink,borderRight:"4px solid "+C.teal,paddingRight:12}}>💼 مؤشرات المحفظة</div>
+      {/* مؤشرات المحفظة + منتقي الشهر الموحّد */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,margin:"8px 0 16px",flexWrap:"wrap"}}>
+        <div style={{fontSize:20,fontWeight:900,color:C.ink,borderRight:"4px solid "+C.teal,paddingRight:12}}>💼 مؤشرات المحفظة</div>
+        <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,background:"#fff",border:"2px solid "+C.teal,borderRadius:12,padding:"6px 14px",boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
+            <span style={{fontSize:16}}>📅</span>
+            <label style={{fontWeight:700,fontSize:14,color:C.ink,whiteSpace:"nowrap"}}>عرض شهر:</label>
+            <select style={{border:"none",outline:"none",fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:800,color:C.teal,background:"transparent",cursor:"pointer"}} value={sel} onChange={e=>setSel(e.target.value)}>
+              {months.map(m=><option key={m} value={m}>{mLabel(m)}</option>)}
+            </select>
+          </div>
+          <button style={{...styles.btn(C.gold),fontSize:14,padding:"8px 16px"}} onClick={()=>window.print()}>🖨️ طباعة</button>
+        </div>
+      </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:14,marginBottom:24}}>
         <div onClick={()=>setDetail({title:"💵 المحصّل هذا الشهر",color:C.green,rows:collectedList,mode:"collected"})}
           style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.green,cursor:"pointer"}}>
@@ -2961,13 +2974,6 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
       </div>
 
       <div style={{fontSize:20,fontWeight:900,margin:"28px 0 16px",color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12}}>📊 ملخص الشهر</div>
-      <div style={{...styles.card,display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}}>
-        <label style={{fontWeight:700,fontSize:15,whiteSpace:"nowrap"}}>عرض شهر:</label>
-        <select style={{...styles.select,width:"auto",minWidth:160}} value={sel} onChange={e=>setSel(e.target.value)}>
-          {months.map(m=><option key={m} value={m}>{mLabel(m)}</option>)}
-        </select>
-        <button style={{...styles.btn(C.gold),marginRight:"auto"}} onClick={()=>window.print()}>🖨️ طباعة</button>
-      </div>
 
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:14,marginBottom:24}}>
         <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.teal}}>
@@ -3106,24 +3112,25 @@ const DAILY_TYPES = [
 function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, settings, toast}) {
   const today = new Date().toISOString().split("T")[0];
   const [selDay,setSelDay] = useState(today);
+  const [baseInput,setBaseInput] = useState("");
+  const [baseDateInput,setBaseDateInput] = useState(today);
+  const [editingBase,setEditingBase] = useState(false);
   const [form,setForm] = useState({type:"sadad", amount:"", desc:""});
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
 
   // حركات اليوم المحدد
   const dayRows = (Array.isArray(daily)?daily:[]).filter(d=>d.date===selDay).sort((a,b)=>a.id-b.id);
 
-  // حساب الرصيد الافتتاحي: متبقي اليوم السابق (تراكمي من كل الأيام قبله)
+  // ═══ رصيد بداية الصندوق: نقطة واحدة ثابتة ═══
   const _daily = Array.isArray(daily) ? daily : [];
   const _dailyOpen = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
-  const prevDays = _daily.filter(d=>d.date < selDay);
-  const manualOpen = _dailyOpen[selDay];
-  // الرصيد الافتتاحي = (رصيد افتتاحي يدوي لأول يوم) + صافي كل الحركات قبل هذا اليوم
-  const firstOpenKey = Object.keys(_dailyOpen).sort()[0];
-  const baseOpen = firstOpenKey ? (_dailyOpen[firstOpenKey]||0) : 0;
-  const baseDate = firstOpenKey || "0000-00-00";
+  const base = _dailyOpen.__base && typeof _dailyOpen.__base==="object" ? _dailyOpen.__base : null;
+  const baseAmount = base ? (+base.amount||0) : 0;
+  const baseDate = base ? base.date : "0000-00-00";
+  // الرصيد الافتتاحي لليوم المختار = رصيد البداية + صافي كل الحركات من تاريخ البداية حتى أمس
   const prevNet = _daily.filter(d=>d.date < selDay && d.date >= baseDate)
     .reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
-  const openingBalance = baseOpen + prevNet;
+  const openingBalance = baseAmount + prevNet;
 
   // صافي حركات اليوم
   const dayNet = dayRows.reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
@@ -3153,7 +3160,6 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   };
   const delRow=(id)=>{ if(!window.confirm("حذف هذا السطر؟"))return; setDaily(p=>p.filter(d=>d.id!==id)); };
 
-  const isFirstDay = !firstOpenKey || selDay <= firstOpenKey;
   const dLabel = ymd => { if(!ymd) return ""; const [y,m,d]=ymd.split("-"); return d+"/"+parseInt(m)+"/"+y; };
 
   return (
@@ -3173,13 +3179,17 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
         </div>
         <div style={{padding:"14px 18px"}}>
           <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
-            {DAILY_TYPES.map(t=>(
+            {DAILY_TYPES.map(t=>{
+              const active=form.type===t.key;
+              return (
               <button key={t.key} onClick={()=>set("type",t.key)}
-                style={{fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:700,padding:"8px 16px",borderRadius:8,cursor:"pointer",
-                  border:"2px solid "+t.color,background:form.type===t.key?t.color:"#fff",color:form.type===t.key?"#fff":t.color}}>
+                style={{fontFamily:"Tajawal,Arial",fontSize:17,fontWeight:800,padding:"14px 26px",borderRadius:14,cursor:"pointer",
+                  border:"2.5px solid "+t.color,background:active?t.color:"#fff",color:active?"#fff":t.color,
+                  boxShadow:active?("0 4px 14px "+t.color+"55"):"0 2px 6px rgba(0,0,0,0.08)",
+                  transform:active?"translateY(-1px)":"none",transition:"all .15s",minWidth:120}}>
                 {t.label}
               </button>
-            ))}
+            );})}
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:12}}>
             <div>
@@ -3277,17 +3287,51 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
         </div>
       </div>
 
-      {/* رصيد افتتاحي يدوي (يظهر فقط لأول يوم أو إذا لم يُحدد) */}
+      {/* رصيد بداية الصندوق — نقطة واحدة ثابتة تُحفظ مرة */}
       <div style={{...styles.card,marginBottom:16,background:"#fffbf0",border:"1px solid "+C.gold}}>
-        <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-          <span style={{fontSize:14,fontWeight:700,color:"#8a6200"}}>تعيين رصيد افتتاحي يدوي لهذا اليوم (للبداية فقط):</span>
-          <input type="number" placeholder="مثال: 15000" style={{...styles.input,width:140}}
-            value={manualOpen!==undefined?manualOpen:""}
-            onChange={e=>setDailyOpen(p=>({...p,[selDay]:parseFloat(e.target.value)||0}))}/>
-          {manualOpen!==undefined && <button style={{...styles.btn(C.red),fontSize:13,padding:"4px 10px"}}
-            onClick={()=>setDailyOpen(p=>{const n={...p};delete n[selDay];return n;})}>إلغاء</button>}
-        </div>
-        <div style={{fontSize:13,color:"#1f2937",marginTop:6}}>اتركه فارغاً ليُحسب تلقائياً من متبقي اليوم السابق</div>
+        {base ? (
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}>
+            <div>
+              <span style={{fontSize:14,fontWeight:800,color:"#8a6200"}}>💰 رصيد بداية الصندوق: </span>
+              <span style={{fontSize:18,fontWeight:900,color:C.ink}}>{SAR(baseAmount)}</span>
+              <span style={{fontSize:13,color:"#1f2937",marginRight:8}}>(بتاريخ {dLabel(baseDate)})</span>
+            </div>
+            <button style={{...styles.btn("#f3f4f6","#6b7280"),fontSize:13,padding:"5px 12px"}}
+              onClick={()=>{
+                if(window.confirm("تعديل رصيد بداية الصندوق يغيّر أساس كل الحسابات. متأكد؟")){
+                  setBaseInput(String(baseAmount)); setBaseDateInput(baseDate); setEditingBase(true);
+                }
+              }}>✏️ تعديل</button>
+          </div>
+        ) : null}
+        {(!base || editingBase) && (
+          <div style={{marginTop:base?12:0}}>
+            <div style={{fontSize:14,fontWeight:800,color:"#8a6200",marginBottom:8}}>💰 تعيين رصيد بداية الصندوق (مرة واحدة):</div>
+            <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+              <div>
+                <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المبلغ</label>
+                <input type="number" placeholder="مثال: 15000" style={{...styles.input,width:150}}
+                  value={baseInput} onChange={e=>setBaseInput(e.target.value)}/>
+              </div>
+              <div>
+                <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>تاريخ البداية</label>
+                <input type="date" style={{...styles.input,width:170}}
+                  value={baseDateInput} onChange={e=>setBaseDateInput(e.target.value)}/>
+              </div>
+              <button style={{...styles.btn(C.teal,"#fff"),fontSize:14,padding:"9px 20px",alignSelf:"flex-end"}}
+                onClick={()=>{
+                  const amt=parseFloat(baseInput);
+                  if(isNaN(amt)){toast("أدخل مبلغاً صحيحاً","warn");return;}
+                  if(!baseDateInput){toast("اختر تاريخ البداية","warn");return;}
+                  setDailyOpen(p=>({...(p&&typeof p==="object"&&!Array.isArray(p)?p:{}), __base:{date:baseDateInput,amount:amt}}));
+                  setEditingBase(false); toast("✅ تم حفظ رصيد البداية واعتماده");
+                }}>💾 حفظ واعتماد</button>
+              {editingBase && <button style={{...styles.btn(C.red,"#fff"),fontSize:13,padding:"7px 14px",alignSelf:"flex-end"}}
+                onClick={()=>setEditingBase(false)}>إلغاء</button>}
+            </div>
+            <div style={{fontSize:13,color:"#1f2937",marginTop:8}}>يُحفظ مرة واحدة ويصبح نقطة بداية الصندوق. بعده تُحسب كل الأرصدة تلقائياً من الحركات.</div>
+          </div>
+        )}
       </div>
 
     </div>
