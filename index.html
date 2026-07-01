@@ -2793,6 +2793,167 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
 
 
 // ─── Dashboard ───────────────────────────────────────────────
+// ─── Monthly Portfolio Page (المحفظة الشهرية) ───────────────
+function MonthlyPortfolio({contracts, investors, settings, payments, monthClose, setMonthClose, JardComp, toast}) {
+  const [tab, setTab] = React.useState("ind");
+  const [openMonth, setOpenMonth] = React.useState(null);
+  const getPeriod = d => fiscalYM(d);
+  const mLabel = ym => { const [y,m]=ym.split("-"); return "شهر "+parseInt(m)+" - "+y; };
+  const allC = contracts.filter(c=>!c.deleted);
+  const months = [...new Set(contracts.map(c=>getPeriod(c.date)))].sort().reverse();
+
+  const calcMonth = (ym) => {
+    const mc = contracts.filter(c=>getPeriod(c.date)===ym);
+    const tot = mc.reduce((a,c)=>{const r=calcContract(c.amount,settings);return{amt:a.amt+c.amount,profit:a.profit+r.profit,admin:a.admin+r.admin,acc:a.acc+r.acc,inst:a.inst+r.inst,net:a.net+r.net};},{amt:0,profit:0,admin:0,acc:0,inst:0,net:0});
+    const collected = (payments||[]).filter(p=>p.date && getPeriod(p.date)===ym).reduce((s,p)=>s+(+p.amount||0),0);
+    const [y,m]=ym.split("-").map(Number);
+    const periodEnd = new Date(y, m, 20);
+    const due = allC.reduce((s,c)=>{
+      const inst=+c.instAmt||0, total=+c.totalInst||+c.amount||0;
+      if(inst<=0||!c.firstInst) return s;
+      const first=new Date(c.firstInst); if(first>periodEnd) return s;
+      const totalCount=Math.max(1,Math.round(total/inst));
+      let el=(periodEnd.getFullYear()-first.getFullYear())*12+(periodEnd.getMonth()-first.getMonth());
+      if(periodEnd.getDate()>=first.getDate()) el+=1;
+      const dueCount=Math.min(Math.max(0,el),totalCount);
+      return s+Math.max(0,Math.min(inst,(dueCount*inst)-_getPaid(payments,c.id)));
+    },0);
+    return {mc, tot, collected, due, count:mc.length};
+  };
+  const totalRemaining = allC.reduce((s,c)=>s+Math.max(0,(+c.totalInst||+c.amount||0)-_getPaid(payments,c.id)),0);
+  const closedMonths = Object.keys(monthClose||{}).sort().reverse();
+
+  const printAll = (rows, title) => {
+    const w=window.open("","_blank"); if(!w){alert("اسمح بالنوافذ المنبثقة");return;}
+    const body=rows.map(r=>"<tr><td>"+mLabel(r.ym)+"</td><td>"+SAR(r.d.collected)+"</td><td>"+SAR(r.d.tot.amt)+"</td><td>"+SAR(r.d.tot.profit)+"</td><td>"+SAR(r.d.tot.net)+"</td><td>"+r.d.count+"</td></tr>").join("");
+    w.document.write("<!DOCTYPE html><html dir='rtl'><head><meta charset='utf-8'><title>"+title+"</title><style>*{font-family:Arial}body{padding:18px}h1{font-size:20px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid #999;padding:7px;text-align:center}th{background:#f0f0f0}</style></head><body onload='window.print()'><h1>مؤسسة قمة الفرصة التجارية — "+title+"</h1><table><thead><tr><th>الشهر</th><th>المحصّل</th><th>قيمة العقود</th><th>الأرباح</th><th>صافي المستثمرين</th><th>عدد العقود</th></tr></thead><tbody>"+body+"</tbody></table></body></html>");
+    w.document.close();
+  };
+
+  const subTabs=[{k:"ind",l:"💼 المؤشرات"},{k:"archive",l:"🗄️ الأرشيف"},{k:"jard",l:"📦 الجرد"}];
+
+  return (
+    <div style={styles.main}>
+      <div style={{display:"flex",gap:0,marginBottom:16,background:C.white,borderRadius:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",width:"fit-content",flexWrap:"wrap"}}>
+        {subTabs.map(t=>(
+          <button key={t.k} onClick={()=>{setTab(t.k);setOpenMonth(null);}}
+            style={{fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:700,padding:"10px 18px",border:"none",cursor:"pointer",background:tab===t.k?C.teal:C.white,color:tab===t.k?"#fff":C.ink2,whiteSpace:"nowrap"}}>{t.l}</button>
+        ))}
+      </div>
+
+      {tab==="ind" && (openMonth ? (
+        <MonthDetail ym={openMonth} calcMonth={calcMonth} mLabel={mLabel}
+          isClosed={!!(monthClose&&monthClose[openMonth])}
+          onBack={()=>setOpenMonth(null)}
+          onClose={()=>{const d=calcMonth(openMonth);setMonthClose(p=>({...(p||{}),[openMonth]:{closedAt:new Date().toISOString(),collected:d.collected,amt:d.tot.amt,profit:d.tot.profit,admin:d.tot.admin,acc:d.tot.acc,inst:d.tot.inst,net:d.tot.net,count:d.count}}));toast("🔒 تم إقفال الشهر");}}
+          onReopen={()=>{if(window.confirm("فتح الشهر المقفل؟")){setMonthClose(p=>{const n={...(p||{})};delete n[openMonth];return n;});toast("🔓 تم فتح الشهر");}}}
+        />
+      ) : (
+        <div style={styles.panel}>
+          <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+            <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>💼 مؤشرات المحفظة الشهرية</h2>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <span style={{fontSize:13,color:"#1f2937",fontWeight:700}}>المتبقي الكلي: <span style={{color:C.red,fontWeight:900}}>{SAR(totalRemaining)}</span></span>
+              <button style={{...styles.btn(C.gold),fontSize:13,padding:"7px 12px"}} onClick={()=>printAll(months.map(ym=>({ym,d:calcMonth(ym)})),"المؤشرات الشهرية")}>🖨️ طباعة</button>
+            </div>
+          </div>
+          <div style={{padding:14}}>
+            <div style={{fontSize:13,color:"#6b7280",marginBottom:10}}>اضغط أي شهر لعرض تفاصيله الكاملة</div>
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              {months.map(ym=>{
+                const d=calcMonth(ym); const closed=!!(monthClose&&monthClose[ym]);
+                return (
+                  <div key={ym} onClick={()=>setOpenMonth(ym)}
+                    style={{cursor:"pointer",border:"1px solid "+C.border,borderRadius:12,padding:14,background:closed?"#f0fdf4":"#fff",borderRight:"4px solid "+(closed?C.green:C.teal)}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:6}}>
+                      <div style={{fontSize:16,fontWeight:900,color:C.ink}}>{mLabel(ym)} {closed&&<span style={{fontSize:12,background:C.green,color:"#fff",borderRadius:10,padding:"2px 10px",marginRight:6}}>🔒 مقفل</span>}</div>
+                      <span style={{fontSize:13,color:C.teal,fontWeight:700}}>التفاصيل ›</span>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}>
+                      {[["المحصّل",d.collected,C.green],["قيمة العقود",d.tot.amt,C.teal],["الأرباح",d.tot.profit,C.green],["صافي المستثمرين",d.tot.net,"#0891b2"],["عدد العقود",d.count,"#475569"]].map(([l,v,col],i)=>(
+                        <div key={i} style={{textAlign:"center",background:"#fafafa",borderRadius:8,padding:"8px 6px"}}>
+                          <div style={{fontSize:12,color:"#6b7280",marginBottom:3}}>{l}</div>
+                          <div style={{fontSize:15,fontWeight:900,color:col}}>{i===4?v:SAR(v)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+              {months.length===0 && <div style={{textAlign:"center",padding:30,color:"#1f2937"}}>لا توجد بيانات</div>}
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {tab==="archive" && (
+        <div style={styles.panel}>
+          <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+            <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>🗄️ أرشيف الأشهر المقفلة</h2>
+            {closedMonths.length>0 && <button style={{...styles.btn(C.gold),fontSize:13,padding:"7px 12px"}} onClick={()=>printAll(closedMonths.map(ym=>({ym,d:{collected:monthClose[ym].collected,tot:{amt:monthClose[ym].amt,profit:monthClose[ym].profit,net:monthClose[ym].net},count:monthClose[ym].count}})),"أرشيف الأشهر المقفلة")}>🖨️ طباعة الأرشيف</button>}
+          </div>
+          <div style={{padding:14,overflowX:"auto"}}>
+            {closedMonths.length===0
+              ? <div style={{textAlign:"center",padding:30,color:"#1f2937"}}>لا توجد أشهر مقفلة بعد. اقفل شهراً من تبويب المؤشرات.</div>
+              : <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
+                  <thead><tr>{["الشهر","المحصّل","قيمة العقود","الأرباح","نصيب المدير","نصيب المحاسب","صافي المستثمرين","عدد العقود"].map(h=><th key={h} style={{...styles.th,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
+                  <tbody>
+                    {closedMonths.map(ym=>{const c=monthClose[ym];return(
+                      <tr key={ym}>
+                        <td style={{...styles.td,fontWeight:800}}>{mLabel(ym)}</td>
+                        <td style={{...styles.td,color:C.green,fontWeight:700}}>{SAR(c.collected)}</td>
+                        <td style={styles.td}>{SAR(c.amt)}</td>
+                        <td style={{...styles.td,color:C.green}}>{SAR(c.profit)}</td>
+                        <td style={styles.td}>{SAR(c.inst)}</td>
+                        <td style={styles.td}>{SAR(c.acc)}</td>
+                        <td style={{...styles.td,color:"#0891b2",fontWeight:700}}>{SAR(c.net)}</td>
+                        <td style={{...styles.td,textAlign:"center"}}>{c.count}</td>
+                      </tr>
+                    );})}
+                  </tbody>
+                </table>}
+          </div>
+        </div>
+      )}
+
+      {tab==="jard" && JardComp}
+    </div>
+  );
+}
+
+function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen}) {
+  const d = calcMonth(ym);
+  const cards=[
+    ["💵 المحصّل",d.collected,C.green],["📅 المستحق",d.due,"#9a6a00"],
+    ["💼 قيمة العقود",d.tot.amt,C.teal],["📈 الأرباح",d.tot.profit,C.green],
+    ["👤 نصيب المدير",d.tot.inst,"#9a6a00"],["🧮 نصيب المحاسب",d.tot.acc,"#4f46e5"],
+    ["💰 صافي المستثمرين",d.tot.net,"#0891b2"],["📋 عدد العقود",d.count,"#475569"]
+  ];
+  return (
+    <div style={styles.panel}>
+      <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <button onClick={onBack} style={{...styles.btn("#e5e7eb","#374151"),fontSize:14,padding:"7px 14px"}}>‹ رجوع</button>
+          <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>{mLabel(ym)} {isClosed&&<span style={{fontSize:12,background:C.green,color:"#fff",borderRadius:10,padding:"2px 10px",marginRight:6}}>🔒 مقفل</span>}</h2>
+        </div>
+        {isClosed
+          ? <button onClick={onReopen} style={{...styles.btn(C.red,"#fff"),fontSize:14,padding:"8px 16px"}}>🔓 فتح الشهر</button>
+          : <button onClick={onClose} style={{...styles.btn(C.green,"#fff"),fontSize:14,padding:"8px 16px"}}>🔒 إقفال هذا الشهر</button>}
+      </div>
+      <div style={{padding:16}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:14}}>
+          {cards.map(([l,v,col],i)=>(
+            <div key={i} style={{...styles.card,textAlign:"center",borderTop:"4px solid "+col}}>
+              <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>{l}</div>
+              <div style={{fontSize:24,fontWeight:900,color:col}}>{i===7?v:SAR(v)}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dailyOpen,setDailyOpen,toast,setPage,payments}) {
   const [detail,setDetail] = useState(null); // {title, color, rows, mode}
   // Period: starts 21st of month, ends 20th of next month
@@ -2938,95 +3099,6 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
         </div>
       )}
 
-      {/* مؤشرات المحفظة + منتقي الشهر الموحّد */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,margin:"8px 0 16px",flexWrap:"wrap"}}>
-        <div style={{fontSize:20,fontWeight:900,color:C.ink,borderRight:"4px solid "+C.teal,paddingRight:12}}>💼 مؤشرات المحفظة الشهرية</div>
-        <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,background:"#fff",border:"2px solid "+C.teal,borderRadius:12,padding:"6px 14px",boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
-            <span style={{fontSize:16}}>📅</span>
-            <label style={{fontWeight:700,fontSize:14,color:C.ink,whiteSpace:"nowrap"}}>عرض شهر:</label>
-            <select style={{border:"none",outline:"none",fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:800,color:C.teal,background:"transparent",cursor:"pointer"}} value={sel} onChange={e=>setSel(e.target.value)}>
-              {months.map(m=><option key={m} value={m}>{mLabel(m)}</option>)}
-            </select>
-          </div>
-          <button style={{...styles.btn(C.gold),fontSize:14,padding:"8px 16px"}} onClick={()=>window.print()}>🖨️ طباعة</button>
-        </div>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:14,marginBottom:24}}>
-        <div onClick={()=>setDetail({title:"💵 المحصّل هذا الشهر",color:C.green,rows:collectedList,mode:"collected"})}
-          style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.green,cursor:"pointer"}}>
-          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>💵 المحصّل هذا الشهر</div>
-          <div style={{fontSize:24,fontWeight:900,color:C.green}}>{SAR(collectedThisMonth)}</div>
-          <div style={{fontSize:12,color:C.teal,marginTop:4,fontWeight:700}}>عرض التفاصيل ({collectedList.length}) ›</div>
-        </div>
-        <div onClick={()=>setDetail({title:"📤 إجمالي المتبقي على الزبائن",color:C.red,rows:remainingList,mode:"balance"})}
-          style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.red,cursor:"pointer"}}>
-          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>📤 إجمالي المتبقي على الزبائن</div>
-          <div style={{fontSize:24,fontWeight:900,color:C.red}}>{SAR(totalRemaining)}</div>
-          <div style={{fontSize:12,color:C.teal,marginTop:4,fontWeight:700}}>عرض التفاصيل ({remainingList.length}) ›</div>
-        </div>
-        <div onClick={()=>setDetail({title:"📅 المستحق هذا الشهر",color:"#9a6a00",rows:dueList,mode:"balance"})}
-          style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.gold,cursor:"pointer"}}>
-          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>📅 المستحق هذا الشهر</div>
-          <div style={{fontSize:24,fontWeight:900,color:"#9a6a00"}}>{SAR(dueThisMonth)}</div>
-          <div style={{fontSize:12,color:C.teal,marginTop:4,fontWeight:700}}>عرض التفاصيل ({dueList.length}) ›</div>
-        </div>
-        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.teal}}>
-          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>💼 قيمة العقود</div>
-          <div style={{fontSize:24,fontWeight:900,color:C.teal}}>{SAR(tot.amt)}</div>
-        </div>
-        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.green}}>
-          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>📈 أرباح العقود</div>
-          <div style={{fontSize:24,fontWeight:900,color:C.green}}>{SAR(tot.profit)}</div>
-        </div>
-        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.gold}}>
-          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>👤 نصيب المدير 10%</div>
-          <div style={{fontSize:24,fontWeight:900,color:"#9a6a00"}}>{SAR(tot.inst)}</div>
-        </div>
-        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid #6366f1"}}>
-          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>🧮 نصيب المحاسب 10%</div>
-          <div style={{fontSize:24,fontWeight:900,color:"#4f46e5"}}>{SAR(tot.acc)}</div>
-        </div>
-        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid #0891b2"}}>
-          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>💰 صافي المستثمرين</div>
-          <div style={{fontSize:24,fontWeight:900,color:"#0891b2"}}>{SAR(tot.net)}</div>
-        </div>
-        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid #64748b"}}>
-          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>📋 عدد العقود</div>
-          <div style={{fontSize:24,fontWeight:900,color:"#475569"}}>{NUM(mc.length)}</div>
-        </div>
-      </div>
-
-      {/* Portfolio Detail Modal */}
-      <Modal open={!!detail} onClose={()=>setDetail(null)} title={detail?detail.title:""}>
-        {detail && (
-          <div style={{padding:"8px 4px"}}>
-            {detail.rows.length===0
-              ? <div style={{textAlign:"center",padding:30,color:"#1f2937"}}>لا يوجد</div>
-              : <div>
-                  <div style={{display:"flex",justifyContent:"space-between",padding:"8px 12px",background:"#f0f0f0",borderRadius:8,marginBottom:8,fontWeight:800,fontSize:13,color:C.ink}}>
-                    <span>الزبون</span><span>{detail.mode==="collected"?"المبلغ / التاريخ":"المبلغ"}</span>
-                  </div>
-                  <div style={{maxHeight:"55vh",overflowY:"auto",display:"flex",flexDirection:"column",gap:6}}>
-                    {detail.rows.map((r,i)=>(
-                      <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 12px",background:i%2?"#fafafa":"#fff",border:"1px solid "+C.border,borderRadius:8}}>
-                        <div>
-                          <div style={{fontWeight:700,fontSize:14,color:C.ink}}>{r.name||"—"}{r.num?(" #"+r.num):""}</div>
-                          {detail.mode==="balance" && r.inv && <div style={{fontSize:12,color:"#1f2937",marginTop:2}}>{r.inv}</div>}
-                          {detail.mode==="collected" && <div style={{fontSize:12,color:"#1f2937",marginTop:2}}>{fmtDate(r.date)}</div>}
-                        </div>
-                        <div style={{fontWeight:900,fontSize:15,color:detail.color,whiteSpace:"nowrap"}}>{SAR(r.amount)}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{display:"flex",justifyContent:"space-between",padding:"12px",marginTop:10,background:detail.color,color:"#fff",borderRadius:8,fontWeight:900,fontSize:16}}>
-                    <span>الإجمالي ({detail.rows.length})</span>
-                    <span>{SAR(detail.rows.reduce((s,r)=>s+(r.amount||0),0))}</span>
-                  </div>
-                </div>}
-          </div>
-        )}
-      </Modal>
     </div>
   );
 }
@@ -4569,7 +4641,7 @@ function App() {
     "qimma_txlist":"txlist", "qimma_loans":"loans", "qimma_zakat":"zakat",
     "qimma_pending":"pending", "qimma_payments":"payments", "qimma_goods3":"goods3",
     "qimma_jard_ov":"jard_ov", "qimma_daily":"daily", "qimma_daily_open":"daily_open",
-    "qimma_activity":"activity"
+    "qimma_activity":"activity", "qimma_monthclose":"monthclose"
   };
   const exportBackup = () => {
     try {
@@ -4647,6 +4719,8 @@ function App() {
   const setPending = v => { const d=_arr(typeof v==="function"?v(pending):v); setPendingRaw(d); saveLS("qimma_pending",d); gsWrite("pending",d); };
   const [activity,setActivityRaw]=useState(()=>_arr(loadLS("qimma_activity",[])));
   const setActivity = v => { const d=_arr(typeof v==="function"?v(activity):v); setActivityRaw(d); saveLS("qimma_activity",d); gsWrite("activity",d); };
+  const [monthClose,setMonthCloseRaw]=useState(()=>{try{return JSON.parse(loadLS("qimma_monthclose","{}"))||{};}catch{return {};}});
+  const setMonthClose = v => { const d=(typeof v==="function"?v(monthClose):v)||{}; setMonthCloseRaw(d); saveLS("qimma_monthclose",JSON.stringify(d)); gsWrite("monthclose",d); };
   const [payments,setPaymentsRaw]=useState(()=>_arr(loadLS("qimma_payments",[])));
   const setPayments = v => {
     const d=_arr(typeof v==="function"?v(payments):v);
@@ -4681,11 +4755,11 @@ function App() {
   useEffect(()=>{
     (async ()=>{
       setSyncStatus("loading");
-      const [inv, con, set, tx, ln, zk, pd, pay, gd, jov, dly, dlyo, act] = await Promise.all([
+      const [inv, con, set, tx, ln, zk, pd, pay, gd, jov, dly, dlyo, act, mcl] = await Promise.all([
         gsRead("investors"), gsRead("contracts"), gsRead("settings"),
         gsRead("txlist"), gsRead("loans"), gsRead("zakat"),
         gsRead("pending"), gsRead("payments"), gsRead("goods3"), gsRead("jard_ov"),
-        gsRead("daily"), gsRead("daily_open"), gsRead("activity")
+        gsRead("daily"), gsRead("daily_open"), gsRead("activity"), gsRead("monthclose")
       ]);
       if (inv) { setInvestorsRaw(inv); saveLS("qimma_investors", inv); }
       if (con) { setContractsRaw(con); saveLS("qimma_contracts", con); }
@@ -4700,6 +4774,7 @@ function App() {
       if (dly) { setDailyRaw(_arr(dly)); saveLS("qimma_daily", _arr(dly)); }
       if (dlyo && !Array.isArray(dlyo)) { setDailyOpenRaw(dlyo); saveLS("qimma_daily_open", dlyo); }
       if (act) { setActivityRaw(_arr(act)); saveLS("qimma_activity", _arr(act)); }
+      if (mcl && typeof mcl==="object" && !Array.isArray(mcl)) { setMonthCloseRaw(mcl); saveLS("qimma_monthclose", JSON.stringify(mcl)); }
       setSyncStatus("idle");
     })();
   }, []);
@@ -4713,7 +4788,7 @@ function App() {
     {id:"collect",label:"⚡",name:"التحصيل",color:"#0d9488"},
     {id:"goods",label:"📦",name:"البضاعة",color:"#78350f"},
     {id:"accounts",label:"💰",name:"الحسابات",color:"#b45309"},
-    {id:"jard",label:"📊",name:"الجرد",color:"#ea580c"},
+    {id:"portfolio",label:"📊",name:"المحفظة الشهرية",color:"#0d9488"},
     {id:"activity",label:"📜",name:"سجل النشاط",color:"#475569"},
     {id:"settings",label:"⚙️",name:"الإعدادات",color:"#4b5563"},
   ];
@@ -4763,7 +4838,7 @@ function App() {
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast}/>}
         {page==="collect" && <ContractsPage startCollect={true} contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct}/>}
-        {page==="jard" && <JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite}/>}
+        {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite}/>}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast}/>}
         {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast}/>}
