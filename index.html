@@ -2702,7 +2702,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
 
 
 // ─── Dashboard ───────────────────────────────────────────────
-function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dailyOpen,setDailyOpen,toast,setPage}) {
+function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dailyOpen,setDailyOpen,toast,setPage,payments}) {
   const [editFund,setEditFund] = useState(null); // {inv, form}
   // Period: starts 21st of month, ends 20th of next month
   const getPeriod = (dateStr) => fiscalYM(dateStr);
@@ -2712,6 +2712,29 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
   const mLabel=ym=>{const[y,m]=ym.split("-");return"شهر "+parseInt(m)+" - "+y;};
   const mc=contracts.filter(c=>getPeriod(c.date)===sel);
   const tot=mc.reduce((a,c)=>{const r=calcContract(c.amount,settings);return{amt:a.amt+c.amount,profit:a.profit+r.profit,admin:a.admin+r.admin,acc:a.acc+r.acc,inst:a.inst+r.inst,net:a.net+r.net};},{amt:0,profit:0,admin:0,acc:0,inst:0,net:0});
+
+  // ═══ مؤشرات المحفظة (لحظية) ═══
+  const allC = contracts.filter(c=>!c.deleted);
+  // ١. المحصّل هذا الشهر: مجموع الدفعات اللي تقع فترتها المالية = الشهر المختار
+  const collectedThisMonth = (payments||[]).filter(p=>p.date && getPeriod(p.date)===sel).reduce((s,p)=>s+(+p.amount||0),0);
+  // ٢. إجمالي المتبقي على الزبائن: (إجمالي كل عقد − المحصّل منه)
+  const totalRemaining = allC.reduce((s,c)=>s+Math.max(0,(+c.totalInst||+c.amount||0)-_getPaid(payments,c.id)),0);
+  // ٣. المستحق هذا الشهر: مجموع الأقساط الواجبة حتى نهاية الشهر المختار، ناقص المدفوع (بحد أقصى قسط الشهر)
+  const [selY,selM]=sel.split("-").map(Number);
+  const periodEnd = new Date(selY, selM, 20); // نهاية الفترة المالية للشهر المختار (20 من الشهر التالي)
+  const dueThisMonth = allC.reduce((s,c)=>{
+    const inst=+c.instAmt||0, total=+c.totalInst||+c.amount||0;
+    if(inst<=0||!c.firstInst) return s;
+    const first=new Date(c.firstInst);
+    if(first>periodEnd) return s; // ما بدأت أقساطه بعد
+    const totalCount=Math.max(1,Math.round(total/inst));
+    let elapsed=(periodEnd.getFullYear()-first.getFullYear())*12+(periodEnd.getMonth()-first.getMonth());
+    if(periodEnd.getDate()>=first.getDate()) elapsed+=1;
+    const dueCount=Math.min(Math.max(0,elapsed),totalCount);
+    const dueAmt=dueCount*inst;
+    const paid=_getPaid(payments,c.id);
+    return s+Math.max(0,Math.min(inst, dueAmt-paid)); // المستحق المتبقي لهذا الشهر (قسط واحد كحد أقصى)
+  },0);
 
   return (
     <div>
@@ -2724,6 +2747,23 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
 
       {/* دفتر اليومية مدمج في الرئيسية */}
       <DailyPage daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} contracts={contracts} settings={settings} toast={toast}/>
+
+      {/* مؤشرات المحفظة اللحظية */}
+      <div style={{fontSize:20,fontWeight:900,margin:"8px 0 16px",color:C.ink,borderRight:"4px solid "+C.teal,paddingRight:12}}>💼 مؤشرات المحفظة</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:14,marginBottom:24}}>
+        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.green}}>
+          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>💵 المحصّل هذا الشهر</div>
+          <div style={{fontSize:24,fontWeight:900,color:C.green}}>{SAR(collectedThisMonth)}</div>
+        </div>
+        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.red}}>
+          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>📤 إجمالي المتبقي على الزبائن</div>
+          <div style={{fontSize:24,fontWeight:900,color:C.red}}>{SAR(totalRemaining)}</div>
+        </div>
+        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.gold}}>
+          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>📅 المستحق هذا الشهر</div>
+          <div style={{fontSize:24,fontWeight:900,color:"#9a6a00"}}>{SAR(dueThisMonth)}</div>
+        </div>
+      </div>
 
       <div style={{fontSize:20,fontWeight:900,margin:"28px 0 16px",color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12}}>📊 ملخص الشهر</div>
       <div style={{...styles.card,display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}}>
@@ -4364,7 +4404,7 @@ function App() {
       <div style={styles.main}>
         {page==="clients" && <ClientsPage contracts={contracts} investors={investors} payments={payments} goCollect={()=>setPage("collect")} />}
         {page==="overdue" && <OverduePage contracts={contracts} investors={investors} payments={payments} goCollect={()=>setPage("collect")} />}
-        {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage}/>}
+        {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={payments}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast}/>}
         {page==="collect" && <ContractsPage startCollect={true} contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c))} onRestore={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);}} setInvTxList={setInvTxList}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c))} onRestore={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);}} setInvTxList={setInvTxList}/>}
