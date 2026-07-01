@@ -2704,6 +2704,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
 // ─── Dashboard ───────────────────────────────────────────────
 function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dailyOpen,setDailyOpen,toast,setPage,payments}) {
   const [editFund,setEditFund] = useState(null); // {inv, form}
+  const [detail,setDetail] = useState(null); // {title, color, rows, mode}
   // Period: starts 21st of month, ends 20th of next month
   const getPeriod = (dateStr) => fiscalYM(dateStr);
   const months=[...new Set(contracts.map(c=>getPeriod(c.date)))].sort().reverse();
@@ -2736,6 +2737,29 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
     return s+Math.max(0,Math.min(inst, dueAmt-paid)); // المستحق المتبقي لهذا الشهر (قسط واحد كحد أقصى)
   },0);
 
+  // ═══ تفاصيل كل مؤشر (تظهر عند الضغط) ═══
+  const invNameOf = id => (investors.find(i=>String(i.id)===String(id))||{}).name || "—";
+  // قائمة المحصّل: كل دفعة وقعت في الشهر المختار
+  const collectedList = (payments||[]).filter(p=>p.date && getPeriod(p.date)===sel)
+    .map(p=>{const c=allC.find(k=>k.id===p.contractId);return {name:c?c.client:"—", num:c?c.num:"", amount:+p.amount||0, date:p.date};})
+    .sort((a,b)=>new Date(b.date)-new Date(a.date));
+  // قائمة المتبقي: كل عقد عليه متبقي
+  const remainingList = allC.map(c=>({name:c.client, num:c.num, inv:invNameOf(c.investorId), amount:Math.max(0,(+c.totalInst||+c.amount||0)-_getPaid(payments,c.id))}))
+    .filter(x=>x.amount>0).sort((a,b)=>b.amount-a.amount);
+  // قائمة المستحق: كل عقد عليه مستحق هذا الشهر
+  const dueList = allC.map(c=>{
+    const inst=+c.instAmt||0, total=+c.totalInst||+c.amount||0;
+    if(inst<=0||!c.firstInst) return null;
+    const first=new Date(c.firstInst);
+    if(first>periodEnd) return null;
+    const totalCount=Math.max(1,Math.round(total/inst));
+    let elapsed=(periodEnd.getFullYear()-first.getFullYear())*12+(periodEnd.getMonth()-first.getMonth());
+    if(periodEnd.getDate()>=first.getDate()) elapsed+=1;
+    const dueCount=Math.min(Math.max(0,elapsed),totalCount);
+    const amt=Math.max(0,Math.min(inst,(dueCount*inst)-_getPaid(payments,c.id)));
+    return amt>0?{name:c.client, num:c.num, inv:invNameOf(c.investorId), amount:amt}:null;
+  }).filter(Boolean).sort((a,b)=>b.amount-a.amount);
+
   return (
     <div>
       {/* زر البحث السريع */}
@@ -2751,17 +2775,23 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
       {/* مؤشرات المحفظة اللحظية */}
       <div style={{fontSize:20,fontWeight:900,margin:"8px 0 16px",color:C.ink,borderRight:"4px solid "+C.teal,paddingRight:12}}>💼 مؤشرات المحفظة</div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:14,marginBottom:24}}>
-        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.green}}>
+        <div onClick={()=>setDetail({title:"💵 المحصّل هذا الشهر",color:C.green,rows:collectedList,mode:"collected"})}
+          style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.green,cursor:"pointer"}}>
           <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>💵 المحصّل هذا الشهر</div>
           <div style={{fontSize:24,fontWeight:900,color:C.green}}>{SAR(collectedThisMonth)}</div>
+          <div style={{fontSize:12,color:C.teal,marginTop:4,fontWeight:700}}>عرض التفاصيل ({collectedList.length}) ›</div>
         </div>
-        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.red}}>
+        <div onClick={()=>setDetail({title:"📤 إجمالي المتبقي على الزبائن",color:C.red,rows:remainingList,mode:"balance"})}
+          style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.red,cursor:"pointer"}}>
           <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>📤 إجمالي المتبقي على الزبائن</div>
           <div style={{fontSize:24,fontWeight:900,color:C.red}}>{SAR(totalRemaining)}</div>
+          <div style={{fontSize:12,color:C.teal,marginTop:4,fontWeight:700}}>عرض التفاصيل ({remainingList.length}) ›</div>
         </div>
-        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.gold}}>
+        <div onClick={()=>setDetail({title:"📅 المستحق هذا الشهر",color:"#9a6a00",rows:dueList,mode:"balance"})}
+          style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.gold,cursor:"pointer"}}>
           <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>📅 المستحق هذا الشهر</div>
           <div style={{fontSize:24,fontWeight:900,color:"#9a6a00"}}>{SAR(dueThisMonth)}</div>
+          <div style={{fontSize:12,color:C.teal,marginTop:4,fontWeight:700}}>عرض التفاصيل ({dueList.length}) ›</div>
         </div>
       </div>
 
@@ -2818,6 +2848,37 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
           </div>
         </div>
       </div>
+
+      {/* Portfolio Detail Modal */}
+      <Modal open={!!detail} onClose={()=>setDetail(null)} title={detail?detail.title:""}>
+        {detail && (
+          <div style={{padding:"8px 4px"}}>
+            {detail.rows.length===0
+              ? <div style={{textAlign:"center",padding:30,color:"#1f2937"}}>لا يوجد</div>
+              : <div>
+                  <div style={{display:"flex",justifyContent:"space-between",padding:"8px 12px",background:"#f0f0f0",borderRadius:8,marginBottom:8,fontWeight:800,fontSize:13,color:C.ink}}>
+                    <span>الزبون</span><span>{detail.mode==="collected"?"المبلغ / التاريخ":"المبلغ"}</span>
+                  </div>
+                  <div style={{maxHeight:"55vh",overflowY:"auto",display:"flex",flexDirection:"column",gap:6}}>
+                    {detail.rows.map((r,i)=>(
+                      <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 12px",background:i%2?"#fafafa":"#fff",border:"1px solid "+C.border,borderRadius:8}}>
+                        <div>
+                          <div style={{fontWeight:700,fontSize:14,color:C.ink}}>{r.name||"—"}{r.num?(" #"+r.num):""}</div>
+                          {detail.mode==="balance" && r.inv && <div style={{fontSize:12,color:"#1f2937",marginTop:2}}>{r.inv}</div>}
+                          {detail.mode==="collected" && <div style={{fontSize:12,color:"#1f2937",marginTop:2}}>{fmtDate(r.date)}</div>}
+                        </div>
+                        <div style={{fontWeight:900,fontSize:15,color:detail.color,whiteSpace:"nowrap"}}>{SAR(r.amount)}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{display:"flex",justifyContent:"space-between",padding:"12px",marginTop:10,background:detail.color,color:"#fff",borderRadius:8,fontWeight:900,fontSize:16}}>
+                    <span>الإجمالي ({detail.rows.length})</span>
+                    <span>{SAR(detail.rows.reduce((s,r)=>s+(r.amount||0),0))}</span>
+                  </div>
+                </div>}
+          </div>
+        )}
+      </Modal>
 
       {/* Edit Fund Modal */}
       <Modal open={!!editFund} onClose={()=>setEditFund(null)} title="✏️ تعديل المستثمر">
@@ -4226,6 +4287,59 @@ function OverduePage({contracts, investors, payments, goCollect}) {
   );
 }
 
+// ─── Activity Log Page ───────────────────────────────────────
+function ActivityPage({activity, setActivity, toast}){
+  const [filter,setFilter] = React.useState("all");
+  const list = _arr(activity);
+  const actColor = a => {
+    if(a.action.indexOf("حذف")>=0) return C.red;
+    if(a.action==="إضافة"||a.action==="سداد") return C.green;
+    if(a.action==="تعديل") return C.gold;
+    if(a.action==="استرجاع") return C.teal;
+    return C.ink;
+  };
+  const filtered = filter==="all" ? list : list.filter(a=>a.entity===filter);
+  const entities = ["all","عقد","دفعة","مستثمر"];
+  const entLabel = e => e==="all"?"الكل":e==="عقد"?"العقود":e==="دفعة"?"السدادات":"المستثمرون";
+  return (
+    <div style={styles.main}>
+      <div style={styles.panel}>
+        <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+          <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>📜 سجل النشاط</h2>
+          {list.length>0 && (
+            <button style={{...styles.btn(C.red,"#fff"),fontSize:13,padding:"7px 12px"}} onClick={()=>{
+              if(window.confirm("مسح كامل سجل النشاط؟ لا يمكن التراجع.")){ setActivity([]); toast("🗑 تم مسح السجل"); }
+            }}>🗑 مسح السجل</button>
+          )}
+        </div>
+        <div style={{padding:"12px 16px",display:"flex",gap:8,flexWrap:"wrap",borderBottom:"1px solid "+C.border}}>
+          {entities.map(e=>(
+            <button key={e} onClick={()=>setFilter(e)}
+              style={{...styles.btn(filter===e?C.ink:"#e5e7eb", filter===e?"#fff":"#374151"),fontSize:13,padding:"6px 14px"}}>
+              {entLabel(e)}
+            </button>
+          ))}
+        </div>
+        <div style={{padding:16}}>
+          {filtered.length===0
+            ? <div style={{textAlign:"center",padding:30,color:"#1f2937"}}>لا توجد حركات مسجّلة</div>
+            : <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {filtered.map(a=>(
+                  <div key={a.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",background:"#fafafa",borderRadius:8,borderRight:"4px solid "+actColor(a)}}>
+                    <span style={{background:actColor(a),color:"#fff",borderRadius:6,padding:"3px 10px",fontSize:13,fontWeight:800,whiteSpace:"nowrap"}}>{a.action}</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:14,fontWeight:700,color:C.ink}}>{a.entity}{a.detail?(" — "+a.detail):""}</div>
+                      <div style={{fontSize:12,color:"#1f2937",marginTop:2}}>🕐 {a.time}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main App ────────────────────────────────────────────────
 function App() {
   const [page,setPage]=useState("dashboard");
@@ -4267,7 +4381,8 @@ function App() {
     "qimma_investors":"investors", "qimma_contracts":"contracts", "qimma_settings":"settings",
     "qimma_txlist":"txlist", "qimma_loans":"loans", "qimma_zakat":"zakat",
     "qimma_pending":"pending", "qimma_payments":"payments", "qimma_goods3":"goods3",
-    "qimma_jard_ov":"jard_ov", "qimma_daily":"daily", "qimma_daily_open":"daily_open"
+    "qimma_jard_ov":"jard_ov", "qimma_daily":"daily", "qimma_daily_open":"daily_open",
+    "qimma_activity":"activity"
   };
   const exportBackup = () => {
     try {
@@ -4312,7 +4427,16 @@ function App() {
   const [contracts,setContractsRaw]=useState(()=>_arr(loadLS("qimma_contracts",[])));
   const [settings,setSettingsRaw]=useState(()=>loadLS("qimma_settings",{profit:50,admin:2.5,acc:10,inst:10}));
 
-  const setInvestors = v => { const d=typeof v==="function"?v(investors):v; setInvestorsRaw(d); saveLS("qimma_investors",d); gsWrite("investors",d); };
+  const setInvestors = v => {
+    const d=typeof v==="function"?v(investors):v;
+    const before=_arr(investors);
+    setInvestorsRaw(d); saveLS("qimma_investors",d); gsWrite("investors",d);
+    try {
+      if(d.length>before.length){const a=d.find(x=>!before.some(y=>y.id===x.id));if(a)logAct("إضافة","مستثمر",(a.name||""));}
+      else if(d.length<before.length){const r=before.find(x=>!d.some(y=>y.id===x.id));if(r)logAct("حذف","مستثمر",(r.name||""));}
+      else {const ch=d.find(x=>{const o=before.find(y=>y.id===x.id);return o&&(o.name!==x.name||o.capital!==x.capital||o.fund!==x.fund);});if(ch)logAct("تعديل","مستثمر",(ch.name||""));}
+    } catch(e){}
+  };
   const setContracts = v => { const d=typeof v==="function"?v(contracts):v; setContractsRaw(d); saveLS("qimma_contracts",d); gsWrite("contracts",d); };
   const activeContracts = contracts.filter(c=>!c.deleted);
   const setSettings  = v => { const d=typeof v==="function"?v(settings):v;  setSettingsRaw(d);  saveLS("qimma_settings",d); gsWrite("settings",d); };
@@ -4334,8 +4458,30 @@ function App() {
   const setZakatTx = v => { const d=_arr(typeof v==="function"?v(zakatTx):v); setZakatTxRaw(d); saveLS("qimma_zakat",d); gsWrite("zakat",d); };
   const [pending,setPendingRaw]=useState(()=>_arr(loadLS("qimma_pending",[])));
   const setPending = v => { const d=_arr(typeof v==="function"?v(pending):v); setPendingRaw(d); saveLS("qimma_pending",d); gsWrite("pending",d); };
+  const [activity,setActivityRaw]=useState(()=>_arr(loadLS("qimma_activity",[])));
+  const setActivity = v => { const d=_arr(typeof v==="function"?v(activity):v); setActivityRaw(d); saveLS("qimma_activity",d); gsWrite("activity",d); };
   const [payments,setPaymentsRaw]=useState(()=>_arr(loadLS("qimma_payments",[])));
-  const setPayments = v => { const d=_arr(typeof v==="function"?v(payments):v); setPaymentsRaw(d); saveLS("qimma_payments",d); gsWrite("payments",d); };
+  const setPayments = v => {
+    const d=_arr(typeof v==="function"?v(payments):v);
+    const before=_arr(payments);
+    setPaymentsRaw(d); saveLS("qimma_payments",d); gsWrite("payments",d);
+    // تسجيل تلقائي في سجل النشاط
+    try {
+      if(d.length>before.length){
+        const added=d.find(x=>!before.some(y=>y.id===x.id));
+        if(added){const c=contracts.find(k=>k.id===added.contractId);logAct("سداد","دفعة",(SAR(added.amount||0)+(c?(" — "+c.client+" #"+c.num):"")));}
+      } else if(d.length<before.length){
+        const removed=before.find(x=>!d.some(y=>y.id===x.id));
+        if(removed){const c=contracts.find(k=>k.id===removed.contractId);logAct("حذف سداد","دفعة",(SAR(removed.amount||0)+(c?(" — "+c.client+" #"+c.num):"")));}
+      }
+    } catch(e){}
+  };
+  // تسجيل حركة في سجل النشاط (يبقى آخر 500 حركة، الأحدث أولاً)
+  const logAct = (action, entity, detail) => {
+    const now = new Date();
+    const stamp = now.getFullYear()+"/"+String(now.getMonth()+1).padStart(2,"0")+"/"+String(now.getDate()).padStart(2,"0")+" "+String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+    setActivity(prev => [{id:Date.now()+"_"+Math.floor(Math.random()*1000), action, entity, detail:detail||"", time:stamp}, ..._arr(prev)].slice(0,500));
+  };
   const [daily,setDailyRaw]=useState(()=>_arr(loadLS("qimma_daily",[])));
   const setDaily = v => { const d=_arr(typeof v==="function"?v(daily):v); setDailyRaw(d); saveLS("qimma_daily",d); gsWrite("daily",d); };
   const [dailyOpen,setDailyOpenRaw]=useState(()=>{const v=loadLS("qimma_daily_open",{});return (v&&typeof v==="object"&&!Array.isArray(v))?v:{};});
@@ -4348,11 +4494,11 @@ function App() {
   useEffect(()=>{
     (async ()=>{
       setSyncStatus("loading");
-      const [inv, con, set, tx, ln, zk, pd, pay, gd, jov, dly, dlyo] = await Promise.all([
+      const [inv, con, set, tx, ln, zk, pd, pay, gd, jov, dly, dlyo, act] = await Promise.all([
         gsRead("investors"), gsRead("contracts"), gsRead("settings"),
         gsRead("txlist"), gsRead("loans"), gsRead("zakat"),
         gsRead("pending"), gsRead("payments"), gsRead("goods3"), gsRead("jard_ov"),
-        gsRead("daily"), gsRead("daily_open")
+        gsRead("daily"), gsRead("daily_open"), gsRead("activity")
       ]);
       if (inv) { setInvestorsRaw(inv); saveLS("qimma_investors", inv); }
       if (con) { setContractsRaw(con); saveLS("qimma_contracts", con); }
@@ -4366,6 +4512,7 @@ function App() {
       if (jov) { localStorage.setItem("qimma_jard_ov", JSON.stringify(jov)); }
       if (dly) { setDailyRaw(_arr(dly)); saveLS("qimma_daily", _arr(dly)); }
       if (dlyo && !Array.isArray(dlyo)) { setDailyOpenRaw(dlyo); saveLS("qimma_daily_open", dlyo); }
+      if (act) { setActivityRaw(_arr(act)); saveLS("qimma_activity", _arr(act)); }
       setSyncStatus("idle");
     })();
   }, []);
@@ -4379,6 +4526,7 @@ function App() {
     {id:"goods",label:"📦",name:"البضاعة",color:"#78350f"},
     {id:"accounts",label:"💰",name:"الحسابات",color:"#b45309"},
     {id:"jard",label:"📊",name:"الجرد",color:"#ea580c"},
+    {id:"activity",label:"📜",name:"سجل النشاط",color:"#475569"},
     {id:"settings",label:"⚙️",name:"الإعدادات",color:"#4b5563"},
   ];
 
@@ -4425,11 +4573,12 @@ function App() {
         {page==="overdue" && <OverduePage contracts={contracts} investors={investors} payments={payments} goCollect={()=>setPage("collect")} />}
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={payments}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast}/>}
-        {page==="collect" && <ContractsPage startCollect={true} contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c))} onRestore={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);}} setInvTxList={setInvTxList}/>}
-        {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c))} onRestore={id=>setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c))} onUpdate={updated=>setContracts(p=>p.map(c=>c.id===updated.id?updated:c))} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);}} setInvTxList={setInvTxList}/>}
+        {page==="collect" && <ContractsPage startCollect={true} contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct}/>}
+        {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct}/>}
         {page==="jard" && <JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast}/>}
+        {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast}/>}
         {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup}/>}
       </div>
 
