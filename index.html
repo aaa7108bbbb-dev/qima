@@ -2981,13 +2981,31 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
         <button style={{...styles.btn(C.gold),marginRight:"auto"}} onClick={()=>window.print()}>🖨️ طباعة</button>
       </div>
 
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:24}}>
-        <KpiCard label="قيمة العقود" value={SAR(tot.amt)}/>
-        <KpiCard label="أرباح العقود" value={SAR(tot.profit)}/>
-        <KpiCard label="نصيب المدير 10%" value={SAR(tot.inst)}/>
-        <KpiCard label="نصيب المحاسب 10%" value={SAR(tot.acc)}/>
-        <KpiCard label="صافي المستثمرين" value={SAR(tot.net)}/>
-        <KpiCard label="عدد العقود" value={NUM(mc.length)}/>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:14,marginBottom:24}}>
+        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.teal}}>
+          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>💼 قيمة العقود</div>
+          <div style={{fontSize:24,fontWeight:900,color:C.teal}}>{SAR(tot.amt)}</div>
+        </div>
+        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.green}}>
+          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>📈 أرباح العقود</div>
+          <div style={{fontSize:24,fontWeight:900,color:C.green}}>{SAR(tot.profit)}</div>
+        </div>
+        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.gold}}>
+          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>👤 نصيب المدير 10%</div>
+          <div style={{fontSize:24,fontWeight:900,color:"#9a6a00"}}>{SAR(tot.inst)}</div>
+        </div>
+        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid #6366f1"}}>
+          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>🧮 نصيب المحاسب 10%</div>
+          <div style={{fontSize:24,fontWeight:900,color:"#4f46e5"}}>{SAR(tot.acc)}</div>
+        </div>
+        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid #0891b2"}}>
+          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>💰 صافي المستثمرين</div>
+          <div style={{fontSize:24,fontWeight:900,color:"#0891b2"}}>{SAR(tot.net)}</div>
+        </div>
+        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid #64748b"}}>
+          <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>📋 عدد العقود</div>
+          <div style={{fontSize:24,fontWeight:900,color:"#475569"}}>{NUM(mc.length)}</div>
+        </div>
       </div>
 
       {/* Portfolio Detail Modal */}
@@ -3161,55 +3179,6 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
         </div>
       </div>
 
-      {/* ملخص اليوم */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
-        <div style={{...styles.card,borderTop:"4px solid #64748b"}}>
-          <div style={{fontSize:14,color:"#1f2937",marginBottom:6}}>الرصيد الافتتاحي</div>
-          <div style={{fontSize:20,fontWeight:900,color:"#334155"}}>{SAR(openingBalance)}</div>
-          <div style={{fontSize:13,color:"#1f2937",marginTop:4}}>متبقي أمس</div>
-        </div>
-        <div style={{...styles.card,borderTop:"4px solid #16a34a"}}>
-          <div style={{fontSize:14,color:"#1f2937",marginBottom:6}}>سدادات اليوم</div>
-          <div style={{fontSize:20,fontWeight:900,color:"#16a34a"}}>{SAR(sumByType("sadad"))}</div>
-        </div>
-        <div style={{...styles.card,borderTop:"4px solid #dc2626"}}>
-          <div style={{fontSize:14,color:"#1f2937",marginBottom:6}}>المصروفات + السحوبات</div>
-          <div style={{fontSize:20,fontWeight:900,color:"#dc2626"}}>{SAR(sumByType("masroof")+sumByType("sahb")+sumByType("estilam"))}</div>
-        </div>
-        <div style={{...styles.card,borderTop:"4px solid #0d9488",background:"#f0fdfa"}}>
-          <div style={{fontSize:14,color:"#0d9488",marginBottom:6,fontWeight:700}}>💰 المتبقي في الصندوق</div>
-          <div style={{fontSize:22,fontWeight:900,color:closingBalance>=0?"#0d9488":"#dc2626"}}>{SAR(closingBalance)}</div>
-        </div>
-      </div>
-
-      {/* حساب المدير والمحاسب */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
-        <div style={{...styles.card,borderTop:"4px solid #b45309"}}>
-          <div style={{fontSize:15,fontWeight:800,color:"#b45309",marginBottom:8}}>👔 حساب المدير</div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستحق (كل العقود)</span><span style={{fontWeight:700}}>{SAR(mgrEarnedAll)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(mgrTakenAll)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginTop:6,paddingTop:6,borderTop:"1px solid "+C.border}}><span style={{fontWeight:800}}>الباقي له</span><span style={{fontWeight:900,color:mgrLeft>=0?"#b45309":C.red}}>{SAR(mgrLeft)}</span></div>
-        </div>
-        <div style={{...styles.card,borderTop:"4px solid #0891b2"}}>
-          <div style={{fontSize:15,fontWeight:800,color:"#0891b2",marginBottom:8}}>🧮 حساب المحاسب</div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستحق (كل العقود)</span><span style={{fontWeight:700}}>{SAR(accEarnedAll)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(accTakenAll)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginTop:6,paddingTop:6,borderTop:"1px solid "+C.border}}><span style={{fontWeight:800}}>الباقي له</span><span style={{fontWeight:900,color:accLeft>=0?"#0891b2":C.red}}>{SAR(accLeft)}</span></div>
-        </div>
-      </div>
-
-      {/* رصيد افتتاحي يدوي (يظهر فقط لأول يوم أو إذا لم يُحدد) */}
-      <div style={{...styles.card,marginBottom:16,background:"#fffbf0",border:"1px solid "+C.gold}}>
-        <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-          <span style={{fontSize:14,fontWeight:700,color:"#8a6200"}}>تعيين رصيد افتتاحي يدوي لهذا اليوم (للبداية فقط):</span>
-          <input type="number" placeholder="مثال: 15000" style={{...styles.input,width:140}}
-            value={manualOpen!==undefined?manualOpen:""}
-            onChange={e=>setDailyOpen(p=>({...p,[selDay]:parseFloat(e.target.value)||0}))}/>
-          {manualOpen!==undefined && <button style={{...styles.btn(C.red),fontSize:13,padding:"4px 10px"}}
-            onClick={()=>setDailyOpen(p=>{const n={...p};delete n[selDay];return n;})}>إلغاء</button>}
-        </div>
-        <div style={{fontSize:13,color:"#1f2937",marginTop:6}}>اتركه فارغاً ليُحسب تلقائياً من متبقي اليوم السابق</div>
-      </div>
 
       {/* إضافة حركة */}
       <div style={{...styles.panel,marginBottom:16}}>
@@ -3282,6 +3251,57 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
           </table>
         </div>
       </div>
+
+      {/* ملخص اليوم */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
+        <div style={{...styles.card,borderTop:"4px solid #64748b"}}>
+          <div style={{fontSize:14,color:"#1f2937",marginBottom:6}}>الرصيد الافتتاحي</div>
+          <div style={{fontSize:20,fontWeight:900,color:"#334155"}}>{SAR(openingBalance)}</div>
+          <div style={{fontSize:13,color:"#1f2937",marginTop:4}}>متبقي أمس</div>
+        </div>
+        <div style={{...styles.card,borderTop:"4px solid #16a34a"}}>
+          <div style={{fontSize:14,color:"#1f2937",marginBottom:6}}>سدادات اليوم</div>
+          <div style={{fontSize:20,fontWeight:900,color:"#16a34a"}}>{SAR(sumByType("sadad"))}</div>
+        </div>
+        <div style={{...styles.card,borderTop:"4px solid #dc2626"}}>
+          <div style={{fontSize:14,color:"#1f2937",marginBottom:6}}>المصروفات + السحوبات</div>
+          <div style={{fontSize:20,fontWeight:900,color:"#dc2626"}}>{SAR(sumByType("masroof")+sumByType("sahb")+sumByType("estilam"))}</div>
+        </div>
+        <div style={{...styles.card,borderTop:"4px solid #0d9488",background:"#f0fdfa"}}>
+          <div style={{fontSize:14,color:"#0d9488",marginBottom:6,fontWeight:700}}>💰 المتبقي في الصندوق</div>
+          <div style={{fontSize:22,fontWeight:900,color:closingBalance>=0?"#0d9488":"#dc2626"}}>{SAR(closingBalance)}</div>
+        </div>
+      </div>
+
+      {/* حساب المدير والمحاسب */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
+        <div style={{...styles.card,borderTop:"4px solid #b45309"}}>
+          <div style={{fontSize:15,fontWeight:800,color:"#b45309",marginBottom:8}}>👔 حساب المدير</div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستحق (كل العقود)</span><span style={{fontWeight:700}}>{SAR(mgrEarnedAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(mgrTakenAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginTop:6,paddingTop:6,borderTop:"1px solid "+C.border}}><span style={{fontWeight:800}}>الباقي له</span><span style={{fontWeight:900,color:mgrLeft>=0?"#b45309":C.red}}>{SAR(mgrLeft)}</span></div>
+        </div>
+        <div style={{...styles.card,borderTop:"4px solid #0891b2"}}>
+          <div style={{fontSize:15,fontWeight:800,color:"#0891b2",marginBottom:8}}>🧮 حساب المحاسب</div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستحق (كل العقود)</span><span style={{fontWeight:700}}>{SAR(accEarnedAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(accTakenAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginTop:6,paddingTop:6,borderTop:"1px solid "+C.border}}><span style={{fontWeight:800}}>الباقي له</span><span style={{fontWeight:900,color:accLeft>=0?"#0891b2":C.red}}>{SAR(accLeft)}</span></div>
+        </div>
+      </div>
+
+      {/* رصيد افتتاحي يدوي (يظهر فقط لأول يوم أو إذا لم يُحدد) */}
+      <div style={{...styles.card,marginBottom:16,background:"#fffbf0",border:"1px solid "+C.gold}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+          <span style={{fontSize:14,fontWeight:700,color:"#8a6200"}}>تعيين رصيد افتتاحي يدوي لهذا اليوم (للبداية فقط):</span>
+          <input type="number" placeholder="مثال: 15000" style={{...styles.input,width:140}}
+            value={manualOpen!==undefined?manualOpen:""}
+            onChange={e=>setDailyOpen(p=>({...p,[selDay]:parseFloat(e.target.value)||0}))}/>
+          {manualOpen!==undefined && <button style={{...styles.btn(C.red),fontSize:13,padding:"4px 10px"}}
+            onClick={()=>setDailyOpen(p=>{const n={...p};delete n[selDay];return n;})}>إلغاء</button>}
+        </div>
+        <div style={{fontSize:13,color:"#1f2937",marginTop:6}}>اتركه فارغاً ليُحسب تلقائياً من متبقي اليوم السابق</div>
+      </div>
+
     </div>
   );
 }
