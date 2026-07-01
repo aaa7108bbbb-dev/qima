@@ -1018,6 +1018,33 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
 // ─── Contracts Page ──────────────────────────────────────────
 const _getPaid = (payments, cid) => (payments||[]).filter(p=>p.contractId===cid).reduce((s,p)=>s+p.amount,0);
 
+// ═══ تقييم مخاطر العميل ═══
+// يحسب عدد الأقساط المتأخرة (المستحقة وغير المدفوعة) ويعطي مستوى + لون
+const assessRisk = (c, payments) => {
+  const inst = +c.instAmt || 0;
+  const total = +c.totalInst || +c.amount || 0;
+  const paid = _getPaid(payments, c.id);
+  if(total>0 && paid>=total) return {level:"مكتمل", months:0, overdue:0, color:"#3b82f6", score:0};
+  if(inst<=0 || !c.firstInst) return {level:"—", months:0, overdue:0, color:"#9ca3af", score:0};
+  const first = new Date(c.firstInst);
+  const now = new Date();
+  const totalCount = Math.max(1, Math.round(total/inst));
+  // عدد الأقساط المفترض دفعها حتى اليوم
+  let due = (now.getFullYear()-first.getFullYear())*12 + (now.getMonth()-first.getMonth());
+  if(now.getDate() >= first.getDate()) due += 1;
+  due = Math.min(Math.max(0,due), totalCount);
+  const dueAmt = due * inst;
+  const behindAmt = Math.max(0, dueAmt - paid);
+  const monthsBehind = inst>0 ? Math.floor(behindAmt/inst) : 0;
+  // المستوى حسب شهور التأخر
+  let level, color, score;
+  if(monthsBehind<=0){ level="منتظم"; color="#16a34a"; score=1; }
+  else if(monthsBehind===1){ level="متأخر بسيط"; color="#eab308"; score=2; }
+  else if(monthsBehind===2){ level="متأخر"; color="#f97316"; score=3; }
+  else { level="متعثّر"; color="#dc2626"; score=4; }
+  return {level, months:monthsBehind, overdue:behindAmt, color, score};
+};
+
 function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate,payments,setPayments,toast,completionAlert,setCompletionAlert,onSaveNew,setInvTxList,startCollect}) {
   const [showNew,setShowNew]=useState(false);
   const [showCollect,setShowCollect]=useState(!!startCollect);
@@ -2760,6 +2787,30 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
     return amt>0?{name:c.client, num:c.num, inv:invNameOf(c.investorId), amount:amt}:null;
   }).filter(Boolean).sort((a,b)=>b.amount-a.amount);
 
+  // ═══ لوحة شغل اليوم ═══
+  const invNm = id => (investors.find(i=>String(i.id)===String(id))||{}).name || "—";
+  const today = new Date();
+  const todayStr = today.getFullYear()+"/"+String(today.getMonth()+1).padStart(2,"0")+"/"+String(today.getDate()).padStart(2,"0");
+  // المحصّل اليوم فعلياً
+  const collectedToday = (payments||[]).filter(p=>{ if(!p.date) return false; const d=new Date(p.date); return d.getFullYear()===today.getFullYear()&&d.getMonth()===today.getMonth()&&d.getDate()===today.getDate(); }).reduce((s,p)=>s+(+p.amount||0),0);
+  // العقود حسب المخاطر (غير المكتملة)
+  const withRisk = allC.map(c=>({c, r:assessRisk(c,payments)})).filter(x=>x.r.level!=="—" && x.r.level!=="مكتمل");
+  const troubled = withRisk.filter(x=>x.r.months>=2).sort((a,b)=>b.r.months-a.r.months); // متعثّر/متأخر
+  const slightLate = withRisk.filter(x=>x.r.months===1);
+  // مستحقّون هذا الأسبوع: قسطهم يحل خلال 7 أيام قادمة (تقريبياً حسب يوم أول قسط)
+  const dueSoon = allC.map(c=>{
+    const inst=+c.instAmt||0, total=+c.totalInst||+c.amount||0;
+    if(inst<=0||!c.firstInst) return null;
+    const paid=_getPaid(payments,c.id);
+    if(total>0 && paid>=total) return null;
+    const first=new Date(c.firstInst);
+    const dueDay=first.getDate();
+    const nextDue=new Date(today.getFullYear(),today.getMonth(),dueDay);
+    if(nextDue<today) nextDue.setMonth(nextDue.getMonth()+1);
+    const diffDays=Math.ceil((nextDue-today)/(1000*60*60*24));
+    return (diffDays>=0 && diffDays<=7) ? {c, days:diffDays, inst} : null;
+  }).filter(Boolean).sort((a,b)=>a.days-b.days);
+
   return (
     <div>
       {/* زر البحث السريع */}
@@ -2772,8 +2823,66 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
       {/* دفتر اليومية مدمج في الرئيسية */}
       <DailyPage daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} contracts={contracts} settings={settings} toast={toast}/>
 
-      {/* مؤشرات المحفظة اللحظية */}
-      <div style={{fontSize:20,fontWeight:900,margin:"8px 0 16px",color:C.ink,borderRight:"4px solid "+C.teal,paddingRight:12}}>💼 مؤشرات المحفظة</div>
+      {/* لوحة شغل اليوم */}
+      <div style={{fontSize:20,fontWeight:900,margin:"8px 0 16px",color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12}}>☀️ شغل اليوم — {todayStr}</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
+        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.green}}>
+          <div style={{fontSize:13,color:"#1f2937",fontWeight:700,marginBottom:6}}>💵 حصّلت اليوم</div>
+          <div style={{fontSize:22,fontWeight:900,color:C.green}}>{SAR(collectedToday)}</div>
+        </div>
+        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid #f97316"}}>
+          <div style={{fontSize:13,color:"#1f2937",fontWeight:700,marginBottom:6}}>⏰ أقساط خلال أسبوع</div>
+          <div style={{fontSize:22,fontWeight:900,color:"#f97316"}}>{dueSoon.length}</div>
+        </div>
+        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.red}}>
+          <div style={{fontSize:13,color:"#1f2937",fontWeight:700,marginBottom:6}}>🚨 يحتاجون متابعة</div>
+          <div style={{fontSize:22,fontWeight:900,color:C.red}}>{troubled.length}</div>
+        </div>
+      </div>
+
+      {/* قائمة المتابعة العاجلة */}
+      {troubled.length>0 && (
+        <div style={{...styles.panel,marginBottom:16,borderRight:"4px solid "+C.red}}>
+          <div style={{padding:"12px 16px",borderBottom:"1px solid "+C.border,fontWeight:900,color:C.red,fontSize:15}}>🚨 متابعة عاجلة ({troubled.length})</div>
+          <div style={{padding:12,display:"flex",flexDirection:"column",gap:8,maxHeight:"40vh",overflowY:"auto"}}>
+            {troubled.slice(0,15).map(({c,r})=>(
+              <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:"#fef2f2",borderRadius:8}}>
+                <div>
+                  <div style={{fontWeight:700,fontSize:14,color:C.ink}}>{c.client} <span style={{fontSize:12,color:"#6b7280"}}>#{c.num}</span></div>
+                  <div style={{fontSize:12,color:"#1f2937",marginTop:2}}>{invNm(c.investorId)}{c.cPhone?(" • "+c.cPhone):""}</div>
+                </div>
+                <div style={{textAlign:"left",whiteSpace:"nowrap"}}>
+                  <span style={{background:r.color,color:"#fff",borderRadius:12,padding:"2px 10px",fontSize:11,fontWeight:800}}>{r.level} {r.months} شهر</span>
+                  <div style={{fontSize:13,fontWeight:900,color:C.red,marginTop:4}}>{SAR(r.overdue)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* أقساط قادمة خلال أسبوع */}
+      {dueSoon.length>0 && (
+        <div style={{...styles.panel,marginBottom:16,borderRight:"4px solid #f97316"}}>
+          <div style={{padding:"12px 16px",borderBottom:"1px solid "+C.border,fontWeight:900,color:"#f97316",fontSize:15}}>⏰ أقساط تستحق خلال أسبوع ({dueSoon.length})</div>
+          <div style={{padding:12,display:"flex",flexDirection:"column",gap:8,maxHeight:"40vh",overflowY:"auto"}}>
+            {dueSoon.slice(0,15).map(({c,days,inst})=>(
+              <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:"#fff7ed",borderRadius:8}}>
+                <div>
+                  <div style={{fontWeight:700,fontSize:14,color:C.ink}}>{c.client} <span style={{fontSize:12,color:"#6b7280"}}>#{c.num}</span></div>
+                  <div style={{fontSize:12,color:"#1f2937",marginTop:2}}>{invNm(c.investorId)}</div>
+                </div>
+                <div style={{textAlign:"left",whiteSpace:"nowrap"}}>
+                  <span style={{fontSize:12,color:"#f97316",fontWeight:800}}>{days===0?"اليوم":days===1?"غداً":("بعد "+days+" يوم")}</span>
+                  <div style={{fontSize:13,fontWeight:900,color:C.ink,marginTop:4}}>{SAR(inst)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* مؤشرات المحفظة اللحظية */}      <div style={{fontSize:20,fontWeight:900,margin:"8px 0 16px",color:C.ink,borderRight:"4px solid "+C.teal,paddingRight:12}}>💼 مؤشرات المحفظة</div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:14,marginBottom:24}}>
         <div onClick={()=>setDetail({title:"💵 المحصّل هذا الشهر",color:C.green,rows:collectedList,mode:"collected"})}
           style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.green,cursor:"pointer"}}>
@@ -3778,6 +3887,7 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
     const paid = _getPaid(payments, c.id);
     const left = Math.max(0,(c.totalInst||0)-paid);
     const pct = c.totalInst>0 ? Math.min(100,Math.round(paid/c.totalInst*100)) : 0;
+    const risk = assessRisk(c, payments);
     return (
       <div style={{...styles.panel,marginBottom:12,borderRight:`4px solid ${isDone?C.green:C.teal}`}}>
         <div style={{padding:"14px 18px"}}>
@@ -3786,9 +3896,16 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
               <div style={{fontWeight:800,fontSize:17,color:C.ink}}>{c.client}</div>
               <div style={{fontSize:14,color:"#1f2937"}}>عقد #{c.num} | {c.date} | {inv?.name||"—"}</div>
             </div>
-            <span style={styles.badge(isDone?C.greenLt:C.tealLt, isDone?C.green:C.teal)}>
-              {isDone?"✅ منتهي":"⏳ ساري"}
-            </span>
+            <div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end"}}>
+              <span style={styles.badge(isDone?C.greenLt:C.tealLt, isDone?C.green:C.teal)}>
+                {isDone?"✅ منتهي":"⏳ ساري"}
+              </span>
+              {!isDone && risk.level!=="—" && (
+                <span style={{background:risk.color,color:"#fff",borderRadius:20,padding:"3px 12px",fontSize:12,fontWeight:800,whiteSpace:"nowrap"}}>
+                  ● {risk.level}{risk.months>0?(" ("+risk.months+" شهر)"):""}
+                </span>
+              )}
+            </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:10,fontSize:15}}>
             <div style={{background:"#f8f8f8",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
