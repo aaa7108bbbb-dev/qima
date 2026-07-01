@@ -191,7 +191,9 @@ function printStatement(elementId) {
 
 
 // ─── helpers ───────────────────────────────────────────────
-const SAR = n => Math.round(+(n||0)).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0}) + " ر.س";
+const SAR = n => Math.round(+(n||0)).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
+// رمز المستثمر: يُعرض الرمز إن وُجد، وإلا الاسم الكامل
+const invLabel = inv => (inv && inv.code && String(inv.code).trim()) ? String(inv.code).trim() : (inv ? inv.name : "—");
 const NUM = n => (+(n||0)).toLocaleString("en-US");
 
 function calcContract(amount, s = {profit:50, admin:2.5, acc:10, inst:10}) {
@@ -767,7 +769,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
             <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المستثمر (الصندوق) *</label>
             <select style={styles.select} value={form.investorId} onChange={e=>set("investorId",e.target.value)}>
               <option value="">— اختر المستثمر —</option>
-              {investors.map(i=><option key={i.id} value={i.id}>{i.name} ({i.fund})</option>)}
+              {investors.map(i=><option key={i.id} value={i.id}>{invLabel(i)} ({i.fund})</option>)}
             </select>
           </div>
 
@@ -998,7 +1000,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
                   <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المستثمر</label>
                   <select style={styles.select} value={form.deductInvestorId||""} onChange={e=>set("deductInvestorId",e.target.value)}>
                     <option value="">اختر مستثمر</option>
-                    {investors.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
+                    {investors.map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
                   </select>
                 </div>
               </div>
@@ -1110,7 +1112,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       const inv = investors.find(i=>String(i.id)===String(c.investorId));
       const paid = (payments||[]).filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
       const tot = +c.totalInst||+c.amount||0;
-      return [c.num||"", c.client||"", c.idNum||"", c.cPhone||"", inv?inv.name:"", c.amount||0, tot, c.instAmt||0, paid, Math.max(0,tot-paid), c.firstInst?fmtDate(c.firstInst):"", c.gName||""];
+      return [c.num||"", c.client||"", c.idNum||"", c.cPhone||"", inv?invLabel(inv):"", c.amount||0, tot, c.instAmt||0, paid, Math.max(0,tot-paid), c.firstInst?fmtDate(c.firstInst):"", c.gName||""];
     });
     const head = ["رقم العقد","العميل","الهوية","الجوال","المستثمر","النقدي","الإجمالي","القسط","الواصل","المتبقي","أول قسط","الكفيل"];
     const esc = v => '"'+String(v).replace(/"/g,'""')+'"';
@@ -1193,7 +1195,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         </div>
         <select style={{...styles.select,marginBottom:10}} value={collectInv} onChange={e=>setCollectInv(e.target.value)}>
           <option value="all">👥 كل المستثمرين</option>
-          {investors.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
+          {investors.map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
         </select>
         <input style={{...styles.input,marginBottom:14}} placeholder="🔍 بحث بالاسم أو الجوال..." value={collectSearch} onChange={e=>setCollectSearch(e.target.value)}/>
         {activeForCollect.length===0 ? (
@@ -1208,7 +1210,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8,flexWrap:"wrap",gap:6}}>
                     <div>
                       <div style={{fontSize:16,fontWeight:800}}>{c.client} {c.contractType==="defer"&&<span style={{fontSize:12,color:"#a87520"}}>🕒 مؤجل</span>}</div>
-                      <div style={{fontSize:13,color:"#1f2937"}}>{inv?inv.name:"—"} · عقد {c.num}</div>
+                      <div style={{fontSize:13,color:"#1f2937"}}>{inv?invLabel(inv):"—"} · عقد {c.num}</div>
                     </div>
                     {c.lateAmt>0
                       ? <span style={styles.badge(C.redLt,C.red)}>🔴 متأخر {SAR(c.lateAmt)}</span>
@@ -1372,7 +1374,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         <input style={{...styles.input,width:200,fontSize:15}} placeholder="🔍 بحث..." value={search} onChange={e=>setSearch(e.target.value)}/>
         <select style={{...styles.input,width:190,fontSize:15,cursor:"pointer"}} value={filterInv} onChange={e=>setFilterInv(e.target.value)}>
           <option value="">🏢 كل المستثمرين</option>
-          {investors.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
+          {investors.map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
         </select>
         {filterInv && <button style={{...styles.btn(C.red,"#fff"),fontSize:13,padding:"6px 10px"}} onClick={()=>setFilterInv("")}>✕ إلغاء الفلتر</button>}
         <button style={{...styles.btn(C.green,"#fff"),fontSize:14,padding:"6px 12px"}} onClick={exportExcel}>⬇️ تصدير Excel</button>
@@ -1395,13 +1397,13 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         <div style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
             <thead>
-              <tr>{["#","التاريخ","العميل","الهوية","العمل","الكفيل","البضاعة","العدد","الفئة","المستثمر","القيمة","القسط","محصّل","متبقي","أول قسط","آخر قسط","الربح","الرسوم","ع.محاسبين","ن.مؤسسة","صافي المستثمر",""].map(h=>(
+              <tr>{["#","التاريخ","العميل","الهوية","العمل","الكفيل","البضاعة","العدد","المستثمر","القيمة","الإجمالي","القسط","أول قسط","الربح",""].map(h=>(
                 <th key={h} style={styles.th}>{h}</th>
               ))}</tr>
             </thead>
             <tbody>
               {filtered.length===0 ? (
-                <tr><td colSpan={18} style={{...styles.td,textAlign:"center",padding:40,color:"#1f2937"}}>لا توجد عقود — أضف عقداً جديداً</td></tr>
+                <tr><td colSpan={15} style={{...styles.td,textAlign:"center",padding:40,color:"#1f2937"}}>لا توجد عقود — أضف عقداً جديداً</td></tr>
               ) : filtered.map((c,i)=>{
                 const inv=investors.find(x=>String(x.id)===String(c.investorId));
                 const r=calcContract(c.amount,settings);
@@ -1415,19 +1417,12 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                     <td style={{...styles.td,color:C.gold,fontWeight:600,whiteSpace:"nowrap"}}>{c.gName||"—"}</td>
                     <td style={styles.td}><span style={styles.badge(C.tealLt,C.teal)}>{c.goods||"—"}</span></td>
                     <td style={{...styles.td,textAlign:"center",fontWeight:700}}>{c.qty||"—"}</td>
-                    <td style={styles.td}>{c.category||"—"}</td>
-                    <td style={styles.td}>{inv?inv.name:"—"}</td>
+                    <td style={styles.td}>{inv?invLabel(inv):"—"}</td>
                     <td style={styles.td}>{SAR(c.amount)}</td>
+                    <td style={{...styles.td,fontWeight:800,color:C.ink}}>{SAR(c.totalInst||0)}</td>
                     <td style={{...styles.td,color:C.teal,fontWeight:800}}>{SAR(c.instAmt||0)}</td>
-                    <td style={{...styles.td,color:C.green,fontWeight:700}}>{SAR(_getPaid(payments, c.id))}</td>
-                    <td style={{...styles.td,color:(c.totalInst||0)-_getPaid(payments, c.id)<=0?C.green:C.red,fontWeight:700}}>{SAR(Math.max(0,(c.totalInst||0)-_getPaid(payments, c.id)))}</td>
                     <td style={{...styles.td,color:C.green,fontSize:14}}>{c.firstInst||"—"}</td>
-                    <td style={{...styles.td,color:C.gold,fontSize:14}}>{c.lastInst||"—"}</td>
                     <td style={{...styles.td,color:C.green}}>{SAR(r.profit)}</td>
-                    <td style={{...styles.td,color:C.red}}>{SAR(r.admin)}</td>
-                    <td style={{...styles.td,color:C.red}}>{SAR(r.acc)}</td>
-                    <td style={{...styles.td,color:C.gold}}>{SAR(r.inst)}</td>
-                    <td style={{...styles.td,color:C.teal,fontWeight:800}}>{SAR(r.net)}</td>
                     <td style={{...styles.td,whiteSpace:"nowrap"}}>
                       <button style={{...styles.btn(C.green),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>{setPayModal(c);setPayAmount("");setPayNote("");}}>💳 سدّد</button>
                       <button style={{...styles.btn(C.purple),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>setContractDoc(c)}>📄</button>
@@ -1551,7 +1546,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المستثمر (الصندوق)</label>
               <select style={styles.input} value={editForm.investorId||""} onChange={e=>setEditForm(f=>({...f,investorId:e.target.value}))}>
                 <option value="">— اختر المستثمر —</option>
-                {investors.map(i=><option key={i.id} value={String(i.id)}>{i.name} ({i.fund})</option>)}
+                {investors.map(i=><option key={i.id} value={String(i.id)}>{invLabel(i)} ({i.fund})</option>)}
               </select>
             </div>
             <div style={{gridColumn:"1/-1"}}>
@@ -1991,7 +1986,7 @@ function CommissionsPage({contracts, investors, settings}) {
     return {
       num: c.num||"—",
       client: c.client,
-      investor: inv?inv.name:"—",
+      investor: inv?invLabel(inv):"—",
       goods: c.goods||"—",
       amount: c.amount,
       profit: r.profit,
@@ -2144,12 +2139,12 @@ function DeductionsSheet({contracts, investors, payments}){
     const inv=investors.find(i=>String(i.id)===String(c.investorId));
     const paid=_getPaid(payments,c.id);
     const left=Math.max(0,(c.totalInst||0)-paid);
-    return {...c, invName:inv?inv.name:"—", paid, left};
+    return {...c, invName:inv?invLabel(inv):"—", paid, left};
   });
   const totalInst=rows.reduce((s,c)=>s+(c.instAmt||0),0);
 
   const printSheet=()=>{
-    const fmt=n=>Math.round(+(n||0)).toLocaleString("en-US")+" ر.س";
+    const fmt=n=>Math.round(+(n||0)).toLocaleString("en-US");
     let body=rows.map((c,i)=>`<tr><td>${i+1}</td><td>${c.client}</td><td>${c.bankAccount||"—"}</td><td>${c.invName}</td><td class="amt">${fmt(c.instAmt)}</td><td style="width:60px"></td></tr>`).join("");
     const win=window.open("","_blank");
     win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>كشف الاستقطاعات</title>
@@ -2230,7 +2225,7 @@ function FundsPanel({investors, contracts, settings, setInvestors, toast}){
                 <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                   {fundInvs.map(inv=>(
                     <button key={inv.id} style={{...styles.btn("#f0f4ff","#3b82f6"),fontSize:14,padding:"4px 10px"}}
-                      onClick={()=>setEditFund({inv,form:{name:inv.name,fund:inv.fund,capital:String(inv.capital)}})}>
+                      onClick={()=>setEditFund({inv,form:{name:inv.name,code:inv.code||"",fund:inv.fund,capital:String(inv.capital)}})}>
                       ✏️ {inv.fund}
                     </button>
                   ))}
@@ -2244,7 +2239,7 @@ function FundsPanel({investors, contracts, settings, setInvestors, toast}){
       <Modal open={!!editFund} onClose={()=>setEditFund(null)} title="✏️ تعديل المستثمر">
         {editFund && (
           <div>
-            {[["الاسم","name","text"],["الصندوق","fund","text"],["رأس المال","capital","number"]].map(([l,k,t])=>(
+            {[["الاسم","name","text"],["الرمز (اختياري)","code","text"],["الصندوق","fund","text"],["رأس المال","capital","number"]].map(([l,k,t])=>(
               <div key={k} style={{marginBottom:12}}>
                 <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
                 <input style={styles.input} type={t} value={editFund.form[k]} onChange={e=>setEditFund(f=>({...f,form:{...f.form,[k]:e.target.value}}))}/>
@@ -2392,7 +2387,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
         <label style={{fontWeight:700,fontSize:15,whiteSpace:"nowrap"}}>المستثمر:</label>
         <select style={{...styles.select,flex:1,maxWidth:300,borderColor:C.teal,color:C.teal,fontWeight:700}}
           value={selInv||""} onChange={e=>{const v=e.target.value;const special=(v==="zakat"||v==="pending"||v==="loans");setInvSubTab(special?v:"inv");setSelInv(special?v:parseInt(v));}}>
-          {investors.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
+          {investors.map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
           <option value="loans">🤝 السلف</option>
           <option value="zakat">🌙 صندوق الزكاة</option>
           <option value="pending">📌 المتبقي</option>
@@ -2451,7 +2446,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
       <div style={styles.panel}>
         <div style={styles.panelHdr}>
           <h3 style={{margin:0,fontSize:15,fontWeight:700}}>
-            📋 كشف حساب — {inv?.name||""}
+            📋 كشف حساب — {inv?invLabel(inv):""}
           </h3>
           <div style={{display:"flex",gap:10,fontSize:15}}>
             <span style={{color:C.green,fontWeight:700}}>إجمالي الإيداعات: {SAR(totalDeposits)}</span>
@@ -3045,7 +3040,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
 // ─── Daily Cashbook Page ─────────────────────────────────────
 function printDailyReport(day, rows, opening, closing, sumByType){
   const dLabel = ymd => { if(!ymd) return ""; const [y,m,d]=ymd.split("-"); return d+"/"+parseInt(m)+"/"+y; };
-  const fmt = n => Math.round(+(n||0)).toLocaleString("en-US")+" ر.س";
+  const fmt = n => Math.round(+(n||0)).toLocaleString("en-US");
   const labels = {sadad:"سداد",masroof:"مصروف",sahb:"سحب",estilam:"استلمت نقدي",mgr:"استلام مدير",acc:"استلام محاسب"};
   const signs = {sadad:"+",masroof:"−",sahb:"−",estilam:"−",mgr:"−",acc:"−"};
   let rowsHtml = rows.map(r=>`<tr><td>${labels[r.type]||r.type}</td><td>${r.desc||"—"}</td><td class="amt">${signs[r.type]||""}${fmt(r.amount)}</td></tr>`).join("");
@@ -3313,13 +3308,13 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
   const [stmtInv,setStmtInv]=useState(null);
   const [yearInv,setYearInv]=useState(null);
   const [stmtType,setStmtType]=useState("brief"); // brief | detailed
-  const [form,setForm]=useState({name:"",fund:"",capital:"",date:""});
+  const [form,setForm]=useState({name:"",code:"",fund:"",capital:"",date:""});
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
   const save=()=>{
     if(!form.name){toast("أدخل اسم المستثمر","warn");return;}
     onAdd({id:Date.now(),...form,capital:parseFloat(form.capital)||0});
     toast("✅ تمت إضافة "+form.name);
-    setForm({name:"",fund:"",capital:"",date:""});setShow(false);
+    setForm({name:"",code:"",fund:"",capital:"",date:""});setShow(false);
   };
   return (
     <div>
@@ -3332,7 +3327,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
           <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>إضافة مستثمر جديد</h3></div>
           <div style={{padding:"16px 20px"}}>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12,marginBottom:14}}>
-              {[["اسم المستثمر *","name","text","الاسم الكامل"],["الصندوق","fund","text","اسم الصندوق"],["رأس المال (ر.س)","capital","number","مثال: 100000"],["تاريخ الدخول","date","date",""]].map(([l,k,t,p])=>(
+              {[["اسم المستثمر *","name","text","الاسم الكامل"],["الرمز (اختياري)","code","text","مثال: ف3 أو ل.ن"],["الصندوق","fund","text","اسم الصندوق"],["رأس المال (ر.س)","capital","number","مثال: 100000"],["تاريخ الدخول","date","date",""]].map(([l,k,t,p])=>(
                 <div key={k}>
                   <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
                   <input style={styles.input} type={t} placeholder={p} value={form[k]} onChange={e=>set(k,e.target.value)}/>
@@ -3750,7 +3745,7 @@ function GoodsPage({investors, contracts, toast}) {
       id:"c_"+c.id, date:c.date, contractNum:c.num,
       contractAmount:parseFloat(c.amount)||0,
       client:c.client,
-      investor:inv?inv.name:"—",
+      investor:inv?invLabel(inv):"—",
       supportClient:(c.deductEnabled&&c.deductAmount)?parseFloat(c.deductAmount)||0:0,
       supportAcc:0,
       withdrawnQty:parseInt(c.qty)||0,
@@ -3920,7 +3915,7 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
             <div>
               <div style={{fontWeight:800,fontSize:17,color:C.ink}}>{c.client}</div>
-              <div style={{fontSize:14,color:"#1f2937"}}>عقد #{c.num} | {c.date} | {inv?.name||"—"}</div>
+              <div style={{fontSize:14,color:"#1f2937"}}>عقد #{c.num} | {c.date} | {inv?invLabel(inv):"—"}</div>
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end"}}>
               <span style={styles.badge(isDone?C.greenLt:C.tealLt, isDone?C.green:C.teal)}>
