@@ -1045,6 +1045,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     }
   };
   const [search,setSearch] = useState("");
+  const [filterInv,setFilterInv] = useState("");
   const [bond,setBond] = useState(null);
   const [bondG,setBondG] = useState(null);
   const [cheque,setCheque] = useState(null);
@@ -1054,8 +1055,9 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   const [contractDoc,setContractDoc] = useState(null);
   const [invSearch,setInvSearch] = useState("");
   const [reportMode,setReportMode] = useState("detailed"); // detailed or brief
-  const allFiltered = contracts.filter(c=>!c.deleted && (c.client.includes(search)||(investors.find(i=>String(i.id)===String(c.investorId))?.name||"").includes(search)));
-  const deletedList = contracts.filter(c=>c.deleted && (c.client.includes(search)||(investors.find(i=>String(i.id)===String(c.investorId))?.name||"").includes(search)));
+  const _matchInv = c => !filterInv || String(c.investorId)===String(filterInv);
+  const allFiltered = contracts.filter(c=>!c.deleted && _matchInv(c) && (c.client.includes(search)||(investors.find(i=>String(i.id)===String(c.investorId))?.name||"").includes(search)));
+  const deletedList = contracts.filter(c=>c.deleted && _matchInv(c) && (c.client.includes(search)||(investors.find(i=>String(i.id)===String(c.investorId))?.name||"").includes(search)));
   const isDefer = c => c.contractType==="defer";
   const deferList = allFiltered.filter(isDefer);
   // الشهري فقط في active/done، المؤجل في تبويبه
@@ -1322,6 +1324,11 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,flexWrap:"wrap",gap:8}}>
         <div style={{fontSize:19,fontWeight:800}}>📋 العقود</div>
         <input style={{...styles.input,width:200,fontSize:15}} placeholder="🔍 بحث..." value={search} onChange={e=>setSearch(e.target.value)}/>
+        <select style={{...styles.input,width:190,fontSize:15,cursor:"pointer"}} value={filterInv} onChange={e=>setFilterInv(e.target.value)}>
+          <option value="">🏢 كل المستثمرين</option>
+          {investors.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
+        </select>
+        {filterInv && <button style={{...styles.btn(C.red,"#fff"),fontSize:13,padding:"6px 10px"}} onClick={()=>setFilterInv("")}>✕ إلغاء الفلتر</button>}
       </div>
       <div style={{display:"flex",gap:8,marginBottom:16}}>
         <button onClick={()=>setStatusTab("active")} style={{...styles.btn(statusTab==="active"?C.teal:"#e5e7eb",statusTab==="active"?"#fff":C.ink),fontSize:15,padding:"6px 14px"}}>
