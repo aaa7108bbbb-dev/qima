@@ -3165,19 +3165,19 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
 
   return (
     <div>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:10}}>
-        <div style={{fontSize:19,fontWeight:800}}>📒 دفتر اليومية</div>
-        <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-          <label style={{fontWeight:700,fontSize:15}}>اليوم:</label>
-          <input type="date" style={{...styles.input,width:"auto"}} value={selDay} onChange={e=>setSelDay(e.target.value)}/>
-          <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px"}} onClick={()=>printDailyReport(selDay,dayRows,openingBalance,closingBalance,sumByType)}>🖨️ طباعة اليوم</button>
-        </div>
-      </div>
-
 
       {/* إضافة حركة */}
       <div style={{...styles.panel,marginBottom:16}}>
-        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>➕ إضافة حركة</h3></div>
+        <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+          <h3 style={{margin:0,fontSize:16,fontWeight:800}}>📒 دفتر اليومية</h3>
+          <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+            <div style={{display:"flex",alignItems:"center",gap:6,background:"#fff",border:"2px solid "+C.gold,borderRadius:10,padding:"6px 12px",boxShadow:"0 2px 6px rgba(0,0,0,0.08)"}}>
+              <span style={{fontSize:16}}>📅</span>
+              <input type="date" style={{border:"none",outline:"none",fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:700,color:C.ink,background:"transparent",cursor:"pointer"}} value={selDay} onChange={e=>setSelDay(e.target.value)}/>
+            </div>
+            <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px"}} onClick={()=>printDailyReport(selDay,dayRows,openingBalance,closingBalance,sumByType)}>🖨️ طباعة اليوم</button>
+          </div>
+        </div>
         <div style={{padding:"14px 18px"}}>
           <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
             {DAILY_TYPES.map(t=>(
@@ -4673,6 +4673,7 @@ function App() {
   }, []);
 
   const TABS=[
+    {id:"search",label:"🔍",name:"بحث",color:"#0d9488"},
     {id:"dashboard",label:"🏠",name:"الرئيسية",color:"#1e3a5f"},
     {id:"clients",label:"👥",name:"العملاء",color:"#0891b2"},
     {id:"overdue",label:"⚠️",name:"المتأخرون",color:"#b91c1c"},
