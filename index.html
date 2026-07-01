@@ -2940,7 +2940,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
 
       {/* مؤشرات المحفظة + منتقي الشهر الموحّد */}
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,margin:"8px 0 16px",flexWrap:"wrap"}}>
-        <div style={{fontSize:20,fontWeight:900,color:C.ink,borderRight:"4px solid "+C.teal,paddingRight:12}}>💼 مؤشرات المحفظة</div>
+        <div style={{fontSize:20,fontWeight:900,color:C.ink,borderRight:"4px solid "+C.teal,paddingRight:12}}>💼 مؤشرات المحفظة الشهرية</div>
         <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,background:"#fff",border:"2px solid "+C.teal,borderRadius:12,padding:"6px 14px",boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
             <span style={{fontSize:16}}>📅</span>
@@ -2971,11 +2971,6 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
           <div style={{fontSize:24,fontWeight:900,color:"#9a6a00"}}>{SAR(dueThisMonth)}</div>
           <div style={{fontSize:12,color:C.teal,marginTop:4,fontWeight:700}}>عرض التفاصيل ({dueList.length}) ›</div>
         </div>
-      </div>
-
-      <div style={{fontSize:20,fontWeight:900,margin:"28px 0 16px",color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12}}>📊 ملخص الشهر</div>
-
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:14,marginBottom:24}}>
         <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.teal}}>
           <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>💼 قيمة العقود</div>
           <div style={{fontSize:24,fontWeight:900,color:C.teal}}>{SAR(tot.amt)}</div>
