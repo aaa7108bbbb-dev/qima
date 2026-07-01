@@ -2358,7 +2358,6 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
     {key:"inv",   label:"💰 الحسابات"},
     {key:"funds", label:"🏦 الصناديق"},
     {key:"comm",  label:"📑 العمولات"},
-    {key:"deduct",label:"🏦 الاستقطاعات"},
   ];
 
   return (
@@ -2381,7 +2380,6 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
       {subTab==="list" && <InvestorsPage investors={investors} contracts={contracts} settings={settings} payments={payments} txList={txList} onAdd={inv=>setInvestors(p=>[...p,inv])} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} toast={toast}/>}
       {subTab==="comm" && <CommissionsPage contracts={contracts} investors={investors} settings={settings}/>}
       {subTab==="funds" && <FundsPanel investors={investors} contracts={contracts} settings={settings} setInvestors={setInvestors} toast={toast}/>}
-      {subTab==="deduct" && <DeductionsSheet contracts={contracts} investors={investors} payments={payments}/>}
 
       {/* Investor accounts sub-page */}
       {subTab==="inv" && <>
@@ -4027,6 +4025,7 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
 
 // ─── Clients Page ────────────────────────────────────────────────
 function ClientsPage({contracts, investors, payments, goCollect}) {
+  const [mainTab, setMainTab] = React.useState("clients"); // clients | deduct
   const [mode, setMode] = React.useState("client"); // client | investor
   const [q, setQ] = React.useState("");
   const [selContract, setSelContract] = React.useState(null);
@@ -4079,15 +4078,15 @@ function ClientsPage({contracts, investors, payments, goCollect}) {
     w.document.close();
   };
 
-  // نتائج بحث الزبون
+  // نتائج بحث الزبون (لو ما فيه بحث → كل الزبائن)
   const clientResults = q.trim()
     ? active.filter(c => (c.client||"").includes(q.trim()) || String(c.num||"").includes(q.trim()) || (c.cPhone||"").includes(q.trim()))
-    : [];
+    : active.slice().sort((a,b)=>(a.client||"").localeCompare(b.client||"","ar"));
 
-  // نتائج بحث المستثمر
+  // نتائج بحث المستثمر (لو ما فيه بحث → كل المستثمرين)
   const investorResults = q.trim()
     ? investors.filter(i => (i.name||"").includes(q.trim()) || (i.fund||"").includes(q.trim()))
-    : [];
+    : investors.slice();
 
   const investorContracts = selInvestor
     ? active.filter(c => String(c.investorId) === String(selInvestor.id))
@@ -4097,6 +4096,15 @@ function ClientsPage({contracts, investors, payments, goCollect}) {
 
   return (
     <div style={styles.main}>
+      {/* التبويبات الداخلية */}
+      <div style={{display:"flex",gap:0,marginBottom:16,background:C.white,borderRadius:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",width:"fit-content"}}>
+        <button onClick={()=>setMainTab("clients")} style={{fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:700,padding:"10px 18px",border:"none",cursor:"pointer",background:mainTab==="clients"?C.teal:C.white,color:mainTab==="clients"?"#fff":C.ink2,whiteSpace:"nowrap"}}>👥 العملاء</button>
+        <button onClick={()=>setMainTab("deduct")} style={{fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:700,padding:"10px 18px",border:"none",cursor:"pointer",background:mainTab==="deduct"?C.teal:C.white,color:mainTab==="deduct"?"#fff":C.ink2,whiteSpace:"nowrap"}}>🏦 الاستقطاعات</button>
+      </div>
+
+      {mainTab==="deduct" && <DeductionsSheet contracts={contracts} investors={investors} payments={payments}/>}
+
+      {mainTab==="clients" && <>
       <div style={styles.panel}>
         <div style={styles.panelHdr}>
           <h2 style={{margin:0,fontSize:20,fontWeight:900,color:C.ink}}>👥 العملاء</h2>
@@ -4115,11 +4123,13 @@ function ClientsPage({contracts, investors, payments, goCollect}) {
             placeholder={mode==="client" ? "اكتب اسم الزبون أو رقم العقد أو الجوال..." : "اكتب اسم المستثمر أو الصندوق..."}
             style={{...styles.input, marginBottom:14}}/>
 
-          {/* نتائج بحث الزبون */}
-          {mode==="client" && q.trim() && !selContract && (
+          {/* نتائج/قائمة الزبائن */}
+          {mode==="client" && !selContract && (
             clientResults.length === 0
               ? <div style={{padding:14,textAlign:"center",color:"#333"}}>لا توجد نتائج</div>
-              : <div style={{border:"1px solid "+C.border,borderRadius:8,overflow:"hidden"}}>
+              : <div>
+                  <div style={{fontSize:13,color:"#6b7280",marginBottom:8,fontWeight:700}}>{q.trim()?("نتائج البحث: "+clientResults.length):("كل الزبائن: "+clientResults.length)}</div>
+                  <div style={{border:"1px solid "+C.border,borderRadius:8,overflow:"hidden",maxHeight:"60vh",overflowY:"auto"}}>
                   {clientResults.map(c=>(
                     <div key={c.id} onClick={()=>setSelContract(c)}
                       style={{padding:12,borderBottom:"1px solid "+C.border,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -4130,14 +4140,17 @@ function ClientsPage({contracts, investors, payments, goCollect}) {
                       <span style={{color:C.teal,fontWeight:700}}>عرض ›</span>
                     </div>
                   ))}
+                  </div>
                 </div>
           )}
 
           {/* نتائج بحث المستثمر */}
-          {mode==="investor" && q.trim() && !selInvestor && (
+          {mode==="investor" && !selInvestor && (
             investorResults.length === 0
               ? <div style={{padding:14,textAlign:"center",color:"#333"}}>لا توجد نتائج</div>
-              : <div style={{border:"1px solid "+C.border,borderRadius:8,overflow:"hidden"}}>
+              : <div>
+                  <div style={{fontSize:13,color:"#6b7280",marginBottom:8,fontWeight:700}}>{q.trim()?("نتائج البحث: "+investorResults.length):("كل المستثمرين: "+investorResults.length)}</div>
+                  <div style={{border:"1px solid "+C.border,borderRadius:8,overflow:"hidden",maxHeight:"60vh",overflowY:"auto"}}>
                   {investorResults.map(i=>(
                     <div key={i.id} onClick={()=>setSelInvestor(i)}
                       style={{padding:12,borderBottom:"1px solid "+C.border,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -4148,6 +4161,7 @@ function ClientsPage({contracts, investors, payments, goCollect}) {
                       <span style={{color:C.teal,fontWeight:700}}>عرض ›</span>
                     </div>
                   ))}
+                  </div>
                 </div>
           )}
         </div>
@@ -4272,6 +4286,7 @@ function ClientsPage({contracts, investors, payments, goCollect}) {
           </div>
         );
       })()}
+      </>}
     </div>
   );
 }
