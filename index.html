@@ -2200,6 +2200,75 @@ function DeductionsSheet({contracts, investors, payments}){
   );
 }
 
+// ─── Funds Panel (الصناديق) ──────────────────────────────────
+function FundsPanel({investors, contracts, settings, setInvestors, toast}){
+  const [editFund,setEditFund] = React.useState(null);
+  // عقود الشهر المالي الحالي (لحساب فوائد هذا الشهر)
+  const curYM = fiscalYM(new Date());
+  const mc = contracts.filter(c=>fiscalYM(c.date)===curYM);
+  return (
+    <div>
+      <div style={styles.panel}>
+        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>🏦 الصناديق</h3></div>
+        <div style={{padding:"14px 18px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:12}}>
+          {[...new Set(investors.map(i=>i.fund))].map(fund=>{
+            const cap=investors.filter(i=>i.fund===fund).reduce((s,i)=>s+i.capital,0);
+            const fNet=mc.filter(c=>(investors.find(i=>String(i.id)===String(c.investorId))?.fund)===fund).reduce((s,c)=>s+calcContract(c.amount,settings).net,0);
+            const fundInvs = investors.filter(i=>i.fund===fund);
+            return (
+              <div key={fund} style={{padding:"14px",border:"1px solid "+C.border,borderRadius:10,background:"#fcfcfd"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontWeight:800,fontSize:16,color:"#1a1a2e",marginBottom:4}}>{fundInvs.map(x=>x.name).join("، ")}</div>
+                    <div style={{fontWeight:900,fontSize:22,color:cap>=0?C.green:C.red}}>{SAR(cap)}</div>
+                  </div>
+                  <div style={{textAlign:"left"}}>
+                    <div style={{fontSize:13,color:"#1f2937",marginBottom:4}}>فوائد هذا الشهر</div>
+                    <div style={{fontWeight:900,fontSize:19,color:fNet>=0?C.green:C.red}}>{SAR(fNet)}</div>
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {fundInvs.map(inv=>(
+                    <button key={inv.id} style={{...styles.btn("#f0f4ff","#3b82f6"),fontSize:14,padding:"4px 10px"}}
+                      onClick={()=>setEditFund({inv,form:{name:inv.name,fund:inv.fund,capital:String(inv.capital)}})}>
+                      ✏️ {inv.fund}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <Modal open={!!editFund} onClose={()=>setEditFund(null)} title="✏️ تعديل المستثمر">
+        {editFund && (
+          <div>
+            {[["الاسم","name","text"],["الصندوق","fund","text"],["رأس المال","capital","number"]].map(([l,k,t])=>(
+              <div key={k} style={{marginBottom:12}}>
+                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
+                <input style={styles.input} type={t} value={editFund.form[k]} onChange={e=>setEditFund(f=>({...f,form:{...f.form,[k]:e.target.value}}))}/>
+              </div>
+            ))}
+            <div style={{display:"flex",gap:8,marginTop:8}}>
+              <button style={{...styles.btn(C.teal,"#fff"),flex:1}} onClick={()=>{
+                setInvestors(p=>p.map(i=>i.id===editFund.inv.id?{...i,...editFund.form,capital:parseFloat(editFund.form.capital)||0}:i));
+                setEditFund(null); toast&&toast("✅ تم الحفظ");
+              }}>💾 حفظ</button>
+              <button style={{...styles.btn(C.red,"#fff")}} onClick={()=>{
+                if(window.confirm("حذف هذا المستثمر؟")){
+                  setInvestors(p=>p.filter(i=>i.id!==editFund.inv.id));
+                  setEditFund(null); toast&&toast("🗑 تم الحذف");
+                }
+              }}>🗑 حذف</button>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
+
 function AccountsPage({contracts, investors, setInvestors, settings, txList, setTxList, loans, setLoans, zakatTx, setZakatTx, pending, setPending, payments, toast}) {
   const [subTab, setSubTab] = useState("inv");
   const [selInv, setSelInv] = useState(investors[0]?.id||null);
@@ -2287,6 +2356,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
   const subTabs = [
     {key:"list",  label:"👥 المستثمرون"},
     {key:"inv",   label:"💰 الحسابات"},
+    {key:"funds", label:"🏦 الصناديق"},
     {key:"comm",  label:"📑 العمولات"},
     {key:"deduct",label:"🏦 الاستقطاعات"},
   ];
@@ -2310,6 +2380,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
       {/* Commissions sub-page */}
       {subTab==="list" && <InvestorsPage investors={investors} contracts={contracts} settings={settings} payments={payments} txList={txList} onAdd={inv=>setInvestors(p=>[...p,inv])} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} toast={toast}/>}
       {subTab==="comm" && <CommissionsPage contracts={contracts} investors={investors} settings={settings}/>}
+      {subTab==="funds" && <FundsPanel investors={investors} contracts={contracts} settings={settings} setInvestors={setInvestors} toast={toast}/>}
       {subTab==="deduct" && <DeductionsSheet contracts={contracts} investors={investors} payments={payments}/>}
 
       {/* Investor accounts sub-page */}
@@ -2730,7 +2801,6 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
 
 // ─── Dashboard ───────────────────────────────────────────────
 function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dailyOpen,setDailyOpen,toast,setPage,payments}) {
-  const [editFund,setEditFund] = useState(null); // {inv, form}
   const [detail,setDetail] = useState(null); // {title, color, rows, mode}
   // Period: starts 21st of month, ends 20th of next month
   const getPeriod = (dateStr) => fiscalYM(dateStr);
@@ -2922,42 +2992,6 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
         <KpiCard label="عدد العقود" value={NUM(mc.length)}/>
       </div>
 
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:16,marginBottom:20}}>
-
-        <div style={styles.panel}>
-          <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>🏦 الصناديق</h3></div>
-          <div style={{padding:"14px 18px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:12}}>
-            {[...new Set(investors.map(i=>i.fund))].map(fund=>{
-              const cap=investors.filter(i=>i.fund===fund).reduce((s,i)=>s+i.capital,0);
-              const fNet=mc.filter(c=>(investors.find(i=>String(i.id)===String(c.investorId))?.fund)===fund).reduce((s,c)=>s+calcContract(c.amount,settings).net,0);
-              const fundInvs = investors.filter(i=>i.fund===fund);
-              return (
-                <div key={fund} style={{padding:"14px",border:"1px solid "+C.border,borderRadius:10,background:"#fcfcfd"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                    <div style={{textAlign:"right"}}>
-                      <div style={{fontWeight:800,fontSize:16,color:"#1a1a2e",marginBottom:4}}>{fundInvs.map(x=>x.name).join("، ")}</div>
-                      <div style={{fontWeight:900,fontSize:22,color:cap>=0?C.green:C.red}}>{SAR(cap)}</div>
-                    </div>
-                    <div style={{textAlign:"left"}}>
-                      <div style={{fontSize:13,color:"#1f2937",marginBottom:4}}>فوائد هذا الشهر</div>
-                      <div style={{fontWeight:900,fontSize:19,color:fNet>=0?C.green:C.red}}>{SAR(fNet)}</div>
-                    </div>
-                  </div>
-                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                    {fundInvs.map(inv=>(
-                      <button key={inv.id} style={{...styles.btn("#f0f4ff","#3b82f6"),fontSize:14,padding:"4px 10px"}}
-                        onClick={()=>setEditFund({inv,form:{name:inv.name,fund:inv.fund,capital:String(inv.capital)}})}>
-                        ✏️ {inv.fund}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
       {/* Portfolio Detail Modal */}
       <Modal open={!!detail} onClose={()=>setDetail(null)} title={detail?detail.title:""}>
         {detail && (
@@ -2985,32 +3019,6 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
                     <span>{SAR(detail.rows.reduce((s,r)=>s+(r.amount||0),0))}</span>
                   </div>
                 </div>}
-          </div>
-        )}
-      </Modal>
-
-      {/* Edit Fund Modal */}
-      <Modal open={!!editFund} onClose={()=>setEditFund(null)} title="✏️ تعديل المستثمر">
-        {editFund && (
-          <div style={{padding:"14px 18px"}}>
-            {[["الاسم","name","text"],["الصندوق","fund","text"],["رأس المال","capital","number"]].map(([l,k,t])=>(
-              <div key={k} style={{marginBottom:12}}>
-                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>{l}</label>
-                <input style={styles.input} type={t} value={editFund.form[k]} onChange={e=>setEditFund(f=>({...f,form:{...f.form,[k]:e.target.value}}))}/>
-              </div>
-            ))}
-            <div style={{display:"flex",gap:8,marginTop:8}}>
-              <button style={styles.btn(C.teal)} onClick={()=>{
-                setInvestors(p=>p.map(i=>i.id===editFund.inv.id?{...i,...editFund.form,capital:parseFloat(editFund.form.capital)||0}:i));
-                setEditFund(null);
-              }}>💾 حفظ</button>
-              <button style={styles.btn(C.red)} onClick={()=>{
-                if(confirm("حذف هذا المستثمر نهائياً؟")){
-                  setInvestors(p=>p.filter(i=>i.id!==editFund.inv.id));
-                  setEditFund(null);
-                }
-              }}>🗑️ حذف</button>
-            </div>
           </div>
         )}
       </Modal>
