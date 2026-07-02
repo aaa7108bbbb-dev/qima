@@ -4012,7 +4012,7 @@ function GoodsPage({investors, contracts, toast}) {
     try{return JSON.parse(localStorage.getItem("qimma_goods3")||"[]");}catch{return[];}
   });
   const [showAdd, setShowAdd] = useState(false);
-  const [newRow, setNewRow] = useState({date:new Date().toISOString().split("T")[0],supportAcc:"",note:"",price:""});
+  const [newRow, setNewRow] = useState({date:new Date().toISOString().split("T")[0],supportAcc:"",note:"",price:"",itemType:"cards",itemName:""});
 
   const saveManual = r => { setManualRows(r); localStorage.setItem("qimma_goods3",JSON.stringify(r)); };
   const savePriceOverride = (id, val) => {
@@ -4052,7 +4052,14 @@ function GoodsPage({investors, contracts, toast}) {
   // Calculate running balance with per-row price
   let runningCards = 0;
   let lastPrice = 0;
+  let runningCash = 0; // رصيد نقدي مباشر (سلع غير البطاقات)
   const display = allRows.map(row=>{
+    // سلعة نقدية مباشرة (أسهم/سيارة): تُضاف قيمتها للرصيد النقدي بدون بطاقات
+    if(row.cashOnly){
+      const amt=parseFloat(row.supportAcc)||0;
+      runningCash += amt;
+      return {...row, rowPrice:0, supported:0, withdrawn:0, runningCards, cashBalance:runningCards*(lastPrice||0)+runningCash, isCashItem:true};
+    }
     const rowPrice = parseFloat(priceOverrides[row.id]||row.price)||lastPrice||1;
     if(rowPrice) lastPrice = rowPrice;
     const supC = parseFloat(row.supportClient)||0;
@@ -4060,7 +4067,7 @@ function GoodsPage({investors, contracts, toast}) {
     const supported = supC||supA ? Math.floor((supC+supA)/rowPrice) : 0;
     const withdrawn = parseInt(row.withdrawnQty)||0;
     runningCards = runningCards + supported - withdrawn;
-    return {...row, rowPrice, supported, withdrawn, runningCards, cashBalance:runningCards*rowPrice};
+    return {...row, rowPrice, supported, withdrawn, runningCards, cashBalance:runningCards*rowPrice+runningCash};
   });
 
   return (
@@ -4078,28 +4085,48 @@ function GoodsPage({investors, contracts, toast}) {
       {showAdd && (
         <div style={{...styles.panel,marginBottom:16,padding:16}}>
           <div style={{fontSize:15,fontWeight:700,marginBottom:12}}>إضافة دعم حساب</div>
+          {/* اختيار نوع الدعم */}
+          <div style={{display:"flex",gap:8,marginBottom:14}}>
+            <button type="button" onClick={()=>setNewRow(p=>({...p,itemType:"cards"}))}
+              style={{flex:1,padding:"11px",borderRadius:10,border:"2px solid "+(newRow.itemType==="cards"?C.teal:C.border),background:newRow.itemType==="cards"?C.tealLt:"#fff",color:newRow.itemType==="cards"?C.teal:C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"Tajawal,Arial"}}>💳 بطاقات</button>
+            <button type="button" onClick={()=>setNewRow(p=>({...p,itemType:"other"}))}
+              style={{flex:1,padding:"11px",borderRadius:10,border:"2px solid "+(newRow.itemType==="other"?C.gold:C.border),background:newRow.itemType==="other"?"#fef9ec":"#fff",color:newRow.itemType==="other"?"#a87520":C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"Tajawal,Arial"}}>📦 سلعة أخرى (أسهم/سيارة)</button>
+          </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:12}}>
             <div>
               <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>التاريخ</label>
               <input style={styles.input} type="date" value={newRow.date} onChange={e=>setNewRow(p=>({...p,date:e.target.value}))}/>
             </div>
             <div>
-              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>دعم الحساب (ر.س)</label>
+              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>قيمة الدعم (ر.س)</label>
               <input style={styles.input} type="number" placeholder="المبلغ" value={newRow.supportAcc} onChange={e=>setNewRow(p=>({...p,supportAcc:e.target.value}))}/>
             </div>
-            <div>
-              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>سعر البطاقة</label>
-              <input style={styles.input} type="number" placeholder="اتركه فارغ للتعبئة التلقائية" value={newRow.price} onChange={e=>setNewRow(p=>({...p,price:e.target.value}))}/>
-            </div>
+            {newRow.itemType==="cards" ? (
+              <div>
+                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>سعر البطاقة</label>
+                <input style={styles.input} type="number" placeholder="اتركه فارغ للتعبئة التلقائية" value={newRow.price} onChange={e=>setNewRow(p=>({...p,price:e.target.value}))}/>
+              </div>
+            ) : (
+              <div>
+                <label style={{fontSize:15,fontWeight:700,color:"#a87520",display:"block",marginBottom:4}}>اسم السلعة *</label>
+                <input style={styles.input} type="text" placeholder="مثال: أسهم الراجحي / سيارة" value={newRow.itemName} onChange={e=>setNewRow(p=>({...p,itemName:e.target.value}))}/>
+              </div>
+            )}
             <div>
               <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>ملاحظة</label>
               <input style={styles.input} type="text" placeholder="اختياري" value={newRow.note} onChange={e=>setNewRow(p=>({...p,note:e.target.value}))}/>
             </div>
           </div>
+          {newRow.itemType==="other" && <div style={{fontSize:13,color:"#a87520",marginBottom:10,fontWeight:600}}>💡 قيمة الدعم ستُضاف مباشرة على الرصيد النقدي (بدون حساب بطاقات).</div>}
           <button style={styles.btn(C.teal)} onClick={()=>{
             if(!newRow.supportAcc){toast("أدخل مبلغ الدعم","error");return;}
-            saveManual([...manualRows,{id:Date.now(),date:newRow.date,contractNum:"—",contractAmount:0,client:newRow.note||"دعم حساب",investor:"—",supportClient:0,supportAcc:parseFloat(newRow.supportAcc)||0,withdrawnQty:0,fromContract:false,price:parseFloat(newRow.price)||0}]);
-            setNewRow({date:new Date().toISOString().split("T")[0],supportAcc:"",note:"",price:""});
+            if(newRow.itemType==="other" && !newRow.itemName.trim()){toast("أدخل اسم السلعة","error");return;}
+            if(newRow.itemType==="other"){
+              saveManual([...manualRows,{id:Date.now(),date:newRow.date,contractNum:"—",contractAmount:0,client:newRow.itemName+(newRow.note?(" — "+newRow.note):""),investor:"—",supportClient:0,supportAcc:parseFloat(newRow.supportAcc)||0,withdrawnQty:0,fromContract:false,price:0,cashOnly:true,itemName:newRow.itemName}]);
+            } else {
+              saveManual([...manualRows,{id:Date.now(),date:newRow.date,contractNum:"—",contractAmount:0,client:newRow.note||"دعم حساب",investor:"—",supportClient:0,supportAcc:parseFloat(newRow.supportAcc)||0,withdrawnQty:0,fromContract:false,price:parseFloat(newRow.price)||0}]);
+            }
+            setNewRow({date:new Date().toISOString().split("T")[0],supportAcc:"",note:"",price:"",itemType:"cards",itemName:""});
             setShowAdd(false);
             toast("✅ تم إضافة الدعم");
           }}>💾 حفظ</button>
@@ -4130,15 +4157,17 @@ function GoodsPage({investors, contracts, toast}) {
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",color:C.green,fontWeight:700}}>{row.supportClient>0?row.supportClient.toLocaleString("en-US"):""}</td>
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",color:C.teal,fontWeight:700}}>{row.supportAcc>0?row.supportAcc.toLocaleString("en-US"):""}</td>
                 <td style={{padding:"3px 4px",borderBottom:"1px solid #eee",textAlign:"center"}}>
-                  <input type="number" value={priceOverrides[row.id]||row.price||""}
-                    placeholder={String(row.rowPrice||"")}
-                    onChange={e=>savePriceOverride(row.id,e.target.value)}
-                    style={{width:65,border:"1px solid "+C.gold,borderRadius:4,padding:"3px 4px",fontSize:14,textAlign:"center",background:"#fffbf0"}}/>
+                  {row.isCashItem
+                    ? <span style={{fontSize:12,color:"#a87520",fontWeight:700}}>📦 سلعة</span>
+                    : <input type="number" value={priceOverrides[row.id]||row.price||""}
+                        placeholder={String(row.rowPrice||"")}
+                        onChange={e=>savePriceOverride(row.id,e.target.value)}
+                        style={{width:65,border:"1px solid "+C.gold,borderRadius:4,padding:"3px 4px",fontSize:14,textAlign:"center",background:"#fffbf0"}}/>}
                 </td>
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",background:"#f0faf5",fontWeight:700}}>{row.supported>0?row.supported:""}</td>
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",color:C.red,fontWeight:700}}>{row.withdrawn>0?row.withdrawn:""}</td>
                 <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",background:"#f0f0ff",fontWeight:800,color:C.teal}}>{row.runningCards}</td>
-                <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",background:"#fffbf0",fontWeight:800,color:row.cashBalance<0?C.red:C.gold}}>{row.rowPrice?row.cashBalance.toLocaleString("en-US"):""}</td>
+                <td style={{padding:"6px 8px",borderBottom:"1px solid #eee",textAlign:"center",background:"#fffbf0",fontWeight:800,color:row.cashBalance<0?C.red:C.gold}}>{row.cashBalance.toLocaleString("en-US")}</td>
                 <td style={{padding:"4px",borderBottom:"1px solid #eee",textAlign:"center"}}>
                   {!row.fromContract&&<button style={{...styles.btn(C.red),fontSize:13,padding:"3px 8px"}} onClick={()=>{if(window.confirm("حذف هذا السطر؟"))saveManual(manualRows.filter(r=>r.id!==row.id));}}>🗑️</button>}
                 </td>
