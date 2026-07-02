@@ -2939,10 +2939,10 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
                       <span style={{fontSize:13,color:C.teal,fontWeight:700}}>التفاصيل ›</span>
                     </div>
                     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}>
-                      {[["المحصّل",d.collected,C.green],["قيمة العقود",d.tot.amt,C.teal],["الأرباح",d.tot.profit,C.green],["صافي المستثمرين",d.tot.net,"#0891b2"],["عدد العقود",d.count,"#475569"]].map(([l,v,col],i)=>(
-                        <div key={i} style={{textAlign:"center",background:"#fafafa",borderRadius:8,padding:"8px 6px"}}>
-                          <div style={{fontSize:12,color:"#6b7280",marginBottom:3}}>{l}</div>
-                          <div style={{fontSize:15,fontWeight:900,color:col}}>{i===4?v:SAR(v)}</div>
+                      {[["📋 عدد العقود",d.count,"#475569",true],["💰 القيمة النقدية",d.tot.amt,C.teal],["🧾 الإجمالي",d.totalWithProfit,"#7c3aed"],["📈 الأرباح",d.tot.profit,C.green],["💰 ربح المستثمرين",d.tot.profit-d.tot.inst-d.tot.acc,"#0891b2"],["✅ المحصّل",d.collected,C.green]].map(([l,v,col,isCount],i)=>(
+                        <div key={i} style={{textAlign:"center",background:"#fff",border:"1px solid "+C.border,borderTop:"3px solid "+col,borderRadius:8,padding:"8px 6px"}}>
+                          <div style={{fontSize:12,color:"#6b7280",marginBottom:3,fontWeight:600}}>{l}</div>
+                          <div style={{fontSize:15,fontWeight:900,color:col}}>{isCount?v:SAR(v)}</div>
                         </div>
                       ))}
                     </div>
