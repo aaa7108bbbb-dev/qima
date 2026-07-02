@@ -14,6 +14,7 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; }
   @media print {
@@ -25,16 +26,16 @@
     #bond-g-print-area, #bond-g-print-area * { visibility: visible; }
     #cheque-g-print-area, #cheque-g-print-area * { visibility: visible; }
     #bond-cl-print-area, #bond-cl-print-area * { visibility: visible; }
-    #bond-cl-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
+    #bond-cl-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; padding: 5mm 7mm !important; }
     #bond-cl-print-area .doc-half { font-size: 9px !important; }
     #bond-cl-print-area .doc-half * { line-height: 1.25 !important; }
     #bond-gg-print-area, #bond-gg-print-area * { visibility: visible; }
-    #bond-gg-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
+    #bond-gg-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; padding: 5mm 7mm !important; }
     #bond-gg-print-area .doc-half { font-size: 9px !important; }
     #bond-gg-print-area .doc-half * { line-height: 1.25 !important; }
     #statement-print-area, #statement-print-area * { visibility: visible; }
     #statement-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
-    #contract-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
+    #contract-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; padding: 6mm 8mm !important; }
     #bond-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
     #cheque-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
     #bond-g-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
@@ -44,7 +45,7 @@
     #contract-print-area h1, #contract-print-area h2, #contract-print-area h3 { margin: 4px 0 !important; }
     #contract-print-area p, #contract-print-area div { margin-top: 2px !important; margin-bottom: 2px !important; }
   }
-  body { margin: 0; font-family: 'Tajawal', 'Poppins', Arial, sans-serif; background: #f4f4f6; }
+  body { margin: 0; font-family: 'IBM Plex Sans Arabic', 'Poppins', Arial, sans-serif; background: #f4f4f6; }
   /* LOGIN PAGE STYLES */
   #lock-screen { background: linear-gradient(135deg, #0a1428 0%, #1a2a45 25%, #0f3a4f 50%, #1a2a45 75%, #0a1428 100%) !important; overflow: hidden !important; }
   .animated-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0a1428 0%, #1a2a45 25%, #0f3a4f 50%, #1a2a45 75%, #0a1428 100%); z-index: 1; overflow: hidden; }
@@ -70,19 +71,19 @@
   .login-title p { color: rgba(255, 255, 255, 0.6); font-size: 14px; font-weight: 400; }
   #login-section { animation: fadeInDown 0.8s ease 0.4s both; }
   #pwd-section { animation: fadeInDown 0.8s ease 0.4s both; display: none; }
-  .login-button-primary { width: 100%; height: 140px; background: linear-gradient(135deg, #2d7a94 0%, #0d5a6f 100%); border: 2px solid rgba(45, 122, 148, 0.5); border-radius: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 15px; margin-bottom: 25px; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); color: #fff; font-family: 'Tajawal', Arial, sans-serif; position: relative; overflow: hidden; box-shadow: 0 8px 25px rgba(45, 122, 148, 0.3); }
+  .login-button-primary { width: 100%; height: 140px; background: linear-gradient(135deg, #2d7a94 0%, #0d5a6f 100%); border: 2px solid rgba(45, 122, 148, 0.5); border-radius: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 15px; margin-bottom: 25px; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); color: #fff; font-family: 'IBM Plex Sans Arabic', Arial, sans-serif; position: relative; overflow: hidden; box-shadow: 0 8px 25px rgba(45, 122, 148, 0.3); }
   .login-button-primary::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent); transition: left 0.6s; }
   .login-button-primary:hover::before { left: 100%; }
   .login-button-primary:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 15px 45px rgba(45, 122, 148, 0.5); border-color: rgba(45, 122, 148, 0.8); }
   .icon { font-size: 55px; animation: pulse 2s ease-in-out infinite; }
   @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
   .button-text { font-weight: 900; font-size: 16px; letter-spacing: 0.5px; }
-  .pwd-input { width: 100%; padding: 16px 20px; border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 14px; background: rgba(255, 255, 255, 0.08); color: #fff; font-size: 18px; text-align: center; letter-spacing: 4px; font-weight: 900; font-family: 'Tajawal', Arial, sans-serif; margin-bottom: 15px; transition: all 0.3s ease; backdrop-filter: blur(10px); }
+  .pwd-input { width: 100%; padding: 16px 20px; border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 14px; background: rgba(255, 255, 255, 0.08); color: #fff; font-size: 18px; text-align: center; letter-spacing: 4px; font-weight: 900; font-family: 'IBM Plex Sans Arabic', Arial, sans-serif; margin-bottom: 15px; transition: all 0.3s ease; backdrop-filter: blur(10px); }
   .pwd-input::placeholder { color: rgba(255, 255, 255, 0.3); }
   .pwd-input:focus { outline: none; border-color: rgba(45, 122, 148, 0.8); background: rgba(255, 255, 255, 0.12); box-shadow: 0 0 20px rgba(45, 122, 148, 0.3); }
   .error-msg { color: #ff6b6b; font-size: 13px; margin-top: 10px; display: none; animation: shake 0.5s ease; font-weight: 700; }
   @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-  .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 900; cursor: pointer; font-family: 'Tajawal', Arial, sans-serif; transition: all 0.3s ease; margin-top: 15px; }
+  .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 900; cursor: pointer; font-family: 'IBM Plex Sans Arabic', Arial, sans-serif; transition: all 0.3s ease; margin-top: 15px; }
   .btn-login { background: linear-gradient(135deg, #2d7a94 0%, #0d5a6f 100%); color: #fff; box-shadow: 0 8px 25px rgba(45, 122, 148, 0.3); }
   .btn-login:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(45, 122, 148, 0.4); }
   .btn-back { background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.8); border: 1px solid rgba(255, 255, 255, 0.2); }
@@ -116,7 +117,7 @@ window.addEventListener("DOMContentLoaded",function(){createStars();if(sessionSt
 </script>
 </head>
 <body>
-<div id="lock-screen" style="display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#0a1428 0%,#1a2a45 25%,#0f3a4f 50%,#1a2a45 75%,#0a1428 100%);z-index:9999;align-items:center;justify-content:center;font-family:Tajawal,Arial,sans-serif;overflow:hidden">
+<div id="lock-screen" style="display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#0a1428 0%,#1a2a45 25%,#0f3a4f 50%,#1a2a45 75%,#0a1428 100%);z-index:9999;align-items:center;justify-content:center;font-family:IBM Plex Sans Arabic,Arial,sans-serif;overflow:hidden">
   <div class="animated-bg">
     <div class="grid-bg"></div>
     <div class="stars" id="stars-container"></div>
@@ -215,7 +216,7 @@ function numToWords(n) {
   let r="";
   if(n>=1000){const t=Math.floor(n/1000);r+=(t===1?"ألف":t===2?"ألفان":t<=10?ones[t]+" آلاف":numToWords(t)+" ألف")+" ";n%=1000;}
   if(n>=100){r+=hundreds[Math.floor(n/100)]+" ";n%=100;}
-  if(n>=20){r+=tens[Math.floor(n/10)]+(n%10?" و"+ones[n%10]:"")+" ";n=0;}
+  if(n>=20){const o=n%10;r+=(o?ones[o]+" و":"")+tens[Math.floor(n/10)]+" ";n=0;}
   if(n>0)r+=ones[n]+" ";
   return r.trim();
 }
@@ -276,11 +277,11 @@ const C = {
 };
 
 const styles = {
-  body:{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",background:C.slate,minHeight:"100vh",margin:0},
+  body:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",direction:"rtl",background:C.slate,minHeight:"100vh",margin:0},
   header:{background:"linear-gradient(135deg,#0f1923,#1a2e45)",color:"white",padding:"0 16px",display:"flex",alignItems:"center",justifyContent:"space-between",height:60,position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 20px rgba(0,0,0,0.25)"},
   logo:{width:44,height:44,borderRadius:8,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"},
   nav:{background:C.white,borderBottom:"1px solid "+C.border,display:"flex",overflowX:"auto",padding:"0 8px"},
-  navBtn:{padding:"12px 14px",fontFamily:"Tajawal,Arial,sans-serif",fontSize:15,fontWeight:700,color:"#1f2937",background:"none",border:"none",borderBottom:"3px solid transparent",cursor:"pointer",whiteSpace:"nowrap"},
+  navBtn:{padding:"12px 14px",fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,fontWeight:700,color:"#1f2937",background:"none",border:"none",borderBottom:"3px solid transparent",cursor:"pointer",whiteSpace:"nowrap"},
   navBtnActive:{color:C.teal,borderBottomColor:C.teal},
   main:{maxWidth:1200,margin:"0 auto",padding:"20px 12px"},
   card:{background:C.white,borderRadius:12,padding:"16px 18px",boxShadow:"0 2px 12px rgba(0,0,0,0.07)"},
@@ -288,12 +289,12 @@ const styles = {
   panelHdr:{padding:"14px 20px",borderBottom:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"space-between",background:"#fafbfc"},
   th:{background:C.ink,color:C.white,padding:"10px 12px",textAlign:"right",fontWeight:700,fontSize:15,whiteSpace:"nowrap"},
   td:{padding:"9px 12px",borderBottom:"1px solid "+C.border,textAlign:"right",fontSize:15},
-  input:{fontFamily:"Tajawal,Arial,sans-serif",fontSize:15,padding:"9px 12px",border:"1.5px solid "+C.border,borderRadius:8,color:C.ink,background:C.white,width:"100%",boxSizing:"border-box",textAlign:"right"},
-  select:{fontFamily:"Tajawal,Arial,sans-serif",fontSize:15,padding:"9px 12px",border:"1.5px solid "+C.border,borderRadius:8,color:C.ink,background:C.white,width:"100%",textAlign:"right"},
-  btn:(bg,color="#fff")=>({fontFamily:"Tajawal,Arial,sans-serif",fontSize:15,fontWeight:700,padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",background:bg,color,display:"inline-flex",alignItems:"center",gap:4}),
+  input:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,padding:"9px 12px",border:"1.5px solid "+C.border,borderRadius:8,color:C.ink,background:C.white,width:"100%",boxSizing:"border-box",textAlign:"right"},
+  select:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,padding:"9px 12px",border:"1.5px solid "+C.border,borderRadius:8,color:C.ink,background:C.white,width:"100%",textAlign:"right"},
+  btn:(bg,color="#fff")=>({fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,fontWeight:700,padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",background:bg,color,display:"inline-flex",alignItems:"center",gap:4}),
   badge:(bg,color)=>({display:"inline-block",padding:"2px 9px",borderRadius:20,fontSize:14,fontWeight:700,background:bg,color}),
   calcBox:{background:"linear-gradient(135deg,#0f1923,#1a2e45)",borderRadius:12,padding:"16px 20px",marginTop:16,color:C.white},
-  goodsBtn:(active)=>({fontFamily:"Tajawal,Arial,sans-serif",fontSize:15,fontWeight:700,padding:"6px 14px",borderRadius:20,border:"2px solid "+(active?C.teal:C.border),background:active?C.teal:C.white,color:active?C.white:C.ink2,cursor:"pointer",margin:"3px 3px 3px 0"}),
+  goodsBtn:(active)=>({fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,fontWeight:700,padding:"6px 14px",borderRadius:20,border:"2px solid "+(active?C.teal:C.border),background:active?C.teal:C.white,color:active?C.white:C.ink2,cursor:"pointer",margin:"3px 3px 3px 0"}),
 };
 
 // ─── Toast ──────────────────────────────────────────────────
@@ -349,7 +350,7 @@ function BondContent({c,inv,r}) {
   const totalInst = c.totalInst || 0;
   const words = numToWords(Math.round(totalInst)) + " ريال سعودي";
   return (
-    <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",padding:"28px 32px",color:"#000",fontSize:15,lineHeight:1.9,border:"2px solid #000"}}>
+    <div style={{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",direction:"rtl",padding:"28px 32px",color:"#000",fontSize:15,lineHeight:1.9,border:"2px solid #000"}}>
       <div style={{textAlign:"center",marginBottom:18,borderBottom:"2px solid #000",paddingBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginBottom:6}}>
           <span>رقم السند: <strong>{c.num||"—"}</strong></span>
@@ -415,7 +416,7 @@ function BondGuarantorContent({c,inv,r}) {
   const totalInst = c.totalInst || 0;
   const words = numToWords(Math.round(totalInst)) + " ريال سعودي";
   return (
-    <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",padding:"28px 32px",color:"#000",fontSize:15,lineHeight:1.9,border:"2px solid #000"}}>
+    <div style={{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",direction:"rtl",padding:"28px 32px",color:"#000",fontSize:15,lineHeight:1.9,border:"2px solid #000"}}>
       <div style={{textAlign:"center",marginBottom:18,borderBottom:"2px solid #000",paddingBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginBottom:6}}>
           <span>رقم السند: <strong>{c.num||"—"}</strong></span>
@@ -482,8 +483,8 @@ function ChequeContent({c,r,isGuarantor=false}) {
   const name = isGuarantor ? (c.gName||"...............") : c.client;
   const idNum = isGuarantor ? (c.gId||"...............") : (c.idNum||"...............");
   return (
-    <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",padding:"36px 40px",color:"#000",lineHeight:2.6,border:"2px solid #000"}}>
-      <div style={{textAlign:"center",fontSize:24,fontWeight:900,letterSpacing:3,marginBottom:28,borderBottom:"3px double #000",paddingBottom:12}}>( اثبات مديونية )</div>
+    <div style={{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",direction:"rtl",padding:"36px 40px",color:"#000",lineHeight:2.6,border:"2px solid #000"}}>
+      <div style={{textAlign:"center",fontSize:24,fontWeight:900,letterSpacing:3,marginBottom:28,borderBottom:"3px double #000",paddingBottom:12}}>( اثبات حوالة )</div>
       {[["نعم أنا /",name],["هوية وطنية /",idNum],["عندي وفي ذمتي للمدعو /"," "]].map(([l,v])=>(
         <div key={l} style={{display:"flex",gap:8,alignItems:"flex-end",marginBottom:4,fontSize:17}}>
           <span style={{fontWeight:800,whiteSpace:"nowrap"}}>{l}</span>
@@ -524,7 +525,7 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
   const lineW = (w) => ({display:"inline-block", minWidth:w||80});
 
   return (
-    <div style={{fontFamily:"Tajawal,Arial,sans-serif",direction:"rtl",color:"#000",fontSize:15,maxWidth:740,margin:"0 auto",background:"#fff",lineHeight:1.8,padding:"20px 30px",fontWeight:500,border:"2px solid #000"}}>
+    <div style={{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",direction:"rtl",color:"#000",fontSize:15,maxWidth:740,margin:"0 auto",background:"#fff",lineHeight:1.8,padding:"20px 30px",fontWeight:500,border:"2px solid #000"}}>
 
       {/* ══ HEADER ══ */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",borderBottom:"2px solid #000",paddingBottom:10,marginBottom:10}}>
@@ -819,11 +820,11 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
             <label style={{fontSize:15,fontWeight:800,color:C.ink2,display:"block",marginBottom:8}}>📑 نوع العقد *</label>
             <div style={{display:"flex",gap:8,marginBottom:form.contractType==="defer"?14:0}}>
               <button type="button" onClick={()=>set("contractType","monthly")}
-                style={{flex:1,padding:"12px",borderRadius:10,border:"2px solid "+(form.contractType==="monthly"?C.teal:C.border),background:form.contractType==="monthly"?C.tealLt:"#fff",color:form.contractType==="monthly"?C.teal:C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"Tajawal,Arial"}}>
+                style={{flex:1,padding:"12px",borderRadius:10,border:"2px solid "+(form.contractType==="monthly"?C.teal:C.border),background:form.contractType==="monthly"?C.tealLt:"#fff",color:form.contractType==="monthly"?C.teal:C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>
                 📅 شهري
               </button>
               <button type="button" onClick={()=>set("contractType","defer")}
-                style={{flex:1,padding:"12px",borderRadius:10,border:"2px solid "+(form.contractType==="defer"?C.gold:C.border),background:form.contractType==="defer"?"#fef9ec":"#fff",color:form.contractType==="defer"?"#a87520":C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"Tajawal,Arial"}}>
+                style={{flex:1,padding:"12px",borderRadius:10,border:"2px solid "+(form.contractType==="defer"?C.gold:C.border),background:form.contractType==="defer"?"#fef9ec":"#fff",color:form.contractType==="defer"?"#a87520":C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>
                 🕒 مؤجل
               </button>
             </div>
@@ -858,11 +859,11 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
             <label style={{fontSize:15,fontWeight:800,color:C.ink2,display:"block",marginBottom:8}}>💳 نوع السداد *</label>
             <div style={{display:"flex",gap:8,marginBottom:form.payType==="deduction"?14:0}}>
               <button type="button" onClick={()=>set("payType","normal")}
-                style={{flex:1,padding:"12px",borderRadius:10,border:"2px solid "+(form.payType==="normal"?C.teal:C.border),background:form.payType==="normal"?C.tealLt:"#fff",color:form.payType==="normal"?C.teal:C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"Tajawal,Arial"}}>
+                style={{flex:1,padding:"12px",borderRadius:10,border:"2px solid "+(form.payType==="normal"?C.teal:C.border),background:form.payType==="normal"?C.tealLt:"#fff",color:form.payType==="normal"?C.teal:C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>
                 💵 نقدي
               </button>
               <button type="button" onClick={()=>set("payType","deduction")}
-                style={{flex:1,padding:"12px",borderRadius:10,border:"2px solid "+(form.payType==="deduction"?"#3b82f6":C.border),background:form.payType==="deduction"?"#eff6ff":"#fff",color:form.payType==="deduction"?"#3b82f6":C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"Tajawal,Arial"}}>
+                style={{flex:1,padding:"12px",borderRadius:10,border:"2px solid "+(form.payType==="deduction"?"#3b82f6":C.border),background:form.payType==="deduction"?"#eff6ff":"#fff",color:form.payType==="deduction"?"#3b82f6":C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>
                 🏦 استقطاع
               </button>
             </div>
@@ -1561,7 +1562,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       <Modal open={!!bond} onClose={()=>setBond(null)} title="📜 سند الأمر">
         <div style={{padding:"10px 12px 0",textAlign:"left",display:"flex",gap:8,flexWrap:"wrap"}}>
           <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-print-area")}>🖨️ سند الزبون فقط</button>
-          <button style={styles.btn(C.teal)} onClick={()=>printContent("bond-cl-print-area")}>🖨️ سند الزبون + إثبات المديونية</button>
+          <button style={styles.btn(C.teal)} onClick={()=>printContent("bond-cl-print-area")}>🖨️ سند الزبون + إثبات حوالة</button>
         </div>
         <div id="bond-print-area">{bond && <BondContent c={bond} inv={investors.find(i=>String(i.id)===String(bond.investorId))} r={calcContract(bond.amount,settings)}/>}</div>
         <div id="bond-cl-print-area" style={{position:"absolute",left:"-9999px",top:0}}>
@@ -1575,7 +1576,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       <Modal open={!!bondG} onClose={()=>setBondG(null)} title="📜 سند الأمر">
         <div style={{padding:"10px 12px 0",textAlign:"left",display:"flex",gap:8,flexWrap:"wrap"}}>
           <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-g-print-area")}>🖨️ سند الكفيل فقط</button>
-          <button style={styles.btn(C.teal)} onClick={()=>printContent("bond-gg-print-area")}>🖨️ سند الكفيل + إثبات المديونية</button>
+          <button style={styles.btn(C.teal)} onClick={()=>printContent("bond-gg-print-area")}>🖨️ سند الكفيل + إثبات حوالة</button>
         </div>
         <div id="bond-g-print-area">{bondG && <BondGuarantorContent c={bondG} inv={investors.find(i=>String(i.id)===String(bondG.investorId))} r={calcContract(bondG.amount,settings)}/>}</div>
         <div id="bond-gg-print-area" style={{position:"absolute",left:"-9999px",top:0}}>
@@ -2024,7 +2025,7 @@ function CommissionsPage({contracts, investors, settings}) {
           {key:"inst", label:"🏛️ نسب المؤسسة",    color:C.purple},
         ].map(t=>(
           <button key={t.key} onClick={()=>setTab(t.key)}
-            style={{fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:700,padding:"10px 22px",border:"none",
+            style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:700,padding:"10px 22px",border:"none",
               cursor:"pointer",background:tab===t.key?t.color:C.white,color:tab===t.key?"white":C.ink2,
               transition:"all 0.2s"}}>
             {t.label}
@@ -2363,7 +2364,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
       <div style={{display:"flex",gap:0,marginBottom:20,background:C.white,borderRadius:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",width:"fit-content"}}>
         {subTabs.map(t=>(
           <button key={t.key} onClick={()=>setSubTab(t.key)}
-            style={{fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:700,padding:"10px 16px",border:"none",
+            style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:700,padding:"10px 16px",border:"none",
               cursor:"pointer",background:subTab===t.key?C.teal:C.white,color:subTab===t.key?"white":C.ink2,
               transition:"all 0.2s",whiteSpace:"nowrap"}}>
             {t.label}
@@ -2906,7 +2907,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
       <div style={{display:"flex",gap:0,marginBottom:16,background:C.white,borderRadius:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",width:"fit-content",flexWrap:"wrap"}}>
         {subTabs.map(t=>(
           <button key={t.k} onClick={()=>{setTab(t.k);setOpenMonth(null);}}
-            style={{fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:700,padding:"10px 18px",border:"none",cursor:"pointer",background:tab===t.k?C.teal:C.white,color:tab===t.k?"#fff":C.ink2,whiteSpace:"nowrap"}}>{t.l}</button>
+            style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:700,padding:"10px 18px",border:"none",cursor:"pointer",background:tab===t.k?C.teal:C.white,color:tab===t.k?"#fff":C.ink2,whiteSpace:"nowrap"}}>{t.l}</button>
         ))}
       </div>
 
@@ -3404,7 +3405,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
           <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
             <div style={{display:"flex",alignItems:"center",gap:6,background:"#fff",border:"2px solid "+C.gold,borderRadius:10,padding:"6px 12px",boxShadow:"0 2px 6px rgba(0,0,0,0.08)"}}>
               <span style={{fontSize:16}}>📅</span>
-              <input type="date" style={{border:"none",outline:"none",fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:700,color:C.ink,background:"transparent",cursor:"pointer"}} value={selDay} onChange={e=>setSelDay(e.target.value)}/>
+              <input type="date" style={{border:"none",outline:"none",fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:700,color:C.ink,background:"transparent",cursor:"pointer"}} value={selDay} onChange={e=>setSelDay(e.target.value)}/>
             </div>
             <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px"}} onClick={()=>printDailyReport(selDay,dayRows,openingBalance,closingBalance,sumByType)}>🖨️ طباعة اليوم</button>
           </div>
@@ -3415,7 +3416,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
               const active=form.type===t.key;
               return (
               <button key={t.key} onClick={()=>set("type",t.key)}
-                style={{fontFamily:"Tajawal,Arial",fontSize:17,fontWeight:800,padding:"14px 26px",borderRadius:14,cursor:"pointer",
+                style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:17,fontWeight:800,padding:"14px 26px",borderRadius:14,cursor:"pointer",
                   border:"2.5px solid "+t.color,background:active?t.color:"#fff",color:active?"#fff":t.color,
                   boxShadow:active?("0 4px 14px "+t.color+"55"):"0 2px 6px rgba(0,0,0,0.08)",
                   transform:active?"translateY(-1px)":"none",transition:"all .15s",minWidth:120}}>
@@ -3772,7 +3773,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
               <div style={{display:"flex",gap:0,marginBottom:16,background:C.slate,borderRadius:8,overflow:"hidden",width:"fit-content"}}>
                 {[["brief","📄 مختصر"],["detailed","📋 مفصل"]].map(([k,l])=>(
                   <button key={k} onClick={()=>setStmtType(k)}
-                    style={{fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:700,padding:"8px 18px",border:"none",
+                    style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:700,padding:"8px 18px",border:"none",
                       cursor:"pointer",background:stmtType===k?C.ink:C.slate,color:stmtType===k?"white":C.ink2}}>
                     {l}
                   </button>
@@ -4096,9 +4097,9 @@ function GoodsPage({investors, contracts, toast}) {
           {/* اختيار نوع الدعم */}
           <div style={{display:"flex",gap:8,marginBottom:14}}>
             <button type="button" onClick={()=>setNewRow(p=>({...p,itemType:"cards"}))}
-              style={{flex:1,padding:"11px",borderRadius:10,border:"2px solid "+(newRow.itemType==="cards"?C.teal:C.border),background:newRow.itemType==="cards"?C.tealLt:"#fff",color:newRow.itemType==="cards"?C.teal:C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"Tajawal,Arial"}}>💳 بطاقات</button>
+              style={{flex:1,padding:"11px",borderRadius:10,border:"2px solid "+(newRow.itemType==="cards"?C.teal:C.border),background:newRow.itemType==="cards"?C.tealLt:"#fff",color:newRow.itemType==="cards"?C.teal:C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>💳 بطاقات</button>
             <button type="button" onClick={()=>setNewRow(p=>({...p,itemType:"other"}))}
-              style={{flex:1,padding:"11px",borderRadius:10,border:"2px solid "+(newRow.itemType==="other"?C.gold:C.border),background:newRow.itemType==="other"?"#fef9ec":"#fff",color:newRow.itemType==="other"?"#a87520":C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"Tajawal,Arial"}}>📦 سلعة أخرى (أسهم/سيارة)</button>
+              style={{flex:1,padding:"11px",borderRadius:10,border:"2px solid "+(newRow.itemType==="other"?C.gold:C.border),background:newRow.itemType==="other"?"#fef9ec":"#fff",color:newRow.itemType==="other"?"#a87520":C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>📦 سلعة أخرى (أسهم/سيارة)</button>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:12}}>
             <div>
@@ -4406,7 +4407,7 @@ function ClientsPage({contracts, investors, payments, goCollect}) {
     const today = (()=>{const d=new Date();return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0");})();
     const rows = (list||[]).map((p,i)=>`<tr><td style="border:1px solid #000;padding:6px;text-align:center">${i+1}</td><td style="border:1px solid #000;padding:6px;text-align:center">${fmtDate(p.date)}</td><td style="border:1px solid #000;padding:6px;text-align:center">${NUM(p.amount)}</td><td style="border:1px solid #000;padding:6px;text-align:center">${p.note||"—"}</td></tr>`).join("");
     const html = `
-      <div style="font-family:Tajawal,Arial,sans-serif;direction:rtl;color:#000;padding:20px 28px;max-width:760px;margin:0 auto">
+      <div style="font-family:IBM Plex Sans Arabic,Arial,sans-serif;direction:rtl;color:#000;padding:20px 28px;max-width:760px;margin:0 auto">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:14px">
           <div><div style="font-size:18px;font-weight:900">مؤسسة قمة الفرصة التجارية</div><div style="font-size:13px">بريدة - شارع الثلاثين</div><div style="font-size:13px">ج: 0555171283 &nbsp; ت: 0163839323</div></div>
           <div style="text-align:left"><div style="font-size:13px">التاريخ: ${today}</div><div style="font-size:13px">رقم العقد: ${c.num||"—"}</div></div>
@@ -4459,8 +4460,8 @@ function ClientsPage({contracts, investors, payments, goCollect}) {
     <div style={styles.main}>
       {/* التبويبات الداخلية */}
       <div style={{display:"flex",gap:0,marginBottom:16,background:C.white,borderRadius:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",width:"fit-content"}}>
-        <button onClick={()=>setMainTab("clients")} style={{fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:700,padding:"10px 18px",border:"none",cursor:"pointer",background:mainTab==="clients"?C.teal:C.white,color:mainTab==="clients"?"#fff":C.ink2,whiteSpace:"nowrap"}}>👥 العملاء</button>
-        <button onClick={()=>setMainTab("deduct")} style={{fontFamily:"Tajawal,Arial",fontSize:15,fontWeight:700,padding:"10px 18px",border:"none",cursor:"pointer",background:mainTab==="deduct"?C.teal:C.white,color:mainTab==="deduct"?"#fff":C.ink2,whiteSpace:"nowrap"}}>🏦 الاستقطاعات</button>
+        <button onClick={()=>setMainTab("clients")} style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:700,padding:"10px 18px",border:"none",cursor:"pointer",background:mainTab==="clients"?C.teal:C.white,color:mainTab==="clients"?"#fff":C.ink2,whiteSpace:"nowrap"}}>👥 العملاء</button>
+        <button onClick={()=>setMainTab("deduct")} style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:700,padding:"10px 18px",border:"none",cursor:"pointer",background:mainTab==="deduct"?C.teal:C.white,color:mainTab==="deduct"?"#fff":C.ink2,whiteSpace:"nowrap"}}>🏦 الاستقطاعات</button>
       </div>
 
       {mainTab==="deduct" && <DeductionsSheet contracts={contracts} investors={investors} payments={payments}/>}
@@ -5066,7 +5067,7 @@ function App() {
 
       <nav style={styles.nav}>
         {TABS.map(t=>(
-          <button key={t.id} onClick={()=>setPage(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"8px 10px",border:"none",cursor:"pointer",background:"none",fontFamily:"Tajawal,Arial,sans-serif"}}>
+          <button key={t.id} onClick={()=>setPage(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"8px 10px",border:"none",cursor:"pointer",background:"none",fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif"}}>
             <div style={{width:42,height:42,borderRadius:12,background:page===t.id?t.color:"#d1d5db",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,transition:"all 0.2s",boxShadow:page===t.id?"0 3px 10px rgba(0,0,0,0.25)":"none"}}>{t.label}</div>
             <span style={{fontSize:13,fontWeight:700,color:"#111",whiteSpace:"nowrap"}}>{t.name}</span>
           </button>
