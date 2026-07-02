@@ -4845,6 +4845,8 @@ function ActivityPage({activity, setActivity, toast}){
 // ─── Main App ────────────────────────────────────────────────
 function App() {
   const [page,setPage]=useState("dashboard");
+  const [tabOrder,setTabOrder]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_tab_order")||"null");}catch{return null;}});
+  const [dragTab,setDragTab]=useState(null);
   const [toastMsg,setToastMsg]=useState(null);
   const [toastType,setToastType]=useState("");
 
@@ -5035,6 +5037,20 @@ function App() {
     {id:"activity",label:"📜",name:"سجل النشاط",color:"#475569"},
     {id:"settings",label:"⚙️",name:"الإعدادات",color:"#4b5563"},
   ];
+  // ترتيب التبويبات حسب المحفوظ
+  const orderedTabs = (()=>{
+    if(!tabOrder) return TABS;
+    const byId={}; TABS.forEach(t=>byId[t.id]=t);
+    const out=[]; tabOrder.forEach(id=>{if(byId[id]){out.push(byId[id]);delete byId[id];}});
+    TABS.forEach(t=>{if(byId[t.id])out.push(t);});
+    return out;
+  })();
+  const saveTabOrder=(arr)=>{const ids=arr.map(t=>t.id);setTabOrder(ids);try{localStorage.setItem("qimma_tab_order",JSON.stringify(ids));}catch(e){}};
+  const onTabDrop=(toIdx)=>{
+    if(dragTab===null||dragTab===toIdx) return;
+    const arr=[...orderedTabs]; const [m]=arr.splice(dragTab,1); arr.splice(toIdx,0,m);
+    saveTabOrder(arr); setDragTab(null);
+  };
 
   return (
     <div style={styles.body}>
@@ -5066,10 +5082,17 @@ function App() {
       )}
 
       <nav style={styles.nav}>
-        {TABS.map(t=>(
-          <button key={t.id} onClick={()=>setPage(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"8px 10px",border:"none",cursor:"pointer",background:"none",fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif"}}>
-            <div style={{width:52,height:52,borderRadius:0,background:page===t.id?t.color:"#d1d5db",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,transition:"all 0.2s",boxShadow:page===t.id?"0 3px 10px rgba(0,0,0,0.25)":"none"}}>{t.label}</div>
-            <span style={{fontSize:13.5,fontWeight:700,color:"#111",whiteSpace:"nowrap"}}>{t.name}</span>
+        {orderedTabs.map((t,idx)=>(
+          <button key={t.id} draggable
+            onDragStart={()=>setDragTab(idx)}
+            onDragOver={e=>e.preventDefault()}
+            onDrop={()=>onTabDrop(idx)}
+            onClick={()=>setPage(t.id)}
+            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"8px 10px",border:"none",cursor:"grab",background:"none",fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",opacity:dragTab===idx?0.4:1}}>
+            <div style={{width:52,height:52,borderRadius:0,background:page===t.id?"#0f1e33":"#1e293b",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,transition:"all 0.2s",
+              border:page===t.id?"2px solid #c8922a":"2px solid transparent",
+              boxShadow:page===t.id?"0 0 12px rgba(200,146,42,0.5)":"none"}}>{t.label}</div>
+            <span style={{fontSize:13.5,fontWeight:page===t.id?800:700,color:page===t.id?"#c8922a":"#111",whiteSpace:"nowrap"}}>{t.name}</span>
           </button>
         ))}
       </nav>
