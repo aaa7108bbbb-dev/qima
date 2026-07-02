@@ -4864,7 +4864,12 @@ function App() {
   const gsWrite = async (sheet, data) => {
     try {
       setSyncStatus("saving");
-      const res = await fetch(`${GS_URL}?action=write&sheet=${sheet}&data=${encodeURIComponent(JSON.stringify(data))}`);
+      // POST: البيانات في جسم الطلب (بلا حد على الطول) — يحل مشكلة انقطاع الحفظ مع كبر البيانات
+      const res = await fetch(GS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action:"write", sheet, data })
+      });
       const json = await res.json();
       setSyncStatus(json.success ? "saved" : "error");
       setTimeout(()=>setSyncStatus("idle"), 2000);
