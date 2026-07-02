@@ -2880,7 +2880,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
       totalWithProfit: contractRows(mc,c=>+c.totalInst||+c.amount||0),
       instSum: contractRows(mc,c=>+c.instAmt||0),
       profit: contractRows(mc,c=>calcContract(c.amount,settings).profit),
-      net: contractRows(mc,c=>calcContract(c.amount,settings).net),
+      net: contractRows(mc,c=>{const r=calcContract(c.amount,settings);return r.profit-r.inst-r.acc;}),
       inst: contractRows(mc,c=>calcContract(c.amount,settings).inst),
       acc: contractRows(mc,c=>calcContract(c.amount,settings).acc),
       collected: collectedDetail,
@@ -2993,9 +2993,11 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
 function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen}) {
   const d = calcMonth(ym);
   const [cardDetail,setCardDetail] = React.useState(null);
+  const [cardOrder,setCardOrder] = React.useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_cardorder")||"null");}catch{return null;}});
+  const [dragIdx,setDragIdx] = React.useState(null);
   const cards=[
     ["📋 عدد العقود",d.count,"#475569",true,"count"],
-    ["💵 عقود نقدية",d.cashCount,"#0891b2",true,"cashCount"],
+    ["💵 عقود مؤجلة",d.cashCount,"#0891b2",true,"cashCount"],
     ["📅 عقود شهرية",d.monthlyCount,C.teal,true,"monthlyCount"],
     ["💰 النقدي (القيمة)",d.tot.amt,C.teal,false,"amt"],
     ["🧾 الإجمالي (بالفائدة)",d.totalWithProfit,"#7c3aed",false,"totalWithProfit"],
@@ -3004,10 +3006,24 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
     ["✅ المحصّل",d.collected,C.green,false,"collected"],
     ["📌 المستحق",d.due,"#9a6a00",false,"due"],
     ["⚠️ المتعثّر",d.late,C.red,false,"late"],
-    ["💰 ربح المستثمرين",d.tot.net,"#0891b2",false,"net"],
+    ["💰 ربح المستثمرين",d.tot.profit - d.tot.inst - d.tot.acc,"#0891b2",false,"net"],
     ["👤 ربح المدير",d.tot.inst,"#9a6a00",false,"inst"],
     ["🧮 ربح المحاسب",d.tot.acc,"#4f46e5",false,"acc"],
   ];
+  // ترتيب البطاقات حسب المحفوظ (بالمفتاح)، والجديدة تنضاف بالنهاية
+  const orderedCards = (()=>{
+    if(!cardOrder) return cards;
+    const byKey={}; cards.forEach(c=>byKey[c[4]]=c);
+    const out=[]; cardOrder.forEach(k=>{if(byKey[k]){out.push(byKey[k]);delete byKey[k];}});
+    cards.forEach(c=>{if(byKey[c[4]])out.push(c);});
+    return out;
+  })();
+  const saveOrder = (arr)=>{ const ks=arr.map(c=>c[4]); setCardOrder(ks); try{localStorage.setItem("qimma_cardorder",JSON.stringify(ks));}catch(e){} };
+  const onDrop = (toIdx)=>{
+    if(dragIdx===null||dragIdx===toIdx) return;
+    const arr=[...orderedCards]; const [moved]=arr.splice(dragIdx,1); arr.splice(toIdx,0,moved);
+    saveOrder(arr); setDragIdx(null);
+  };
   const th={padding:"10px 8px",textAlign:"center",fontSize:13,fontWeight:800,background:"#1e293b",color:"#fff",whiteSpace:"nowrap"};
   const td={padding:"9px 8px",textAlign:"center",fontSize:14,borderBottom:"1px solid "+C.border};
   const printReport = () => {
@@ -3032,12 +3048,17 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
         </div>
       </div>
       <div style={{padding:16}}>
+        <div style={{fontSize:12,color:"#9ca3af",marginBottom:8}}>💡 اسحب البطاقات لإعادة ترتيبها — يُحفظ الترتيب تلقائياً</div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:24}}>
-          {cards.map(([l,v,col,isCount,key],i)=>{
+          {orderedCards.map(([l,v,col,isCount,key],i)=>{
             const rows=(d.details&&d.details[key])||[];
             return (
-            <div key={i} onClick={()=>rows.length>0&&setCardDetail({title:l,color:col,rows,isCount})}
-              style={{...styles.card,textAlign:"center",borderTop:"4px solid "+col,cursor:rows.length>0?"pointer":"default"}}>
+            <div key={key} draggable
+              onDragStart={()=>setDragIdx(i)}
+              onDragOver={e=>e.preventDefault()}
+              onDrop={()=>onDrop(i)}
+              onClick={()=>rows.length>0&&setCardDetail({title:l,color:col,rows,isCount})}
+              style={{...styles.card,textAlign:"center",borderTop:"4px solid "+col,cursor:"grab",opacity:dragIdx===i?0.5:1}}>
               <div style={{fontSize:13,color:"#1f2937",marginBottom:6,fontWeight:700}}>{l}</div>
               <div style={{fontSize:22,fontWeight:900,color:col}}>{isCount?v:SAR(v)}</div>
               {rows.length>0 && <div style={{fontSize:11,color:C.teal,marginTop:4,fontWeight:700}}>التفاصيل ({rows.length}) ›</div>}
@@ -3897,7 +3918,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
 }
 
 // ─── Settings Page ───────────────────────────────────────────
-function SettingsPage({settings,onSave,toast,exportBackup,importBackup}) {
+function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,setPayments}) {
   const [s,setS]=useState({...settings});
   const r=calcContract(10000,s);
   return (
@@ -3962,6 +3983,20 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup}) {
             </label>
           </div>
           <div style={{fontSize:13,color:C.red,marginTop:12,fontWeight:700}}>⚠️ الاسترجاع يستبدل كل البيانات الحالية بالكامل.</div>
+
+          <div style={{marginTop:24,paddingTop:20,borderTop:"2px dashed "+C.border}}>
+            <div style={{fontSize:15,fontWeight:800,color:C.red,marginBottom:8}}>🗑️ تصفير الدفعات (المحصّل)</div>
+            <div style={{fontSize:13,color:"#1f2937",marginBottom:12}}>يحذف جميع الدفعات المسجّلة (سداد/تحصيل الأقساط). لا يمس دفتر اليومية ولا العقود ولا المستثمرين. مناسب لبدء التحصيل من الصفر بعد التجربة.</div>
+            <button style={styles.btn(C.red,"#fff")} onClick={()=>{
+              const cnt=(payments||[]).length;
+              if(cnt===0){ toast&&toast("لا توجد دفعات مسجّلة"); return; }
+              if(window.confirm("سيتم حذف جميع الدفعات المسجّلة نهائياً ("+cnt+" دفعة). سيرجع المحصّل إلى صفر. دفتر اليومية والعقود لن تتأثر.\n\nهل أنت متأكد؟")){
+                if(window.confirm("تأكيد أخير: هذا الإجراء لا يمكن التراجع عنه. متابعة الحذف؟")){
+                  setPayments([]); toast&&toast("🗑️ تم تصفير جميع الدفعات");
+                }
+              }
+            }}>🗑️ حذف جميع الدفعات وتصفير المحصّل</button>
+          </div>
         </div>
       </div>
     </div>
@@ -4986,7 +5021,7 @@ function App() {
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast}/>}
         {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast}/>}
-        {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup}/>}
+        {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup} payments={payments} setPayments={setPayments}/>}
       </div>
 
       <Toast msg={toastMsg} type={toastType}/>
