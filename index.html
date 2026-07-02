@@ -484,7 +484,7 @@ function ChequeContent({c,r,isGuarantor=false}) {
   const idNum = isGuarantor ? (c.gId||"...............") : (c.idNum||"...............");
   return (
     <div style={{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",direction:"rtl",padding:"36px 40px",color:"#000",lineHeight:2.6,border:"2px solid #000"}}>
-      <div style={{textAlign:"center",fontSize:24,fontWeight:900,letterSpacing:3,marginBottom:28,borderBottom:"3px double #000",paddingBottom:12}}>( اثبات حوالة )</div>
+      <div style={{textAlign:"center",fontSize:24,fontWeight:900,letterSpacing:3,marginBottom:28,borderBottom:"3px double #000",paddingBottom:12}}>( اقرار )</div>
       {[["نعم أنا /",name],["هوية وطنية /",idNum],["عندي وفي ذمتي للمدعو /"," "]].map(([l,v])=>(
         <div key={l} style={{display:"flex",gap:8,alignItems:"flex-end",marginBottom:4,fontSize:17}}>
           <span style={{fontWeight:800,whiteSpace:"nowrap"}}>{l}</span>
@@ -1562,7 +1562,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       <Modal open={!!bond} onClose={()=>setBond(null)} title="📜 سند الأمر">
         <div style={{padding:"10px 12px 0",textAlign:"left",display:"flex",gap:8,flexWrap:"wrap"}}>
           <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-print-area")}>🖨️ سند الزبون فقط</button>
-          <button style={styles.btn(C.teal)} onClick={()=>printContent("bond-cl-print-area")}>🖨️ سند الزبون + إثبات حوالة</button>
+          <button style={styles.btn(C.teal)} onClick={()=>printContent("bond-cl-print-area")}>🖨️ سند الزبون + إقرار</button>
         </div>
         <div id="bond-print-area">{bond && <BondContent c={bond} inv={investors.find(i=>String(i.id)===String(bond.investorId))} r={calcContract(bond.amount,settings)}/>}</div>
         <div id="bond-cl-print-area" style={{position:"absolute",left:"-9999px",top:0}}>
@@ -1576,7 +1576,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       <Modal open={!!bondG} onClose={()=>setBondG(null)} title="📜 سند الأمر">
         <div style={{padding:"10px 12px 0",textAlign:"left",display:"flex",gap:8,flexWrap:"wrap"}}>
           <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-g-print-area")}>🖨️ سند الكفيل فقط</button>
-          <button style={styles.btn(C.teal)} onClick={()=>printContent("bond-gg-print-area")}>🖨️ سند الكفيل + إثبات حوالة</button>
+          <button style={styles.btn(C.teal)} onClick={()=>printContent("bond-gg-print-area")}>🖨️ سند الكفيل + إقرار</button>
         </div>
         <div id="bond-g-print-area">{bondG && <BondGuarantorContent c={bondG} inv={investors.find(i=>String(i.id)===String(bondG.investorId))} r={calcContract(bondG.amount,settings)}/>}</div>
         <div id="bond-gg-print-area" style={{position:"absolute",left:"-9999px",top:0}}>
@@ -5068,8 +5068,8 @@ function App() {
       <nav style={styles.nav}>
         {TABS.map(t=>(
           <button key={t.id} onClick={()=>setPage(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"8px 10px",border:"none",cursor:"pointer",background:"none",fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif"}}>
-            <div style={{width:42,height:42,borderRadius:12,background:page===t.id?t.color:"#d1d5db",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,transition:"all 0.2s",boxShadow:page===t.id?"0 3px 10px rgba(0,0,0,0.25)":"none"}}>{t.label}</div>
-            <span style={{fontSize:13,fontWeight:700,color:"#111",whiteSpace:"nowrap"}}>{t.name}</span>
+            <div style={{width:52,height:52,borderRadius:0,background:page===t.id?t.color:"#d1d5db",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,transition:"all 0.2s",boxShadow:page===t.id?"0 3px 10px rgba(0,0,0,0.25)":"none"}}>{t.label}</div>
+            <span style={{fontSize:13.5,fontWeight:700,color:"#111",whiteSpace:"nowrap"}}>{t.name}</span>
           </button>
         ))}
       </nav>
