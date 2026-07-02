@@ -2808,6 +2808,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
     const collected = (payments||[]).filter(p=>p.date && getPeriod(p.date)===ym).reduce((s,p)=>s+(+p.amount||0),0);
     const [y,m]=ym.split("-").map(Number);
     const periodEnd = new Date(y, m, 20);
+    // المستحق: مجموع الأقساط الواجبة حتى نهاية الشهر لكل العقود
     const due = allC.reduce((s,c)=>{
       const inst=+c.instAmt||0, total=+c.totalInst||+c.amount||0;
       if(inst<=0||!c.firstInst) return s;
@@ -2818,7 +2819,33 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
       const dueCount=Math.min(Math.max(0,el),totalCount);
       return s+Math.max(0,Math.min(inst,(dueCount*inst)-_getPaid(payments,c.id)));
     },0);
-    return {mc, tot, collected, due, count:mc.length};
+    // نقدي/شهري + مجموع الأقساط الشهرية + الإجمالي بالفائدة
+    const cashCount = mc.filter(c=>c.contractType==="defer").length;
+    const monthlyCount = mc.filter(c=>c.contractType!=="defer").length;
+    const totalWithProfit = mc.reduce((s,c)=>s+(+c.totalInst||+c.amount||0),0);
+    const instSum = mc.reduce((s,c)=>s+(+c.instAmt||0),0);
+    // محصلة المستثمرين: كل المستثمرين، ولو بدون عقود يطلع أصفار
+    const invRows = investors.map(iv=>{
+      const ic = mc.filter(c=>String(c.investorId)===String(iv.id));
+      const cash = ic.reduce((s,c)=>s+(+c.amount||0),0);
+      const total = ic.reduce((s,c)=>s+(+c.totalInst||+c.amount||0),0);
+      const inst = ic.reduce((s,c)=>s+(+c.instAmt||0),0);
+      // المحصّل والمستحق لعقود هذا المستثمر في هذا الشهر
+      const ids = ic.map(c=>c.id);
+      const coll = (payments||[]).filter(p=>p.date && getPeriod(p.date)===ym && ids.includes(p.contractId)).reduce((s,p)=>s+(+p.amount||0),0);
+      const dueInv = ic.reduce((s,c)=>{
+        const it=+c.instAmt||0, tt=+c.totalInst||+c.amount||0;
+        if(it<=0||!c.firstInst) return s;
+        const first=new Date(c.firstInst); if(first>periodEnd) return s;
+        const tc=Math.max(1,Math.round(tt/it));
+        let el=(periodEnd.getFullYear()-first.getFullYear())*12+(periodEnd.getMonth()-first.getMonth());
+        if(periodEnd.getDate()>=first.getDate()) el+=1;
+        const dc=Math.min(Math.max(0,el),tc);
+        return s+Math.max(0,Math.min(it,(dc*it)-_getPaid(payments,c.id)));
+      },0);
+      return {name:invLabel(iv), count:ic.length, cash, total, inst, coll, due:dueInv, late:Math.max(0,dueInv-coll)};
+    });
+    return {mc, tot, collected, due, count:mc.length, cashCount, monthlyCount, totalWithProfit, instSum, invRows, late:Math.max(0,due-collected)};
   };
   const totalRemaining = allC.reduce((s,c)=>s+Math.max(0,(+c.totalInst||+c.amount||0)-_getPaid(payments,c.id)),0);
   const closedMonths = Object.keys(monthClose||{}).sort().reverse();
@@ -2924,11 +2951,29 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
 function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen}) {
   const d = calcMonth(ym);
   const cards=[
-    ["💵 المحصّل",d.collected,C.green],["📅 المستحق",d.due,"#9a6a00"],
-    ["💼 قيمة العقود",d.tot.amt,C.teal],["📈 الأرباح",d.tot.profit,C.green],
-    ["👤 نصيب المدير",d.tot.inst,"#9a6a00"],["🧮 نصيب المحاسب",d.tot.acc,"#4f46e5"],
-    ["💰 صافي المستثمرين",d.tot.net,"#0891b2"],["📋 عدد العقود",d.count,"#475569"]
+    ["📋 عدد العقود",d.count,"#475569",true],
+    ["💵 عقود نقدية",d.cashCount,"#0891b2",true],
+    ["📅 عقود شهرية",d.monthlyCount,C.teal,true],
+    ["💰 النقدي (القيمة)",d.tot.amt,C.teal],
+    ["🧾 الإجمالي (بالفائدة)",d.totalWithProfit,"#7c3aed"],
+    ["📆 مجموع الأقساط",d.instSum,"#9a6a00"],
+    ["📈 الأرباح",d.tot.profit,C.green],
+    ["✅ المحصّل",d.collected,C.green],
+    ["📌 المستحق",d.due,"#9a6a00"],
+    ["⚠️ المتعثّر",d.late,C.red],
+    ["💰 ربح المستثمرين",d.tot.net,"#0891b2"],
+    ["👤 ربح المدير",d.tot.inst,"#9a6a00"],
+    ["🧮 ربح المحاسب",d.tot.acc,"#4f46e5"],
   ];
+  const th={padding:"10px 8px",textAlign:"center",fontSize:13,fontWeight:800,background:"#1e293b",color:"#fff",whiteSpace:"nowrap"};
+  const td={padding:"9px 8px",textAlign:"center",fontSize:14,borderBottom:"1px solid "+C.border};
+  const printReport = () => {
+    const w=window.open("","_blank"); if(!w){alert("اسمح بالنوافذ");return;}
+    const cardsHtml=cards.map(c=>"<div class='cc'><div class='cl'>"+c[0]+"</div><div class='cv'>"+(c[3]?c[1]:SAR(c[1]))+"</div></div>").join("");
+    const rowsHtml=d.invRows.map(r=>"<tr><td style='text-align:right;font-weight:bold'>"+r.name+"</td><td>"+r.count+"</td><td>"+SAR(r.cash)+"</td><td>"+SAR(r.total)+"</td><td>"+SAR(r.inst)+"</td><td>"+SAR(r.coll)+"</td><td>"+SAR(r.due)+"</td><td style='color:#b91c1c'>"+SAR(r.late)+"</td></tr>").join("");
+    w.document.write("<!DOCTYPE html><html dir='rtl'><head><meta charset='utf-8'><title>تقرير "+mLabel(ym)+"</title><style>*{font-family:Arial;box-sizing:border-box}body{padding:18px}h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:18px 0 8px}.g{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.cc{border:1px solid #999;border-radius:8px;padding:8px;text-align:center}.cl{font-size:12px;color:#555}.cv{font-size:16px;font-weight:bold}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #999;padding:6px;text-align:center}th{background:#eee}@media print{@page{size:A4 landscape;margin:8mm}}</style></head><body onload='window.print()'><h1>مؤسسة قمة الفرصة التجارية</h1><div>تقرير "+mLabel(ym)+"</div><h2>مؤشرات الشهر</h2><div class='g'>"+cardsHtml+"</div><h2>محصلة المستثمرين</h2><table><thead><tr><th>المستثمر</th><th>عدد العقود</th><th>النقدي</th><th>الإجمالي</th><th>الأقساط</th><th>المحصّل</th><th>المستحق</th><th>المتعثّر</th></tr></thead><tbody>"+rowsHtml+"</tbody></table></body></html>");
+    w.document.close();
+  };
   return (
     <div style={styles.panel}>
       <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
@@ -2936,18 +2981,47 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
           <button onClick={onBack} style={{...styles.btn("#e5e7eb","#374151"),fontSize:14,padding:"7px 14px"}}>‹ رجوع</button>
           <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>{mLabel(ym)} {isClosed&&<span style={{fontSize:12,background:C.green,color:"#fff",borderRadius:10,padding:"2px 10px",marginRight:6}}>🔒 مقفل</span>}</h2>
         </div>
-        {isClosed
-          ? <button onClick={onReopen} style={{...styles.btn(C.red,"#fff"),fontSize:14,padding:"8px 16px"}}>🔓 فتح الشهر</button>
-          : <button onClick={onClose} style={{...styles.btn(C.green,"#fff"),fontSize:14,padding:"8px 16px"}}>🔒 إقفال هذا الشهر</button>}
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          <button onClick={printReport} style={{...styles.btn(C.gold),fontSize:14,padding:"8px 16px"}}>🖨️ طباعة التقرير</button>
+          {isClosed
+            ? <button onClick={onReopen} style={{...styles.btn(C.red,"#fff"),fontSize:14,padding:"8px 16px"}}>🔓 فتح الشهر</button>
+            : <button onClick={onClose} style={{...styles.btn(C.green,"#fff"),fontSize:14,padding:"8px 16px"}}>🔒 إقفال هذا الشهر</button>}
+        </div>
       </div>
       <div style={{padding:16}}>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:14}}>
-          {cards.map(([l,v,col],i)=>(
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:24}}>
+          {cards.map(([l,v,col,isCount],i)=>(
             <div key={i} style={{...styles.card,textAlign:"center",borderTop:"4px solid "+col}}>
-              <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>{l}</div>
-              <div style={{fontSize:24,fontWeight:900,color:col}}>{i===7?v:SAR(v)}</div>
+              <div style={{fontSize:13,color:"#1f2937",marginBottom:6,fontWeight:700}}>{l}</div>
+              <div style={{fontSize:22,fontWeight:900,color:col}}>{isCount?v:SAR(v)}</div>
             </div>
           ))}
+        </div>
+
+        <div style={{fontSize:17,fontWeight:900,color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12,marginBottom:12}}>👥 محصلة المستثمرين</div>
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",borderRadius:10,overflow:"hidden"}}>
+            <thead><tr>
+              <th style={th}>المستثمر</th><th style={th}>عدد العقود</th><th style={th}>النقدي</th>
+              <th style={th}>الإجمالي</th><th style={th}>الأقساط</th><th style={th}>المحصّل</th>
+              <th style={th}>المستحق</th><th style={th}>المتعثّر</th>
+            </tr></thead>
+            <tbody>
+              {d.invRows.map((r,i)=>(
+                <tr key={i} style={{background:i%2?"#fafafa":"#fff"}}>
+                  <td style={{...td,textAlign:"right",fontWeight:800,color:C.ink}}>{r.name}</td>
+                  <td style={{...td,fontWeight:700}}>{r.count}</td>
+                  <td style={td}>{SAR(r.cash)}</td>
+                  <td style={{...td,color:"#7c3aed"}}>{SAR(r.total)}</td>
+                  <td style={{...td,color:"#9a6a00"}}>{SAR(r.inst)}</td>
+                  <td style={{...td,color:C.green,fontWeight:700}}>{SAR(r.coll)}</td>
+                  <td style={td}>{SAR(r.due)}</td>
+                  <td style={{...td,color:r.late>0?C.red:"#9ca3af",fontWeight:r.late>0?800:400}}>{SAR(r.late)}</td>
+                </tr>
+              ))}
+              {d.invRows.length===0 && <tr><td colSpan={8} style={{...td,padding:24,color:"#6b7280"}}>لا يوجد مستثمرون</td></tr>}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
