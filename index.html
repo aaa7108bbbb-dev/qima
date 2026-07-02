@@ -2845,7 +2845,49 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
       },0);
       return {name:invLabel(iv), count:ic.length, cash, total, inst, coll, due:dueInv, late:Math.max(0,dueInv-coll)};
     });
-    return {mc, tot, collected, due, count:mc.length, cashCount, monthlyCount, totalWithProfit, instSum, invRows, late:Math.max(0,due-collected)};
+
+    // ═══ قوائم تفصيلية لكل بطاقة ═══
+    const invName = id => { const iv=investors.find(x=>String(x.id)===String(id)); return iv?invLabel(iv):"—"; };
+    const pType = c => c.contractType==="defer" ? "مبلغ مؤجل" : "قسط شهري";
+    // دفعات المحصّل (كل دفعة في الشهر)
+    const collectedDetail = (payments||[]).filter(p=>p.date && getPeriod(p.date)===ym).map(p=>{
+      const c=allC.find(k=>k.id===p.contractId);
+      return {name:c?c.client:"—", inv:c?invName(c.investorId):"—", amount:+p.amount||0, date:p.date, type:c?pType(c):"—"};
+    }).sort((a,b)=>new Date(b.date)-new Date(a.date));
+    // المستحق (لكل عقد له مستحق)
+    const dueDetail=[], lateDetail=[];
+    allC.forEach(c=>{
+      const inst=+c.instAmt||0, total=+c.totalInst||+c.amount||0;
+      if(inst<=0||!c.firstInst) return;
+      const first=new Date(c.firstInst); if(first>periodEnd) return;
+      const totalCount=Math.max(1,Math.round(total/inst));
+      let el=(periodEnd.getFullYear()-first.getFullYear())*12+(periodEnd.getMonth()-first.getMonth());
+      if(periodEnd.getDate()>=first.getDate()) el+=1;
+      const dueCount=Math.min(Math.max(0,el),totalCount);
+      const dueAmt=Math.max(0,Math.min(inst,(dueCount*inst)-_getPaid(payments,c.id)));
+      const collForC=(payments||[]).filter(p=>p.date&&getPeriod(p.date)===ym&&p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
+      if(dueAmt>0) dueDetail.push({name:c.client, inv:invName(c.investorId), amount:dueAmt, type:pType(c)});
+      const lateAmt=Math.max(0,dueAmt-collForC);
+      if(lateAmt>0) lateDetail.push({name:c.client, inv:invName(c.investorId), amount:lateAmt, type:pType(c)});
+    });
+    // عقود (للبطاقات المبنية على العقود)
+    const contractRows = (list,valFn)=>list.map(c=>({name:c.client, inv:invName(c.investorId), amount:valFn(c), type:pType(c)}));
+    const details = {
+      count: contractRows(mc,c=>+c.amount||0),
+      cashCount: contractRows(mc.filter(c=>c.contractType==="defer"),c=>+c.amount||0),
+      monthlyCount: contractRows(mc.filter(c=>c.contractType!=="defer"),c=>+c.amount||0),
+      amt: contractRows(mc,c=>+c.amount||0),
+      totalWithProfit: contractRows(mc,c=>+c.totalInst||+c.amount||0),
+      instSum: contractRows(mc,c=>+c.instAmt||0),
+      profit: contractRows(mc,c=>calcContract(c.amount,settings).profit),
+      net: contractRows(mc,c=>calcContract(c.amount,settings).net),
+      inst: contractRows(mc,c=>calcContract(c.amount,settings).inst),
+      acc: contractRows(mc,c=>calcContract(c.amount,settings).acc),
+      collected: collectedDetail,
+      due: dueDetail,
+      late: lateDetail,
+    };
+    return {mc, tot, collected, due, count:mc.length, cashCount, monthlyCount, totalWithProfit, instSum, invRows, late:Math.max(0,due-collected), details};
   };
   const totalRemaining = allC.reduce((s,c)=>s+Math.max(0,(+c.totalInst||+c.amount||0)-_getPaid(payments,c.id)),0);
   const closedMonths = Object.keys(monthClose||{}).sort().reverse();
@@ -2950,20 +2992,21 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
 
 function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen}) {
   const d = calcMonth(ym);
+  const [cardDetail,setCardDetail] = React.useState(null);
   const cards=[
-    ["📋 عدد العقود",d.count,"#475569",true],
-    ["💵 عقود نقدية",d.cashCount,"#0891b2",true],
-    ["📅 عقود شهرية",d.monthlyCount,C.teal,true],
-    ["💰 النقدي (القيمة)",d.tot.amt,C.teal],
-    ["🧾 الإجمالي (بالفائدة)",d.totalWithProfit,"#7c3aed"],
-    ["📆 مجموع الأقساط",d.instSum,"#9a6a00"],
-    ["📈 الأرباح",d.tot.profit,C.green],
-    ["✅ المحصّل",d.collected,C.green],
-    ["📌 المستحق",d.due,"#9a6a00"],
-    ["⚠️ المتعثّر",d.late,C.red],
-    ["💰 ربح المستثمرين",d.tot.net,"#0891b2"],
-    ["👤 ربح المدير",d.tot.inst,"#9a6a00"],
-    ["🧮 ربح المحاسب",d.tot.acc,"#4f46e5"],
+    ["📋 عدد العقود",d.count,"#475569",true,"count"],
+    ["💵 عقود نقدية",d.cashCount,"#0891b2",true,"cashCount"],
+    ["📅 عقود شهرية",d.monthlyCount,C.teal,true,"monthlyCount"],
+    ["💰 النقدي (القيمة)",d.tot.amt,C.teal,false,"amt"],
+    ["🧾 الإجمالي (بالفائدة)",d.totalWithProfit,"#7c3aed",false,"totalWithProfit"],
+    ["📆 مجموع الأقساط",d.instSum,"#9a6a00",false,"instSum"],
+    ["📈 الأرباح",d.tot.profit,C.green,false,"profit"],
+    ["✅ المحصّل",d.collected,C.green,false,"collected"],
+    ["📌 المستحق",d.due,"#9a6a00",false,"due"],
+    ["⚠️ المتعثّر",d.late,C.red,false,"late"],
+    ["💰 ربح المستثمرين",d.tot.net,"#0891b2",false,"net"],
+    ["👤 ربح المدير",d.tot.inst,"#9a6a00",false,"inst"],
+    ["🧮 ربح المحاسب",d.tot.acc,"#4f46e5",false,"acc"],
   ];
   const th={padding:"10px 8px",textAlign:"center",fontSize:13,fontWeight:800,background:"#1e293b",color:"#fff",whiteSpace:"nowrap"};
   const td={padding:"9px 8px",textAlign:"center",fontSize:14,borderBottom:"1px solid "+C.border};
@@ -2990,13 +3033,40 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
       </div>
       <div style={{padding:16}}>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:24}}>
-          {cards.map(([l,v,col,isCount],i)=>(
-            <div key={i} style={{...styles.card,textAlign:"center",borderTop:"4px solid "+col}}>
+          {cards.map(([l,v,col,isCount,key],i)=>{
+            const rows=(d.details&&d.details[key])||[];
+            return (
+            <div key={i} onClick={()=>rows.length>0&&setCardDetail({title:l,color:col,rows,isCount})}
+              style={{...styles.card,textAlign:"center",borderTop:"4px solid "+col,cursor:rows.length>0?"pointer":"default"}}>
               <div style={{fontSize:13,color:"#1f2937",marginBottom:6,fontWeight:700}}>{l}</div>
               <div style={{fontSize:22,fontWeight:900,color:col}}>{isCount?v:SAR(v)}</div>
+              {rows.length>0 && <div style={{fontSize:11,color:C.teal,marginTop:4,fontWeight:700}}>التفاصيل ({rows.length}) ›</div>}
             </div>
-          ))}
+          );})}
         </div>
+
+        {/* مودال تفاصيل البطاقة */}
+        <Modal open={!!cardDetail} onClose={()=>setCardDetail(null)} title={cardDetail?cardDetail.title:""}>
+          {cardDetail && (
+            <div style={{padding:"4px"}}>
+              <div style={{maxHeight:"55vh",overflowY:"auto",display:"flex",flexDirection:"column",gap:6}}>
+                {cardDetail.rows.map((r,i)=>(
+                  <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 12px",background:i%2?"#fafafa":"#fff",border:"1px solid "+C.border,borderRadius:8}}>
+                    <div>
+                      <div style={{fontWeight:700,fontSize:14,color:C.ink}}>{r.name}</div>
+                      <div style={{fontSize:12,color:"#1f2937",marginTop:2}}>{r.inv}{r.type?(" • "+r.type):""}{r.date?(" • "+fmtDate(r.date)):""}</div>
+                    </div>
+                    <div style={{fontWeight:900,fontSize:15,color:cardDetail.color,whiteSpace:"nowrap"}}>{cardDetail.isCount?SAR(r.amount):SAR(r.amount)}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",padding:"12px",marginTop:10,background:cardDetail.color,color:"#fff",borderRadius:8,fontWeight:900,fontSize:16}}>
+                <span>الإجمالي ({cardDetail.rows.length})</span>
+                <span>{SAR(cardDetail.rows.reduce((s,r)=>s+(r.amount||0),0))}</span>
+              </div>
+            </div>
+          )}
+        </Modal>
 
         <div style={{fontSize:17,fontWeight:900,color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12,marginBottom:12}}>👥 محصلة المستثمرين</div>
         <div style={{overflowX:"auto"}}>
