@@ -4861,19 +4861,29 @@ function App() {
       return Array.isArray(json.data) ? json.data : null;
     } catch (e) { return null; }
   };
-  const gsWrite = async (sheet, data) => {
+  const gsWrite = async (sheet, data, _retry) => {
     try {
       setSyncStatus("saving");
-      // POST: البيانات في جسم الطلب (بلا حد على الطول) — يحل مشكلة انقطاع الحفظ مع كبر البيانات
+      // POST: البيانات في جسم الطلب (بلا حد على الطول)
       const res = await fetch(GS_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action:"write", sheet, data })
       });
       const json = await res.json();
-      setSyncStatus(json.success ? "saved" : "error");
-      setTimeout(()=>setSyncStatus("idle"), 2000);
-    } catch (e) { setSyncStatus("error"); }
+      if (json.success) {
+        setSyncStatus("saved");
+        setTimeout(()=>setSyncStatus(s=>s==="saved"?"idle":s), 2000);
+      } else {
+        // فشل منطقي — أعد المحاولة مرة واحدة قبل عرض الخطأ
+        if (!_retry) { return gsWrite(sheet, data, true); }
+        setSyncStatus("error");
+      }
+    } catch (e) {
+      // فشل شبكة — أعد المحاولة مرة واحدة تلقائياً قبل عرض الخطأ (يخفي الوميض الكاذب)
+      if (!_retry) { await new Promise(r=>setTimeout(r,1200)); return gsWrite(sheet, data, true); }
+      setSyncStatus("error");
+    }
   };
 
   // Load from localStorage with fallback (instant UI), then sync from Sheets in background
