@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-02-v3-form-post -->
+<!-- build: 2026-07-02-v4-ux -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -5086,7 +5086,7 @@ function App() {
           <div style={{display:"flex",alignItems:"center",gap:5,fontSize:14,fontWeight:700,
             color: syncStatus==="error"?"#ff8080":syncStatus==="saving"?C.gold:syncStatus==="loading"?C.gold:"#5cd98a"}}>
             <span style={{fontSize:12}}>●</span>
-            {syncStatus==="saving" ? "⏳ جارٍ الحفظ..." : syncStatus==="loading" ? "⏳ جارٍ التحميل..." : syncStatus==="error" ? "⚠️ خطأ بالحفظ" : "☁️ متصل"}
+            {syncStatus==="saving" ? "💾 محفوظ • جارٍ المزامنة..." : syncStatus==="loading" ? "⏳ جارٍ التحميل..." : syncStatus==="error" ? "⚠️ لم تكتمل المزامنة (محفوظ محلياً)" : "☁️ متصل"}
           </div>
           <div style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:8,padding:"5px 12px",fontSize:15,fontWeight:700,color:C.gold}}>
             {contracts.length} عقد
@@ -5096,7 +5096,7 @@ function App() {
 
       {syncStatus==="error" && (
         <div style={{background:"#c0392b",color:"#fff",padding:"12px 16px",textAlign:"center",fontWeight:800,fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-          ⚠️ لم يتم حفظ آخر تعديل في السحابة! تأكد من الإنترنت وأعد المحاولة قبل إغلاق البرنامج.
+          ⚠️ بياناتك محفوظة على جهازك، لكن لم تكتمل المزامنة السحابية. تأكد من الإنترنت — ستُرفع تلقائياً عند عودة الاتصال.
         </div>
       )}
 
