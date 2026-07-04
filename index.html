@@ -198,15 +198,21 @@ const SAR = n => Math.round(+(n||0)).toLocaleString("en-US",{minimumFractionDigi
 const invLabel = inv => (inv && inv.code && String(inv.code).trim()) ? String(inv.code).trim() : (inv ? inv.name : "—");
 const NUM = n => (+(n||0)).toLocaleString("en-US");
 
-function calcContract(amount, s = {profit:50, admin:2.5, acc:10, inst:10}) {
-  const profit = amount * (s.profit/100);
+function calcContract(amount, s = {profit:50, admin:2.5, acc:10, inst:10}, totalActual) {
+  amount = +amount || 0;
+  // إذا مُرّر الإجمالي الفعلي (من العقد) واستخدمناه: الربح = الإجمالي − النقدي
+  // وإلا (توافق مع القديم): الربح = النقدي × النسبة
+  const hasTotal = totalActual != null && !isNaN(+totalActual) && +totalActual > 0;
+  const profit = hasTotal ? Math.max(0, (+totalActual) - amount) : amount * (s.profit/100);
   const admin  = amount * (s.admin/100);
   const acc    = profit * (s.acc/100);
   const inst   = profit * (s.inst/100);
   const net    = profit - admin - acc - inst;
-  const total  = amount + profit;
+  const total  = hasTotal ? (+totalActual) : (amount + profit);
   return { profit, admin, acc, inst, net, total };
 }
+// مساعد: يحسب العقد باستخدام إجماليه الفعلي (totalInst)
+function calcC(c, settings){ return calcContract(+c.amount||0, settings, c.totalInst); }
 
 function numToWords(n) {
   n = Math.round(n);
@@ -674,7 +680,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
     }
   };
   const amount = parseFloat(form.amount)||0;
-  const r = amount ? calcContract(amount, settings) : null;
+  const r = amount ? calcContract(amount, settings, form.totalInst) : null;
   // Auto-calculate lastInst: firstInst + (totalInst/instAmt - 1) months
   const numMonths = (form.totalInst && form.instAmt && parseFloat(form.instAmt) > 0)
     ? Math.round(parseFloat(form.totalInst) / parseFloat(form.instAmt))
@@ -701,7 +707,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
         toast("⚠️ يرجى تعبئة جميع الحقول المطلوبة","warn"); return;
       }
     }
-    const rr = calcContract(amount, settings);
+    const rr = calcContract(amount, settings, saveForm.totalInst);
     const id = Date.now();
     const _totalInst = parseFloat(saveForm.totalInst), _instAmt = parseFloat(saveForm.instAmt);
     const _numMonths = isDefer ? saveForm.numMonths : numMonths;
@@ -1422,7 +1428,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                 <tr><td colSpan={15} style={{...styles.td,textAlign:"center",padding:40,color:"#1f2937"}}>لا توجد عقود — أضف عقداً جديداً</td></tr>
               ) : filtered.map((c,i)=>{
                 const inv=investors.find(x=>String(x.id)===String(c.investorId));
-                const r=calcContract(c.amount,settings);
+                const r=calcC(c,settings);
                 return (
                   <tr key={c.id} style={{background:i%2===0?C.white:C.gray}}>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.num||i+1}</td>
@@ -1583,11 +1589,11 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-print-area")}>🖨️ سند الزبون فقط</button>
           <button style={styles.btn(C.teal)} onClick={()=>printContent("bond-cl-print-area")}>🖨️ سند الزبون + إقرار</button>
         </div>
-        <div id="bond-print-area">{bond && <BondContent c={bond} inv={investors.find(i=>String(i.id)===String(bond.investorId))} r={calcContract(bond.amount,settings)}/>}</div>
+        <div id="bond-print-area">{bond && <BondContent c={bond} inv={investors.find(i=>String(i.id)===String(bond.investorId))} r={calcContract(bond.amount,settings,bond.totalInst)}/>}</div>
         <div id="bond-cl-print-area" style={{position:"absolute",left:"-9999px",top:0}}>
-          {bond && <div className="doc-half"><BondContent c={bond} inv={investors.find(i=>String(i.id)===String(bond.investorId))} r={calcContract(bond.amount,settings)}/></div>}
+          {bond && <div className="doc-half"><BondContent c={bond} inv={investors.find(i=>String(i.id)===String(bond.investorId))} r={calcContract(bond.amount,settings,bond.totalInst)}/></div>}
           {bond && <div style={{borderTop:"2px dashed #000",margin:"12px 0"}}></div>}
-          {bond && <div className="doc-half"><ChequeContent c={bond} r={calcContract(bond.amount,settings)}/></div>}
+          {bond && <div className="doc-half"><ChequeContent c={bond} r={calcContract(bond.amount,settings,bond.totalInst)}/></div>}
         </div>
       </Modal>
 
@@ -1597,11 +1603,11 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-g-print-area")}>🖨️ سند الكفيل فقط</button>
           <button style={styles.btn(C.teal)} onClick={()=>printContent("bond-gg-print-area")}>🖨️ سند الكفيل + إقرار</button>
         </div>
-        <div id="bond-g-print-area">{bondG && <BondGuarantorContent c={bondG} inv={investors.find(i=>String(i.id)===String(bondG.investorId))} r={calcContract(bondG.amount,settings)}/>}</div>
+        <div id="bond-g-print-area">{bondG && <BondGuarantorContent c={bondG} inv={investors.find(i=>String(i.id)===String(bondG.investorId))} r={calcContract(bondG.amount,settings,bondG.totalInst)}/>}</div>
         <div id="bond-gg-print-area" style={{position:"absolute",left:"-9999px",top:0}}>
-          {bondG && <div className="doc-half"><BondGuarantorContent c={bondG} inv={investors.find(i=>String(i.id)===String(bondG.investorId))} r={calcContract(bondG.amount,settings)}/></div>}
+          {bondG && <div className="doc-half"><BondGuarantorContent c={bondG} inv={investors.find(i=>String(i.id)===String(bondG.investorId))} r={calcContract(bondG.amount,settings,bondG.totalInst)}/></div>}
           {bondG && <div style={{borderTop:"2px dashed #000",margin:"12px 0"}}></div>}
-          {bondG && <div className="doc-half"><ChequeContent c={bondG} r={calcContract(bondG.amount,settings)} isGuarantor={true}/></div>}
+          {bondG && <div className="doc-half"><ChequeContent c={bondG} r={calcContract(bondG.amount,settings,bondG.totalInst)} isGuarantor={true}/></div>}
         </div>
       </Modal>
 
@@ -1609,14 +1615,14 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         <div style={{padding:"10px 12px 0",textAlign:"left"}}>
           <button style={styles.btn(C.gold)} onClick={()=>printContent("cheque-print-area")}>🖨️ طباعة</button>
         </div>
-        <div id="cheque-print-area">{cheque && <ChequeContent c={cheque} r={calcContract(cheque.amount,settings)}/>}</div>
+        <div id="cheque-print-area">{cheque && <ChequeContent c={cheque} r={calcContract(cheque.amount,settings,cheque.totalInst)}/>}</div>
       </Modal>
 
       <Modal open={!!chequeG} onClose={()=>setChequeG(null)} title="📋 العقد - الكفيل">
         <div style={{padding:"10px 12px 0",textAlign:"left"}}>
           <button style={styles.btn(C.gold)} onClick={()=>printContent("cheque-g-print-area")}>🖨️ طباعة</button>
         </div>
-        <div id="cheque-g-print-area">{chequeG && <ChequeContent c={chequeG} r={calcContract(chequeG.amount,settings)} isGuarantor={true}/>}</div>
+        <div id="cheque-g-print-area">{chequeG && <ChequeContent c={chequeG} r={calcContract(chequeG.amount,settings,chequeG.totalInst)} isGuarantor={true}/>}</div>
       </Modal>
 
       {/* Contract Doc Modal */}
@@ -1625,7 +1631,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           <button style={styles.btn(C.gold)} onClick={()=>printContent("contract-print-area")}>🖨️ طباعة</button>
         </div>
         <div id="contract-print-area">
-          {contractDoc && <ContractContent c={contractDoc} inv={investors.find(i=>String(i.id)===String(contractDoc.investorId))} r={calcContract(contractDoc.amount,settings)} settings={settings} investors={investors}/>}
+          {contractDoc && <ContractContent c={contractDoc} inv={investors.find(i=>String(i.id)===String(contractDoc.investorId))} r={calcContract(contractDoc.amount,settings,contractDoc.totalInst)} settings={settings} investors={investors}/>}
         </div>
       </Modal>
     </div>
@@ -2001,7 +2007,7 @@ function CommissionsPage({contracts, investors, settings}) {
   });
 
   const rows = mc.map(c=>{
-    const r = calcContract(c.amount, settings);
+    const r = calcC(c, settings);
     const inv = investors.find(i=>String(i.id)===String(c.investorId));
     return {
       num: c.num||"—",
@@ -2228,7 +2234,7 @@ function FundsPanel({investors, contracts, settings, setInvestors, toast}){
         <div style={{padding:"14px 18px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:12}}>
           {[...new Set(investors.map(i=>i.fund))].map(fund=>{
             const cap=investors.filter(i=>i.fund===fund).reduce((s,i)=>s+i.capital,0);
-            const fNet=mc.filter(c=>(investors.find(i=>String(i.id)===String(c.investorId))?.fund)===fund).reduce((s,c)=>s+calcContract(c.amount,settings).net,0);
+            const fNet=mc.filter(c=>(investors.find(i=>String(i.id)===String(c.investorId))?.fund)===fund).reduce((s,c)=>s+calcC(c,settings).net,0);
             const fundInvs = investors.filter(i=>i.fund===fund);
             return (
               <div key={fund} style={{padding:"14px",border:"1px solid "+C.border,borderRadius:10,background:"#fcfcfd"}}>
@@ -2307,7 +2313,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
   // Auto-transactions from contracts
   const myContracts = contracts.filter(c=>c.investorId===selInv);
   const autoTx = myContracts.map(c=>{
-    const r = calcContract(c.amount, settings);
+    const r = calcC(c, settings);
     // ينخصم: قيمة العقد النقدية + عمولة المحاسبين + نصيب المؤسسة + الرسوم الإدارية
     const deduct = c.amount + r.acc + r.inst + r.admin;
     return {
@@ -2622,7 +2628,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     const myContracts = contracts.filter(c=>c.investorId===id);
     const myManualTx = (txList[id]||[]);
     const autoDeduct = myContracts.reduce((s,c)=>{
-      const r=calcContract(c.amount,settings);
+      const r=calcC(c,settings);
       return s-(c.amount+r.acc+r.inst+r.admin);
     },0);
     const autoPaid = (payments||[]).filter(p=>myContracts.find(c=>c.id===p.contractId)).reduce((s,p)=>s+p.amount,0);
@@ -2824,7 +2830,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
 
   const calcMonth = (ym) => {
     const mc = contracts.filter(c=>getPeriod(c.date)===ym);
-    const tot = mc.reduce((a,c)=>{const r=calcContract(c.amount,settings);return{amt:a.amt+c.amount,profit:a.profit+r.profit,admin:a.admin+r.admin,acc:a.acc+r.acc,inst:a.inst+r.inst,net:a.net+r.net};},{amt:0,profit:0,admin:0,acc:0,inst:0,net:0});
+    const tot = mc.reduce((a,c)=>{const r=calcC(c,settings);return{amt:a.amt+c.amount,profit:a.profit+r.profit,admin:a.admin+r.admin,acc:a.acc+r.acc,inst:a.inst+r.inst,net:a.net+r.net};},{amt:0,profit:0,admin:0,acc:0,inst:0,net:0});
     const collected = (payments||[]).filter(p=>p.date && getPeriod(p.date)===ym).reduce((s,p)=>s+(+p.amount||0),0);
     const [y,m]=ym.split("-").map(Number);
     const periodEnd = new Date(y, m, 20);
@@ -2899,10 +2905,10 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
       amt: contractRows(mc,c=>+c.amount||0),
       totalWithProfit: contractRows(mc,c=>+c.totalInst||+c.amount||0),
       instSum: contractRows(mc,c=>+c.instAmt||0),
-      profit: contractRows(mc,c=>calcContract(c.amount,settings).profit),
-      net: contractRows(mc,c=>{const r=calcContract(c.amount,settings);return r.profit-r.inst-r.acc;}),
-      inst: contractRows(mc,c=>calcContract(c.amount,settings).inst),
-      acc: contractRows(mc,c=>calcContract(c.amount,settings).acc),
+      profit: contractRows(mc,c=>calcC(c,settings).profit),
+      net: contractRows(mc,c=>{const r=calcC(c,settings);return r.profit-r.inst-r.acc;}),
+      inst: contractRows(mc,c=>calcC(c,settings).inst),
+      acc: contractRows(mc,c=>calcC(c,settings).acc),
       collected: collectedDetail,
       due: dueDetail,
       late: lateDetail,
@@ -3148,7 +3154,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
   const [sel,setSel]=useState(months[0]||"");
   const mLabel=ym=>{const[y,m]=ym.split("-");return"شهر "+parseInt(m)+" - "+y;};
   const mc=contracts.filter(c=>getPeriod(c.date)===sel);
-  const tot=mc.reduce((a,c)=>{const r=calcContract(c.amount,settings);return{amt:a.amt+c.amount,profit:a.profit+r.profit,admin:a.admin+r.admin,acc:a.acc+r.acc,inst:a.inst+r.inst,net:a.net+r.net};},{amt:0,profit:0,admin:0,acc:0,inst:0,net:0});
+  const tot=mc.reduce((a,c)=>{const r=calcC(c,settings);return{amt:a.amt+c.amount,profit:a.profit+r.profit,admin:a.admin+r.admin,acc:a.acc+r.acc,inst:a.inst+r.inst,net:a.net+r.net};},{amt:0,profit:0,admin:0,acc:0,inst:0,net:0});
 
   // ═══ مؤشرات المحفظة (لحظية) ═══
   const allC = contracts.filter(c=>!c.deleted);
@@ -3393,12 +3399,12 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
 
   // نصيب المدير والمحاسب من عقود هذا اليوم
   const dayContracts = contracts.filter(c=>c.date===selDay);
-  const mgrShare = dayContracts.reduce((s,c)=>s+calcContract(c.amount,settings).inst,0);
-  const accShare = dayContracts.reduce((s,c)=>s+calcContract(c.amount,settings).acc,0);
+  const mgrShare = dayContracts.reduce((s,c)=>s+calcC(c,settings).inst,0);
+  const accShare = dayContracts.reduce((s,c)=>s+calcC(c,settings).acc,0);
 
   // الحساب الكامل: المستحق من كل العقود - المستلم من اليومية
-  const mgrEarnedAll = contracts.reduce((s,c)=>s+calcContract(c.amount,settings).inst,0);
-  const accEarnedAll = contracts.reduce((s,c)=>s+calcContract(c.amount,settings).acc,0);
+  const mgrEarnedAll = contracts.reduce((s,c)=>s+calcC(c,settings).inst,0);
+  const accEarnedAll = contracts.reduce((s,c)=>s+calcC(c,settings).acc,0);
   const mgrTakenAll = _daily.filter(d=>d.type==="mgr").reduce((s,d)=>s+(d.amount||0),0);
   const accTakenAll = _daily.filter(d=>d.type==="acc").reduce((s,d)=>s+(d.amount||0),0);
   const mgrLeft = mgrEarnedAll - mgrTakenAll;
@@ -3631,7 +3637,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:14}}>
         {investors.map(inv=>{
           const myCon=contracts.filter(c=>c.investorId===inv.id);
-          const totalNet=myCon.reduce((s,c)=>s+calcContract(c.amount,settings).net,0);
+          const totalNet=myCon.reduce((s,c)=>s+calcC(c,settings).net,0);
           const totalAmt=myCon.reduce((s,c)=>s+c.amount,0);
           return (
             <div key={inv.id} style={{...styles.card,borderTop:"4px solid "+C.teal}}>
@@ -3701,7 +3707,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
           // النقدي حتى نهاية تاريخ معيّن
           const cashUpto = (end) => {
             let v = capital;
-            myCon.forEach(c=>{ if(new Date(c.date) <= end){ const r=calcContract(c.amount,settings); v -= (c.amount + r.acc + r.inst + r.admin); } });
+            myCon.forEach(c=>{ if(new Date(c.date) <= end){ const r=calcC(c,settings); v -= (c.amount + r.acc + r.inst + r.admin); } });
             (payments||[]).forEach(p=>{ if(myCon.find(c=>c.id===p.contractId) && new Date(p.date) <= end){ v += (+p.amount||0); } });
             myTx.forEach(t=>{ if(t.date && new Date(t.date) <= end){ v += (+t.amount||0); } });
             return v;
@@ -3775,7 +3781,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
           const totalAmt   = myCon.reduce((s,c)=>s+c.amount,0);
           const totalPaid  = myCon.reduce((s,c)=>s+_getPaid(payments,c.id),0);
           const totalLeft  = myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
-          const totalProfit= myCon.reduce((s,c)=>s+calcContract(c.amount,settings).net,0);
+          const totalProfit= myCon.reduce((s,c)=>s+calcC(c,settings).net,0);
           return (
             <div id="stmt-print-area" style={{padding:"16px 20px"}}>
               {/* رأس الطباعة (يظهر فقط عند الطباعة) */}
@@ -3840,7 +3846,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
                     {myCon.length===0 ? (
                       <tr><td colSpan={20} style={{...styles.td,textAlign:"center",padding:30,color:"#1f2937"}}>لا توجد عقود</td></tr>
                     ) : myCon.map((c,i)=>{
-                      const r = calcContract(c.amount,settings);
+                      const r = calcC(c,settings);
                       const paid = _getPaid(payments,c.id);
                       const left = Math.max(0,(c.totalInst||0)-paid);
                       const done = left===0 && (c.totalInst||0)>0;
