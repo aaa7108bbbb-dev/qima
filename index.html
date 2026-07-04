@@ -661,7 +661,7 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
 function NewContractPage({investors, settings, contracts, onSave, toast, setInvTxList}) {
   const today = new Date().toISOString().split("T")[0];
   const nextNum = contracts.length ? Math.max(...contracts.map(c=>parseInt(c.num)||0).filter(n=>n>0), 0) + 1 : (settings.startNum||1);
-  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:"",contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",bankAccount:""});
+  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:"",contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",bankAccount:"",stockName:"",stockQty:""});
   const set = (k,v) => {
     setForm(f=>({...f,[k]:v}));
     // Auto-fill if idNum entered and matches existing contract
@@ -803,6 +803,20 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
             </div>
             <input style={{...styles.input,borderColor:C.teal,fontWeight:700}} type="text" placeholder="اكتب نوع البضاعة..." value={form.goods} onChange={e=>set("goods",e.target.value)}/>
           </div>
+
+          {/* حقول الأسهم — تظهر فقط عند اختيار أسهم */}
+          {form.goods && form.goods.includes("أسهم") && (
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14,background:"#f0f9ff",border:"2px solid #0891b2",borderRadius:12,padding:"12px 14px"}}>
+              <div>
+                <label style={{fontSize:15,fontWeight:700,color:"#0891b2",display:"block",marginBottom:5}}>📈 اسم الشركة</label>
+                <input style={styles.input} type="text" placeholder="مثال: الراجحي / الإنماء" value={form.stockName||""} onChange={e=>set("stockName",e.target.value)}/>
+              </div>
+              <div>
+                <label style={{fontSize:15,fontWeight:700,color:"#0891b2",display:"block",marginBottom:5}}>📊 عدد الأسهم</label>
+                <input style={styles.input} type="number" placeholder="مثال: 1000" value={form.stockQty||""} onChange={e=>set("stockQty",e.target.value)} min="1"/>
+              </div>
+            </div>
+          )}
 
           {/* العدد والفئة */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
@@ -4032,16 +4046,35 @@ function GoodsPage({investors, contracts, toast}) {
   // Build rows from contracts + manual
   const contractRows = contracts.map(c=>{
     const inv = investors.find(i=>String(i.id)===String(c.investorId));
-    return {
-      id:"c_"+c.id, date:c.date, contractNum:c.num,
-      contractAmount:parseFloat(c.amount)||0,
-      client:c.client,
-      investor:inv?invLabel(inv):"—",
-      supportClient:(c.deductEnabled&&c.deductAmount)?parseFloat(c.deductAmount)||0:0,
-      supportAcc:0,
-      withdrawnQty:parseInt(c.qty)||0,
-      fromContract:true,
-    };
+    // بطاقة (سوا/موبايلي/زين) → تخصم العدد من رصيد البطاقات
+    // غيرها (أسهم/جوال/سيارة) → سلعة نقدية: تخصم قيمة العقد النقدية من الإجمالي النقدي
+    const isCard = (c.goods||"").trim().startsWith("بطاقة");
+    if(isCard){
+      return {
+        id:"c_"+c.id, date:c.date, contractNum:c.num,
+        contractAmount:parseFloat(c.amount)||0,
+        client:c.client,
+        investor:inv?invLabel(inv):"—",
+        supportClient:(c.deductEnabled&&c.deductAmount)?parseFloat(c.deductAmount)||0:0,
+        supportAcc:0,
+        withdrawnQty:parseInt(c.qty)||0,
+        fromContract:true,
+      };
+    } else {
+      // سلعة نقدية: قيمتها النقدية تُخصم من الإجمالي النقدي (سالبة)، بدون لمس البطاقات
+      const stockInfo = (c.goods||"").includes("أسهم") && c.stockName ? (" ("+c.stockName+(c.stockQty?" ×"+c.stockQty:"")+")") : "";
+      return {
+        id:"c_"+c.id, date:c.date, contractNum:c.num,
+        contractAmount:parseFloat(c.amount)||0,
+        client:c.client+" — "+(c.goods||"سلعة")+stockInfo,
+        investor:inv?invLabel(inv):"—",
+        supportClient:(c.deductEnabled&&c.deductAmount)?parseFloat(c.deductAmount)||0:0,
+        supportAcc:-(parseFloat(c.amount)||0),  // سالبة: تخصم قيمة العقد النقدية من الإجمالي النقدي
+        withdrawnQty:0,
+        fromContract:true,
+        cashOnly:true, isCashItem:true, itemName:c.goods,
+      };
+    }
   });
 
   // ترتيب زمني: بالتاريخ، ثم بوقت الإنشاء (timestamp) — آخر عملية تكون آخر صف
