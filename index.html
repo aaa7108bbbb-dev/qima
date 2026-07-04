@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-04-profit-fix -->
+<!-- build: 2026-07-04-goods-cash -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -4229,7 +4229,7 @@ function GoodsPage({investors, contracts, toast}) {
               const C_={
                 "رقم العقد":cell({textAlign:"center",fontWeight:700},row.contractNum),
                 "قيمة العقد":cell({textAlign:"center"},row.contractAmount>0?row.contractAmount.toLocaleString("en-US"):""),
-                "اسم العميل":cell({fontWeight:700},row.client),
+                "اسم العميل":cell({fontWeight:700,whiteSpace:"nowrap"},row.client),
                 "اسم المستثمر":cell({},row.investor),
                 "دعم العميل":cell({textAlign:"center",color:C.green,fontWeight:700},row.supportClient>0?row.supportClient.toLocaleString("en-US"):""),
                 "دعم الحساب":cell({textAlign:"center",color:C.teal,fontWeight:700},row.supportAcc>0?row.supportAcc.toLocaleString("en-US"):""),
@@ -4238,7 +4238,7 @@ function GoodsPage({investors, contracts, toast}) {
                 "البطاقات المسحوبة":cell({textAlign:"center",color:C.red,fontWeight:700},row.withdrawn>0?row.withdrawn:""),
                 "رصيد البطاقات":cell({textAlign:"center",background:"#f0f0ff",fontWeight:800,color:C.teal},row.runningCards),
                 "نقدي البطاقات":cell({textAlign:"center",fontWeight:700,color:"#0891b2"},(row.cardsCash||0).toLocaleString("en-US")),
-                "نقدي السلع":cell({textAlign:"center",fontWeight:700,color:"#a87520"},(row.goodsCash||0)>0?(row.goodsCash).toLocaleString("en-US"):""),
+                "نقدي السلع":cell({textAlign:"center",fontWeight:700,color:(row.goodsCash||0)<0?C.red:"#a87520"},(row.goodsCash||0).toLocaleString("en-US")),
                 "الإجمالي النقدي":cell({textAlign:"center",background:"#fffbf0",fontWeight:800,color:row.cashBalance<0?C.red:C.gold},row.cashBalance.toLocaleString("en-US")),
               };
               return (
