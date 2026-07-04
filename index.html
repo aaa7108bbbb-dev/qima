@@ -41,10 +41,10 @@
     #cheque-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
     #bond-g-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
     #cheque-g-print-area { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
-    #contract-print-area { font-size: 10.5px !important; }
-    #contract-print-area * { line-height: 1.35 !important; }
-    #contract-print-area h1, #contract-print-area h2, #contract-print-area h3 { margin: 4px 0 !important; }
-    #contract-print-area p, #contract-print-area div { margin-top: 2px !important; margin-bottom: 2px !important; }
+    #contract-print-area { font-size: 14px !important; }
+    #contract-print-area * { line-height: 1.7 !important; }
+    #contract-print-area h1, #contract-print-area h2, #contract-print-area h3 { margin: 8px 0 !important; }
+    #contract-print-area p, #contract-print-area div { margin-top: 4px !important; margin-bottom: 4px !important; }
   }
   body { margin: 0; font-family: 'IBM Plex Sans Arabic', 'Poppins', Arial, sans-serif; background: #f4f4f6; }
   /* LOGIN PAGE STYLES */
@@ -576,7 +576,7 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
 
       {/* ══ الكفيل ══ */}
       {c.gName && (<>
-      <div style={{textAlign:"center",fontWeight:800,textDecoration:"underline",marginBottom:6}}>إقرار بالكفالة الغرامية</div>
+      <div style={{textAlign:"center",fontWeight:800,textDecoration:"underline",marginBottom:6,pageBreakBefore:"always"}}>إقرار بالكفالة الغرامية</div>
       <div style={{marginBottom:8,lineHeight:2}}>
         <span>نعم أنا / </span><span style={lineW(160)}>{c.gName}</span>
         <span> &nbsp; الجنسية / </span><span style={lineW(80)}>{c.nationality||"سعودي"}</span>
@@ -1446,7 +1446,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                       {c.gName&&<button style={{...styles.btn("#8b5cf6"),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>setBondG(c)}>📜ك</button>}
                       <button style={{...styles.btn(C.ink),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>setCheque(c)}>📋م</button>
                       {c.gName&&<button style={{...styles.btn("#6b7280"),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>setChequeG(c)}>📋ك</button>}
-                      <button style={{...styles.btn("#f59e0b"),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>{setEditC(c);setEditForm({client:c.client,cPhone:c.cPhone||"",gName:c.gName||"",gPhone:c.gPhone||"",note:c.note||"",date:c.date,firstInst:c.firstInst||"",investorId:c.investorId!=null?String(c.investorId):""});}}>✏️</button>
+                      <button style={{...styles.btn("#f59e0b"),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>{setEditC(c);setEditForm({...c, investorId:c.investorId!=null?String(c.investorId):""});}}>✏️</button>
                       {statusTab==="deleted"
                         ? <button style={{...styles.btn(C.green),fontSize:14,padding:"5px 10px"}} onClick={()=>{onRestore(c.id);toast("✅ تم الاسترجاع");}}>↩️ استرجاع</button>
                         : <button style={{...styles.btn(C.red),fontSize:14,padding:"5px 10px"}} onClick={()=>{if(confirm("نقل هذا العقد للمحذوفة؟ (يبقى محفوظاً ويمكن استرجاعه)")){onDelete(c.id);toast("تم النقل للمحذوفة");}}}>🗑️</button>}
@@ -1552,25 +1552,29 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       <Modal open={!!editC} onClose={()=>setEditC(null)} title="✏️ تعديل العقد">
         <div style={{padding:"14px 18px"}}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
-            {[["اسم العميل","client","text"],["جوال العميل","cPhone","tel"],["اسم الكفيل","gName","text"],["جوال الكفيل","gPhone","tel"],["تاريخ العقد","date","date"],["تاريخ أول قسط","firstInst","date"]].map(([l,k,t])=>(
+            {[["اسم العميل","client","text"],["رقم الهوية","idNum","text"],["جوال العميل","cPhone","tel"],["العمل","job","text"],["الجنسية","nationality","text"],["العنوان","address","text"],
+              ["اسم الكفيل","gName","text"],["هوية الكفيل","gId","text"],["جوال الكفيل","gPhone","tel"],["عمل الكفيل","gJob","text"],
+              ["البضاعة","goods","text"],["العدد","qty","number"],["الفئة/المواصفة","category","text"],
+              ["المبلغ النقدي","amount","number"],["الإجمالي (بالفائدة)","totalInst","number"],["القسط الشهري","instAmt","number"],
+              ["تاريخ العقد","date","date"],["تاريخ أول قسط","firstInst","date"]].map(([l,k,t])=>(
               <div key={k}>
-                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>{l}</label>
+                <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>{l}</label>
                 <input style={styles.input} type={t} value={editForm[k]||""} onChange={e=>setEditForm(f=>({...f,[k]:e.target.value}))}/>
               </div>
             ))}
             <div style={{gridColumn:"1/-1"}}>
-              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المستثمر (الصندوق)</label>
+              <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المستثمر (الصندوق)</label>
               <select style={styles.input} value={editForm.investorId||""} onChange={e=>setEditForm(f=>({...f,investorId:e.target.value}))}>
                 <option value="">— اختر المستثمر —</option>
                 {investors.map(i=><option key={i.id} value={String(i.id)}>{invLabel(i)} ({i.fund})</option>)}
               </select>
             </div>
             <div style={{gridColumn:"1/-1"}}>
-              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>ملاحظة</label>
+              <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>ملاحظة</label>
               <textarea style={{...styles.input,height:60}} value={editForm.note||""} onChange={e=>setEditForm(f=>({...f,note:e.target.value}))}/>
             </div>
           </div>
-          <button style={styles.btn(C.teal)} onClick={()=>{const ef={...editForm}; if(ef.investorId!==undefined&&ef.investorId!=="") ef.investorId=parseInt(ef.investorId); onUpdate({...editC,...ef});setEditC(null);toast("✅ تم التعديل");}}>💾 حفظ التعديل</button>
+          <button style={styles.btn(C.teal)} onClick={()=>{const ef={...editForm}; if(ef.investorId!==undefined&&ef.investorId!=="") ef.investorId=parseInt(ef.investorId); ["amount","totalInst","instAmt","qty"].forEach(k=>{if(ef[k]!==undefined&&ef[k]!=="")ef[k]=parseFloat(ef[k])||0;}); onUpdate({...editC,...ef});setEditC(null);toast("✅ تم التعديل");}}>💾 حفظ التعديل</button>
         </div>
       </Modal>
 
@@ -5120,9 +5124,6 @@ function App() {
             color: syncStatus==="error"?"#ff8080":syncStatus==="saving"?C.gold:syncStatus==="loading"?C.gold:"#5cd98a"}}>
             <span style={{fontSize:12}}>●</span>
             {syncStatus==="saving" ? "💾 محفوظ • جارٍ المزامنة..." : syncStatus==="loading" ? "⏳ جارٍ التحميل..." : syncStatus==="error" ? "⚠️ لم تكتمل المزامنة (محفوظ محلياً)" : "☁️ متصل"}
-          </div>
-          <div style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:8,padding:"5px 12px",fontSize:15,fontWeight:700,color:C.gold}}>
-            {contracts.length} عقد
           </div>
         </div>
       </div>
