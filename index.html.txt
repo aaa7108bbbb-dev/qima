@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>مؤسسة قمة الفرصة التجارية</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 480px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+      backdrop-filter: blur(12px);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      text-align: center;
+    }
+
+    p {
+      margin: 0 0 20px;
+      text-align: center;
+      color: #cbd5e1;
+      line-height: 1.8;
+    }
+
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      outline: none;
+      box-sizing: border-box;
+      font-size: 15px;
+    }
+
+    input::placeholder {
+      color: #94a3b8;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 18px;
+      padding: 14px 16px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .note {
+      margin-top: 16px;
+      font-size: 13px;
+      text-align: center;
+      color: #cbd5e1;
+    }
+
+    .result {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(34,197,94,0.15);
+      border: 1px solid rgba(34,197,94,0.35);
+      display: none;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>مؤسسة قمة الفرصة التجارية</h1>
+    <p>نظام بسيط كبداية، ويمكن تطويره لاحقًا إلى لوحة إدارة كاملة.</p>
+
+    <label for="name">اسم المستخدم</label>
+    <input id="name" type="text" placeholder="أدخل اسم المستخدم" />
+
+    <label for="pass">كلمة المرور</label>
+    <input id="pass" type="password" placeholder="أدخل كلمة المرور" />
+
+    <button onclick="login()">تسجيل الدخول</button>
+
+    <div class="result" id="result">تم تسجيل الدخول بنجاح</div>
+
+    <div class="note">هذا ملف بداية، وليس النظام الكامل بعد.</div>
+  </div>
+
+  <script>
+    function login() {
+      const name = document.getElementById('name').value.trim();
+      const pass = document.getElementById('pass').value.trim();
+      const result = document.getElementById('result');
+
+      if (!name || !pass) {
+        alert('أدخل اسم المستخدم وكلمة المرور');
+        return;
+      }
+
+      result.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
