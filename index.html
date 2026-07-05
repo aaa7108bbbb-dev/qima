@@ -17,12 +17,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-  // ═══ إعداد Firebase ═══
+  // ═══ تحميل Firebase بالتسلسل (أضمن على الجوال) ═══
+  window._fbReady = false;
+  window._fbFailed = false;
   const firebaseConfig = {
     apiKey: "AIzaSyDpIOR4iSroK9I8My-ElFgamRnvFi9wHHE",
     authDomain: "qima-erp-654fa.firebaseapp.com",
@@ -31,12 +29,56 @@
     messagingSenderId: "420467732319",
     appId: "1:420467732319:web:b3e60119decb1f0d5610ea"
   };
-  try {
-    firebase.initializeApp(firebaseConfig);
-    window._fbAuth = firebase.auth();
-    window._fbDB = firebase.firestore();
-    window._fbReady = true;
-  } catch(e) { window._fbReady = false; console.error("Firebase init failed", e); }
+  function _loadScript(src){
+    return new Promise(function(resolve,reject){
+      var done=false;
+      var s=document.createElement("script");
+      s.src=src; s.async=false;
+      s.onload=function(){ if(!done){done=true;resolve();} };
+      s.onerror=function(){ if(!done){done=true;reject(new Error("fail "+src));} };
+      // مهلة ٦ ثواني لكل سكربت — لو تعلّق، ننتقل للمصدر التالي
+      setTimeout(function(){ if(!done){done=true;reject(new Error("timeout "+src));} }, 6000);
+      document.head.appendChild(s);
+    });
+  }
+  (async function(){
+    // مصادر بديلة متعددة — لو حُجب مصدر، يجرّب التالي (يتجاوز حجب gstatic)
+    var sources = [
+      "https://www.gstatic.com/firebasejs/10.12.2/",
+      "https://cdn.jsdelivr.net/npm/firebase@10.12.2/",
+      "https://unpkg.com/firebase@10.12.2/",
+      "https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/"
+    ];
+    // أسماء الملفات تختلف قليلاً بين المصادر
+    function files(base){
+      if(base.indexOf("gstatic")>-1) return [base+"firebase-app-compat.js", base+"firebase-auth-compat.js", base+"firebase-firestore-compat.js"];
+      if(base.indexOf("cloudflare")>-1) return [base+"firebase-app-compat.min.js", base+"firebase-auth-compat.min.js", base+"firebase-firestore-compat.min.js"];
+      // jsdelivr / unpkg
+      return [base+"firebase-app-compat.js", base+"firebase-auth-compat.js", base+"firebase-firestore-compat.js"];
+    }
+    var loaded=false;
+    for(var i=0;i<sources.length && !loaded;i++){
+      try {
+        var f=files(sources[i]);
+        await _loadScript(f[0]);
+        await _loadScript(f[1]);
+        await _loadScript(f[2]);
+        if(typeof firebase==="undefined") throw new Error("firebase undefined");
+        if(!firebase.apps||!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        window._fbAuth=firebase.auth();
+        window._fbDB=firebase.firestore();
+        window._fbReady=true;
+        loaded=true;
+        console.log("✓ Firebase حُمّل من:", sources[i]);
+      } catch(e){
+        console.warn("تعذّر التحميل من "+sources[i]+" — تجربة المصدر التالي...");
+      }
+    }
+    if(!loaded){
+      window._fbFailed=true;
+      console.warn("كل مصادر Firebase محجوبة — البرنامج يعمل بالوضع العادي (Google Sheets)");
+    }
+  })();
 </script>
 <style>
   * { box-sizing: border-box; }
@@ -101,59 +143,10 @@
   @media (max-width: 768px) { .login-card { padding: 40px 30px; } .login-title h1 { font-size: 24px; } .logo { width: 70px; height: 70px; font-size: 40px; } }
 </style>
 <script>
-function createStars(){const container=document.getElementById('stars-container');for(let i=0;i<50;i++){const star=document.createElement('div');star.className='star';star.style.left=Math.random()*100+'%';star.style.top=Math.random()*100+'%';star.style.animationDelay=Math.random()*3+'s';container.appendChild(star);}}
-function showPasswordSection(){document.getElementById('login-section').style.display='none';document.getElementById('pwd-section').style.display='block';document.getElementById('pwd-input').focus();}
-function showLoginSection(){document.getElementById('pwd-section').style.display='none';document.getElementById('login-section').style.display='block';document.getElementById('pwd-error').style.display='none';document.getElementById('pwd-input').value='';}
-async function checkPwd(){
-  var p=document.getElementById("pwd-input").value;
-  try{
-    const buf=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(p));
-    const hash=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
-    if(hash==="42d17ba3e305cc212a5b52968a777b733420d41adf7f500f351b30077638abee"){
-      document.getElementById("lock-screen").style.display="none";
-      sessionStorage.setItem("auth","1");
-    } else {
-      document.getElementById("pwd-error").style.display="block";
-      document.getElementById("pwd-input").value="";
-      document.getElementById("pwd-input").focus();
-    }
-  }catch(e){
-    document.getElementById("pwd-error").style.display="block";
-  }
-}
-window.addEventListener("DOMContentLoaded",function(){createStars();if(sessionStorage.getItem("auth")==="1"){document.getElementById("lock-screen").style.display="none";}});
+// شاشة الدخول الآن عبر Firebase (LoginGate) — الشاشة القديمة أُزيلت
 </script>
 </head>
 <body>
-<div id="lock-screen" style="display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#0a1428 0%,#1a2a45 25%,#0f3a4f 50%,#1a2a45 75%,#0a1428 100%);z-index:9999;align-items:center;justify-content:center;font-family:IBM Plex Sans Arabic,Arial,sans-serif;overflow:hidden">
-  <div class="animated-bg">
-    <div class="grid-bg"></div>
-    <div class="stars" id="stars-container"></div>
-    <div class="orb orb1"></div>
-    <div class="orb orb2"></div>
-    <div class="orb orb3"></div>
-  </div>
-  <div class="login-wrapper">
-    <div class="login-card">
-      <div class="logo-container"><div class="logo">🏢</div></div>
-      <div class="login-title"><h1>قمة الفرصة</h1><p>نظام إدارة التقسيط والمستثمرين</p></div>
-      <div class="divider"></div>
-      <div id="login-section">
-        <button class="login-button-primary" onclick="showPasswordSection()">
-          <span class="icon">🔐</span>
-          <span class="button-text">أدخل النظام</span>
-        </button>
-      </div>
-      <div id="pwd-section">
-        <input id="pwd-input" type="password" placeholder="••••••••" class="pwd-input" onkeypress="if(event.key==='Enter') checkPwd()"/>
-        <p id="pwd-error" class="error-msg">❌ الرقم السري غير صحيح</p>
-        <button class="btn btn-login" onclick="checkPwd()">🔓 تحقق</button>
-        <button class="btn btn-back" onclick="showLoginSection()">← رجوع</button>
-      </div>
-      <div class="footer-text"><p>نظام آمن ومحمي</p><p>© 2024 جميع الحقوق محفوظة</p></div>
-    </div>
-  </div>
-</div>
 <div id="root"></div>
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useCallback } = React;
@@ -5391,9 +5384,19 @@ function LoginGate() {
   const [mode, setMode] = React.useState("login"); // login | signup
 
   React.useEffect(()=>{
-    if(!window._fbReady || !window._fbAuth){ setUser("nofirebase"); return; }
-    const unsub = window._fbAuth.onAuthStateChanged(u=>setUser(u||null));
-    return ()=>unsub&&unsub();
+    let unsub = null;
+    let tries = 0;
+    const check = () => {
+      if(window._fbFailed){ setUser("nofirebase"); return; }   // فشل التحميل → ادخل عادي (Google Sheets)
+      if(window._fbReady && window._fbAuth){
+        unsub = window._fbAuth.onAuthStateChanged(u=>setUser(u||null));
+        return;
+      }
+      if(tries < 200){ tries++; setTimeout(check, 150); }       // ينتظر المصادر المتعددة (٣٠ ثانية)
+      else { setUser("nofirebase"); }                           // مهلة → ادخل عادي
+    };
+    check();
+    return ()=>{ if(unsub) unsub(); };
   },[]);
 
   const doAuth = async () => {
