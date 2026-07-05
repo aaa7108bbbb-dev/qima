@@ -82,6 +82,13 @@
 </script>
 <style>
   * { box-sizing: border-box; }
+  /* تمرير أفقي داخلي لكل الجداول العريضة — بدل تحريك الصفحة كلها */
+  table { display: block; overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; border-collapse: collapse; }
+  table thead, table tbody { display: table; width: 100%; min-width: max-content; }
+  /* شريط تمرير واضح */
+  table::-webkit-scrollbar { height: 8px; }
+  table::-webkit-scrollbar-thumb { background: #c8922a; border-radius: 4px; }
+  table::-webkit-scrollbar-track { background: #f1f5f9; }
   @media print {
     @page { size: A4; margin: 7mm; }
     /* منطقة الطباعة تُنقل لـ body وتأخذ class print-host — نظهرها فقط */
