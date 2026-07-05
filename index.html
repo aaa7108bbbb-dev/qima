@@ -37,16 +37,16 @@
       s.onload=function(){ if(!done){done=true;resolve();} };
       s.onerror=function(){ if(!done){done=true;reject(new Error("fail "+src));} };
       // مهلة ٦ ثواني لكل سكربت — لو تعلّق، ننتقل للمصدر التالي
-      setTimeout(function(){ if(!done){done=true;reject(new Error("timeout "+src));} }, 6000);
+      setTimeout(function(){ if(!done){done=true;reject(new Error("timeout "+src));} }, 4000);
       document.head.appendChild(s);
     });
   }
   (async function(){
     // مصادر بديلة متعددة — لو حُجب مصدر، يجرّب التالي (يتجاوز حجب gstatic)
     var sources = [
-      "https://www.gstatic.com/firebasejs/10.12.2/",
       "https://cdn.jsdelivr.net/npm/firebase@10.12.2/",
       "https://unpkg.com/firebase@10.12.2/",
+      "https://www.gstatic.com/firebasejs/10.12.2/",
       "https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/"
     ];
     // أسماء الملفات تختلف قليلاً بين المصادر
@@ -5392,7 +5392,7 @@ function LoginGate() {
         unsub = window._fbAuth.onAuthStateChanged(u=>setUser(u||null));
         return;
       }
-      if(tries < 200){ tries++; setTimeout(check, 150); }       // ينتظر المصادر المتعددة (٣٠ ثانية)
+      if(tries < 100){ tries++; setTimeout(check, 150); }       // ينتظر المصادر المتعددة (٣٠ ثانية)
       else { setUser("nofirebase"); }                           // مهلة → ادخل عادي
     };
     check();
