@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-04-goods-cash -->
+<!-- build: 2026-07-04-goods-sync -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -4028,7 +4028,7 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
 }
 
 // ─── Goods Page ─────────────────────────────────────────────
-function GoodsPage({investors, contracts, toast}) {
+function GoodsPage({investors, contracts, toast, gsWrite}) {
   const [priceOverrides, setPriceOverrides] = useState(()=>{
     try{return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}");}catch{return{};}
   });
@@ -4044,11 +4044,12 @@ function GoodsPage({investors, contracts, toast}) {
   const toggleCol = c => { const n={...visCols,[c]:!visCols[c]}; setVisCols(n); try{localStorage.setItem("qimma_vis_cols",JSON.stringify(n));}catch(e){} };
   const [showColMenu, setShowColMenu] = useState(false);
 
-  const saveManual = r => { setManualRows(r); localStorage.setItem("qimma_goods3",JSON.stringify(r)); };
+  const saveManual = r => { setManualRows(r); localStorage.setItem("qimma_goods3",JSON.stringify(r)); if(gsWrite) gsWrite("goods3", r); };
   const savePriceOverride = (id, val) => {
     const p = {...priceOverrides, [id]: val};
     setPriceOverrides(p);
     localStorage.setItem("qimma_price_ov", JSON.stringify(p));
+    if(gsWrite) gsWrite("price_ov", p);
   };
 
   // Build rows from contracts + manual
@@ -4946,7 +4947,7 @@ function App() {
     "qimma_txlist":"txlist", "qimma_loans":"loans", "qimma_zakat":"zakat",
     "qimma_pending":"pending", "qimma_payments":"payments", "qimma_goods3":"goods3",
     "qimma_jard_ov":"jard_ov", "qimma_daily":"daily", "qimma_daily_open":"daily_open",
-    "qimma_activity":"activity", "qimma_monthclose":"monthclose"
+    "qimma_activity":"activity", "qimma_monthclose":"monthclose", "qimma_price_ov":"price_ov"
   };
   const exportBackup = () => {
     try {
@@ -5060,11 +5061,11 @@ function App() {
   useEffect(()=>{
     (async ()=>{
       setSyncStatus("loading");
-      const [inv, con, set, tx, ln, zk, pd, pay, gd, jov, dly, dlyo, act, mcl] = await Promise.all([
+      const [inv, con, set, tx, ln, zk, pd, pay, gd, jov, dly, dlyo, act, mcl, pov] = await Promise.all([
         gsRead("investors"), gsRead("contracts"), gsRead("settings"),
         gsRead("txlist"), gsRead("loans"), gsRead("zakat"),
         gsRead("pending"), gsRead("payments"), gsRead("goods3"), gsRead("jard_ov"),
-        gsRead("daily"), gsRead("daily_open"), gsRead("activity"), gsRead("monthclose")
+        gsRead("daily"), gsRead("daily_open"), gsRead("activity"), gsRead("monthclose"), gsRead("price_ov")
       ]);
       if (inv) { setInvestorsRaw(inv); saveLS("qimma_investors", inv); }
       if (con) { setContractsRaw(con); saveLS("qimma_contracts", con); }
@@ -5075,6 +5076,7 @@ function App() {
       if (pd)  { setPendingRaw(pd); saveLS("qimma_pending", pd); }
       if (pay) { setPaymentsRaw(pay); saveLS("qimma_payments", pay); }
       if (gd)  { localStorage.setItem("qimma_goods3", JSON.stringify(gd)); }
+      if (pov) { localStorage.setItem("qimma_price_ov", JSON.stringify(pov)); }
       if (jov) { localStorage.setItem("qimma_jard_ov", JSON.stringify(jov)); }
       if (dly) { setDailyRaw(_arr(dly)); saveLS("qimma_daily", _arr(dly)); }
       if (dlyo && !Array.isArray(dlyo)) { setDailyOpenRaw(dlyo); saveLS("qimma_daily_open", dlyo); }
@@ -5163,7 +5165,7 @@ function App() {
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct}/>}
         {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite}/>}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
-        {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast}/>}
+        {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast} gsWrite={gsWrite}/>}
         {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast}/>}
         {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup} payments={payments} setPayments={setPayments}/>}
       </div>
