@@ -1096,6 +1096,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   const [payModal,setPayModal]=useState(null);
   const [printModal,setPrintModal]=useState(null);
   const [cardModal,setCardModal]=useState(null);
+  const [earlyModal,setEarlyModal]=useState(null);
   const [printSel,setPrintSel]=useState({contract:true,bond:false,bondG:false,cheque:false,chequeG:false});
   const [payAmount,setPayAmount]=useState("");
   const [payDate,setPayDate]=useState(new Date().toISOString().split("T")[0]);
@@ -1150,6 +1151,37 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     if(!w){ alert("الرجاء السماح بالنوافذ المنبثقة"); return; }
     w.document.write(`<html><head><title>عقد #${c.num||""} — ${c.client||""}</title><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>@media print{.noprint{display:none!important}}</style></head><body style="margin:0;background:#f7f8fa"><div class="noprint" style="position:sticky;top:0;display:flex;gap:10px;padding:12px;background:#1e2235;z-index:99"><button onclick="window.print()" style="flex:1;background:#0d7a6f;color:#fff;border:none;border-radius:10px;padding:14px;font-size:17px;font-weight:800;font-family:Arial;cursor:pointer">🖨️ طباعة</button><button onclick="window.close()" style="background:#dc2626;color:#fff;border:none;border-radius:10px;padding:14px 22px;font-size:17px;font-weight:800;font-family:Arial;cursor:pointer">✕ إغلاق</button></div>${html}</body></html>`);
     w.document.close();
+  };
+  // حساب السداد المبكر: نسبة المستثمر 50% أول 6 شهور، ثم تدرّج من 60% إلى 80% حتى النهاية
+  const calcEarly = (c) => {
+    const calc = calcC(c, settings);
+    const profitFull = calc.profit||0;
+    const accShare = calc.acc||0;
+    const mgrShare = calc.inst||0;
+    const amount = +c.amount||0;
+    const instAmt = +c.instAmt||0;
+    const totalInst = +c.totalInst||amount;
+    const totalMonths = instAmt>0 ? Math.round(totalInst/instAmt) : 0;
+    let elapsed = 0;
+    if(c.firstInst){
+      const f=new Date(c.firstInst), now=new Date();
+      elapsed = (now.getFullYear()-f.getFullYear())*12 + (now.getMonth()-f.getMonth());
+      if(now.getDate() < f.getDate()) elapsed--;
+      elapsed = Math.max(0, elapsed);
+    }
+    const elapsedClamped = Math.min(elapsed, totalMonths);
+    let pct;
+    if(elapsedClamped <= 6){ pct = 50; }
+    else if(totalMonths > 6){ pct = 60 + 20 * (elapsedClamped - 6) / (totalMonths - 6); }
+    else { pct = 60; }
+    pct = Math.max(50, Math.min(80, pct));
+    const invShare = profitFull * (pct/100);
+    const profitApplied = invShare + accShare + mgrShare;
+    const totalReduced = amount + profitApplied;
+    const paidBefore = _getPaid(payments, c.id);
+    const earlyDue = Math.max(0, totalReduced - paidBefore);
+    const saving = Math.max(0, totalInst - totalReduced);
+    return { profitFull, accShare, mgrShare, invShare, pct, profitApplied, totalReduced, paidBefore, earlyDue, saving, elapsed:elapsedClamped, totalMonths };
   };
   const addPayment=()=>{
     if(!payAmount||!payModal)return;
@@ -1530,6 +1562,49 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         </div>
       </div>
 
+      {/* Early Settlement Modal */}
+      <Modal open={!!earlyModal} onClose={()=>setEarlyModal(null)} title={"⚡ سداد مبكر — "+(earlyModal?.client||"")} titleBg="#7c3aed" wide>
+        {earlyModal && (()=>{
+          const c = earlyModal;
+          const e = calcEarly(c);
+          const rowS = (label,val,color,bold)=>(
+            <div style={{display:"flex",justifyContent:"space-between",padding:"9px 4px",borderBottom:"1px solid "+C.border,fontSize:15}}>
+              <span style={{fontWeight:bold?800:500,color:"#333"}}>{label}</span>
+              <span style={{fontWeight:800,color:color||C.ink}}>{SAR(val)}</span>
+            </div>
+          );
+          return (
+            <div>
+              <div style={{background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:10,padding:"12px 14px",marginBottom:14,fontSize:14,lineHeight:1.9,color:"#4c1d95"}}>
+                الشهور المنقضية: <b>{e.elapsed}</b> من <b>{e.totalMonths}</b> · نسبة المستثمر المطبّقة: <b>{e.pct.toFixed(1)}%</b> من الربح الكامل
+              </div>
+              {rowS("الربح الكامل للعقد", e.profitFull, C.ink)}
+              {rowS("حصة المستثمر ("+e.pct.toFixed(1)+"%)", e.invShare, "#7c3aed", true)}
+              {rowS("حصة المحاسب (10% ثابت)", e.accShare, C.teal)}
+              {rowS("حصة المدير (10% ثابت)", e.mgrShare, C.gold)}
+              {rowS("الربح المطبّق (بعد التخفيض)", e.profitApplied, C.ink, true)}
+              {rowS("المدفوع سابقاً", e.paidBefore, C.green)}
+              <div style={{background:"#ecfdf5",border:"1px solid #a7f3d0",borderRadius:10,padding:"10px 14px",margin:"12px 0",display:"flex",justifyContent:"space-between",fontSize:15}}>
+                <span style={{fontWeight:700,color:"#065f46"}}>💰 توفير الزبون</span>
+                <span style={{fontWeight:900,color:"#059669"}}>{SAR(e.saving)}</span>
+              </div>
+              <div style={{background:"#1e2235",borderRadius:12,padding:"16px",textAlign:"center",marginBottom:16}}>
+                <div style={{color:"#cbd5e1",fontSize:14,marginBottom:4}}>المبلغ المطلوب للسداد المبكر</div>
+                <div style={{color:"#fff",fontSize:30,fontWeight:900}}>{SAR(e.earlyDue)}</div>
+              </div>
+              <button style={{...styles.btn("#7c3aed","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px"}}
+                onClick={()=>{
+                  if(!window.confirm("تأكيد السداد المبكر بمبلغ "+SAR(e.earlyDue)+"؟ سيُسجّل السداد ويُقفل العقد كمنتهي.")) return;
+                  setPayments(p=>[...p,{id:Date.now(),contractId:c.id,amount:e.earlyDue,date:new Date().toISOString().split("T")[0],note:"سداد مبكر — تصفية ("+e.pct.toFixed(1)+"% للمستثمر)"}]);
+                  markDone(c.id);
+                  setEarlyModal(null);
+                  toast("⚡ تم السداد المبكر وإقفال العقد");
+                }}>✅ تأكيد السداد المبكر وإقفال العقد</button>
+            </div>
+          );
+        })()}
+      </Modal>
+
       {/* Contract Card Modal (بطاقة العقد داخل التطبيق) */}
       <Modal open={!!cardModal} onClose={()=>setCardModal(null)} title={"👤 "+(cardModal?.client||"")+" — عقد #"+(cardModal?.num||"")} titleBg={C.ink} wide>
         {cardModal && (()=>{
@@ -1565,7 +1640,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                 {c.gName&&<div><b>الكفيل:</b> {c.gName}</div>}
                 {c.goods&&<div><b>السلعة:</b> {c.goods}</div>}
               </div>
-              <button style={{...styles.btn(C.green,"#fff"),width:"100%",justifyContent:"center",fontSize:16,padding:"12px",marginBottom:16}} onClick={()=>{setCardModal(null);setPayModal(c);setPayAmount("");setPayNote("");}}>💵 تسجيل سداد جديد</button>
+              <button style={{...styles.btn(C.green,"#fff"),width:"100%",justifyContent:"center",fontSize:16,padding:"12px",marginBottom:10}} onClick={()=>{setCardModal(null);setPayModal(c);setPayAmount("");setPayNote("");}}>💵 تسجيل سداد جديد</button>
+              <button style={{...styles.btn("#7c3aed","#fff"),width:"100%",justifyContent:"center",fontSize:16,padding:"12px",marginBottom:16}} onClick={()=>{setCardModal(null);setEarlyModal(c);}}>⚡ سداد مبكر (تصفية العقد)</button>
               <h3 style={{color:C.ink,fontWeight:900,marginBottom:10,fontSize:16}}>📋 السدادات السابقة ({list.length})</h3>
               <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
                 <thead><tr>{["#","التاريخ","المبلغ","ملاحظة"].map(h=><th key={h} style={styles.th}>{h}</th>)}</tr></thead>
