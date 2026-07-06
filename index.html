@@ -3806,7 +3806,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
 }
 
 // ─── طباعة كشف الحساب الشامل (إجماليات الأنواع خلال فترة) ───
-function printStatement(from, to, totals, sIn, sOut, sNet){
+function printAccountStatement(from, to, totals, sIn, sOut, sNet){
   const dLabel = ymd => { if(!ymd) return ""; const [y,m,d]=ymd.split("-"); return d+"/"+parseInt(m)+"/"+y; };
   const fmt = n => Math.round(+(n||0)).toLocaleString("en-US");
   const period = (from||to) ? ((from?dLabel(from):"البداية")+" ← "+(to?dLabel(to):"اليوم")) : "كل الفترات";
@@ -4145,7 +4145,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
         <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
           <h3 style={{margin:0,fontSize:16,fontWeight:800}}>📊 كشف حساب شامل</h3>
           <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px"}}
-            onClick={()=>printStatement(stmtFrom,stmtTo,stmtTotals,stmtIn,stmtOut,stmtNet)}>🖨️ طباعة الكشف</button>
+            onClick={()=>printAccountStatement(stmtFrom,stmtTo,stmtTotals,stmtIn,stmtOut,stmtNet)}>🖨️ طباعة الكشف</button>
         </div>
         <div style={{padding:"14px 18px"}}>
           {/* اختيار الفترة */}
@@ -5703,52 +5703,6 @@ function LoginGate() {
       </div>
     </div>
   );
-}
-
-// ─── مصيدة الأخطاء: تعرض الخطأ على الشاشة بدل الصفحة البيضاء ───
-class ErrorBoundary extends React.Component {
-  constructor(props){ super(props); this.state={err:null, info:null}; }
-  static getDerivedStateFromError(err){ return {err}; }
-  componentDidCatch(err, info){ this.setState({info}); try{console.error("App crash:",err,info);}catch(e){} }
-  render(){
-    if(this.state.err){
-      const msg = (this.state.err && (this.state.err.message||String(this.state.err))) || "خطأ غير معروف";
-      const stack = (this.state.err && this.state.err.stack) || "";
-      const comp = (this.state.info && this.state.info.componentStack) || "";
-      return (
-        <div dir="rtl" style={{minHeight:"100vh",background:"#fff5f5",padding:"24px 16px",fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",color:"#111",boxSizing:"border-box"}}>
-          <div style={{maxWidth:640,margin:"0 auto",background:"#fff",border:"2px solid #dc2626",borderRadius:14,padding:"20px",boxShadow:"0 4px 18px rgba(0,0,0,0.08)"}}>
-            <div style={{fontSize:22,fontWeight:900,color:"#dc2626",marginBottom:10}}>⚠️ حدث خطأ في التطبيق</div>
-            <div style={{fontSize:15,color:"#334155",marginBottom:14,lineHeight:1.8}}>
-              بياناتك محفوظة ولم تُفقد. انسخ نص الخطأ التالي وأرسله للمطوّر لإصلاحه:
-            </div>
-            <div style={{background:"#0f172a",color:"#fca5a5",padding:"12px 14px",borderRadius:10,fontSize:13,fontFamily:"monospace",direction:"ltr",textAlign:"left",whiteSpace:"pre-wrap",wordBreak:"break-word",maxHeight:220,overflow:"auto",marginBottom:8}}>
-              {msg}
-            </div>
-            {(stack||comp) && (
-              <details style={{marginBottom:14}}>
-                <summary style={{cursor:"pointer",fontSize:13,fontWeight:700,color:"#64748b",marginBottom:6}}>تفاصيل تقنية إضافية</summary>
-                <div style={{background:"#0f172a",color:"#94a3b8",padding:"12px 14px",borderRadius:10,fontSize:12,fontFamily:"monospace",direction:"ltr",textAlign:"left",whiteSpace:"pre-wrap",wordBreak:"break-word",maxHeight:260,overflow:"auto"}}>
-                  {stack}{comp?("\n\n--- Component Stack ---"+comp):""}
-                </div>
-              </details>
-            )}
-            <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-              <button onClick={()=>{try{navigator.clipboard.writeText(msg+"\n\n"+stack+"\n"+comp);}catch(e){}}}
-                style={{flex:1,minWidth:130,padding:"12px",borderRadius:10,border:"none",background:"#c8922a",color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>
-                📋 نسخ نص الخطأ
-              </button>
-              <button onClick={()=>location.reload()}
-                style={{flex:1,minWidth:130,padding:"12px",borderRadius:10,border:"none",background:"#0d9488",color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>
-                🔄 إعادة تحميل الصفحة
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
 }
 
 const _rootEl = document.getElementById('root');
