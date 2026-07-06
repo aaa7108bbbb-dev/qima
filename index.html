@@ -1086,7 +1086,7 @@ const assessRisk = (c, payments) => {
   return {level, months:monthsBehind, overdue:behindAmt, color, score};
 };
 
-function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate,payments,setPayments,toast,completionAlert,setCompletionAlert,onSaveNew,setInvTxList,startCollect}) {
+function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate,payments,setPayments,toast,completionAlert,setCompletionAlert,onSaveNew,setInvTxList,startCollect,setPage,logAct}) {
   const [showNew,setShowNew]=useState(false);
   const [showCollect,setShowCollect]=useState(!!startCollect);
   const [collectDate,setCollectDate]=useState(new Date().toISOString().split("T")[0]);
@@ -1325,6 +1325,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       <div>
         {!startCollect && <button style={{...styles.btn("#e5e7eb",C.ink),marginBottom:16}} onClick={()=>setShowCollect(false)}>← رجوع للعقود</button>}
         <div style={{...styles.card,marginBottom:16,borderTop:"4px solid "+C.green}}>
+          {startCollect && setPage && <button style={{...styles.btn("#b91c1c","#fff"),width:"100%",justifyContent:"center",fontSize:16,padding:"12px",marginBottom:12,fontWeight:800}} onClick={()=>setPage("overdue")}>⚠️ المتأخرون</button>}
           <div style={{fontSize:19,fontWeight:900,marginBottom:12}}>⚡ تحصيل سريع</div>
           <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center",marginBottom:12}}>
             <label style={{fontWeight:700,fontSize:15}}>تاريخ التحصيل:</label>
@@ -3681,6 +3682,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
 
   return (
     <div>
+      <button style={{...styles.btn("#0d9488","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px",marginBottom:14,fontWeight:800}} onClick={()=>setPage("search")}>🔍 بحث شامل</button>
       {/* دفتر اليومية مدمج في الرئيسية */}
       <DailyPage daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} contracts={contracts} settings={settings} toast={toast}/>
 
@@ -4361,7 +4363,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
 }
 
 // ─── Settings Page ───────────────────────────────────────────
-function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,setPayments,dailyOpen,setDailyOpen}) {
+function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,setPayments,dailyOpen,setDailyOpen,setPage}) {
   const [s,setS]=useState({...settings});
   const r=calcContract(10000,s);
   // رصيد بداية الصندوق
@@ -4375,6 +4377,7 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
   return (
     <div>
       <div style={{fontSize:19,fontWeight:800,marginBottom:16}}>⚙️ الإعدادات</div>
+      <button style={{...styles.btn("#475569","#fff"),width:"100%",justifyContent:"center",fontSize:16,padding:"12px",marginBottom:16}} onClick={()=>setPage&&setPage("activity")}>📜 سجل النشاط</button>
 
       {/* رصيد بداية الصندوق */}
       <div style={{...styles.card,marginBottom:16,background:"#fffbf0",border:"1px solid "+C.gold}}>
@@ -4722,7 +4725,7 @@ function GoodsPage({investors, contracts, toast, gsWrite}) {
 
 
 // ─── Search Page ─────────────────────────────────────────────
-function SearchPage({contracts, investors, settings, payments, setPayments, toast}) {
+function SearchPage({contracts, investors, settings, payments, setPayments, toast, setPage}) {
   const [q, setQ] = useState("");
   const [payModal, setPayModal] = useState(null);
   const [payAmount, setPayAmount] = useState("");
@@ -4836,7 +4839,10 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
 
   return (
     <div>
-      <div style={{fontSize:19,fontWeight:800,marginBottom:16}}>🔍 البحث</div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        <div style={{fontSize:19,fontWeight:800}}>🔍 البحث</div>
+        <button style={{...styles.btn("#64748b","#fff"),fontSize:15,padding:"8px 16px"}} onClick={()=>setPage&&setPage("dashboard")}>← رجوع</button>
+      </div>
       <div style={{...styles.card,marginBottom:20}}>
         <input
           style={{...styles.input,fontSize:17,padding:"12px 16px"}}
@@ -5028,7 +5034,7 @@ function OverduePage({contracts, investors, payments, goCollect}) {
 }
 
 // ─── Activity Log Page ───────────────────────────────────────
-function ActivityPage({activity, setActivity, toast}){
+function ActivityPage({activity, setActivity, toast, setPage}){
   const [filter,setFilter] = React.useState("all");
   const list = _arr(activity);
   const actColor = a => {
@@ -5046,6 +5052,7 @@ function ActivityPage({activity, setActivity, toast}){
       <div style={styles.panel}>
         <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
           <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>📜 سجل النشاط</h2>
+          <button style={{...styles.btn("#64748b","#fff"),fontSize:14,padding:"7px 14px"}} onClick={()=>setPage&&setPage("settings")}>← رجوع للإعدادات</button>
           {list.length>0 && (
             <button style={{...styles.btn(C.red,"#fff"),fontSize:13,padding:"7px 12px"}} onClick={()=>{
               if(window.confirm("مسح كامل سجل النشاط؟ لا يمكن التراجع.")){ setActivity([]); toast("🗑 تم مسح السجل"); }
@@ -5308,15 +5315,12 @@ function App() {
   }, []);
 
   const TABS=[
-    {id:"search",label:"🔍",name:"بحث",color:"#0d9488"},
     {id:"dashboard",label:"🏠",name:"الرئيسية",color:"#1e3a5f"},
-    {id:"overdue",label:"⚠️",name:"المتأخرون",color:"#b91c1c"},
     {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
+    {id:"accounts",label:"💰",name:"الحسابات",color:"#b45309"},
     {id:"collect",label:"⚡",name:"التحصيل",color:"#0d9488"},
     {id:"goods",label:"📦",name:"البضاعة",color:"#78350f"},
-    {id:"accounts",label:"💰",name:"الحسابات",color:"#b45309"},
     {id:"portfolio",label:"📊",name:"المحفظة الشهرية",color:"#0d9488"},
-    {id:"activity",label:"📜",name:"سجل النشاط",color:"#475569"},
     {id:"settings",label:"⚙️",name:"الإعدادات",color:"#4b5563"},
   ];
   // ترتيب التبويبات حسب المحفوظ
@@ -5369,11 +5373,11 @@ function App() {
             onDragOver={e=>e.preventDefault()}
             onDrop={()=>onTabDrop(idx)}
             onClick={()=>setPage(t.id)}
-            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"8px 10px",border:"none",cursor:"grab",background:"none",fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",opacity:dragTab===idx?0.4:1}}>
-            <div style={{width:52,height:52,borderRadius:0,background:page===t.id?"#0f1e33":"#1e293b",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,transition:"all 0.2s",
-              border:page===t.id?"2px solid #c8922a":"2px solid transparent",
-              boxShadow:page===t.id?"0 0 12px rgba(200,146,42,0.5)":"none"}}>{t.label}</div>
-            <span style={{fontSize:13.5,fontWeight:page===t.id?800:700,color:page===t.id?"#c8922a":"#111",whiteSpace:"nowrap"}}>{t.name}</span>
+            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:"10px 14px",border:"none",cursor:"grab",background:"none",fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",opacity:dragTab===idx?0.4:1}}>
+            <div style={{width:72,height:72,borderRadius:14,background:page===t.id?"#0f1e33":"#1e293b",display:"flex",alignItems:"center",justifyContent:"center",fontSize:40,transition:"all 0.2s",
+              border:page===t.id?"3px solid #c8922a":"3px solid transparent",
+              boxShadow:page===t.id?"0 0 18px rgba(200,146,42,0.6)":"0 2px 6px rgba(0,0,0,0.15)"}}>{t.label}</div>
+            <span style={{fontSize:16,fontWeight:page===t.id?900:700,color:page===t.id?"#c8922a":"#111",whiteSpace:"nowrap"}}>{t.name}</span>
           </button>
         ))}
       </nav>
@@ -5381,14 +5385,14 @@ function App() {
       <div style={styles.main}>
         {page==="overdue" && <OverduePage contracts={contracts} investors={investors} payments={payments} goCollect={()=>setPage("collect")} />}
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={payments}/>}
-        {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast}/>}
-        {page==="collect" && <ContractsPage startCollect={true} contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct}/>}
+        {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
+        {page==="collect" && <ContractsPage startCollect={true} setPage={setPage} contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct}/>}
         {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast}/>}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast} gsWrite={gsWrite}/>}
-        {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast}/>}
-        {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup} payments={payments} setPayments={setPayments} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen}/>}
+        {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast} setPage={setPage}/>}
+        {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup} payments={payments} setPayments={setPayments} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} setPage={setPage}/>}
       </div>
 
       <Toast msg={toastMsg} type={toastType}/>
