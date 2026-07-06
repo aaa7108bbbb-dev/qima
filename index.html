@@ -12,11 +12,11 @@
 <meta name="apple-mobile-web-app-title" content="قمة الفرصة">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <!-- تحميل المكتبات من jsdelivr (unpkg محجوب عند بعض المزوّدين) مع بديل احتياطي onerror -->
-<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js" crossorigin
+<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"
   onerror="this.onerror=null;document.write(unescape('%3Cscript src=\'https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js\'%3E%3C/script%3E'));"></script>
-<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"
   onerror="this.onerror=null;document.write(unescape('%3Cscript src=\'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js\'%3E%3C/script%3E'));"></script>
-<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js" crossorigin
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js"
   onerror="this.onerror=null;document.write(unescape('%3Cscript src=\'https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js\'%3E%3C/script%3E'));"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -213,10 +213,10 @@
     diag += "• XLSX: "+(typeof XLSX!=="undefined"?"محمّل ✓":"غير محمّل ✗")+"\n";
     diag += "\nالأغلب: أحد ملفات المكتبات لم يُحمّل (إنترنت/حجب CDN).";
     showFatal("التطبيق لم يبدأ", diag);
-  }, 8000);
+  }, 20000);
 })();
 </script>
-<script type="text/babel" data-presets="react">
+<script type="text/babel-manual" data-presets="react" id="main-app-script">
 const { useState, useEffect, useCallback } = React;
 const _arr = x => Array.isArray(x) ? x : [];
 
@@ -5755,6 +5755,48 @@ const _rootEl = document.getElementById('root');
 _rootEl.setAttribute("data-app-rendered","1"); // إعلام طبقة التشخيص أن التطبيق بدأ
 const root = ReactDOM.createRoot(_rootEl);
 root.render(<ErrorBoundary><LoginGate /></ErrorBoundary>);
+</script>
+<script>
+/* ═══ ضمان تشغيل Babel: لو لم يحوّل السكربت تلقائياً، حوّله يدوياً ═══ */
+(function(){
+  function appStarted(){
+    var r=document.getElementById("root");
+    return r && r.getAttribute("data-app-rendered")==="1";
+  }
+  function runManually(){
+    if(appStarted()) return;
+    if(typeof Babel==="undefined"){ console.warn("Babel غير جاهز بعد"); return; }
+    var el=document.getElementById("main-app-script");
+    if(!el){ console.warn("لم يُعثر على سكربت التطبيق"); return; }
+    try{
+      console.log("↻ تحويل التطبيق يدوياً عبر Babel...");
+      var out=Babel.transform(el.textContent,{presets:["react"]}).code;
+      // تشغيل الكود في نفس النطاق لالتقاط الخطأ الحقيقي (بدل appendChild الذي يخفيه كـ Script error)
+      (0, eval)(out);
+      console.log("✓ اكتمل التحويل والتشغيل اليدوي");
+    }catch(err){
+      var box=document.getElementById("root");
+      if(box && !appStarted()){
+        var msg=(err&&(err.message||String(err)))||"خطأ تحويل غير معروف";
+        var stack=(err&&err.stack)||"";
+        box.innerHTML='<div dir="rtl" style="min-height:100vh;background:#fff5f5;padding:24px 16px;font-family:Arial,sans-serif;color:#111"><div style="max-width:640px;margin:0 auto;background:#fff;border:2px solid #dc2626;border-radius:14px;padding:20px"><div style="font-size:22px;font-weight:900;color:#dc2626;margin-bottom:10px">⚠️ خطأ في كود التطبيق</div><div style="font-size:15px;color:#334155;margin-bottom:14px">انسخ النص وأرسله للمطوّر:</div><div id="diag-box" style="background:#0f172a;color:#fca5a5;padding:12px 14px;border-radius:10px;font-size:13px;font-family:monospace;direction:ltr;text-align:left;white-space:pre-wrap;word-break:break-word;max-height:320px;overflow:auto;margin-bottom:12px">'+msg+"\n\n"+stack+'</div><button onclick="try{navigator.clipboard.writeText(document.getElementById(\'diag-box\').innerText);this.textContent=\'✓ تم النسخ\'}catch(e){}" style="width:100%;padding:12px;border-radius:10px;border:none;background:#c8922a;color:#fff;font-size:15px;font-weight:800;cursor:pointer">📋 نسخ نص الخطأ</button></div></div>';
+      }
+      console.error("خطأ تحويل Babel:",err);
+    }
+  }
+  // التحويل التلقائي معطّل (النوع text/babel-manual) — نشغّل يدوياً مرة واحدة عند جهوزية Babel
+  var _ran=false;
+  function tryRun(){
+    if(_ran||appStarted()) return;
+    if(typeof Babel==="undefined" || typeof React==="undefined" || typeof ReactDOM==="undefined"){ return; }
+    _ran=true;
+    runManually();
+  }
+  var _iv=setInterval(function(){ tryRun(); if(_ran||appStarted()) clearInterval(_iv); }, 200);
+  if(document.readyState==="complete"){ tryRun(); }
+  else { window.addEventListener("load", tryRun); }
+  setTimeout(function(){ clearInterval(_iv); }, 25000);
+})();
 </script>
 </body>
 </html>
