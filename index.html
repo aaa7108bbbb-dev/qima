@@ -1095,6 +1095,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   const [collectAmounts,setCollectAmounts]=useState({});
   const [payModal,setPayModal]=useState(null);
   const [printModal,setPrintModal]=useState(null);
+  const [cardModal,setCardModal]=useState(null);
   const [printSel,setPrintSel]=useState({contract:true,bond:false,bondG:false,cheque:false,chequeG:false});
   const [payAmount,setPayAmount]=useState("");
   const [payDate,setPayDate]=useState(new Date().toISOString().split("T")[0]);
@@ -1501,7 +1502,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                   <tr key={c.id} style={{background:i%2===0?C.white:C.gray}}>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.num||i+1}</td>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.date}</td>
-                    <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}><span onClick={()=>openContractCard(c)} style={{color:C.teal,cursor:"pointer",textDecoration:"underline"}}>{c.client}</span></td>
+                    <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}><span onClick={()=>setCardModal(c)} style={{color:C.teal,cursor:"pointer",textDecoration:"underline"}}>{c.client}</span></td>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.idNum||"—"}</td>
                     <td style={styles.td}>{c.job||"—"}</td>
                     <td style={{...styles.td,color:C.gold,fontWeight:600,whiteSpace:"nowrap"}}>{c.gName||"—"}</td>
@@ -1528,6 +1529,63 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           </table>
         </div>
       </div>
+
+      {/* Contract Card Modal (بطاقة العقد داخل التطبيق) */}
+      <Modal open={!!cardModal} onClose={()=>setCardModal(null)} title={"👤 "+(cardModal?.client||"")+" — عقد #"+(cardModal?.num||"")} titleBg={C.ink} wide>
+        {cardModal && (()=>{
+          const c = cardModal;
+          const inv = investors.find(i=>String(i.id)===String(c.investorId));
+          const invName = inv?invLabel(inv):"—";
+          const tot = (+c.totalInst||+c.amount||0);
+          const paid = _getPaid(payments,c.id);
+          const left = Math.max(0,tot-paid);
+          const list = (payments||[]).filter(p=>p.contractId===c.id).sort((a,b)=>new Date(a.date)-new Date(b.date));
+          const box = (label,val,color)=>(
+            <div style={{flex:1,minWidth:130,background:"#fff",border:"1px solid "+C.border,borderRadius:12,padding:"14px",textAlign:"center"}}>
+              <div style={{fontSize:14,color:"#555",marginBottom:6}}>{label}</div>
+              <div style={{fontSize:22,fontWeight:900,color}}>{SAR(val)}</div>
+            </div>
+          );
+          return (
+            <div>
+              <div style={{display:"flex",gap:10,marginBottom:14}}>
+                <button style={{...styles.btn(C.gold,"#fff"),flex:1,justifyContent:"center",padding:"10px"}} onClick={()=>openContractCard(c)}>🖨️ كشف حساب</button>
+                <button style={{...styles.btn(C.red,"#fff"),flex:1,justifyContent:"center",padding:"10px"}} onClick={()=>setCardModal(null)}>✕ إغلاق</button>
+              </div>
+              <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}}>
+                {box("الإجمالي",tot,C.ink)}
+                {box("الواصل",paid,C.green)}
+                {box("القسط",(+c.instAmt||0),C.teal)}
+                {box("المتبقي",left,C.red)}
+              </div>
+              <div style={{background:"#fff",border:"1px solid "+C.border,borderRadius:12,padding:"14px 16px",marginBottom:14,fontSize:15,lineHeight:2}}>
+                <div><b>المستثمر:</b> {invName} &nbsp;·&nbsp; <b>الجوال:</b> {c.cPhone||"—"}</div>
+                <div><b>رقم الهوية:</b> {c.idNum||"—"} &nbsp;·&nbsp; <b>أول قسط:</b> {c.firstInst?fmtDate(c.firstInst):"—"}</div>
+                <div><b>آخر قسط:</b> {c.lastInst?fmtDate(c.lastInst):"—"} &nbsp;·&nbsp; <b>نوع العقد:</b> {c.contractType||c.type||"monthly"}</div>
+                {c.gName&&<div><b>الكفيل:</b> {c.gName}</div>}
+                {c.goods&&<div><b>السلعة:</b> {c.goods}</div>}
+              </div>
+              <button style={{...styles.btn(C.green,"#fff"),width:"100%",justifyContent:"center",fontSize:16,padding:"12px",marginBottom:16}} onClick={()=>{setCardModal(null);setPayModal(c);setPayAmount("");setPayNote("");}}>💵 تسجيل سداد جديد</button>
+              <h3 style={{color:C.ink,fontWeight:900,marginBottom:10,fontSize:16}}>📋 السدادات السابقة ({list.length})</h3>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
+                <thead><tr>{["#","التاريخ","المبلغ","ملاحظة"].map(h=><th key={h} style={styles.th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {list.length===0
+                    ? <tr><td colSpan={4} style={{...styles.td,textAlign:"center",color:"#888",padding:16}}>لا توجد سدادات مسجلة بعد</td></tr>
+                    : list.map((p,i)=>(
+                      <tr key={p.id} style={{background:i%2===0?C.white:C.gray}}>
+                        <td style={styles.td}>{i+1}</td>
+                        <td style={styles.td}>{fmtDate(p.date)}</td>
+                        <td style={{...styles.td,color:C.green,fontWeight:700}}>{SAR(p.amount)}</td>
+                        <td style={styles.td}>{p.note||"—"}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        })()}
+      </Modal>
 
       {/* Print Selection Modal */}
       <Modal open={!!printModal} onClose={()=>setPrintModal(null)} title={"🖨️ طباعة — "+(printModal?.client||"")} titleBg={C.teal}>
