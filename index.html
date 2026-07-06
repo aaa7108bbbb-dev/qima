@@ -11,12 +11,17 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="قمة الفرصة">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+<!-- تحميل المكتبات من jsdelivr (unpkg محجوب عند بعض المزوّدين) مع بديل احتياطي onerror -->
+<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js" crossorigin
+  onerror="this.onerror=null;document.write(unescape('%3Cscript src=\'https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js\'%3E%3C/script%3E'));"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin
+  onerror="this.onerror=null;document.write(unescape('%3Cscript src=\'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js\'%3E%3C/script%3E'));"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js" crossorigin
+  onerror="this.onerror=null;document.write(unescape('%3Cscript src=\'https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js\'%3E%3C/script%3E'));"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.2/dist/xlsx.full.min.js"
+  onerror="this.onerror=null;document.write(unescape('%3Cscript src=\'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.20.2/xlsx.full.min.js\'%3E%3C/script%3E'));"></script>
 <script>
   // ═══ تحميل Firebase بالتسلسل (أضمن على الجوال) ═══
   window._fbReady = false;
@@ -160,6 +165,57 @@
 </head>
 <body>
 <div id="root"></div>
+<script>
+/* ═══ طبقة تشخيص تعمل حتى لو فشل React أو Babel ═══ */
+(function(){
+  function showFatal(title, detail){
+    var r = document.getElementById("root");
+    if(!r) return;
+    if(r.getAttribute("data-app-rendered")==="1") return; // التطبيق اشتغل، لا تتدخل
+    r.innerHTML =
+      '<div dir="rtl" style="min-height:100vh;background:#fff5f5;padding:24px 16px;font-family:Arial,sans-serif;color:#111;box-sizing:border-box">'+
+      '<div style="max-width:640px;margin:0 auto;background:#fff;border:2px solid #dc2626;border-radius:14px;padding:20px;box-shadow:0 4px 18px rgba(0,0,0,0.08)">'+
+      '<div style="font-size:22px;font-weight:900;color:#dc2626;margin-bottom:10px">⚠️ '+title+'</div>'+
+      '<div style="font-size:15px;color:#334155;margin-bottom:14px;line-height:1.8">بياناتك محفوظة. انسخ النص التالي وأرسله للمطوّر:</div>'+
+      '<div id="diag-box" style="background:#0f172a;color:#fca5a5;padding:12px 14px;border-radius:10px;font-size:13px;font-family:monospace;direction:ltr;text-align:left;white-space:pre-wrap;word-break:break-word;max-height:300px;overflow:auto;margin-bottom:12px">'+detail+'</div>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap">'+
+      '<button onclick="(function(){try{navigator.clipboard.writeText(document.getElementById(\'diag-box\').innerText);this.textContent=\'✓ تم النسخ\';}catch(e){}}).call(this)" style="flex:1;min-width:130px;padding:12px;border-radius:10px;border:none;background:#c8922a;color:#fff;font-size:15px;font-weight:800;cursor:pointer">📋 نسخ</button>'+
+      '<button onclick="location.reload()" style="flex:1;min-width:130px;padding:12px;border-radius:10px;border:none;background:#0d9488;color:#fff;font-size:15px;font-weight:800;cursor:pointer">🔄 إعادة تحميل</button>'+
+      '</div></div></div>';
+  }
+  // 1) التقاط أخطاء JS العامة (تشمل أخطاء Babel أثناء تحويل السكربت)
+  window.addEventListener("error", function(e){
+    var d = "";
+    var msg = (e && e.message) || (e && e.error && e.error.message) || "";
+    if(msg) d += "الرسالة: "+msg+"\n";
+    if(e && e.filename) d += "الملف: "+e.filename+"\n";
+    if(e && (e.lineno||e.colno)) d += "الموقع: سطر "+(e.lineno||"?")+" عمود "+(e.colno||"?")+"\n";
+    if(e && e.error && e.error.stack) d += "\n"+e.error.stack;
+    else if(e && e.error) { try{ d += "\n"+JSON.stringify(e.error); }catch(x){} }
+    // لو ما زال فارغاً، اعرض الحدث نفسه
+    if(!d){ try{ d = "type="+(e&&e.type)+"\n"+String(e); }catch(x){ d="خطأ غير معروف"; } }
+    showFatal("خطأ في تشغيل التطبيق", d || "خطأ غير معروف");
+  }, true);
+  window.addEventListener("unhandledrejection", function(e){
+    var r = e && e.reason;
+    showFatal("خطأ غير معالَج", (r && (r.stack||r.message)) || String(r));
+  });
+  // 2) فحص بعد 8 ثوانٍ: هل رُسم شيء؟ وما الذي فشل تحميله؟
+  setTimeout(function(){
+    var r = document.getElementById("root");
+    if(r && r.getAttribute("data-app-rendered")==="1") return;
+    if(r && r.children.length>0 && !r.querySelector("#diag-box")) return; // شيء ظهر
+    var diag = "لم يبدأ التطبيق خلال ٨ ثوانٍ.\n\nحالة المكتبات:\n";
+    diag += "• React: "+(typeof React!=="undefined"?"محمّل ✓":"غير محمّل ✗")+"\n";
+    diag += "• ReactDOM: "+(typeof ReactDOM!=="undefined"?"محمّل ✓":"غير محمّل ✗")+"\n";
+    diag += "• Babel: "+(typeof Babel!=="undefined"?"محمّل ✓":"غير محمّل ✗")+"\n";
+    diag += "• Firebase: "+(typeof firebase!=="undefined"?"محمّل ✓":(window._fbFailed?"فشل (محجوب)":"جارٍ..."))+"\n";
+    diag += "• XLSX: "+(typeof XLSX!=="undefined"?"محمّل ✓":"غير محمّل ✗")+"\n";
+    diag += "\nالأغلب: أحد ملفات المكتبات لم يُحمّل (إنترنت/حجب CDN).";
+    showFatal("التطبيق لم يبدأ", diag);
+  }, 8000);
+})();
+</script>
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useCallback } = React;
 const _arr = x => Array.isArray(x) ? x : [];
@@ -5695,7 +5751,9 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const _rootEl = document.getElementById('root');
+_rootEl.setAttribute("data-app-rendered","1"); // إعلام طبقة التشخيص أن التطبيق بدأ
+const root = ReactDOM.createRoot(_rootEl);
 root.render(<ErrorBoundary><LoginGate /></ErrorBoundary>);
 </script>
 </body>
