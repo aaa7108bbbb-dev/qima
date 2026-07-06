@@ -3749,6 +3749,71 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
   );
 }
 
+// ─── طباعة كشف الحساب الشامل (إجماليات الأنواع خلال فترة) ───
+function printStatement(from, to, totals, sIn, sOut, sNet){
+  const dLabel = ymd => { if(!ymd) return ""; const [y,m,d]=ymd.split("-"); return d+"/"+parseInt(m)+"/"+y; };
+  const fmt = n => Math.round(+(n||0)).toLocaleString("en-US");
+  const period = (from||to) ? ((from?dLabel(from):"البداية")+" ← "+(to?dLabel(to):"اليوم")) : "كل الفترات";
+  const rowsHtml = totals.map(t=>`<tr>
+      <td>${t.label}</td>
+      <td style="text-align:center">${t.count}</td>
+      <td class="amt">${t.sign<0?"−":"+"}${fmt(t.total)}</td>
+    </tr>`).join("");
+  const win = window.open("","_blank");
+  win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>كشف حساب شامل</title>
+    <style>
+      *{box-sizing:border-box}
+      body{font-family:Arial,sans-serif;padding:24px;color:#000;direction:rtl}
+      .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:14px}
+      .header .right{text-align:right;line-height:1.9}
+      .header .left{text-align:left;line-height:1.9}
+      .org{font-size:18px;font-weight:900}
+      .sub{font-size:13px}
+      .title{text-align:center;font-size:20px;font-weight:900;padding:10px;margin:0 0 14px 0;border:2px solid #000;letter-spacing:1px}
+      table{width:100%;border-collapse:collapse;font-size:15px;border:2px solid #000}
+      th,td{border:1px solid #000;padding:10px 12px;text-align:right}
+      th{font-size:16px;font-weight:900;border-bottom:2px solid #000}
+      td.amt{text-align:left;font-weight:bold;font-family:monospace;font-size:16px}
+      .total-row td{font-weight:900;font-size:17px;border-top:2px solid #000}
+      .summary{display:flex;gap:0;margin-top:16px;border:2px solid #000}
+      .box{flex:1;padding:12px;text-align:center;border-left:1px solid #000}
+      .box:last-child{border-left:none}
+      .box .lbl{font-size:13px;font-weight:bold;margin-bottom:6px}
+      .box .val{font-size:18px;font-weight:900}
+      .foot{text-align:center;color:#444;font-size:12px;margin-top:20px;border-top:1px solid #000;padding-top:8px}
+      @media print{button{display:none}body{padding:10px}}
+    </style></head><body>
+    <div class="header">
+      <div class="right">
+        <div class="org">مؤسسة قمة الفرصة التجارية</div>
+        <div class="sub">بريدة - شارع الثلاثين</div>
+        <div class="sub">ج: 0555171283 &nbsp; ت: 0163839323</div>
+      </div>
+      <div class="left">
+        <div class="sub">كشف حساب شامل</div>
+        <div class="sub">الفترة: ${period}</div>
+      </div>
+    </div>
+    <div class="title">كشف حساب شامل — إجماليات الحركات</div>
+    <table>
+      <thead><tr><th>نوع الحركة</th><th style="text-align:center">عدد الحركات</th><th>الإجمالي</th></tr></thead>
+      <tbody>
+        ${rowsHtml}
+        <tr class="total-row"><td colspan="2">الصافي (الداخل − الخارج)</td><td class="amt">${fmt(sNet)}</td></tr>
+      </tbody>
+    </table>
+    <div class="summary">
+      <div class="box"><div class="lbl">إجمالي الداخل (سداد)</div><div class="val">${fmt(sIn)}</div></div>
+      <div class="box"><div class="lbl">إجمالي الخارج</div><div class="val">${fmt(sOut)}</div></div>
+      <div class="box"><div class="lbl">الصافي</div><div class="val">${fmt(sNet)}</div></div>
+    </div>
+    <div class="foot">طُبع بتاريخ ${new Date().toLocaleString("en-US")}</div>
+    <button onclick="window.print()" style="display:block;margin:20px auto;padding:10px 30px;font-size:16px;background:#000;color:#fff;border:none;border-radius:8px;cursor:pointer">🖨️ طباعة</button>
+    </body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(), 400);
+}
+
 // ─── Daily Cashbook Page ─────────────────────────────────────
 function printDailyReport(day, rows, opening, closing, sumByType){
   const dLabel = ymd => { if(!ymd) return ""; const [y,m,d]=ymd.split("-"); return d+"/"+parseInt(m)+"/"+y; };
@@ -3831,6 +3896,10 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   const [form,setForm] = useState({type:"sadad", amount:"", desc:""});
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
 
+  // ═══ كشف حساب شامل: فترة (من/إلى) ═══
+  const [stmtFrom,setStmtFrom] = useState("");
+  const [stmtTo,setStmtTo]     = useState("");
+
   // حركات اليوم المحدد
   const dayRows = (Array.isArray(daily)?daily:[]).filter(d=>d.date===selDay).sort((a,b)=>a.id-b.id);
 
@@ -3864,6 +3933,21 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   const accTakenAll = _daily.filter(d=>d.type==="acc").reduce((s,d)=>s+(d.amount||0),0);
   const mgrLeft = mgrEarnedAll - mgrTakenAll;
   const accLeft = accEarnedAll - accTakenAll;
+
+  // ═══ كشف حساب شامل عبر كل الأيام (أو ضمن فترة محددة) ═══
+  const stmtRows = _daily.filter(d=>{
+    if(stmtFrom && d.date < stmtFrom) return false;
+    if(stmtTo   && d.date > stmtTo)   return false;
+    return true;
+  });
+  const stmtTotals = DAILY_TYPES.map(t=>({
+    ...t,
+    total: stmtRows.filter(d=>d.type===t.key).reduce((s,d)=>s+(+d.amount||0),0),
+    count: stmtRows.filter(d=>d.type===t.key).length,
+  }));
+  const stmtIn  = stmtTotals.filter(t=>t.sign>0).reduce((s,t)=>s+t.total,0);
+  const stmtOut = stmtTotals.filter(t=>t.sign<0).reduce((s,t)=>s+t.total,0);
+  const stmtNet = stmtIn - stmtOut;
 
   const addRow=()=>{
     if(!form.amount||parseFloat(form.amount)<=0){toast("أدخل مبلغ صحيح","warn");return;}
@@ -3997,6 +4081,69 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
           <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستحق (كل العقود)</span><span style={{fontWeight:700}}>{SAR(accEarnedAll)}</span></div>
           <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(accTakenAll)}</span></div>
           <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginTop:6,paddingTop:6,borderTop:"1px solid "+C.border}}><span style={{fontWeight:800}}>الباقي له</span><span style={{fontWeight:900,color:accLeft>=0?"#0891b2":C.red}}>{SAR(accLeft)}</span></div>
+        </div>
+      </div>
+
+      {/* ═══ كشف حساب شامل ═══ */}
+      <div style={{...styles.panel,marginBottom:16}}>
+        <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+          <h3 style={{margin:0,fontSize:16,fontWeight:800}}>📊 كشف حساب شامل</h3>
+          <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px"}}
+            onClick={()=>printStatement(stmtFrom,stmtTo,stmtTotals,stmtIn,stmtOut,stmtNet)}>🖨️ طباعة الكشف</button>
+        </div>
+        <div style={{padding:"14px 18px"}}>
+          {/* اختيار الفترة */}
+          <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"flex-end",marginBottom:14}}>
+            <div>
+              <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>من تاريخ</label>
+              <input type="date" style={styles.input} value={stmtFrom} onChange={e=>setStmtFrom(e.target.value)}/>
+            </div>
+            <div>
+              <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>إلى تاريخ</label>
+              <input type="date" style={styles.input} value={stmtTo} onChange={e=>setStmtTo(e.target.value)}/>
+            </div>
+            <button style={{...styles.btn("#64748b"),fontSize:14,padding:"10px 16px"}}
+              onClick={()=>{setStmtFrom("");setStmtTo("");}}>♻️ كل الفترات</button>
+          </div>
+          <div style={{fontSize:13,color:"#64748b",marginBottom:12}}>
+            {(stmtFrom||stmtTo) ? ("الفترة: "+(stmtFrom?dLabel(stmtFrom):"البداية")+" ← "+(stmtTo?dLabel(stmtTo):"اليوم")) : "يعرض إجمالي كل الحركات المسجّلة في دفتر اليومية"}
+          </div>
+
+          {/* بطاقات الإجماليات لكل نوع */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:14}}>
+            {stmtTotals.map(t=>(
+              <div key={t.key} style={{...styles.card,borderTop:"4px solid "+t.color}}>
+                <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>{t.label}</div>
+                <div style={{fontSize:20,fontWeight:900,color:t.color}}>{t.sign<0?"−":"+"}{SAR(t.total)}</div>
+                <div style={{fontSize:12,color:"#64748b",marginTop:4}}>{t.count} حركة</div>
+              </div>
+            ))}
+          </div>
+
+          {/* جدول تفصيلي + الصافي */}
+          <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
+              <thead>
+                <tr>{["نوع الحركة","عدد الحركات","الإجمالي"].map(h=>(<th key={h} style={styles.th}>{h}</th>))}</tr>
+              </thead>
+              <tbody>
+                {stmtTotals.map((t,i)=>(
+                  <tr key={t.key} style={{background:i%2===0?C.white:C.gray}}>
+                    <td style={styles.td}><span style={styles.badge(t.color+"22",t.color)}>{t.label}</span></td>
+                    <td style={{...styles.td,textAlign:"center",fontWeight:700}}>{t.count}</td>
+                    <td style={{...styles.td,fontWeight:800,color:t.color}}>{t.sign<0?"−":"+"}{SAR(t.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr style={{background:"#f0fdfa"}}>
+                  <td style={{...styles.td,fontWeight:800,color:"#0d9488"}}>الداخل: {SAR(stmtIn)} · الخارج: {SAR(stmtOut)}</td>
+                  <td style={{...styles.td,fontWeight:800,color:"#0d9488"}}>الصافي</td>
+                  <td style={{...styles.td,fontWeight:900,fontSize:16,color:stmtNet>=0?"#0d9488":C.red}}>{SAR(stmtNet)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -4991,7 +5138,13 @@ function OverduePage({contracts, investors, payments, goCollect}) {
   return (
     <div style={styles.main}>
       <div style={styles.panel}>
-        <div style={styles.panelHdr}>
+        <div style={{...styles.panelHdr,display:"flex",alignItems:"center",gap:12}}>
+          {goCollect && (
+            <button onClick={()=>goCollect()} title="رجوع للتحصيل"
+              style={{border:"none",cursor:"pointer",borderRadius:10,padding:"8px 14px",background:"#f1f5f9",color:C.ink,fontSize:15,fontWeight:800,fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:6}}>
+              → رجوع للتحصيل
+            </button>
+          )}
           <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>⚠️ المتأخرون (3 أشهر فأكثر)</h2>
         </div>
         <div style={{padding:"16px 20px",display:"flex",gap:12,flexWrap:"wrap"}}>
