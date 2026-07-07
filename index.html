@@ -3202,10 +3202,63 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
 
 // ─── Dashboard ───────────────────────────────────────────────
 // ─── Monthly Portfolio Page (المحفظة الشهرية) ───────────────
+// ─── طباعة كشف الحساب البنكي (الراجحي) بالأسماء وآخر رصيد ───
+function printBankStatement(rows, lastBalance, totalDain, totalMadin, filterLabel){
+  const fmt = n => Math.round(+(n||0)).toLocaleString("en-US");
+  const rowsHtml = rows.map(r=>`<tr>
+      <td style="white-space:nowrap">${r.date||""}</td>
+      <td>${(r.type||"")}${r.name?(' — <b>'+r.name+'</b>'):""}</td>
+      <td class="amt" style="color:#b00">${r.madin>0?fmt(r.madin):""}</td>
+      <td class="amt" style="color:#080">${r.dain>0?fmt(r.dain):""}</td>
+      <td class="amt">${fmt(r.balance)}</td>
+    </tr>`).join("");
+  const win = window.open("","_blank");
+  win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>كشف الحساب البنكي</title>
+    <style>
+      *{box-sizing:border-box}
+      body{font-family:Arial,sans-serif;padding:22px;color:#000;direction:rtl}
+      .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:14px}
+      .org{font-size:18px;font-weight:900}
+      .sub{font-size:13px;line-height:1.8}
+      .title{text-align:center;font-size:19px;font-weight:900;padding:10px;margin:0 0 14px 0;border:2px solid #000}
+      table{width:100%;border-collapse:collapse;font-size:13px;border:2px solid #000}
+      th,td{border:1px solid #000;padding:7px 9px;text-align:right}
+      th{font-size:14px;font-weight:900;background:#eee}
+      td.amt{text-align:left;font-family:monospace;font-weight:bold}
+      .summary{display:flex;margin-top:16px;border:2px solid #000}
+      .box{flex:1;padding:12px;text-align:center;border-left:1px solid #000}
+      .box:last-child{border-left:none}
+      .box .lbl{font-size:12px;font-weight:bold;margin-bottom:6px}
+      .box .val{font-size:17px;font-weight:900}
+      .foot{text-align:center;color:#444;font-size:12px;margin-top:18px;border-top:1px solid #000;padding-top:8px}
+      @media print{button{display:none}body{padding:8px}}
+    </style></head><body>
+    <div class="header">
+      <div><div class="org">مؤسسة قمة الفرصة التجارية</div><div class="sub">بريدة - شارع الثلاثين</div></div>
+      <div style="text-align:left"><div class="sub">كشف الحساب البنكي (الراجحي)</div>${filterLabel?('<div class="sub">'+filterLabel+'</div>'):""}<div class="sub">عدد الحركات: ${rows.length}</div></div>
+    </div>
+    <div class="title">كشف الحساب البنكي</div>
+    <table>
+      <thead><tr><th>التاريخ</th><th>تفاصيل العملية / الاسم</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead>
+      <tbody>${rowsHtml||'<tr><td colspan="5" style="text-align:center;color:#666">لا توجد حركات</td></tr>'}</tbody>
+    </table>
+    <div class="summary">
+      <div class="box"><div class="lbl">إجمالي الوارد (دائن)</div><div class="val" style="color:#080">${fmt(totalDain)}</div></div>
+      <div class="box"><div class="lbl">إجمالي المنصرف (مدين)</div><div class="val" style="color:#b00">${fmt(totalMadin)}</div></div>
+      <div class="box"><div class="lbl">آخر رصيد</div><div class="val">${fmt(lastBalance)}</div></div>
+    </div>
+    <div class="foot">طُبع بتاريخ ${new Date().toLocaleString("en-US")}</div>
+    <button onclick="window.print()" style="display:block;margin:20px auto;padding:10px 30px;font-size:16px;background:#000;color:#fff;border:none;border-radius:8px;cursor:pointer">🖨️ طباعة</button>
+    </body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(), 400);
+}
+
 function BankPage({bankTx, setBankTx, toast}) {
   const rows = _arr(bankTx);
   const fileRef = React.useRef(null);
   const [dragOver, setDragOver] = React.useState(false);
+  const [bankQuery, setBankQuery] = React.useState(""); // 🔍 بحث بالاسم/الوصف
 
   // قراءة ملف الراجحي Excel
   const readFile = (file) => {
@@ -3256,13 +3309,23 @@ function BankPage({bankTx, setBankTx, toast}) {
   const totalDain = rows.reduce((s,r)=>s+(+r.dain||0),0);
   const totalMadin = rows.reduce((s,r)=>s+(+r.madin||0),0);
 
+  // 🔍 تصفية بالبحث (اسم الشخص أو نوع/تفاصيل العملية)
+  const _bq = bankQuery.trim().toLowerCase();
+  const shownRows = !_bq ? rows : rows.filter(r =>
+    ((r.name||"").toLowerCase().includes(_bq)) || ((r.type||"").toLowerCase().includes(_bq))
+  );
+  // إجماليات نتيجة البحث
+  const qDain = shownRows.reduce((s,r)=>s+(+r.dain||0),0);
+  const qMadin = shownRows.reduce((s,r)=>s+(+r.madin||0),0);
+
   return (
     <div>
       <div style={{...styles.card,marginBottom:16}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12,marginBottom:14}}>
           <div style={{fontSize:18,fontWeight:800,color:C.ink}}>🏦 رصيد الحساب البنكي (الراجحي)</div>
-          <div style={{display:"flex",gap:8}}>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
             <button style={styles.btn(C.teal)} onClick={()=>fileRef.current&&fileRef.current.click()}>📥 رفع كشف Excel</button>
+            {rows.length>0 && <button style={styles.btn(C.gold)} onClick={()=>printBankStatement(shownRows,lastBalance,_bq?qDain:totalDain,_bq?qMadin:totalMadin,_bq?("بحث: "+bankQuery):"")}>🖨️ طباعة الكشف</button>}
             {rows.length>0 && <button style={styles.btn(C.red)} onClick={()=>{if(window.confirm("مسح كل الحركات؟"))setBankTx([]);}}>🗑️ مسح</button>}
           </div>
           <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{display:"none"}}
@@ -3290,6 +3353,20 @@ function BankPage({bankTx, setBankTx, toast}) {
             ))}
           </div>
 
+          {/* 🔍 بحث عن اسم شخص أو نوع عملية */}
+          <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:12,background:"#f8fafc",border:"2px solid "+C.border,borderRadius:12,padding:"8px 12px"}}>
+            <span style={{fontSize:18}}>🔍</span>
+            <input type="text" placeholder="ابحث باسم شخص أو نوع عملية (تحويل / راتب / إيداع ...)"
+              value={bankQuery} onChange={e=>setBankQuery(e.target.value)}
+              style={{flex:1,border:"none",outline:"none",background:"transparent",fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:600,color:C.ink}}/>
+            {bankQuery && <button onClick={()=>setBankQuery("")} style={{border:"none",background:"#e2e8f0",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:14,fontWeight:700,color:"#475569"}}>✕</button>}
+          </div>
+          {_bq && (
+            <div style={{fontSize:14,fontWeight:700,color:C.ink2,marginBottom:10}}>
+              نتيجة البحث: {shownRows.length} حركة · وارد {SAR(qDain)} · منصرف {SAR(qMadin)}
+            </div>
+          )}
+
           <div style={{overflowX:"auto",borderRadius:10,boxShadow:"0 2px 12px rgba(0,0,0,0.08)"}}>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
               <thead>
@@ -3300,7 +3377,9 @@ function BankPage({bankTx, setBankTx, toast}) {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r,i)=>(
+                {shownRows.length===0 ? (
+                  <tr><td colSpan={5} style={{padding:24,textAlign:"center",color:"#6b7280"}}>لا توجد حركات مطابقة</td></tr>
+                ) : shownRows.map((r,i)=>(
                   <tr key={r.id||i} style={{background:i%2===0?"#fff":"#f8f8f8"}}>
                     <td style={{padding:"8px",borderBottom:"1px solid #eee",textAlign:"center",whiteSpace:"nowrap",fontWeight:600}}>{r.date}</td>
                     <td style={{padding:"8px",borderBottom:"1px solid #eee",textAlign:"right"}}>
