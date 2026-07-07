@@ -3258,31 +3258,50 @@ function parseRajhiPDF(items){
       }
     }
 
-    // التفاصيل: الصفوف التالية حتى الصف المالي التالي (نوع العملية + الاسم)، مع تجاهل صفوف الأرقام والتاريخ والوقت
-    let details = [];
+    // التفاصيل: الصفوف التالية حتى الصف المالي التالي
+    // نميّز: سطر "النوع" (نص عربي نظيف قصير) وسطر "الملاحظة" (فيه الوقت/رقم حساب/اسم)
+    const hasArabic = (s)=>/[\u0600-\u06FF]/.test(s);
+    const hasLongNum = (s)=>/\d{9,}/.test(s); // رقم حساب طويل
+    const rawLines = [];
     for(let j=i+1;j<rowsY.length;j++){
       const rj = rowsY[j];
       const jSar = (rj.text.match(/SAR/g)||[]).length;
       const jMoney = []; rj.cells.forEach(c=>{ const v=num(c.str); if(v!==null && /\.\d{2}/.test(c.str)) jMoney.push(v); });
       if(jSar>=3 || jMoney.length>=3) break; // بداية حركة جديدة
-      let txt = rj.text;
-      // تجاهل أسطر الوقت والملاحظة التقنية
-      txt = txt.replace(/الوقت[\s\S]*$/,"").replace(/\*\*ملاحظة[\s\S]*$/,"").trim();
-      // تجاهل التاريخ المتكرر
-      if(isDate(rj.text.trim())) continue;
-      if(txt) details.push(txt);
-      if(details.length>=3) break;
+      if(isDate(rj.text.trim())) continue;   // تجاهل سطر التاريخ وحده
+      rawLines.push(rj.text.trim());
+      if(rawLines.length>=6) break;
     }
-
-    // رتّب المبالغ: في الراجحي بصرياً من اليسار: [الرصيد, دائن, مدين]
-    // money مُرتّبة حسب x تصاعدي (يسار→يمين). آخذ أول ثلاثة.
-    const balance = money[0];
-    const dain = money[1]!=null?money[1]:0;
-    const madin = money[2]!=null?money[2]:0;
-    if(balance==null) continue;
-
-    const typeLine = details[0]||"";
-    const nameLine = details.slice(1).join(" ")||"";
+    // النوع = أول سطر: عربي، قصير، لا يبدأ بـ"الوقت"/"ملاحظة"، ولا يحتوي رقم حساب طويل
+    let typeLine = "";
+    for(const ln of rawLines){
+      const clean = ln.replace(/\d{4}\/\d{2}\/\d{2}/g,"").trim();
+      if(!clean) continue;
+      if(clean.indexOf("الوقت")===0 || clean.indexOf("ملاحظة")>-1) continue;
+      if(!hasArabic(clean)) continue;
+      if(hasLongNum(clean)) continue;
+      if(clean.length>45) continue; // النوع عادةً قصير
+      typeLine = clean;
+      break;
+    }
+    // الاسم = من سطر الملاحظة: آخر مقطع بعد "/" أو "-" أو الاسم العربي/الإنجليزي في سطر الحوالة
+    let nameLine = "";
+    for(const ln of rawLines){
+      if(ln.indexOf("الوقت")>-1 || ln.indexOf("ملاحظة")>-1){
+        // خذ ما بعد آخر "-" أو "/" أو ":" كاسم مبدئي
+        let m = ln.split(/[\/\-]/).map(x=>x.trim()).filter(Boolean);
+        let cand = m.length? m[m.length-1] : "";
+        cand = cand.replace(/الوقت.*$/,"").replace(/\*+/g,"").replace(/ملاحظة:?/g,"").trim();
+        if(cand && cand.length<=40 && !hasLongNum(cand)) { nameLine = cand; break; }
+      }
+    }
+    // لو لم نجد اسماً، جرّب سطراً فيه إنجليزي (أسماء الحوالات الدولية) أو عربي بلا "الوقت"
+    if(!nameLine){
+      for(const ln of rawLines){
+        const clean = ln.replace(/\d/g,"").replace(/[\/\-\*:]/g," ").replace(/الوقت|ملاحظة|SAR|SA/g,"").trim();
+        if(clean && clean!==typeLine && clean.length>=3 && clean.length<=40){ nameLine = clean; break; }
+      }
+    }
 
     parsed.push({
       id: "bnk_pdf_"+i+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),
