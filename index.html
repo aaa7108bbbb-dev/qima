@@ -3215,102 +3215,142 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
 // ─── Dashboard ───────────────────────────────────────────────
 // ─── Monthly Portfolio Page (المحفظة الشهرية) ───────────────
 // ─── طباعة كشف الحساب البنكي (الراجحي) بالأسماء وآخر رصيد ───
-// ─── تحليل نصوص PDF لكشف الراجحي إلى حركات ───
+// ─── تحليل نصوص PDF لكشف الراجحي إلى حركات (يعتمد على مواقع الأعمدة x) ───
 function parseRajhiPDF(items){
-  // تنظيف رقم من صيغة "676,039.48 SAR"
   const num = (s) => { const v=parseFloat(String(s).replace(/,/g,"").replace(/[^0-9.\-]/g,"")); return isNaN(v)?null:v; };
-  const isDate = (s) => /^\d{4}\/\d{2}\/\d{2}$/.test(String(s).trim());
-  const isMoney = (s) => /SAR/.test(s) || /^\s*[\d,]+\.\d{2}\s*$/.test(s);
+  const isDate = (s) => /\d{4}\/\d{2}\/\d{2}/.test(String(s));
+  const rev = (s) => s.split("").reverse().join("");
+  // تطبيع الحروف العربية من أشكال العرض (Presentation Forms) إلى الأساسية
+  const norm = (s) => { try{ return s.normalize("NFKC"); }catch(e){ return s; } };
+  // أنواع معروفة: [كلمات مفتاحية يجب توفرها كلها, التسمية] — مرن ضد أخطاء الاستخراج
+  const TYPE_DEFS = [
+    [["رسوم","حواله","فوريه","صادره"],"رسوم حوالة فورية صادرة"],
+    [["حواله","فوريه","صادره"],"حوالة فورية صادرة"],
+    [["حوالات","فوريه","وارده"],"حوالات فورية واردة"],
+    [["فوريه","وارده"],"حوالات فورية واردة"],
+    [["عمليه","تحويل","داخليه"],"عملية تحويل داخلية"],
+    [["تحويل","داخليه"],"عملية تحويل داخلية"],
+    [["صراف","الي"],"التحويل للحساب الصراف الآلي"],
+    [["نقاط","البيع"],"نقاط البيع"],
+    [["مدفوعات","سداد"],"مدفوعات سداد"],
+    [["ايداع","شيك","مقاصه"],"إيداع شيك مقاصة"],
+    [["ايداع","بشيك"],"إيداع بشيك"],
+    [["ايداع","شيك"],"إيداع شيك"],
+    [["ايداع","نقدي"],"إيداع نقدي"],
+    [["رسوم","الامر","المستديم"],"رسوم الأمر المستديم"],
+    [["امر","مستديم"],"أمر مستديم"],
+    [["المستديم"],"الأمر المستديم"],
+    [["تحويل"],"تحويل"],
+    [["سداد"],"سداد"],
+    [["رسوم"],"رسوم"],
+  ];
+  const hasArabic = (s)=>/[\u0600-\u06FF\uFB50-\uFEFF]/.test(s);
+  const unify = (x)=> x.replace(/\u0640/g,"").replace(/[إأآ]/g,"ا").replace(/ة/g,"ه").replace(/ى/g,"ي");
+  const matchType = (raw)=>{
+    let base = unify(norm(raw).replace(/[^\u0600-\u06FF]/g,""));
+    const cands = [base, unify(rev(base))];
+    for(const [keys,label] of TYPE_DEFS){
+      for(const c of cands){
+        if(keys.every(k=> c.indexOf(unify(k))>-1)) return label;
+      }
+    }
+    return null;
+  };
 
-  // 1) اجمع العناصر في صفوف حسب تقارب y (وترتيب حسب الصفحة ثم y)
+  // اجمع في صفوف حسب y
   items = items.filter(it=>it.str && it.str.trim()!=="");
-  items.sort((a,b)=> a.page-b.page || a.y-b.y || a.x-b.x);
   const rowsY = [];
-  const TOL = 4; // تسامح رأسي
+  const TOL = 4;
   items.forEach(it=>{
     let row = rowsY.find(r=> r.page===it.page && Math.abs(r.y-it.y)<=TOL);
     if(!row){ row={page:it.page, y:it.y, cells:[]}; rowsY.push(row); }
     row.cells.push(it);
   });
-  // رتّب خلايا كل صف من اليسار لليمين، وكوّن نصاً
-  rowsY.forEach(r=>{ r.cells.sort((a,b)=>a.x-b.x); r.text = r.cells.map(c=>c.str).join(" ").replace(/\s+/g," ").trim(); });
+  rowsY.forEach(r=>{ r.cells.sort((a,b)=>a.x-b.x); r.text = r.cells.map(c=>c.str).join(" "); });
   rowsY.sort((a,b)=> a.page-b.page || a.y-b.y);
 
-  // 2) حدّد صفوف الأرقام: صف فيه 3 قيم مالية (رصيد، دائن، مدين) — عادةً فيه "SAR" ثلاث مرات
-  //    ثم اربط بالتاريخ (يمين نفس الصف أو صف قريب) والتفاصيل (الصفوف التالية حتى الصف المالي القادم)
+  // دالة: هل هذا صف مبالغ؟ (فيه SAR مرتين+ أو 3 أرقام عشرية)
+  const moneyRow = (r) => {
+    const sar = (r.text.match(/SAR/g)||[]).length;
+    const nums = r.cells.filter(c=>/^[\d,]+\.\d{2}$/.test(c.str.trim())).length;
+    return sar>=2 || nums>=2;
+  };
+  // استخرج المبالغ الثلاثة من صف مبالغ حسب x: رصيد(x<130) دائن(130-215) مدين(215-310)
+  const extractMoney = (r) => {
+    let bal=null, dain=0, madin=0;
+    r.cells.forEach(c=>{
+      const v = num(c.str);
+      if(v===null || !/^[\d,]+\.\d{2}$/.test(c.str.trim())) return;
+      if(c.x < 130) bal = v;
+      else if(c.x < 215) dain = v;
+      else if(c.x < 320) madin = v;
+    });
+    return {bal, dain, madin};
+  };
+
   const parsed = [];
   for(let i=0;i<rowsY.length;i++){
     const r = rowsY[i];
-    // استخرج القيم المالية من هذا الصف
-    const money = [];
-    r.cells.forEach(c=>{ const v=num(c.str); if(v!==null && (/SAR/.test(c.str)|| /[\d],?\d*\.\d{2}/.test(c.str))) money.push(v); });
-    // نحتاج 3 أرقام على الأقل (رصيد/دائن/مدين). في الراجحي الترتيب بصرياً: الرصيد | دائن | مدين
-    const sarCount = (r.text.match(/SAR/g)||[]).length;
-    if(sarCount<3 && money.length<3) continue;
+    if(!moneyRow(r)) continue;
+    const {bal, dain, madin} = extractMoney(r);
+    if(bal===null) continue;
 
-    // التاريخ: ابحث في نفس الصف
+    // التاريخ: في نفس الصف (x>480) أو الصفوف القريبة
     let date = "";
-    r.cells.forEach(c=>{ if(isDate(c.str)) date=c.str.trim(); });
-    // لو ما وُجد، ابحث في الصفوف المجاورة (±2)
-    if(!date){
-      for(let k=1;k<=3 && !date;k++){
-        [rowsY[i-k],rowsY[i+k]].forEach(rr=>{ if(rr&&!date){ rr.cells.forEach(c=>{ if(isDate(c.str)) date=c.str.trim(); }); } });
-      }
-    }
+    const findDate = (rr)=>{ rr && rr.cells.forEach(c=>{ const m=String(c.str).match(/\d{4}\/\d{2}\/\d{2}/); if(m && !date) date=m[0]; }); };
+    findDate(r);
+    for(let k=1;k<=2 && !date;k++){ findDate(rowsY[i-k]); findDate(rowsY[i+k]); }
 
-    // التفاصيل: الصفوف التالية حتى الصف المالي التالي
-    // نميّز: سطر "النوع" (نص عربي نظيف قصير) وسطر "الملاحظة" (فيه الوقت/رقم حساب/اسم)
-    const hasArabic = (s)=>/[\u0600-\u06FF]/.test(s);
-    const hasLongNum = (s)=>/\d{9,}/.test(s); // رقم حساب طويل
-    const rawLines = [];
-    for(let j=i+1;j<rowsY.length;j++){
-      const rj = rowsY[j];
-      const jSar = (rj.text.match(/SAR/g)||[]).length;
-      const jMoney = []; rj.cells.forEach(c=>{ const v=num(c.str); if(v!==null && /\.\d{2}/.test(c.str)) jMoney.push(v); });
-      if(jSar>=3 || jMoney.length>=3) break; // بداية حركة جديدة
-      if(isDate(rj.text.trim())) continue;   // تجاهل سطر التاريخ وحده
-      rawLines.push(rj.text.trim());
-      if(rawLines.length>=6) break;
-    }
-    // النوع = أول سطر: عربي، قصير، لا يبدأ بـ"الوقت"/"ملاحظة"، ولا يحتوي رقم حساب طويل
-    let typeLine = "";
-    for(const ln of rawLines){
-      const clean = ln.replace(/\d{4}\/\d{2}\/\d{2}/g,"").trim();
-      if(!clean) continue;
-      if(clean.indexOf("الوقت")===0 || clean.indexOf("ملاحظة")>-1) continue;
-      if(!hasArabic(clean)) continue;
-      if(hasLongNum(clean)) continue;
-      if(clean.length>45) continue; // النوع عادةً قصير
-      typeLine = clean;
-      break;
-    }
-    // الاسم = من سطر الملاحظة: آخر مقطع بعد "/" أو "-" أو الاسم العربي/الإنجليزي في سطر الحوالة
-    let nameLine = "";
-    for(const ln of rawLines){
-      if(ln.indexOf("الوقت")>-1 || ln.indexOf("ملاحظة")>-1){
-        // خذ ما بعد آخر "-" أو "/" أو ":" كاسم مبدئي
-        let m = ln.split(/[\/\-]/).map(x=>x.trim()).filter(Boolean);
-        let cand = m.length? m[m.length-1] : "";
-        cand = cand.replace(/الوقت.*$/,"").replace(/\*+/g,"").replace(/ملاحظة:?/g,"").trim();
-        if(cand && cand.length<=40 && !hasLongNum(cand)) { nameLine = cand; break; }
+    // النوع: كلمات عربية في العمود الأوسط (x بين 355 و 495) من الصفوف القريبة (±3)
+    // نتجاهل الصفوف التي فيها "ملاحظة"/"الوقت"/أرقام حساب طويلة
+    let typeText = "";
+    const collectType = (rr)=>{
+      if(!rr || typeText) return;
+      const midCells = rr.cells.filter(c=> c.x>=350 && c.x<=500 && hasArabic(c.str));
+      if(midCells.length===0) return;
+      const joined = midCells.map(c=>c.str).join("");
+      // تجاهل سطر الملاحظة (فيه ملاحظة/الوقت أو أرقام طويلة)
+      const nj = norm(joined);
+      if(/ملاحظة|الوقت/.test(nj) || /ملاحظة|الوقت/.test(rev(nj))) return;
+      if(/\d{9,}/.test(joined)) return;
+      const matched = matchType(joined);
+      if(matched){ typeText = matched; return; }
+      // fallback: نص عربي مطبّع قصير
+      const cleaned = norm(joined).replace(/[^\u0600-\u06FF]/g,"");
+      if(cleaned && cleaned.length<=30){ typeText = rev(cleaned); }
+    };
+    collectType(r);
+    for(let k=1;k<=3 && !typeText;k++){ collectType(rowsY[i-k]); collectType(rowsY[i+k]); }
+
+    // الاسم: من سطر الملاحظة أو الإنجليزي القريب
+    let nameText = "";
+    const collectName = (rr)=>{
+      if(!rr || nameText) return;
+      // سطر إنجليزي (اسم متجر/شخص دولي)
+      const engCells = rr.cells.filter(c=>/[A-Za-z]{3,}/.test(c.str) && !/SAR|TOACCT|FRACCT|SANCBK|SAALBI/.test(c.str));
+      if(engCells.length){
+        const eng = engCells.map(c=>c.str).join(" ").replace(/[^A-Za-z, ]/g," ").replace(/\s+/g," ").trim();
+        if(eng.length>=3 && eng.length<=45){ nameText = eng; return; }
       }
-    }
-    // لو لم نجد اسماً، جرّب سطراً فيه إنجليزي (أسماء الحوالات الدولية) أو عربي بلا "الوقت"
-    if(!nameLine){
-      for(const ln of rawLines){
-        const clean = ln.replace(/\d/g,"").replace(/[\/\-\*:]/g," ").replace(/الوقت|ملاحظة|SAR|SA/g,"").trim();
-        if(clean && clean!==typeLine && clean.length>=3 && clean.length<=40){ nameLine = clean; break; }
+      // اسم عربي من سطر الملاحظة (بعد آخر شرطة)
+      const noteCell = rr.cells.find(c=>{ const n=norm(c.str); return /ملاحظة/.test(n)||/ملاحظة/.test(rev(n)); });
+      if(noteCell){
+        let parts = norm(noteCell.str).split(/[\/\-]/).map(x=>x.trim()).filter(Boolean);
+        let cand = parts[0]||"";
+        cand = cand.replace(/[A-Za-z0-9:*]/g,"").replace(/ملاحظة/g,"").trim();
+        if(hasArabic(cand) && cand.length>=2 && cand.length<=25){ nameText = rev(cand); }
       }
-    }
+    };
+    for(let k=1;k<=3 && !nameText;k++){ collectName(rowsY[i+k]); collectName(rowsY[i-k]); }
 
     parsed.push({
       id: "bnk_pdf_"+i+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),
       date: date||"",
-      type: typeLine,
-      name: nameLine,
+      type: typeText||"غير محدد",
+      name: nameText||"",
       madin: Math.abs(madin)||0,
       dain: Math.abs(dain)||0,
-      balance: balance,
+      balance: bal,
     });
   }
   return parsed;
