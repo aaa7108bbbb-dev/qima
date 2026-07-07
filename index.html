@@ -3259,6 +3259,7 @@ function BankPage({bankTx, setBankTx, toast}) {
   const fileRef = React.useRef(null);
   const [dragOver, setDragOver] = React.useState(false);
   const [bankQuery, setBankQuery] = React.useState(""); // 🔍 بحث بالاسم/الوصف
+  const [posOnly, setPosOnly] = React.useState(false);  // 💳 فلتر نقاط البيع
 
   // قراءة ملف الراجحي Excel
   const readFile = (file) => {
@@ -3288,7 +3289,7 @@ function BankPage({bankTx, setBankTx, toast}) {
           const balN = parseFloat(String(bal).replace(/[^0-9.-]/g,""));
           if(isNaN(balN)) continue;
           parsed.push({
-            id: "bnk_"+i+"_"+Date.now(),
+            id: "bnk_"+i+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),
             date: String(date).trim(),
             type: String(r[9]||"").trim(),
             name: String(r[10]||"").trim(),
@@ -3298,8 +3299,25 @@ function BankPage({bankTx, setBankTx, toast}) {
           });
         }
         if(parsed.length===0){ toast&&toast("لم يتم العثور على حركات","error"); return; }
-        setBankTx(parsed);
-        toast&&toast("✅ تم استيراد "+parsed.length+" حركة");
+        const existing = _arr(bankTx);
+        if(existing.length > 0){
+          // يوجد كشف سابق — اسأل: دمج (إضافة التكملة) أم استبدال كامل
+          const doMerge = window.confirm(
+            "يوجد كشف سابق فيه "+existing.length+" حركة.\n\n"+
+            "• اضغط \"موافق\" لـ➕ دمج الكشف الجديد ("+parsed.length+" حركة) مع السابق في كشف واحد.\n"+
+            "• اضغط \"إلغاء\" لـ🔄 استبدال الكل بالكشف الجديد فقط."
+          );
+          if(doMerge){
+            setBankTx([...existing, ...parsed]);
+            toast&&toast("✅ تم دمج "+parsed.length+" حركة (الإجمالي "+(existing.length+parsed.length)+")");
+          } else {
+            setBankTx(parsed);
+            toast&&toast("🔄 تم استبدال الكشف بـ "+parsed.length+" حركة");
+          }
+        } else {
+          setBankTx(parsed);
+          toast&&toast("✅ تم استيراد "+parsed.length+" حركة");
+        }
       } catch(err){ toast&&toast("خطأ في قراءة الملف","error"); }
     };
     reader.readAsArrayBuffer(file);
@@ -3309,12 +3327,22 @@ function BankPage({bankTx, setBankTx, toast}) {
   const totalDain = rows.reduce((s,r)=>s+(+r.dain||0),0);
   const totalMadin = rows.reduce((s,r)=>s+(+r.madin||0),0);
 
-  // 🔍 تصفية بالبحث (اسم الشخص أو نوع/تفاصيل العملية)
+  // 💳 نقاط البيع: أي حركة تحتوي "نقاط البيع" أو "نقاط بيع" في تفاصيل العملية
+  const isPOS = (r) => {
+    const s = ((r.type||"")+" "+(r.name||""));
+    return s.indexOf("نقاط البيع")>-1 || s.indexOf("نقاط بيع")>-1;
+  };
+  const posRows = rows.filter(isPOS);
+  const totalPOS = posRows.reduce((s,r)=>s+(+r.madin||0),0); // نقاط البيع مسحوبات (مدين)
+
+  // 🔍 تصفية بالبحث (اسم الشخص أو نوع/تفاصيل العملية) + فلتر نقاط البيع
   const _bq = bankQuery.trim().toLowerCase();
-  const shownRows = !_bq ? rows : rows.filter(r =>
+  let shownRows = rows;
+  if(posOnly) shownRows = shownRows.filter(isPOS);
+  if(_bq) shownRows = shownRows.filter(r =>
     ((r.name||"").toLowerCase().includes(_bq)) || ((r.type||"").toLowerCase().includes(_bq))
   );
-  // إجماليات نتيجة البحث
+  // إجماليات نتيجة العرض الحالي
   const qDain = shownRows.reduce((s,r)=>s+(+r.dain||0),0);
   const qMadin = shownRows.reduce((s,r)=>s+(+r.madin||0),0);
 
@@ -3339,6 +3367,7 @@ function BankPage({bankTx, setBankTx, toast}) {
           style={{border:"2px dashed "+(dragOver?C.teal:C.border),borderRadius:12,padding:"20px",textAlign:"center",cursor:"pointer",background:dragOver?C.tealLt:"#fafafa",marginBottom:8}}>
           <div style={{fontSize:15,color:C.ink2,fontWeight:600}}>📄 اسحب ملف كشف الراجحي هنا، أو اضغط للاختيار</div>
           <div style={{fontSize:13,color:"#6b7280",marginTop:4}}>صيغة Excel (.xlsx) من تطبيق الراجحي</div>
+          {rows.length>0 && <div style={{fontSize:12,color:"#0d9488",marginTop:6,fontWeight:700}}>💡 عند رفع كشف جديد سيسألك: دمج (تكملة) أم استبدال</div>}
         </div>
       </div>
 
@@ -3351,7 +3380,24 @@ function BankPage({bankTx, setBankTx, toast}) {
                 <div style={{fontSize:18,fontWeight:900,color:col}}>{isN?v:SAR(v)}</div>
               </div>
             ))}
+            {/* 💳 بطاقة نقاط البيع — قابلة للنقر لفتح تبويب حركاتها */}
+            <div onClick={()=>setPosOnly(v=>!v)} title="اضغط لعرض حركات نقاط البيع"
+              style={{...styles.card,textAlign:"center",borderTop:"3px solid #7c3aed",padding:"12px",cursor:"pointer",
+                background: posOnly ? "#f5f3ff" : "#fff",
+                outline: posOnly ? "2px solid #7c3aed" : "none",transition:"all .12s"}}>
+              <div style={{fontSize:13,color:"#6b7280",marginBottom:4,fontWeight:600}}>💳 نقاط بيع</div>
+              <div style={{fontSize:18,fontWeight:900,color:"#7c3aed"}}>{SAR(totalPOS)}</div>
+              <div style={{fontSize:11,color:"#7c3aed",marginTop:3,fontWeight:700}}>{posRows.length} حركة · اضغط للعرض</div>
+            </div>
           </div>
+
+          {/* شارة الفلتر النشط لنقاط البيع */}
+          {posOnly && (
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:12,background:"#f5f3ff",border:"2px solid #7c3aed",borderRadius:12,padding:"10px 14px"}}>
+              <span style={{fontSize:14,fontWeight:800,color:"#7c3aed"}}>💳 عرض حركات نقاط البيع فقط — {posRows.length} حركة · إجمالي {SAR(totalPOS)}</span>
+              <button onClick={()=>setPosOnly(false)} style={{border:"none",background:"#7c3aed",color:"#fff",borderRadius:8,padding:"5px 12px",cursor:"pointer",fontSize:13,fontWeight:700}}>✕ إلغاء</button>
+            </div>
+          )}
 
           {/* 🔍 بحث عن اسم شخص أو نوع عملية */}
           <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:12,background:"#f8fafc",border:"2px solid "+C.border,borderRadius:12,padding:"8px 12px"}}>
