@@ -3259,7 +3259,7 @@ function BankPage({bankTx, setBankTx, toast}) {
   const fileRef = React.useRef(null);
   const [dragOver, setDragOver] = React.useState(false);
   const [bankQuery, setBankQuery] = React.useState(""); // 🔍 بحث بالاسم/الوصف
-  const [posOnly, setPosOnly] = React.useState(false);  // 💳 فلتر نقاط البيع
+  const [bankFilter, setBankFilter] = React.useState("all");  // all | in | out | pos
 
   // قراءة ملف الراجحي Excel
   const readFile = (file) => {
@@ -3335,10 +3335,12 @@ function BankPage({bankTx, setBankTx, toast}) {
   const posRows = rows.filter(isPOS);
   const totalPOS = posRows.reduce((s,r)=>s+(+r.madin||0),0); // نقاط البيع مسحوبات (مدين)
 
-  // 🔍 تصفية بالبحث (اسم الشخص أو نوع/تفاصيل العملية) + فلتر نقاط البيع
+  // 🔍 تصفية بالبحث + فلتر (وارد/منصرف/نقاط بيع)
   const _bq = bankQuery.trim().toLowerCase();
   let shownRows = rows;
-  if(posOnly) shownRows = shownRows.filter(isPOS);
+  if(bankFilter==="in")  shownRows = shownRows.filter(r=>(+r.dain||0)>0);
+  if(bankFilter==="out") shownRows = shownRows.filter(r=>(+r.madin||0)>0);
+  if(bankFilter==="pos") shownRows = shownRows.filter(isPOS);
   if(_bq) shownRows = shownRows.filter(r =>
     ((r.name||"").toLowerCase().includes(_bq)) || ((r.type||"").toLowerCase().includes(_bq))
   );
@@ -3374,30 +3376,56 @@ function BankPage({bankTx, setBankTx, toast}) {
       {rows.length>0 && (
         <>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10,marginBottom:16}}>
-            {[["💰 الرصيد الحالي",lastBalance,C.gold],["⬆️ إجمالي الوارد",totalDain,C.green],["⬇️ إجمالي المنصرف",totalMadin,C.red],["📊 عدد الحركات",rows.length,C.teal,true]].map(([l,v,col,isN],i)=>(
-              <div key={i} style={{...styles.card,textAlign:"center",borderTop:"3px solid "+col,padding:"12px"}}>
-                <div style={{fontSize:13,color:"#6b7280",marginBottom:4,fontWeight:600}}>{l}</div>
-                <div style={{fontSize:18,fontWeight:900,color:col}}>{isN?v:SAR(v)}</div>
-              </div>
-            ))}
-            {/* 💳 بطاقة نقاط البيع — قابلة للنقر لفتح تبويب حركاتها */}
-            <div onClick={()=>setPosOnly(v=>!v)} title="اضغط لعرض حركات نقاط البيع"
+            {/* الرصيد الحالي — غير قابل للنقر */}
+            <div style={{...styles.card,textAlign:"center",borderTop:"3px solid "+C.gold,padding:"12px"}}>
+              <div style={{fontSize:13,color:"#6b7280",marginBottom:4,fontWeight:600}}>💰 الرصيد الحالي</div>
+              <div style={{fontSize:18,fontWeight:900,color:C.gold}}>{SAR(lastBalance)}</div>
+            </div>
+            {/* الوارد — قابل للنقر */}
+            <div onClick={()=>setBankFilter(f=>f==="in"?"all":"in")} title="اضغط لعرض الحركات الواردة"
+              style={{...styles.card,textAlign:"center",borderTop:"3px solid "+C.green,padding:"12px",cursor:"pointer",
+                background: bankFilter==="in"?"#f0fdf4":"#fff", outline: bankFilter==="in"?"2px solid "+C.green:"none",transition:"all .12s"}}>
+              <div style={{fontSize:13,color:"#6b7280",marginBottom:4,fontWeight:600}}>⬆️ إجمالي الوارد</div>
+              <div style={{fontSize:18,fontWeight:900,color:C.green}}>{SAR(totalDain)}</div>
+              <div style={{fontSize:11,color:C.green,marginTop:3,fontWeight:700}}>اضغط للعرض</div>
+            </div>
+            {/* المنصرف — قابل للنقر */}
+            <div onClick={()=>setBankFilter(f=>f==="out"?"all":"out")} title="اضغط لعرض الحركات المنصرفة"
+              style={{...styles.card,textAlign:"center",borderTop:"3px solid "+C.red,padding:"12px",cursor:"pointer",
+                background: bankFilter==="out"?"#fef2f2":"#fff", outline: bankFilter==="out"?"2px solid "+C.red:"none",transition:"all .12s"}}>
+              <div style={{fontSize:13,color:"#6b7280",marginBottom:4,fontWeight:600}}>⬇️ إجمالي المنصرف</div>
+              <div style={{fontSize:18,fontWeight:900,color:C.red}}>{SAR(totalMadin)}</div>
+              <div style={{fontSize:11,color:C.red,marginTop:3,fontWeight:700}}>اضغط للعرض</div>
+            </div>
+            {/* عدد الحركات — غير قابل للنقر */}
+            <div style={{...styles.card,textAlign:"center",borderTop:"3px solid "+C.teal,padding:"12px"}}>
+              <div style={{fontSize:13,color:"#6b7280",marginBottom:4,fontWeight:600}}>📊 عدد الحركات</div>
+              <div style={{fontSize:18,fontWeight:900,color:C.teal}}>{rows.length}</div>
+            </div>
+            {/* 💳 نقاط البيع — قابل للنقر */}
+            <div onClick={()=>setBankFilter(f=>f==="pos"?"all":"pos")} title="اضغط لعرض حركات نقاط البيع"
               style={{...styles.card,textAlign:"center",borderTop:"3px solid #7c3aed",padding:"12px",cursor:"pointer",
-                background: posOnly ? "#f5f3ff" : "#fff",
-                outline: posOnly ? "2px solid #7c3aed" : "none",transition:"all .12s"}}>
+                background: bankFilter==="pos" ? "#f5f3ff" : "#fff", outline: bankFilter==="pos" ? "2px solid #7c3aed" : "none",transition:"all .12s"}}>
               <div style={{fontSize:13,color:"#6b7280",marginBottom:4,fontWeight:600}}>💳 نقاط بيع</div>
               <div style={{fontSize:18,fontWeight:900,color:"#7c3aed"}}>{SAR(totalPOS)}</div>
               <div style={{fontSize:11,color:"#7c3aed",marginTop:3,fontWeight:700}}>{posRows.length} حركة · اضغط للعرض</div>
             </div>
           </div>
 
-          {/* شارة الفلتر النشط لنقاط البيع */}
-          {posOnly && (
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:12,background:"#f5f3ff",border:"2px solid #7c3aed",borderRadius:12,padding:"10px 14px"}}>
-              <span style={{fontSize:14,fontWeight:800,color:"#7c3aed"}}>💳 عرض حركات نقاط البيع فقط — {posRows.length} حركة · إجمالي {SAR(totalPOS)}</span>
-              <button onClick={()=>setPosOnly(false)} style={{border:"none",background:"#7c3aed",color:"#fff",borderRadius:8,padding:"5px 12px",cursor:"pointer",fontSize:13,fontWeight:700}}>✕ إلغاء</button>
-            </div>
-          )}
+          {/* شارة الفلتر النشط */}
+          {bankFilter!=="all" && (()=>{
+            const info = {
+              in:{lbl:"⬆️ الحركات الواردة (الإيداعات)",col:C.green,bg:"#f0fdf4",n:shownRows.length,sum:qDain},
+              out:{lbl:"⬇️ الحركات المنصرفة",col:C.red,bg:"#fef2f2",n:shownRows.length,sum:qMadin},
+              pos:{lbl:"💳 حركات نقاط البيع",col:"#7c3aed",bg:"#f5f3ff",n:posRows.length,sum:totalPOS},
+            }[bankFilter];
+            return (
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:12,background:info.bg,border:"2px solid "+info.col,borderRadius:12,padding:"10px 14px"}}>
+                <span style={{fontSize:14,fontWeight:800,color:info.col}}>{info.lbl} — {info.n} حركة · إجمالي {SAR(info.sum)}</span>
+                <button onClick={()=>setBankFilter("all")} style={{border:"none",background:info.col,color:"#fff",borderRadius:8,padding:"5px 12px",cursor:"pointer",fontSize:13,fontWeight:700}}>✕ إلغاء</button>
+              </div>
+            );
+          })()}
 
           {/* 🔍 بحث عن اسم شخص أو نوع عملية */}
           <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:12,background:"#f8fafc",border:"2px solid "+C.border,borderRadius:12,padding:"8px 12px"}}>
