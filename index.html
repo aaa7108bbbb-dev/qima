@@ -22,6 +22,18 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.2/dist/xlsx.full.min.js"
   onerror="this.onerror=null;document.write(unescape('%3Cscript src=\'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.20.2/xlsx.full.min.js\'%3E%3C/script%3E'));"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"
+  onerror="this.onerror=null;document.write(unescape('%3Cscript src=\'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js\'%3E%3C/script%3E'));"></script>
+<script>
+  // ضبط worker لـ pdf.js (نفس المصدر)
+  window.addEventListener("load", function(){
+    try{
+      if(window.pdfjsLib){
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+      }
+    }catch(e){ console.warn("pdf.js worker:",e); }
+  });
+</script>
 <script>
   // ═══ تحميل Firebase بالتسلسل (أضمن على الجوال) ═══
   window._fbReady = false;
@@ -3203,6 +3215,88 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
 // ─── Dashboard ───────────────────────────────────────────────
 // ─── Monthly Portfolio Page (المحفظة الشهرية) ───────────────
 // ─── طباعة كشف الحساب البنكي (الراجحي) بالأسماء وآخر رصيد ───
+// ─── تحليل نصوص PDF لكشف الراجحي إلى حركات ───
+function parseRajhiPDF(items){
+  // تنظيف رقم من صيغة "676,039.48 SAR"
+  const num = (s) => { const v=parseFloat(String(s).replace(/,/g,"").replace(/[^0-9.\-]/g,"")); return isNaN(v)?null:v; };
+  const isDate = (s) => /^\d{4}\/\d{2}\/\d{2}$/.test(String(s).trim());
+  const isMoney = (s) => /SAR/.test(s) || /^\s*[\d,]+\.\d{2}\s*$/.test(s);
+
+  // 1) اجمع العناصر في صفوف حسب تقارب y (وترتيب حسب الصفحة ثم y)
+  items = items.filter(it=>it.str && it.str.trim()!=="");
+  items.sort((a,b)=> a.page-b.page || a.y-b.y || a.x-b.x);
+  const rowsY = [];
+  const TOL = 4; // تسامح رأسي
+  items.forEach(it=>{
+    let row = rowsY.find(r=> r.page===it.page && Math.abs(r.y-it.y)<=TOL);
+    if(!row){ row={page:it.page, y:it.y, cells:[]}; rowsY.push(row); }
+    row.cells.push(it);
+  });
+  // رتّب خلايا كل صف من اليسار لليمين، وكوّن نصاً
+  rowsY.forEach(r=>{ r.cells.sort((a,b)=>a.x-b.x); r.text = r.cells.map(c=>c.str).join(" ").replace(/\s+/g," ").trim(); });
+  rowsY.sort((a,b)=> a.page-b.page || a.y-b.y);
+
+  // 2) حدّد صفوف الأرقام: صف فيه 3 قيم مالية (رصيد، دائن، مدين) — عادةً فيه "SAR" ثلاث مرات
+  //    ثم اربط بالتاريخ (يمين نفس الصف أو صف قريب) والتفاصيل (الصفوف التالية حتى الصف المالي القادم)
+  const parsed = [];
+  for(let i=0;i<rowsY.length;i++){
+    const r = rowsY[i];
+    // استخرج القيم المالية من هذا الصف
+    const money = [];
+    r.cells.forEach(c=>{ const v=num(c.str); if(v!==null && (/SAR/.test(c.str)|| /[\d],?\d*\.\d{2}/.test(c.str))) money.push(v); });
+    // نحتاج 3 أرقام على الأقل (رصيد/دائن/مدين). في الراجحي الترتيب بصرياً: الرصيد | دائن | مدين
+    const sarCount = (r.text.match(/SAR/g)||[]).length;
+    if(sarCount<3 && money.length<3) continue;
+
+    // التاريخ: ابحث في نفس الصف
+    let date = "";
+    r.cells.forEach(c=>{ if(isDate(c.str)) date=c.str.trim(); });
+    // لو ما وُجد، ابحث في الصفوف المجاورة (±2)
+    if(!date){
+      for(let k=1;k<=3 && !date;k++){
+        [rowsY[i-k],rowsY[i+k]].forEach(rr=>{ if(rr&&!date){ rr.cells.forEach(c=>{ if(isDate(c.str)) date=c.str.trim(); }); } });
+      }
+    }
+
+    // التفاصيل: الصفوف التالية حتى الصف المالي التالي (نوع العملية + الاسم)، مع تجاهل صفوف الأرقام والتاريخ والوقت
+    let details = [];
+    for(let j=i+1;j<rowsY.length;j++){
+      const rj = rowsY[j];
+      const jSar = (rj.text.match(/SAR/g)||[]).length;
+      const jMoney = []; rj.cells.forEach(c=>{ const v=num(c.str); if(v!==null && /\.\d{2}/.test(c.str)) jMoney.push(v); });
+      if(jSar>=3 || jMoney.length>=3) break; // بداية حركة جديدة
+      let txt = rj.text;
+      // تجاهل أسطر الوقت والملاحظة التقنية
+      txt = txt.replace(/الوقت[\s\S]*$/,"").replace(/\*\*ملاحظة[\s\S]*$/,"").trim();
+      // تجاهل التاريخ المتكرر
+      if(isDate(rj.text.trim())) continue;
+      if(txt) details.push(txt);
+      if(details.length>=3) break;
+    }
+
+    // رتّب المبالغ: في الراجحي بصرياً من اليسار: [الرصيد, دائن, مدين]
+    // money مُرتّبة حسب x تصاعدي (يسار→يمين). آخذ أول ثلاثة.
+    const balance = money[0];
+    const dain = money[1]!=null?money[1]:0;
+    const madin = money[2]!=null?money[2]:0;
+    if(balance==null) continue;
+
+    const typeLine = details[0]||"";
+    const nameLine = details.slice(1).join(" ")||"";
+
+    parsed.push({
+      id: "bnk_pdf_"+i+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),
+      date: date||"",
+      type: typeLine,
+      name: nameLine,
+      madin: Math.abs(madin)||0,
+      dain: Math.abs(dain)||0,
+      balance: balance,
+    });
+  }
+  return parsed;
+}
+
 function printBankStatement(rows, lastBalance, totalDain, totalMadin, filterLabel){
   const fmt = n => Math.round(+(n||0)).toLocaleString("en-US");
   const rowsHtml = rows.map(r=>`<tr>
@@ -3261,9 +3355,31 @@ function BankPage({bankTx, setBankTx, toast}) {
   const [bankQuery, setBankQuery] = React.useState(""); // 🔍 بحث بالاسم/الوصف
   const [bankFilter, setBankFilter] = React.useState("all");  // all | in | out | pos
 
-  // قراءة ملف الراجحي Excel
-  const readFile = (file) => {
-    if(!file) return;
+  // حفظ الحركات (مع خيار الدمج أو الاستبدال) — مشترك بين Excel و PDF
+  const saveParsed = (parsed) => {
+    if(!parsed || parsed.length===0){ toast&&toast("لم يتم العثور على حركات","error"); return; }
+    const existing = _arr(bankTx);
+    if(existing.length > 0){
+      const doMerge = window.confirm(
+        "يوجد كشف سابق فيه "+existing.length+" حركة.\n\n"+
+        "• اضغط \"موافق\" لـ➕ دمج الكشف الجديد ("+parsed.length+" حركة) مع السابق في كشف واحد.\n"+
+        "• اضغط \"إلغاء\" لـ🔄 استبدال الكل بالكشف الجديد فقط."
+      );
+      if(doMerge){
+        setBankTx([...existing, ...parsed]);
+        toast&&toast("✅ تم دمج "+parsed.length+" حركة (الإجمالي "+(existing.length+parsed.length)+")");
+      } else {
+        setBankTx(parsed);
+        toast&&toast("🔄 تم استبدال الكشف بـ "+parsed.length+" حركة");
+      }
+    } else {
+      setBankTx(parsed);
+      toast&&toast("✅ تم استيراد "+parsed.length+" حركة");
+    }
+  };
+
+  // قراءة ملف Excel
+  const readExcel = (file) => {
     if(typeof XLSX==="undefined"){ toast&&toast("مكتبة القراءة لم تُحمّل، تأكد من الإنترنت","error"); return; }
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -3271,14 +3387,12 @@ function BankPage({bankTx, setBankTx, toast}) {
         const wb = XLSX.read(new Uint8Array(e.target.result), {type:"array"});
         const ws = wb.Sheets[wb.SheetNames[0]];
         const grid = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:""});
-        // نلقى صف الرأس (فيه "التاريخ")
         let hi = -1;
         for(let i=0;i<grid.length;i++){
           const rowStr = (grid[i]||[]).join("|");
           if(rowStr.includes("التاريخ") && (rowStr.includes("مدين")||rowStr.includes("دائن")||rowStr.includes("الرصيد"))){ hi=i; break; }
         }
         if(hi<0){ toast&&toast("لم يتم التعرف على تنسيق كشف الراجحي","error"); return; }
-        // مواقع الأعمدة الثابتة للراجحي: G=6 رصيد، H=7 مدين، I=8 دائن، J=9 نوع، K=10 اسم، L=11 تاريخ (0-based)
         const parsed = [];
         for(let i=hi+1;i<grid.length;i++){
           const r = grid[i]||[];
@@ -3298,29 +3412,49 @@ function BankPage({bankTx, setBankTx, toast}) {
             balance: balN,
           });
         }
-        if(parsed.length===0){ toast&&toast("لم يتم العثور على حركات","error"); return; }
-        const existing = _arr(bankTx);
-        if(existing.length > 0){
-          // يوجد كشف سابق — اسأل: دمج (إضافة التكملة) أم استبدال كامل
-          const doMerge = window.confirm(
-            "يوجد كشف سابق فيه "+existing.length+" حركة.\n\n"+
-            "• اضغط \"موافق\" لـ➕ دمج الكشف الجديد ("+parsed.length+" حركة) مع السابق في كشف واحد.\n"+
-            "• اضغط \"إلغاء\" لـ🔄 استبدال الكل بالكشف الجديد فقط."
-          );
-          if(doMerge){
-            setBankTx([...existing, ...parsed]);
-            toast&&toast("✅ تم دمج "+parsed.length+" حركة (الإجمالي "+(existing.length+parsed.length)+")");
-          } else {
-            setBankTx(parsed);
-            toast&&toast("🔄 تم استبدال الكشف بـ "+parsed.length+" حركة");
-          }
-        } else {
-          setBankTx(parsed);
-          toast&&toast("✅ تم استيراد "+parsed.length+" حركة");
-        }
-      } catch(err){ toast&&toast("خطأ في قراءة الملف","error"); }
+        saveParsed(parsed);
+      } catch(err){ toast&&toast("خطأ في قراءة ملف Excel","error"); }
     };
     reader.readAsArrayBuffer(file);
+  };
+
+  // قراءة ملف PDF (كشف الراجحي)
+  const readPDF = (file) => {
+    if(typeof window.pdfjsLib==="undefined"){ toast&&toast("مكتبة قراءة PDF لم تُحمّل، تأكد من الإنترنت","error"); return; }
+    toast&&toast("⏳ جارٍ قراءة الـ PDF...");
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const pdf = await window.pdfjsLib.getDocument({data:new Uint8Array(e.target.result)}).promise;
+        // نجمع كل عناصر النص من كل الصفحات مع إحداثياتها
+        let items = [];
+        for(let p=1;p<=pdf.numPages;p++){
+          const page = await pdf.getPage(p);
+          const tc = await page.getTextContent();
+          const vp = page.getViewport({scale:1});
+          tc.items.forEach(it=>{
+            const tx = it.transform;
+            items.push({ str:it.str, x:tx[4], y: vp.height - tx[5], page:p });
+          });
+        }
+        const parsed = parseRajhiPDF(items);
+        saveParsed(parsed);
+      } catch(err){ console.error(err); toast&&toast("خطأ في قراءة ملف PDF","error"); }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  // موجّه: يفرّق حسب نوع الملف (بالامتداد أو نوع MIME)
+  const readFile = (file) => {
+    if(!file) return;
+    const name = (file.name||"").toLowerCase();
+    const mime = (file.type||"").toLowerCase();
+    const isPdf = name.endsWith(".pdf") || mime.indexOf("pdf")>-1;
+    const isXls = name.endsWith(".xlsx")||name.endsWith(".xls")||mime.indexOf("sheet")>-1||mime.indexOf("excel")>-1;
+    if(isPdf) readPDF(file);
+    else if(isXls) readExcel(file);
+    else if(mime.indexOf("pdf")>-1) readPDF(file);
+    else toast&&toast("صيغة غير مدعومة — ارفع Excel أو PDF","error");
   };
 
   const lastBalance = rows.length ? rows[rows.length-1].balance : 0;
@@ -3369,11 +3503,11 @@ function BankPage({bankTx, setBankTx, toast}) {
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12,marginBottom:14}}>
           <div style={{fontSize:18,fontWeight:800,color:C.ink}}>🏦 رصيد الحساب البنكي (الراجحي)</div>
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-            <button style={styles.btn(C.teal)} onClick={()=>fileRef.current&&fileRef.current.click()}>📥 رفع كشف Excel</button>
+            <button style={styles.btn(C.teal)} onClick={()=>fileRef.current&&fileRef.current.click()}>📥 رفع كشف (Excel أو PDF)</button>
             {rows.length>0 && <button style={styles.btn(C.gold)} onClick={()=>printBankStatement(shownRows,lastBalance,_bq?qDain:totalDain,_bq?qMadin:totalMadin,_bq?("بحث: "+bankQuery):"")}>🖨️ طباعة الكشف</button>}
             {rows.length>0 && <button style={styles.btn(C.red)} onClick={()=>{if(window.confirm("مسح كل الحركات؟"))setBankTx([]);}}>🗑️ مسح</button>}
           </div>
-          <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{display:"none"}}
+          <input ref={fileRef} type="file" accept=".xlsx,.xls,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style={{display:"none"}}
             onChange={e=>{const f=e.target.files&&e.target.files[0]; readFile(f); e.target.value="";}}/>
         </div>
 
@@ -3383,7 +3517,7 @@ function BankPage({bankTx, setBankTx, toast}) {
           onClick={()=>fileRef.current&&fileRef.current.click()}
           style={{border:"2px dashed "+(dragOver?C.teal:C.border),borderRadius:12,padding:"20px",textAlign:"center",cursor:"pointer",background:dragOver?C.tealLt:"#fafafa",marginBottom:8}}>
           <div style={{fontSize:15,color:C.ink2,fontWeight:600}}>📄 اسحب ملف كشف الراجحي هنا، أو اضغط للاختيار</div>
-          <div style={{fontSize:13,color:"#6b7280",marginTop:4}}>صيغة Excel (.xlsx) من تطبيق الراجحي</div>
+          <div style={{fontSize:13,color:"#6b7280",marginTop:4}}>Excel (.xlsx) أو PDF من تطبيق الراجحي</div>
           {rows.length>0 && <div style={{fontSize:12,color:"#0d9488",marginTop:6,fontWeight:700}}>💡 عند رفع كشف جديد سيسألك: دمج (تكملة) أم استبدال</div>}
         </div>
       </div>
