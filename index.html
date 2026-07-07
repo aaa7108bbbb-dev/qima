@@ -348,15 +348,15 @@ function fmtDate(dateStr) {
 }
 
 const DEFAULT_INVESTORS = [
+  {id:9,  name:"مؤسسة قمة الفرصة التجارية 3",   fund:"مؤسسة قمة الفرصة",        capital:295542,  date:"2026-06-01"},
   {id:1,  name:"مؤسسة قمة الفرصة التجارية 4",   fund:"عبدالله لفاء (القديم)",   capital:-607885, date:"2026-06-01"},
-  {id:2,  name:"مؤسسة قمة الفرصة التجارية 11",  fund:"عبدالله لفاء (الأسهم)",   capital:382401,  date:"2026-06-01"},
   {id:3,  name:"مؤسسة قمة الفرصة التجارية 7",   fund:"عبدالله لفاء (المصاريف)", capital:-269033, date:"2026-06-01"},
+  {id:8,  name:"مؤسسة قمة الفرصة التجارية 8",   fund:"عبدالله لفاء (المليون)",  capital:555320,  date:"2026-06-01"},
+  {id:7,  name:"مؤسسة قمة الفرصة التجارية 9",   fund:"عبدالله لفاء (الجيب)",    capital:295168,  date:"2026-06-01"},
   {id:4,  name:"مؤسسة قمة الفرصة التجارية 10",  fund:"عبدالله لفاء (المجموعة)", capital:382401,  date:"2026-06-01"},
+  {id:2,  name:"مؤسسة قمة الفرصة التجارية 11",  fund:"عبدالله لفاء (الأسهم)",   capital:382401,  date:"2026-06-01"},
   {id:5,  name:"مؤسسة قمة الفرصة التجارية ل.ن", fund:"لفاء نغموش الحربي",       capital:271770,  date:"2026-06-01"},
   {id:6,  name:"مؤسسة قمة الفرصة التجارية ح.ل", fund:"حامد لفاء الحربي",        capital:317100,  date:"2026-06-01"},
-  {id:7,  name:"مؤسسة قمة الفرصة التجارية 9",   fund:"عبدالله لفاء (الجيب)",    capital:295168,  date:"2026-06-01"},
-  {id:8,  name:"مؤسسة قمة الفرصة التجارية 8",   fund:"عبدالله لفاء (المليون)",  capital:555320,  date:"2026-06-01"},
-  {id:9,  name:"مؤسسة قمة الفرصة التجارية 3",   fund:"مؤسسة قمة الفرصة",        capital:295542,  date:"2026-06-01"},
 ];
 
 const GOODS_LIST = ["بطاقة سوا","بطاقة موبايلي","بطاقة زين","أسهم","سيارة","جوال"];
@@ -3135,7 +3135,11 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
                   أرصدة المستثمرين
                 </td>
               </tr>
-              {investors.map((inv,i)=>{
+              {[...investors].sort((a,b)=>{
+                // استخرج الرقم من اسم المؤسسة؛ التي بلا رقم (ل.ن، ح.ل) توضع في الآخر
+                const numOf = (nm)=>{ const m=String(nm).match(/(\d+)\s*$/); return m?parseInt(m[1]):9999; };
+                return numOf(a.name)-numOf(b.name);
+              }).map((inv,i)=>{
                 const cur = getInv(inv.id);
                 const mojab = cur>0?cur:0;
                 const salib = cur<0?Math.abs(cur):0;
