@@ -22,14 +22,16 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.2/dist/xlsx.full.min.js"
   onerror="this.onerror=null;document.write(unescape('%3Cscript src=\'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.20.2/xlsx.full.min.js\'%3E%3C/script%3E'));"></script>
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"
-  onerror="this.onerror=null;document.write(unescape('%3Cscript src=\'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js\'%3E%3C/script%3E'));"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
+  onerror="this.onerror=null;document.write(unescape('%3Cscript src=\'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.min.js\'%3E%3C/script%3E'));"></script>
 <script>
-  // ضبط worker لـ pdf.js (نفس المصدر)
+  // ضبط worker لـ pdf.js من نفس مصدر cloudflare
   window.addEventListener("load", function(){
     try{
-      if(window.pdfjsLib){
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+      var lib = window.pdfjsLib || window["pdfjs-dist/build/pdf"];
+      if(lib){
+        window.pdfjsLib = lib;
+        lib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
       }
     }catch(e){ console.warn("pdf.js worker:",e); }
   });
@@ -3483,13 +3485,14 @@ function BankPage({bankTx, setBankTx, toast}) {
 
   // قراءة ملف PDF (كشف الراجحي)
   const readPDF = (file) => {
-    if(typeof window.pdfjsLib==="undefined"){ toast&&toast("مكتبة قراءة PDF لم تُحمّل، تأكد من الإنترنت","error"); return; }
+    const lib = window.pdfjsLib || window["pdfjs-dist/build/pdf"];
+    if(!lib){ toast&&toast("مكتبة قراءة PDF لم تُحمّل — جرّب تحديث الصفحة أو ارفع Excel","error"); return; }
+    try{ if(lib.GlobalWorkerOptions && !lib.GlobalWorkerOptions.workerSrc){ lib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; } }catch(e){}
     toast&&toast("⏳ جارٍ قراءة الـ PDF...");
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
-        const pdf = await window.pdfjsLib.getDocument({data:new Uint8Array(e.target.result)}).promise;
-        // نجمع كل عناصر النص من كل الصفحات مع إحداثياتها
+        const pdf = await lib.getDocument({data:new Uint8Array(e.target.result)}).promise;
         let items = [];
         for(let p=1;p<=pdf.numPages;p++){
           const page = await pdf.getPage(p);
@@ -3502,7 +3505,7 @@ function BankPage({bankTx, setBankTx, toast}) {
         }
         const parsed = parseRajhiPDF(items);
         saveParsed(parsed);
-      } catch(err){ console.error(err); toast&&toast("خطأ في قراءة ملف PDF","error"); }
+      } catch(err){ console.error(err); toast&&toast("خطأ في قراءة ملف PDF: "+(err&&err.message||""),"error"); }
     };
     reader.readAsArrayBuffer(file);
   };
