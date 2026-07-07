@@ -3952,9 +3952,11 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   const [form,setForm] = useState({type:"sadad", amount:"", desc:""});
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
 
-  // ═══ كشف حساب شامل: فترة (من/إلى) ═══
+  // ═══ كشف حساب شامل: فترة (من/إلى) + بحث + فلتر نوع ═══
   const [stmtFrom,setStmtFrom] = useState("");
   const [stmtTo,setStmtTo]     = useState("");
+  const [stmtQuery,setStmtQuery] = useState("");   // نص البحث (اسم/وصف)
+  const [stmtTypeFilter,setStmtTypeFilter] = useState("all"); // فلتر النوع
 
   // حركات اليوم المحدد
   const dayRows = (Array.isArray(daily)?daily:[]).filter(d=>d.date===selDay).sort((a,b)=>a.id-b.id);
@@ -4004,6 +4006,17 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   const stmtIn  = stmtTotals.filter(t=>t.sign>0).reduce((s,t)=>s+t.total,0);
   const stmtOut = stmtTotals.filter(t=>t.sign<0).reduce((s,t)=>s+t.total,0);
   const stmtNet = stmtIn - stmtOut;
+
+  // ═══ الحركات التفصيلية المصفّاة (بحث + نوع) — تعرض "مَن" وراء كل حركة ═══
+  const _q = stmtQuery.trim().toLowerCase();
+  const stmtDetailRows = stmtRows
+    .filter(d => stmtTypeFilter==="all" ? true : d.type===stmtTypeFilter)
+    .filter(d => !_q ? true : ((d.desc||"").toLowerCase().includes(_q)))
+    .sort((a,b)=> (a.date<b.date?1:a.date>b.date?-1:0) || (b.id-a.id)); // الأحدث أولاً
+  const stmtDetailTotal = stmtDetailRows.reduce((s,d)=>{
+    const t=DAILY_TYPES.find(x=>x.key===d.type); return s+(t?t.sign:1)*(+d.amount||0);
+  },0);
+  const isFiltering = !!_q || stmtTypeFilter!=="all";
 
   const addRow=()=>{
     if(!form.amount||parseFloat(form.amount)<=0){toast("أدخل مبلغ صحيح","warn");return;}
@@ -4165,15 +4178,78 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
             {(stmtFrom||stmtTo) ? ("الفترة: "+(stmtFrom?dLabel(stmtFrom):"البداية")+" ← "+(stmtTo?dLabel(stmtTo):"اليوم")) : "يعرض إجمالي كل الحركات المسجّلة في دفتر اليومية"}
           </div>
 
-          {/* بطاقات الإجماليات لكل نوع */}
+          {/* 🔍 بحث عن شخص/وصف داخل اليومية */}
+          <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:12,background:"#f8fafc",border:"2px solid "+C.border,borderRadius:12,padding:"8px 12px"}}>
+            <span style={{fontSize:18}}>🔍</span>
+            <input type="text" placeholder="ابحث باسم شخص أو وصف (سداد / مصروف / سحب ...)"
+              value={stmtQuery} onChange={e=>setStmtQuery(e.target.value)}
+              style={{flex:1,border:"none",outline:"none",background:"transparent",fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:600,color:C.ink}}/>
+            {stmtQuery && <button onClick={()=>setStmtQuery("")} style={{border:"none",background:"#e2e8f0",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:14,fontWeight:700,color:"#475569"}}>✕</button>}
+          </div>
+
+          {/* فلتر النوع (أزرار) */}
+          <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>
+            <button onClick={()=>setStmtTypeFilter("all")}
+              style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:14,fontWeight:700,padding:"7px 14px",borderRadius:20,cursor:"pointer",
+                border:"2px solid "+(stmtTypeFilter==="all"?C.teal:"#e2e8f0"),background:stmtTypeFilter==="all"?C.teal:"#fff",color:stmtTypeFilter==="all"?"#fff":"#475569"}}>
+              الكل
+            </button>
+            {DAILY_TYPES.map(t=>(
+              <button key={t.key} onClick={()=>setStmtTypeFilter(t.key)}
+                style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:14,fontWeight:700,padding:"7px 14px",borderRadius:20,cursor:"pointer",
+                  border:"2px solid "+(stmtTypeFilter===t.key?t.color:"#e2e8f0"),background:stmtTypeFilter===t.key?t.color:"#fff",color:stmtTypeFilter===t.key?"#fff":t.color}}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* بطاقات الإجماليات لكل نوع (انقر لعرض تفاصيل النوع) */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:14}}>
             {stmtTotals.map(t=>(
-              <div key={t.key} style={{...styles.card,borderTop:"4px solid "+t.color}}>
+              <div key={t.key} onClick={()=>setStmtTypeFilter(f=>f===t.key?"all":t.key)}
+                title="انقر لعرض تفاصيل هذا النوع"
+                style={{...styles.card,borderTop:"4px solid "+t.color,cursor:"pointer",
+                  outline: stmtTypeFilter===t.key ? ("2px solid "+t.color) : "none",
+                  transform: stmtTypeFilter===t.key ? "translateY(-1px)" : "none",transition:"all .12s"}}>
                 <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>{t.label}</div>
                 <div style={{fontSize:20,fontWeight:900,color:t.color}}>{t.sign<0?"−":"+"}{SAR(t.total)}</div>
-                <div style={{fontSize:12,color:"#64748b",marginTop:4}}>{t.count} حركة</div>
+                <div style={{fontSize:12,color:"#64748b",marginTop:4}}>{t.count} حركة · اضغط للتفصيل</div>
               </div>
             ))}
+          </div>
+
+          {/* 📋 جدول الحركات التفصيلية — مَن وراء كل حركة */}
+          <div style={{...styles.panel,marginBottom:14,boxShadow:"none",border:"1px solid "+C.border}}>
+            <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+              <h4 style={{margin:0,fontSize:15,fontWeight:800}}>
+                📋 التفاصيل {stmtTypeFilter!=="all" ? ("— "+(DAILY_TYPES.find(x=>x.key===stmtTypeFilter)||{}).label) : ""}{_q ? (" — بحث: “"+stmtQuery+"”") : ""}
+              </h4>
+              <span style={{fontSize:14,fontWeight:800,color:C.ink2}}>{stmtDetailRows.length} حركة · {SAR(Math.abs(stmtDetailTotal))}</span>
+            </div>
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
+                <thead>
+                  <tr>{["التاريخ","النوع","الاسم / الوصف","المبلغ"].map(h=>(<th key={h} style={styles.th}>{h}</th>))}</tr>
+                </thead>
+                <tbody>
+                  {stmtDetailRows.length===0 ? (
+                    <tr><td colSpan={4} style={{...styles.td,textAlign:"center",padding:24,color:"#64748b"}}>
+                      {isFiltering ? "لا توجد حركات مطابقة" : "لا توجد حركات"}
+                    </td></tr>
+                  ) : stmtDetailRows.map((d,i)=>{
+                    const t=DAILY_TYPES.find(x=>x.key===d.type);
+                    return (
+                      <tr key={d.id} style={{background:i%2===0?C.white:C.gray}}>
+                        <td style={{...styles.td,whiteSpace:"nowrap",color:"#475569",fontWeight:600}}>{dLabel(d.date)}</td>
+                        <td style={styles.td}><span style={styles.badge((t?.color||"#999")+"22",t?.color||"#999")}>{t?.label||d.type}</span></td>
+                        <td style={{...styles.td,fontWeight:700}}>{d.desc||"—"}</td>
+                        <td style={{...styles.td,fontWeight:800,color:t?.color,whiteSpace:"nowrap"}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* جدول تفصيلي + الصافي */}
