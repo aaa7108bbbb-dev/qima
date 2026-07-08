@@ -1646,11 +1646,13 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         </button>
       </div>
       <div style={styles.panel}>
-        <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
+        <div style={{overflowX:"auto",maxHeight:"75vh",overflowY:"auto",position:"relative"}}>
+          <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:15}}>
             <thead>
-              <tr>{["#","التاريخ","العميل","الهوية","العمل","الكفيل","البضاعة","العدد","المستثمر","القيمة","الإجمالي","القسط","أول قسط","الربح",""].map(h=>(
-                <th key={h} style={styles.th}>{h}</th>
+              <tr>{["#","التاريخ","العميل","الهوية","العمل","الكفيل","البضاعة","العدد","المستثمر","القيمة","الإجمالي","القسط","أول قسط","الربح",""].map((h,hi)=>(
+                <th key={h} style={{...styles.th,position:"sticky",top:0,zIndex:hi===2?12:10,
+                  ...(hi===2?{position:"sticky",right:0,zIndex:12}:{})
+                }}>{h}</th>
               ))}</tr>
             </thead>
             <tbody>
@@ -1659,11 +1661,12 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               ) : filtered.map((c,i)=>{
                 const inv=investors.find(x=>String(x.id)===String(c.investorId));
                 const r=calcC(c,settings);
+                const stickyCell = {position:"sticky",right:0,background:i%2===0?C.white:C.gray,zIndex:5,borderLeft:"2px solid "+C.border};
                 return (
                   <tr key={c.id} style={{background:i%2===0?C.white:C.gray}}>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.num||i+1}</td>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.date}</td>
-                    <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}><span onClick={()=>setCardModal(c)} style={{color:C.teal,cursor:"pointer",textDecoration:"underline"}}>{c.client}</span></td>
+                    <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",...stickyCell}}><span onClick={()=>setCardModal(c)} style={{color:C.teal,cursor:"pointer",textDecoration:"underline"}}>{c.client}</span></td>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.idNum||"—"}</td>
                     <td style={styles.td}>{c.job||"—"}</td>
                     <td style={{...styles.td,color:C.gold,fontWeight:600,whiteSpace:"nowrap"}}>{c.gName||"—"}</td>
