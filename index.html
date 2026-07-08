@@ -5067,6 +5067,51 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
 
 // ─── Settings Page ───────────────────────────────────────────
 function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,setPayments,dailyOpen,setDailyOpen,setPage}) {
+  // 🔒 قفل الإعدادات برقم سري
+  const [settingsPin] = useState(()=>{ try{ return localStorage.getItem("qimma_settings_pin")||"1234"; }catch(e){ return "1234"; } });
+  const [pinInput,setPinInput] = useState("");
+  const [unlocked,setUnlocked] = useState(false);
+  const [pinError,setPinError] = useState(false);
+  const [showChangePin,setShowChangePin] = useState(false);
+  const [newPin,setNewPin] = useState("");
+  const [confirmPin,setConfirmPin] = useState("");
+  const [currentPin,setCurrentPin] = useState(settingsPin);
+
+  const checkPin = ()=>{
+    if(pinInput===currentPin){ setUnlocked(true); setPinError(false); }
+    else { setPinError(true); setPinInput(""); }
+  };
+  const changePin = ()=>{
+    if(!newPin||newPin.length<4){ toast&&toast("الرقم السري لازم 4 خانات على الأقل","error"); return; }
+    if(newPin!==confirmPin){ toast&&toast("الرقم السري غير متطابق","error"); return; }
+    try{ localStorage.setItem("qimma_settings_pin",newPin); }catch(e){}
+    setCurrentPin(newPin);
+    setShowChangePin(false); setNewPin(""); setConfirmPin("");
+    toast&&toast("✅ تم تغيير الرقم السري");
+  };
+
+  if(!unlocked){
+    return (
+      <div style={{minHeight:"60vh",display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <div style={{background:"#fff",borderRadius:16,padding:"32px 24px",boxShadow:"0 4px 24px rgba(0,0,0,0.12)",textAlign:"center",maxWidth:340,width:"100%"}}>
+          <div style={{fontSize:48,marginBottom:12}}>🔒</div>
+          <div style={{fontSize:18,fontWeight:800,color:"#1f2937",marginBottom:8}}>الإعدادات مقفلة</div>
+          <div style={{fontSize:14,color:"#6b7280",marginBottom:20}}>أدخل الرقم السري للدخول</div>
+          <input type="password" inputMode="numeric" maxLength={8} placeholder="الرقم السري"
+            value={pinInput} onChange={e=>{ setPinInput(e.target.value); setPinError(false); }}
+            onKeyDown={e=>{ if(e.key==="Enter") checkPin(); }}
+            style={{width:"100%",padding:"14px",fontSize:22,textAlign:"center",border:"2px solid "+(pinError?"#dc2626":"#d1d5db"),borderRadius:12,marginBottom:12,fontWeight:800,letterSpacing:8,fontFamily:"monospace",outline:"none",boxSizing:"border-box"}}/>
+          {pinError && <div style={{color:"#dc2626",fontSize:14,fontWeight:700,marginBottom:10}}>رقم سري خاطئ</div>}
+          <button onClick={checkPin}
+            style={{width:"100%",padding:"14px",fontSize:17,fontWeight:800,background:"#0d9488",color:"#fff",border:"none",borderRadius:12,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>
+            🔓 فتح الإعدادات
+          </button>
+          <div style={{fontSize:12,color:"#9ca3af",marginTop:16}}>الرقم الافتراضي: 1234</div>
+        </div>
+      </div>
+    );
+  }
+
   const [s,setS]=useState({...settings});
   const r=calcContract(10000,s);
   // رصيد بداية الصندوق
@@ -5080,6 +5125,27 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
   return (
     <div>
       <div style={{fontSize:19,fontWeight:800,marginBottom:16}}>⚙️ الإعدادات</div>
+
+      {/* 🔒 تغيير الرقم السري */}
+      <div style={{...styles.panel,marginBottom:16,padding:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <span style={{fontSize:15,fontWeight:700}}>🔒 الرقم السري للإعدادات</span>
+          <button onClick={()=>setShowChangePin(v=>!v)} style={{...styles.btn("#475569","#fff"),fontSize:14,padding:"7px 14px"}}>{showChangePin?"✕ إلغاء":"✏️ تغيير"}</button>
+        </div>
+        {showChangePin && (
+          <div style={{marginTop:12,display:"flex",gap:8,flexWrap:"wrap",alignItems:"flex-end"}}>
+            <div>
+              <label style={{fontSize:13,fontWeight:700,color:"#6b7280",display:"block",marginBottom:4}}>الرقم الجديد</label>
+              <input type="password" inputMode="numeric" maxLength={8} value={newPin} onChange={e=>setNewPin(e.target.value)} placeholder="4 خانات+" style={{...styles.input,width:120,textAlign:"center",letterSpacing:6,fontFamily:"monospace"}}/>
+            </div>
+            <div>
+              <label style={{fontSize:13,fontWeight:700,color:"#6b7280",display:"block",marginBottom:4}}>تأكيد</label>
+              <input type="password" inputMode="numeric" maxLength={8} value={confirmPin} onChange={e=>setConfirmPin(e.target.value)} placeholder="أعد الإدخال" style={{...styles.input,width:120,textAlign:"center",letterSpacing:6,fontFamily:"monospace"}}/>
+            </div>
+            <button onClick={changePin} style={styles.btn("#0d9488")}>💾 حفظ</button>
+          </div>
+        )}
+      </div>
       <button style={{...styles.btn("#475569","#fff"),width:"100%",justifyContent:"center",fontSize:16,padding:"12px",marginBottom:16}} onClick={()=>setPage&&setPage("activity")}>📜 سجل النشاط</button>
 
       {/* رصيد بداية الصندوق */}
