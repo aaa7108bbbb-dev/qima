@@ -5205,7 +5205,7 @@ function GoodsPage({investors, contracts, toast, gsWrite}) {
   const [newRow, setNewRow] = useState({date:new Date().toISOString().split("T")[0],supportAcc:"",note:"",price:"",itemType:"cards",itemName:""});
   const [defaultPrice, setDefaultPrice] = useState(()=>{try{return localStorage.getItem("qimma_default_price")||"";}catch{return "";}});
   const saveDefaultPrice = v => { setDefaultPrice(v); try{localStorage.setItem("qimma_default_price",v);}catch(e){} };
-  const ALL_COLS = ["رقم العقد","قيمة العقد","اسم العميل","اسم المستثمر","دعم العميل","دعم الحساب","سعر البطاقة","البطاقات المدعومة","البطاقات المسحوبة","رصيد البطاقات","نقدي البطاقات","نقدي السلع","الإجمالي النقدي"];
+  const ALL_COLS = ["اسم العميل","رقم العقد","قيمة العقد","اسم المستثمر","دعم العميل","دعم الحساب","سعر البطاقة","البطاقات المدعومة","البطاقات المسحوبة","رصيد البطاقات","نقدي البطاقات","نقدي السلع","الإجمالي النقدي"];
   const [visCols, setVisCols] = useState(()=>{try{const s=JSON.parse(localStorage.getItem("qimma_vis_cols")||"null");return s||ALL_COLS.reduce((a,c)=>({...a,[c]:true}),{});}catch{return ALL_COLS.reduce((a,c)=>({...a,[c]:true}),{});}});
   const toggleCol = c => { const n={...visCols,[c]:!visCols[c]}; setVisCols(n); try{localStorage.setItem("qimma_vis_cols",JSON.stringify(n));}catch(e){} };
   const [showColMenu, setShowColMenu] = useState(false);
@@ -5376,16 +5376,19 @@ function GoodsPage({investors, contracts, toast, gsWrite}) {
       </div>
 
       {/* Table */}
-      <div style={{overflowX:"auto",borderRadius:10,boxShadow:"0 2px 12px rgba(0,0,0,0.08)"}}>
-        <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
+      <div style={{overflowX:"auto",maxHeight:"75vh",overflowY:"auto",borderRadius:10,boxShadow:"0 2px 12px rgba(0,0,0,0.08)"}}>
+        <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14}}>
           <thead>
             <tr style={{background:C.ink,color:"#fff"}}>
-              <th style={{padding:"8px",whiteSpace:"nowrap",fontWeight:700,textAlign:"center"}}>التاريخ</th>
-              {ALL_COLS.filter(c=>visCols[c]!==false).map(h=>(
-                <th key={h} style={{padding:"8px",whiteSpace:"nowrap",fontWeight:700,textAlign:"center",
-                  background:["رصيد البطاقات","نقدي البطاقات","نقدي السلع","الإجمالي النقدي"].includes(h)?"#1a6b4a":C.ink}}>{h}</th>
-              ))}
-              <th style={{padding:"8px"}}></th>
+              <th style={{padding:"8px",whiteSpace:"nowrap",fontWeight:700,textAlign:"center",position:"sticky",top:0,zIndex:10}}>التاريخ</th>
+              {ALL_COLS.filter(c=>visCols[c]!==false).map((h,hi)=>{
+                const isName = h==="اسم العميل";
+                return <th key={h} style={{padding:"8px",whiteSpace:"nowrap",fontWeight:700,textAlign:"center",
+                  position:"sticky",top:0,zIndex:isName?12:10,
+                  ...(isName?{right:0,zIndex:12}:{}),
+                  background:["رصيد البطاقات","نقدي البطاقات","نقدي السلع","الإجمالي النقدي"].includes(h)?"#1a6b4a":C.ink}}>{h}</th>;
+              })}
+              <th style={{padding:"8px",position:"sticky",top:0,zIndex:10}}></th>
             </tr>
           </thead>
           <tbody>
@@ -5396,7 +5399,7 @@ function GoodsPage({investors, contracts, toast, gsWrite}) {
               const C_={
                 "رقم العقد":cell({textAlign:"center",fontWeight:700},row.contractNum),
                 "قيمة العقد":cell({textAlign:"center"},row.contractAmount>0?row.contractAmount.toLocaleString("en-US"):""),
-                "اسم العميل":cell({fontWeight:700,whiteSpace:"nowrap"},row.client),
+                "اسم العميل":cell({fontWeight:700,whiteSpace:"nowrap",position:"sticky",right:0,background:i%2===0?"#fff":"#f8f8f8",zIndex:5,borderLeft:"2px solid #e2e8f0"},row.client),
                 "اسم المستثمر":cell({},row.investor),
                 "دعم العميل":cell({textAlign:"center",color:C.green,fontWeight:700},row.supportClient>0?row.supportClient.toLocaleString("en-US"):""),
                 "دعم الحساب":cell({textAlign:"center",color:C.teal,fontWeight:700},row.supportAcc>0?row.supportAcc.toLocaleString("en-US"):""),
