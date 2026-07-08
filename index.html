@@ -22,19 +22,40 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.2/dist/xlsx.full.min.js"
   onerror="this.onerror=null;document.write(unescape('%3Cscript src=\'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.20.2/xlsx.full.min.js\'%3E%3C/script%3E'));"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
-  onerror="this.onerror=null;document.write(unescape('%3Cscript src=\'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.min.js\'%3E%3C/script%3E'));"></script>
 <script>
-  // ضبط worker لـ pdf.js من نفس مصدر cloudflare
-  window.addEventListener("load", function(){
-    try{
-      var lib = window.pdfjsLib || window["pdfjs-dist/build/pdf"];
-      if(lib){
-        window.pdfjsLib = lib;
-        lib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  // تحميل pdf.js عبر عدة مصادر بالتتابع (بعضها قد يكون محجوباً على بعض الشبكات)
+  window._pdfjsStatus = "لم يبدأ";
+  (function(){
+    var sources = [
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
+      "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.min.js",
+      "https://unpkg.com/pdfjs-dist@3.11.174/legacy/build/pdf.min.js",
+      "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.6.172/legacy/build/pdf.min.js"
+    ];
+    var workers = [
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
+      "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.worker.min.js",
+      "https://unpkg.com/pdfjs-dist@3.11.174/legacy/build/pdf.worker.min.js",
+      "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.6.172/legacy/build/pdf.worker.min.js"
+    ];
+    var idx = 0;
+    function ready(){ return window.pdfjsLib || window["pdfjs-dist/build/pdf"]; }
+    function tryNext(){
+      if(ready()){
+        var lib = ready(); window.pdfjsLib = lib;
+        try{ lib.GlobalWorkerOptions.workerSrc = workers[Math.max(0,idx-1)]; }catch(e){}
+        window._pdfjsStatus = "محمّل ✓ (مصدر "+idx+")";
+        return;
       }
-    }catch(e){ console.warn("pdf.js worker:",e); }
-  });
+      if(idx>=sources.length){ window._pdfjsStatus = "فشل — كل المصادر محجوبة ✗"; return; }
+      var s = document.createElement("script");
+      s.src = sources[idx]; idx++;
+      s.onload = function(){ setTimeout(tryNext, 50); };
+      s.onerror = function(){ window._pdfjsStatus = "المصدر "+idx+" محجوب، أجرّب التالي..."; setTimeout(tryNext, 50); };
+      document.head.appendChild(s);
+    }
+    tryNext();
+  })();
 </script>
 <script>
   // ═══ تحميل Firebase بالتسلسل (أضمن على الجوال) ═══
@@ -3452,28 +3473,43 @@ function BankPage({bankTx, setBankTx, toast}) {
         const wb = XLSX.read(new Uint8Array(e.target.result), {type:"array"});
         const ws = wb.Sheets[wb.SheetNames[0]];
         const grid = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:""});
+        // ابحث عن صف الرأس (فيه التاريخ + مدين/دائن/الرصيد)
         let hi = -1;
         for(let i=0;i<grid.length;i++){
           const rowStr = (grid[i]||[]).join("|");
           if(rowStr.includes("التاريخ") && (rowStr.includes("مدين")||rowStr.includes("دائن")||rowStr.includes("الرصيد"))){ hi=i; break; }
         }
         if(hi<0){ toast&&toast("لم يتم التعرف على تنسيق كشف الراجحي","error"); return; }
+        // حدّد مواقع الأعمدة بأسمائها من صف الرأس (مرن ضد اختلاف الترتيب)
+        const head = (grid[hi]||[]).map(c=>String(c||"").trim());
+        const findCol = (...keys)=> head.findIndex(h=> keys.some(k=> h.includes(k)));
+        let cDate = findCol("التاريخ");
+        let cDetails = findCol("تفاصيل","العملية","البيان");
+        let cMadin = findCol("مدين","المسحوب","سحب");
+        let cDain = findCol("دائن","المودع","إيداع","الوارد");
+        let cBal = findCol("الرصيد","رصيد");
+        // احتياط لو لم توجد بعض الأعمدة: المواقع الافتراضية للراجحي
+        if(cBal<0) cBal=6; if(cMadin<0) cMadin=7; if(cDain<0) cDain=8;
+        if(cDetails<0) cDetails=9; if(cDate<0) cDate=11;
+        const numOf = (v)=>{ const n=parseFloat(String(v).replace(/[^0-9.\-]/g,"")); return isNaN(n)?null:n; };
         const parsed = [];
         for(let i=hi+1;i<grid.length;i++){
           const r = grid[i]||[];
-          const date = r[11], bal = r[6];
-          if(!date || bal===""||bal==null) continue;
-          const madin = parseFloat(String(r[7]).replace(/[^0-9.-]/g,""))||0;
-          const dain = parseFloat(String(r[8]).replace(/[^0-9.-]/g,""))||0;
-          const balN = parseFloat(String(bal).replace(/[^0-9.-]/g,""));
-          if(isNaN(balN)) continue;
+          const date = r[cDate];
+          const balN = numOf(r[cBal]);
+          if(!date || balN===null) continue;
+          const madin = numOf(r[cMadin])||0;
+          const dain = numOf(r[cDain])||0;
+          // النوع والاسم: العمود التفاصيل قد يجمعهما
+          let detailRaw = String(r[cDetails]||"").trim();
+          let typeText = detailRaw, nameText = String(r[cDetails+1]||"").trim();
           parsed.push({
             id: "bnk_"+i+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),
             date: String(date).trim(),
-            type: String(r[9]||"").trim(),
-            name: String(r[10]||"").trim(),
+            type: typeText,
+            name: nameText,
             madin: Math.abs(madin),
-            dain: dain,
+            dain: Math.abs(dain),
             balance: balN,
           });
         }
@@ -3486,7 +3522,7 @@ function BankPage({bankTx, setBankTx, toast}) {
   // قراءة ملف PDF (كشف الراجحي)
   const readPDF = (file) => {
     const lib = window.pdfjsLib || window["pdfjs-dist/build/pdf"];
-    if(!lib){ toast&&toast("مكتبة قراءة PDF لم تُحمّل — جرّب تحديث الصفحة أو ارفع Excel","error"); return; }
+    if(!lib){ toast&&toast("مكتبة PDF: "+(window._pdfjsStatus||"غير محمّلة")+" — جرّب Excel","error"); return; }
     try{ if(lib.GlobalWorkerOptions && !lib.GlobalWorkerOptions.workerSrc){ lib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; } }catch(e){}
     toast&&toast("⏳ جارٍ قراءة الـ PDF...");
     const reader = new FileReader();
