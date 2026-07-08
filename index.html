@@ -305,6 +305,11 @@ function printStatement(elementId) {
 const SAR = n => Math.round(+(n||0)).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
 // رمز المستثمر: يُعرض الرمز إن وُجد، وإلا الاسم الكامل
 const invLabel = inv => (inv && inv.code && String(inv.code).trim()) ? String(inv.code).trim() : (inv ? inv.name : "—");
+// ترتيب المستثمرين حسب الرقم (3,4,7,8,9,10,11 ثم ل.ن, ح.ل)
+const sortedInvestors = (arr) => [..._arr(arr)].sort((a,b)=>{
+  const n = (x)=>{ const m=String(invLabel(x)).match(/(\d+)/); return m?parseInt(m[1]):9999; };
+  return n(a)-n(b);
+});
 const NUM = n => (+(n||0)).toLocaleString("en-US");
 
 function calcContract(amount, s = {profit:50, admin:2.5, acc:10, inst:10}, totalActual) {
@@ -885,7 +890,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
             <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المستثمر (الصندوق) *</label>
             <select style={styles.select} value={form.investorId} onChange={e=>set("investorId",e.target.value)}>
               <option value="">— اختر المستثمر —</option>
-              {investors.map(i=><option key={i.id} value={i.id}>{invLabel(i)} ({i.fund})</option>)}
+              {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)} ({i.fund})</option>)}
             </select>
           </div>
 
@@ -1130,7 +1135,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
                   <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المستثمر</label>
                   <select style={styles.select} value={form.deductInvestorId||""} onChange={e=>set("deductInvestorId",e.target.value)}>
                     <option value="">اختر مستثمر</option>
-                    {investors.map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
+                    {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
                   </select>
                 </div>
               </div>
@@ -1435,7 +1440,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         </div>
         <select style={{...styles.select,marginBottom:10}} value={collectInv} onChange={e=>setCollectInv(e.target.value)}>
           <option value="all">👥 كل المستثمرين</option>
-          {investors.map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
+          {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
         </select>
         <input style={{...styles.input,marginBottom:14}} placeholder="🔍 بحث بالاسم أو الجوال..." value={collectSearch} onChange={e=>setCollectSearch(e.target.value)}/>
         {activeForCollect.length===0 ? (
@@ -1621,7 +1626,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         <input style={{...styles.input,width:200,fontSize:15}} placeholder="🔍 بحث..." value={search} onChange={e=>setSearch(e.target.value)}/>
         <select style={{...styles.input,width:190,fontSize:15,cursor:"pointer"}} value={filterInv} onChange={e=>setFilterInv(e.target.value)}>
           <option value="">🏢 كل المستثمرين</option>
-          {investors.map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
+          {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
         </select>
         {filterInv && <button style={{...styles.btn(C.red,"#fff"),fontSize:13,padding:"6px 10px"}} onClick={()=>setFilterInv("")}>✕ إلغاء الفلتر</button>}
         <button style={{...styles.btn(C.green,"#fff"),fontSize:14,padding:"6px 12px"}} onClick={exportExcel}>⬇️ تصدير Excel</button>
@@ -1941,7 +1946,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المستثمر (الصندوق)</label>
               <select style={styles.input} value={editForm.investorId||""} onChange={e=>setEditForm(f=>({...f,investorId:e.target.value}))}>
                 <option value="">— اختر المستثمر —</option>
-                {investors.map(i=><option key={i.id} value={String(i.id)}>{invLabel(i)} ({i.fund})</option>)}
+                {sortedInvestors(investors).map(i=><option key={i.id} value={String(i.id)}>{invLabel(i)} ({i.fund})</option>)}
               </select>
             </div>
             <div style={{gridColumn:"1/-1"}}>
@@ -2784,7 +2789,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
         <label style={{fontWeight:700,fontSize:15,whiteSpace:"nowrap"}}>المستثمر:</label>
         <select style={{...styles.select,flex:1,maxWidth:300,borderColor:C.teal,color:C.teal,fontWeight:700}}
           value={selInv||""} onChange={e=>{const v=e.target.value;const special=(v==="zakat"||v==="pending"||v==="loans");setInvSubTab(special?v:"inv");setSelInv(special?v:parseInt(v));}}>
-          {investors.map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
+          {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
           <option value="loans">🤝 السلف</option>
           <option value="zakat">🌙 صندوق الزكاة</option>
           <option value="pending">📌 المتبقي</option>
