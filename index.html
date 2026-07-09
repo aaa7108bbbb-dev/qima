@@ -1841,12 +1841,47 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           }
           const doPrint = () => {
             const c = printModal;
-            if(printSel.contract) setContractDoc(c);
+            const inv = investors.find(i=>String(i.id)===String(c.investorId));
+            const r = calcContract(c.amount,settings,c.totalInst);
+            // نجمع كل المستندات المختارة في نافذة واحدة
+            const sections = [];
+            if(printSel.contract){ setContractDoc(c); setPrintModal(null); return; } // العقد يفتح في Modal خاص
+            if(printSel.bond) sections.push("bond");
+            if(printSel.cheque) sections.push("cheque");
+            if(hasG && printSel.bondG) sections.push("bondG");
+            if(hasG && printSel.chequeG) sections.push("chequeG");
+            if(sections.length===0){ setPrintModal(null); return; }
+            // نعرض كل المحدد ثم نطبع مرة واحدة
             if(printSel.bond) setBond(c);
             if(printSel.cheque) setCheque(c);
             if(hasG && printSel.bondG) setBondG(c);
             if(hasG && printSel.chequeG) setChequeG(c);
             setPrintModal(null);
+            // ننتظر React يرسم ثم نجمع ونطبع
+            setTimeout(()=>{
+              const ids = [];
+              if(printSel.bond) ids.push("bond-cl-print-area"); // سند + إقرار معاً
+              else if(printSel.cheque) ids.push("cheque-print-area");
+              if(hasG && printSel.bondG) ids.push("bond-gg-print-area");
+              else if(hasG && printSel.chequeG) ids.push("cheque-g-print-area");
+              // لو سند بدون إقرار
+              if(printSel.bond && !printSel.cheque) ids[0] = "bond-print-area";
+              // نجمع كل الأقسام في نافذة واحدة
+              const w = window.open("","_blank");
+              if(!w) return;
+              let allHtml = "";
+              ids.forEach((id,idx)=>{
+                const el = document.getElementById(id);
+                if(el) allHtml += (idx>0?'<div style="page-break-before:always"></div>':'')+el.innerHTML;
+              });
+              w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><style>*{box-sizing:border-box;font-family:Arial,sans-serif}body{margin:0;padding:12px}@media print{.noprint{display:none!important}button{display:none!important}}</style></head><body>');
+              w.document.write('<div class="noprint" style="display:flex;gap:10px;margin-bottom:14px;position:sticky;top:0;background:#1e2235;padding:12px;border-radius:0 0 12px 12px"><button onclick="window.print()" style="flex:1;background:#0d7a6f;color:#fff;border:none;border-radius:10px;padding:14px;font-size:17px;font-weight:800;cursor:pointer">🖨️ طباعة</button><button onclick="window.close()" style="background:#dc2626;color:#fff;border:none;border-radius:10px;padding:14px 22px;font-size:17px;font-weight:800;cursor:pointer">✕ إغلاق</button></div>');
+              w.document.write(allHtml);
+              w.document.write('</body></html>');
+              w.document.close();
+              // نظّف
+              setTimeout(()=>{ setBond(null);setCheque(null);setBondG(null);setChequeG(null); },500);
+            },400);
           };
           const anySel = printSel.contract||printSel.bond||printSel.cheque||(hasG&&(printSel.bondG||printSel.chequeG));
           return (
@@ -2781,6 +2816,8 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
   const finalBalance = rows.length>0 ? rows[rows.length-1].balance : (inv?.capital||0);
   const totalDeposits = allTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
   const totalWithdraws = allTx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
+  const [acctSearch,setAcctSearch] = useState("");
+  const filteredRows = acctSearch ? rows.filter(tx=>(tx.note||"").includes(acctSearch)||(tx.type||"").includes(acctSearch)||(tx.date||"").includes(acctSearch)) : rows;
 
   const subTabs = [
     {key:"list",  label:"👥 المستثمرون"},
@@ -2887,13 +2924,18 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
             <span style={{color:C.red,fontWeight:700}}>إجمالي الخصومات: {SAR(totalWithdraws)}</span>
           </div>
         </div>
-        <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
-            <thead>
+        <div style={{padding:"8px 14px"}}>
+          <input type="text" placeholder="🔍 بحث بالاسم أو البيان..." value={acctSearch||""} onChange={e=>setAcctSearch(e.target.value)}
+            style={{...styles.input,width:"100%",fontSize:15,padding:"10px 14px",borderColor:C.teal}}/>
+        </div>
+        <div style={{overflowX:"auto",maxHeight:"70vh",overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
+          <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:15}}>
+            <thead style={{position:"sticky",top:0,zIndex:20}}>
               <tr>
-                {["التاريخ","نوع الحركة","البيان","دعم","خصم","الرصيد",""].map(h=>(
-                  <th key={h} style={styles.th}>{h}</th>
-                ))}
+                {["التاريخ","نوع الحركة","البيان","دعم","خصم","الرصيد",""].map((h,hi)=>{
+                  const isBayan = h==="البيان";
+                  return <th key={h} style={{...styles.th,position:"sticky",top:0,zIndex:isBayan?22:20,background:C.ink,...(isBayan?{right:0}:{})}}>{h}</th>;
+                })}
               </tr>
             </thead>
             <tbody>
@@ -2907,7 +2949,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                 <td style={{...styles.td,fontWeight:800,color:C.teal}}>{SAR(inv?.capital||0)}</td>
                 <td style={styles.td}></td>
               </tr>
-              {rows.map((tx,i)=>{
+              {filteredRows.map((tx,i)=>{
                 const txType = TX_TYPES.find(t=>t.key===tx.type)||TX_TYPES[0];
                 const isPos = tx.amount>0;
                 return (
