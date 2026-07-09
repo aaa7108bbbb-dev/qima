@@ -4321,7 +4321,7 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
   );
 }
 
-function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dailyOpen,setDailyOpen,toast,setPage,payments}) {
+function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dailyOpen,setDailyOpen,toast,setPage,payments,zakatTx,setZakatTx,loans,setLoans}) {
   const [detail,setDetail] = useState(null); // {title, color, rows, mode}
   // Period: starts 21st of month, ends 20th of next month
   const getPeriod = (dateStr) => fiscalYM(dateStr);
@@ -4413,7 +4413,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
     <div>
       <button style={{...styles.btn("#0d9488","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px",marginBottom:14,fontWeight:800}} onClick={()=>setPage("search")}>🔍 بحث شامل</button>
       {/* دفتر اليومية مدمج في الرئيسية */}
-      <DailyPage daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} contracts={contracts} settings={settings} toast={toast}/>
+      <DailyPage daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} contracts={contracts} settings={settings} toast={toast} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} investors={investors}/>
 
       {/* لوحة شغل اليوم */}
       <div style={{fontSize:20,fontWeight:900,margin:"8px 0 16px",color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12}}>☀️ شغل اليوم — {todayStr}</div>
@@ -4615,8 +4615,10 @@ const DAILY_TYPES = [
   {key:"estilam", label:"استلمت نقدي",   sign:-1, color:"#7c3aed"},
   {key:"mgr",     label:"استلام مدير",   sign:-1, color:"#b45309"},
   {key:"acc",     label:"استلام محاسب",  sign:-1, color:"#0891b2"},
+  {key:"zakat",   label:"زكاة",          sign:-1, color:"#059669"},
+  {key:"salf",    label:"سلف",           sign:-1, color:"#6366f1"},
 ];
-function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, settings, toast}) {
+function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, settings, toast, zakatTx, setZakatTx, loans, setLoans, investors}) {
   const today = new Date().toISOString().split("T")[0];
   const [selDay,setSelDay] = useState(today);
   const [baseInput,setBaseInput] = useState("");
@@ -4693,7 +4695,16 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
 
   const addRow=()=>{
     if(!form.amount||parseFloat(form.amount)<=0){toast("أدخل مبلغ صحيح","warn");return;}
+    if((form.type==="zakat"||form.type==="salf") && !form.desc){toast("اكتب اسم الشخص","warn");return;}
     setDaily(p=>[...p,{id:Date.now(),date:selDay,type:form.type,amount:parseFloat(form.amount),desc:form.desc||""}]);
+    // ربط الزكاة تلقائياً
+    if(form.type==="zakat" && setZakatTx){
+      setZakatTx(p=>[...p,{id:Date.now(),date:selDay,amount:parseFloat(form.amount),name:form.desc||"زكاة",note:"من دفتر اليومية"}]);
+    }
+    // ربط السلف تلقائياً
+    if(form.type==="salf" && setLoans){
+      setLoans(p=>[...p,{id:Date.now(),date:selDay,amount:parseFloat(form.amount),name:form.desc||"سلف",status:"active",payments:[],note:"من دفتر اليومية"}]);
+    }
     setForm({type:form.type,amount:"",desc:""});
     toast("✅ تمت الإضافة");
   };
@@ -6418,7 +6429,7 @@ function App() {
 
       <div style={styles.main}>
         {page==="overdue" && <OverduePage contracts={contracts} investors={investors} payments={payments} goCollect={()=>setPage("collect")} />}
-        {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={payments}/>}
+        {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={payments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="collect" && <ContractsPage startCollect={true} setPage={setPage} contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct}/>}
