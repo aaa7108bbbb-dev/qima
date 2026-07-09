@@ -3579,11 +3579,38 @@ function BankPage({bankTx, setBankTx, toast}) {
     reader.readAsArrayBuffer(file);
   };
 
-  // قراءة ملف PDF (كشف الراجحي)
-  const readPDF = (file) => {
+  // قراءة ملف PDF (كشف الراجحي) — مع محاولة تحميل المكتبة عند الحاجة
+  const loadPdfLib = ()=> new Promise((resolve,reject)=>{
     const lib = window.pdfjsLib || window["pdfjs-dist/build/pdf"];
-    if(!lib){ toast&&toast("مكتبة PDF: "+(window._pdfjsStatus||"غير محمّلة")+" — جرّب Excel","error"); return; }
-    try{ if(lib.GlobalWorkerOptions && !lib.GlobalWorkerOptions.workerSrc){ lib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; } }catch(e){}
+    if(lib){ resolve(lib); return; }
+    const sources = [
+      "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
+      "https://unpkg.com/pdfjs-dist@3.11.174/legacy/build/pdf.min.js",
+      "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.6.172/legacy/build/pdf.min.js"
+    ];
+    let idx=0;
+    function tryNext(){
+      const lib2 = window.pdfjsLib || window["pdfjs-dist/build/pdf"];
+      if(lib2){ window.pdfjsLib=lib2; resolve(lib2); return; }
+      if(idx>=sources.length){ reject(new Error("all_blocked")); return; }
+      const s=document.createElement("script");
+      s.src=sources[idx]; idx++;
+      s.onload=()=>setTimeout(tryNext,100);
+      s.onerror=()=>setTimeout(tryNext,50);
+      document.head.appendChild(s);
+    }
+    tryNext();
+  });
+
+  const readPDF = async (file) => {
+    toast&&toast("⏳ جارٍ تحميل مكتبة PDF...");
+    let lib;
+    try{ lib = await loadPdfLib(); }catch(e){
+      toast&&toast("مكتبة PDF محجوبة على شبكتك — حمّل الكشف من تطبيق الراجحي بصيغة Excel بدل PDF","error");
+      return;
+    }
+    try{ if(lib.GlobalWorkerOptions && !lib.GlobalWorkerOptions.workerSrc){ lib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.worker.min.js"; } }catch(e){}
     toast&&toast("⏳ جارٍ قراءة الـ PDF...");
     const reader = new FileReader();
     reader.onload = async (e) => {
