@@ -3579,56 +3579,124 @@ function BankPage({bankTx, setBankTx, toast}) {
     reader.readAsArrayBuffer(file);
   };
 
-  // قراءة ملف PDF (كشف الراجحي) — مع محاولة تحميل المكتبة عند الحاجة
-  const loadPdfLib = ()=> new Promise((resolve,reject)=>{
-    const lib = window.pdfjsLib || window["pdfjs-dist/build/pdf"];
-    if(lib){ resolve(lib); return; }
-    const sources = [
-      "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.min.js",
-      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
-      "https://unpkg.com/pdfjs-dist@3.11.174/legacy/build/pdf.min.js",
-      "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.6.172/legacy/build/pdf.min.js"
-    ];
-    let idx=0;
-    function tryNext(){
-      const lib2 = window.pdfjsLib || window["pdfjs-dist/build/pdf"];
-      if(lib2){ window.pdfjsLib=lib2; resolve(lib2); return; }
-      if(idx>=sources.length){ reject(new Error("all_blocked")); return; }
-      const s=document.createElement("script");
-      s.src=sources[idx]; idx++;
-      s.onload=()=>setTimeout(tryNext,100);
-      s.onerror=()=>setTimeout(tryNext,50);
-      document.head.appendChild(s);
+  // ═══ قارئ PDF مدمج بدون مكتبات خارجية ═══
+  const extractPdfTextBuiltin = async (arrayBuffer) => {
+    const bytes = new Uint8Array(arrayBuffer);
+    const raw = new TextDecoder("latin1").decode(bytes);
+    const streams = [];
+    let pos = 0;
+    while(true){
+      const si = raw.indexOf("stream", pos);
+      if(si<0) break;
+      let start = si + 6;
+      if(raw.charCodeAt(start)===13) start++;
+      if(raw.charCodeAt(start)===10) start++;
+      const ei = raw.indexOf("endstream", start);
+      if(ei<0) break;
+      const header = raw.substring(Math.max(0, si-500), si);
+      const isFlate = header.includes("/FlateDecode");
+      streams.push({ start, end: ei, isFlate, data: bytes.slice(start, ei) });
+      pos = ei + 9;
     }
-    tryNext();
-  });
+    const allText = [];
+    for(const s of streams){
+      let decoded = "";
+      try {
+        if(s.isFlate && typeof DecompressionStream !== "undefined"){
+          const ds = new DecompressionStream("deflate");
+          const writer = ds.writable.getWriter();
+          const reader = ds.readable.getReader();
+          writer.write(s.data).catch(()=>{});
+          writer.close().catch(()=>{});
+          const chunks = [];
+          while(true){ const {done,value} = await reader.read(); if(done) break; chunks.push(value); }
+          const total = chunks.reduce((a,c)=>a+c.length,0);
+          const result = new Uint8Array(total); let offset=0;
+          for(const c of chunks){ result.set(c, offset); offset += c.length; }
+          decoded = new TextDecoder("utf-8",{fatal:false}).decode(result);
+        } else if(!s.isFlate) {
+          decoded = new TextDecoder("utf-8",{fatal:false}).decode(s.data);
+        }
+      } catch(e){ continue; }
+      if(!decoded) continue;
+      const tjMatches = decoded.matchAll(/\(([^)]*)\)\s*Tj/g);
+      for(const m of tjMatches){ const t=m[1].replace(/\\n/g," ").replace(/\\(.)/g,"$1").trim(); if(t) allText.push(t); }
+      const tjArr = decoded.matchAll(/\[([^\]]*)\]\s*TJ/gi);
+      for(const m of tjArr){ const parts=m[1].matchAll(/\(([^)]*)\)/g); let line=""; for(const p of parts) line+=p[1].replace(/\\(.)/g,"$1"); line=line.trim(); if(line) allText.push(line); }
+    }
+    return allText;
+  };
+
+  const parseRajhiText = (lines) => {
+    const num = (s)=>{ const v=parseFloat(String(s).replace(/[,،\s]/g,"").replace(/[^0-9.\-]/g,"")); return isNaN(v)?null:v; };
+    const parsed = [];
+    let currentDate = "";
+    let pendingType = "";
+    for(let i=0;i<lines.length;i++){
+      const line = lines[i].trim();
+      if(!line) continue;
+      const dateMatch = line.match(/(\d{4}[\/-]\d{2}[\/-]\d{2})/);
+      if(dateMatch) currentDate = dateMatch[1];
+      const amounts = line.match(/[\d,]+\.\d{2}/g);
+      if(amounts && amounts.length>=2){
+        const nums = amounts.map(a=>Math.abs(num(a)||0));
+        let bal=nums[0],madin=0,dain=0;
+        if(nums.length>=3){bal=nums[0];dain=nums[1];madin=nums[2];}
+        else {bal=nums[0];dain=nums[1];}
+        let type = pendingType||"غير محدد";
+        let name = "";
+        for(let k=1;k<=3;k++){
+          const next=lines[i+k]||"";
+          const engMatch=next.match(/[A-Za-z]{3,}[A-Za-z\s,.]*/);
+          if(engMatch && !/SAR|TOACCT|FRACCT/.test(engMatch[0])){ name=engMatch[0].trim(); break; }
+        }
+        if(bal>0||madin>0||dain>0){
+          parsed.push({ id:"bnk_b_"+i+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,7), date:currentDate, type, name, madin, dain, balance:bal });
+        }
+        pendingType="";
+      } else {
+        const arabic=line.replace(/[^\u0600-\u06FF\s]/g,"").trim();
+        if(arabic.length>=3 && arabic.length<=40) pendingType=arabic;
+      }
+    }
+    return parsed;
+  };
 
   const readPDF = async (file) => {
-    toast&&toast("⏳ جارٍ تحميل مكتبة PDF...");
-    let lib;
-    try{ lib = await loadPdfLib(); }catch(e){
-      toast&&toast("مكتبة PDF محجوبة على شبكتك — حمّل الكشف من تطبيق الراجحي بصيغة Excel بدل PDF","error");
-      return;
-    }
-    try{ if(lib.GlobalWorkerOptions && !lib.GlobalWorkerOptions.workerSrc){ lib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.worker.min.js"; } }catch(e){}
     toast&&toast("⏳ جارٍ قراءة الـ PDF...");
     const reader = new FileReader();
     reader.onload = async (e) => {
-      try {
-        const pdf = await lib.getDocument({data:new Uint8Array(e.target.result)}).promise;
-        let items = [];
-        for(let p=1;p<=pdf.numPages;p++){
-          const page = await pdf.getPage(p);
-          const tc = await page.getTextContent();
-          const vp = page.getViewport({scale:1});
-          tc.items.forEach(it=>{
-            const tx = it.transform;
-            items.push({ str:it.str, x:tx[4], y: vp.height - tx[5], page:p });
-          });
-        }
-        const parsed = parseRajhiPDF(items);
-        saveParsed(parsed);
-      } catch(err){ console.error(err); toast&&toast("خطأ في قراءة ملف PDF: "+(err&&err.message||""),"error"); }
+      const buf = e.target.result;
+      // أولاً: جرّب المكتبة الخارجية لو موجودة
+      const lib = window.pdfjsLib || window["pdfjs-dist/build/pdf"];
+      if(lib){
+        try{
+          try{ if(lib.GlobalWorkerOptions && !lib.GlobalWorkerOptions.workerSrc) lib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.worker.min.js"; }catch(x){}
+          const pdf = await lib.getDocument({data:new Uint8Array(buf)}).promise;
+          let items = [];
+          for(let p=1;p<=pdf.numPages;p++){
+            const page=await pdf.getPage(p);
+            const tc=await page.getTextContent();
+            const vp=page.getViewport({scale:1});
+            tc.items.forEach(it=>{ const tx=it.transform; items.push({str:it.str,x:tx[4],y:vp.height-tx[5],page:p}); });
+          }
+          const parsed = parseRajhiPDF(items);
+          if(parsed.length>0){ saveParsed(parsed); return; }
+        }catch(ex){ console.warn("pdfjsLib failed, trying builtin:", ex); }
+      }
+      // ثانياً: القارئ المدمج (بدون مكتبة)
+      try{
+        const textLines = await extractPdfTextBuiltin(buf);
+        if(textLines.length===0){ toast&&toast("لم أستطع استخراج نص من الـ PDF — جرّب Excel","error"); return; }
+        const parsed = parseRajhiText(textLines);
+        if(parsed.length>0){ saveParsed(parsed); return; }
+        // لو ما لقى حركات من الأسطر، جرّب كنص كامل
+        const fullText = textLines.join("\n");
+        const allNums = fullText.match(/[\d,]+\.\d{2}/g);
+        toast&&toast("تم استخراج "+textLines.length+" سطر و "+(allNums?allNums.length:0)+" رقم، لكن ما تعرّفت على تنسيق الراجحي — جرّب Excel","error");
+      }catch(err){
+        toast&&toast("خطأ في قراءة PDF: "+(err&&err.message||"")+" — جرّب Excel","error");
+      }
     };
     reader.readAsArrayBuffer(file);
   };
