@@ -2553,7 +2553,7 @@ function CommissionsPage({contracts, investors, settings}) {
 
 // ─── Accounts Page ───────────────────────────────────────────
 const TX_TYPES = [
-  {key:"deposit",   label:"إيداع / دعم",      color:"#1a7a4a", sign:1},
+  {key:"deposit",   label:"دعم مستثمر",        color:"#1a7a4a", sign:1},
   {key:"withdraw",  label:"سحب",              color:"#c0392b", sign:-1},
   {key:"installments",label:"أقساط واردة",    color:"#0d7377", sign:1},
   {key:"expenses",  label:"مصروفات",          color:"#c0392b", sign:-1},
@@ -2883,7 +2883,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
             📋 كشف حساب — {inv?invLabel(inv):""}
           </h3>
           <div style={{display:"flex",gap:10,fontSize:15}}>
-            <span style={{color:C.green,fontWeight:700}}>إجمالي الإيداعات: {SAR(totalDeposits)}</span>
+            <span style={{color:C.green,fontWeight:700}}>إجمالي الدعم: {SAR(totalDeposits)}</span>
             <span style={{color:C.red,fontWeight:700}}>إجمالي الخصومات: {SAR(totalWithdraws)}</span>
           </div>
         </div>
@@ -2891,7 +2891,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
             <thead>
               <tr>
-                {["التاريخ","نوع الحركة","البيان","إيداع","خصم","الرصيد",""].map(h=>(
+                {["التاريخ","نوع الحركة","البيان","دعم","خصم","الرصيد",""].map(h=>(
                   <th key={h} style={styles.th}>{h}</th>
                 ))}
               </tr>
@@ -4646,15 +4646,18 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
           <h3 style={{margin:0,fontSize:15,fontWeight:700}}>📋 حركات يوم {dLabel(selDay)}</h3>
           <span style={{fontSize:15,fontWeight:800,color:closingBalance>=0?C.teal:C.red}}>المتبقي: {SAR(closingBalance)}</span>
         </div>
-        <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
-            <thead>
-              <tr>{["النوع","الوصف","المبلغ",""].map(h=>(<th key={h} style={styles.th}>{h}</th>))}</tr>
+        <div style={{overflowX:"auto",maxHeight:"70vh",overflowY:"auto",WebkitOverflowScrolling:"touch",position:"relative"}}>
+          <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:15}}>
+            <thead style={{position:"sticky",top:0,zIndex:20}}>
+              <tr>{["النوع","الوصف","المبلغ",""].map((h,hi)=>{
+                const isDesc = h==="الوصف";
+                return <th key={h||"act"} style={{...styles.th,position:"sticky",top:0,zIndex:isDesc?22:20,background:C.ink,...(isDesc?{right:0}:{})}}>{h}</th>;
+              })}</tr>
             </thead>
             <tbody>
               <tr style={{background:"#f8fafc"}}>
                 <td style={{...styles.td,fontWeight:700,color:"#334155"}}>رصيد افتتاحي</td>
-                <td style={{...styles.td,color:"#1f2937"}}>متبقي أمس</td>
+                <td style={{...styles.td,color:"#1f2937",position:"sticky",right:0,background:"#f8fafc",zIndex:5,borderLeft:"2px solid #e2e8f0"}}>متبقي أمس</td>
                 <td style={{...styles.td,fontWeight:800,color:"#334155"}}>{SAR(openingBalance)}</td>
                 <td style={styles.td}></td>
               </tr>
@@ -4665,8 +4668,8 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                 return (
                   <tr key={d.id} style={{background:i%2===0?C.white:C.gray}}>
                     <td style={styles.td}><span style={styles.badge((t?.color||"#999")+"22",t?.color||"#999")}>{t?.label||d.type}</span></td>
-                    <td style={{...styles.td,fontWeight:700}}>{d.desc||"—"}</td>
-                    <td style={{...styles.td,fontWeight:700,color:t?.color}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
+                    <td style={{...styles.td,fontWeight:700,position:"sticky",right:0,background:i%2===0?C.white:C.gray,zIndex:5,borderLeft:"2px solid #e2e8f0"}}>{d.desc||"—"}</td>
+                    <td style={{...styles.td,fontWeight:700,color:t&&t.color}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
                     <td style={styles.td}>
                       <button style={{...styles.btn(C.red),fontSize:14,padding:"4px 10px"}} onClick={()=>delRow(d.id)}>🗑️</button>
                     </td>
@@ -4795,10 +4798,13 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
               </h4>
               <span style={{fontSize:14,fontWeight:800,color:C.ink2}}>{stmtDetailRows.length} حركة · {SAR(Math.abs(stmtDetailTotal))}</span>
             </div>
-            <div style={{overflowX:"auto"}}>
-              <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
-                <thead>
-                  <tr>{["التاريخ","النوع","الاسم / الوصف","المبلغ"].map(h=>(<th key={h} style={styles.th}>{h}</th>))}</tr>
+            <div style={{overflowX:"auto",maxHeight:"70vh",overflowY:"auto",WebkitOverflowScrolling:"touch",position:"relative"}}>
+              <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:15}}>
+                <thead style={{position:"sticky",top:0,zIndex:20}}>
+                  <tr>{["التاريخ","النوع","الاسم / الوصف","المبلغ"].map((h,hi)=>{
+                    const isName = h==="الاسم / الوصف";
+                    return <th key={h} style={{...styles.th,position:"sticky",top:0,zIndex:isName?22:20,background:C.ink,...(isName?{right:0}:{})}}>{h}</th>;
+                  })}</tr>
                 </thead>
                 <tbody>
                   {stmtDetailRows.length===0 ? (
@@ -4811,8 +4817,8 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                       <tr key={d.id} style={{background:i%2===0?C.white:C.gray}}>
                         <td style={{...styles.td,whiteSpace:"nowrap",color:"#475569",fontWeight:600}}>{dLabel(d.date)}</td>
                         <td style={styles.td}><span style={styles.badge((t?.color||"#999")+"22",t?.color||"#999")}>{t?.label||d.type}</span></td>
-                        <td style={{...styles.td,fontWeight:700}}>{d.desc||"—"}</td>
-                        <td style={{...styles.td,fontWeight:800,color:t?.color,whiteSpace:"nowrap"}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
+                        <td style={{...styles.td,fontWeight:700,position:"sticky",right:0,background:i%2===0?C.white:C.gray,zIndex:5,borderLeft:"2px solid #e2e8f0"}}>{d.desc||"—"}</td>
+                        <td style={{...styles.td,fontWeight:800,color:t&&t.color,whiteSpace:"nowrap"}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
                       </tr>
                     );
                   })}
