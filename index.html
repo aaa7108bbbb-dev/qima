@@ -22,8 +22,28 @@
   onerror="this.onerror=null;document.write(unescape('%3Cscript src=\'https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js\'%3E%3C/script%3E'));"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.2/dist/xlsx.full.min.js"
-  onerror="this.onerror=null;document.write(unescape('%3Cscript src=\'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.20.2/xlsx.full.min.js\'%3E%3C/script%3E'));"></script>
+<script>
+  // تحميل XLSX عبر عدة مصادر بالتتابع
+  (function(){
+    var sources = [
+      "https://cdn.jsdelivr.net/npm/xlsx@0.20.2/dist/xlsx.full.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.20.2/xlsx.full.min.js",
+      "https://unpkg.com/xlsx@0.20.2/dist/xlsx.full.min.js",
+      "https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"
+    ];
+    var idx = 0;
+    function tryNext(){
+      if(typeof XLSX!=="undefined") return;
+      if(idx>=sources.length){ console.warn("XLSX: all sources failed"); return; }
+      var s = document.createElement("script");
+      s.src = sources[idx]; idx++;
+      s.onload = function(){ if(typeof XLSX!=="undefined") console.log("XLSX loaded from source "+idx); else setTimeout(tryNext,50); };
+      s.onerror = function(){ setTimeout(tryNext, 50); };
+      document.head.appendChild(s);
+    }
+    tryNext();
+  })();
+</script>
 <script>
   // تحميل pdf.js عبر عدة مصادر بالتتابع (بعضها قد يكون محجوباً على بعض الشبكات)
   window._pdfjsStatus = "لم يبدأ";
@@ -222,6 +242,8 @@
   }
   // 1) التقاط أخطاء JS العامة (تشمل أخطاء Babel أثناء تحويل السكربت)
   window.addEventListener("error", function(e){
+    // تجاهل أخطاء تحميل السكربتات (ليست أخطاء تشغيل)
+    if(e && e.target && e.target.tagName==="SCRIPT") return;
     var d = "";
     var msg = (e && e.message) || (e && e.error && e.error.message) || "";
     if(msg) d += "الرسالة: "+msg+"\n";
@@ -3488,48 +3510,71 @@ function BankPage({bankTx, setBankTx, toast}) {
         const wb = XLSX.read(new Uint8Array(e.target.result), {type:"array"});
         const ws = wb.Sheets[wb.SheetNames[0]];
         const grid = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:""});
-        // ابحث عن صف الرأس (فيه التاريخ + مدين/دائن/الرصيد)
+        // ابحث عن صف الرأس بمرونة عالية
         let hi = -1;
-        for(let i=0;i<grid.length;i++){
-          const rowStr = (grid[i]||[]).join("|");
-          if(rowStr.includes("التاريخ") && (rowStr.includes("مدين")||rowStr.includes("دائن")||rowStr.includes("الرصيد"))){ hi=i; break; }
+        const dateWords = ["التاريخ","تاريخ","date","Date"];
+        const moneyWords = ["مدين","دائن","الرصيد","رصيد","مبلغ","المبلغ","سحب","إيداع","المسحوب","المودع","debit","credit","balance","amount"];
+        for(let i=0;i<Math.min(grid.length,30);i++){
+          const rowStr = (grid[i]||[]).map(c=>String(c||"").trim()).join("|");
+          const hasDate = dateWords.some(w=>rowStr.includes(w));
+          const hasMoney = moneyWords.some(w=>rowStr.includes(w));
+          if(hasDate && hasMoney){ hi=i; break; }
         }
-        if(hi<0){ toast&&toast("لم يتم التعرف على تنسيق كشف الراجحي","error"); return; }
-        // حدّد مواقع الأعمدة بأسمائها من صف الرأس (مرن ضد اختلاف الترتيب)
+        // محاولة ثانية: أي صف فيه كلمة تاريخ
+        if(hi<0){
+          for(let i=0;i<Math.min(grid.length,30);i++){
+            const rowStr = (grid[i]||[]).map(c=>String(c||"").trim()).join("|");
+            if(dateWords.some(w=>rowStr.includes(w))){ hi=i; break; }
+          }
+        }
+        if(hi<0){ toast&&toast("لم يتم التعرف على تنسيق الكشف — تأكد أن الملف فيه عمود التاريخ","error"); return; }
         const head = (grid[hi]||[]).map(c=>String(c||"").trim());
-        const findCol = (...keys)=> head.findIndex(h=> keys.some(k=> h.includes(k)));
-        let cDate = findCol("التاريخ");
-        let cDetails = findCol("تفاصيل","العملية","البيان");
-        let cMadin = findCol("مدين","المسحوب","سحب");
-        let cDain = findCol("دائن","المودع","إيداع","الوارد");
-        let cBal = findCol("الرصيد","رصيد");
-        // احتياط لو لم توجد بعض الأعمدة: المواقع الافتراضية للراجحي
-        if(cBal<0) cBal=6; if(cMadin<0) cMadin=7; if(cDain<0) cDain=8;
-        if(cDetails<0) cDetails=9; if(cDate<0) cDate=11;
-        const numOf = (v)=>{ const n=parseFloat(String(v).replace(/[^0-9.\-]/g,"")); return isNaN(n)?null:n; };
+        const findCol = (...keys)=> head.findIndex(h=> keys.some(k=> h.toLowerCase().includes(k.toLowerCase())));
+        let cDate = findCol("التاريخ","تاريخ","Date");
+        let cDetails = findCol("تفاصيل","العملية","البيان","الوصف","Description","نوع");
+        let cMadin = findCol("مدين","المسحوب","سحب","Debit","خصم");
+        let cDain = findCol("دائن","المودع","إيداع","الوارد","Credit");
+        let cBal = findCol("الرصيد","رصيد","Balance");
+        // إذا ما لقى أعمدة مدين/دائن، جرّب عمود "المبلغ" الموحّد
+        let cAmount = findCol("المبلغ","مبلغ","Amount","القيمة");
+        // احتياط: المواقع الافتراضية لكشف الراجحي
+        if(cDate<0) cDate = head.length>10 ? 11 : 0;
+        if(cDetails<0) cDetails = head.length>10 ? 9 : 1;
+        const numOf = (v)=>{ const n=parseFloat(String(v).replace(/[,،\s]/g,"").replace(/[^0-9.\-]/g,"")); return isNaN(n)?null:n; };
         const parsed = [];
         for(let i=hi+1;i<grid.length;i++){
           const r = grid[i]||[];
-          const date = r[cDate];
-          const balN = numOf(r[cBal]);
-          if(!date || balN===null) continue;
-          const madin = numOf(r[cMadin])||0;
-          const dain = numOf(r[cDain])||0;
-          // النوع والاسم: العمود التفاصيل قد يجمعهما
+          const date = String(r[cDate]||"").trim();
+          if(!date || date.length<4) continue; // تخطّي الصفوف الفارغة
+          let madin=0, dain=0, balN=null;
+          if(cMadin>=0) madin = Math.abs(numOf(r[cMadin])||0);
+          if(cDain>=0) dain = Math.abs(numOf(r[cDain])||0);
+          if(cBal>=0) balN = numOf(r[cBal]);
+          // لو عمود مبلغ موحّد بدل مدين/دائن
+          if(cMadin<0 && cDain<0 && cAmount>=0){
+            const amt = numOf(r[cAmount])||0;
+            if(amt<0) madin=Math.abs(amt); else dain=amt;
+          }
+          // لا نشترط الرصيد — لو مافيه نحطه 0
+          if(balN===null) balN=0;
+          // لازم يكون فيه حركة مالية أو تاريخ فعلي
+          if(madin===0 && dain===0 && balN===0) continue;
           let detailRaw = String(r[cDetails]||"").trim();
-          let typeText = detailRaw, nameText = String(r[cDetails+1]||"").trim();
+          let nameText = "";
+          if(cDetails>=0 && cDetails+1<r.length) nameText = String(r[cDetails+1]||"").trim();
           parsed.push({
             id: "bnk_"+i+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),
-            date: String(date).trim(),
-            type: typeText,
-            name: nameText,
-            madin: Math.abs(madin),
-            dain: Math.abs(dain),
-            balance: balN,
+            date, type: detailRaw, name: nameText,
+            madin, dain, balance: balN,
           });
         }
+        if(parsed.length===0){
+          // رسالة مفصلة للتشخيص
+          toast&&toast("الملف فيه "+grid.length+" صف، رأس في سطر "+(hi+1)+": ["+head.slice(0,6).join(", ")+"] — لكن ما لقيت حركات. جرّب تنسيق مختلف","error");
+          return;
+        }
         saveParsed(parsed);
-      } catch(err){ toast&&toast("خطأ في قراءة ملف Excel","error"); }
+      } catch(err){ toast&&toast("خطأ في قراءة ملف Excel: "+(err&&err.message||""),"error"); }
     };
     reader.readAsArrayBuffer(file);
   };
