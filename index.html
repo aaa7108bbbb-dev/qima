@@ -1329,16 +1329,80 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     w.document.write(`<html dir="rtl"><head><meta charset="utf-8"><title>كشف المستثمر — ${invName}</title><style>*{font-family:Arial}body{padding:18px}h1{font-size:19px;text-align:center}table{width:100%;border-collapse:collapse;font-size:14px;margin-top:12px}th,td{border:1px solid #999;padding:8px;text-align:center}th{background:#1e2235;color:#fff}@media print{.noprint{display:none}}</style></head><body><div class="noprint" style="display:flex;gap:10px;margin-bottom:14px"><button onclick="window.print()" style="flex:1;background:#0d7a6f;color:#fff;border:none;border-radius:8px;padding:13px;font-size:16px;font-weight:800;cursor:pointer">🖨️ طباعة</button><button onclick="window.close()" style="background:#dc2626;color:#fff;border:none;border-radius:8px;padding:13px 20px;font-size:16px;font-weight:800;cursor:pointer">✕ إغلاق</button></div><h1>كشف المستثمر — ${invName} (${reportMode==="brief"?"مختصر":"مفصل"})</h1><table><thead>${thead}</thead><tbody>${rows}</tbody></table></body></html>`);
     w.document.close();
   };
+  // طباعة إيصال سداد
+  const printReceipt = (contract, amount, date, note, receiptNum) => {
+    const inv = investors.find(i=>String(i.id)===String(contract.investorId));
+    const totalPaid = _getPaid(payments, contract.id);
+    const remaining = Math.max(0, (contract.totalInst||0) - totalPaid);
+    const w = window.open("","_blank");
+    if(!w) return;
+    w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8">
+    <style>
+      *{box-sizing:border-box;font-family:Arial,sans-serif;margin:0;padding:0}
+      body{padding:12px;font-size:14px}
+      .receipt{border:2px solid #000;padding:16px;max-width:350px;margin:0 auto}
+      .header{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:12px}
+      .header h2{font-size:18px;margin-bottom:4px}
+      .header .sub{font-size:12px;color:#555}
+      .row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #ccc}
+      .row .label{font-weight:700;color:#333}
+      .row .val{font-weight:800}
+      .total{background:#f0f0f0;padding:10px;text-align:center;margin-top:12px;border-radius:6px}
+      .total .amount{font-size:22px;font-weight:900;color:#0d7a6f}
+      .footer{text-align:center;margin-top:14px;font-size:11px;color:#777;border-top:1px solid #ccc;padding-top:8px}
+      .sig{display:flex;justify-content:space-between;margin-top:20px;font-size:12px}
+      .sig div{text-align:center;min-width:100px}
+      .sig .line{border-top:1px solid #000;margin-top:30px;padding-top:4px}
+      @media print{.noprint{display:none!important}body{padding:0}}
+    </style></head><body>
+    <div class="noprint" style="display:flex;gap:10px;margin-bottom:14px">
+      <button onclick="window.print()" style="flex:1;background:#0d7a6f;color:#fff;border:none;border-radius:10px;padding:14px;font-size:17px;font-weight:800;cursor:pointer">🖨️ طباعة الإيصال</button>
+      <button onclick="window.close()" style="background:#dc2626;color:#fff;border:none;border-radius:10px;padding:14px 22px;font-size:17px;font-weight:800;cursor:pointer">✕ إغلاق</button>
+    </div>
+    <div class="receipt">
+      <div class="header">
+        <h2>مؤسسة قمة الفرصة التجارية</h2>
+        <div class="sub">إيصال سداد قسط</div>
+        <div style="margin-top:6px;font-size:16px;font-weight:900;color:#0d7a6f">رقم: ${receiptNum}</div>
+      </div>
+      <div class="row"><span class="label">اسم الزبون:</span><span class="val">${contract.client}</span></div>
+      <div class="row"><span class="label">رقم العقد:</span><span class="val">${contract.num||"—"}</span></div>
+      <div class="row"><span class="label">المستثمر:</span><span class="val">${inv?.name||"—"}</span></div>
+      <div class="row"><span class="label">تاريخ السداد:</span><span class="val">${date}</span></div>
+      <div class="row"><span class="label">ملاحظة:</span><span class="val">${note||"قسط"}</span></div>
+      <div class="total">
+        <div style="font-size:13px;color:#555">المبلغ المسدد</div>
+        <div class="amount">${parseFloat(amount).toLocaleString()} ر.س</div>
+      </div>
+      <div class="row"><span class="label">إجمالي العقد:</span><span class="val">${(contract.totalInst||0).toLocaleString()} ر.س</span></div>
+      <div class="row"><span class="label">إجمالي المسدد:</span><span class="val" style="color:#0d7a6f">${totalPaid.toLocaleString()} ر.س</span></div>
+      <div class="row"><span class="label">المتبقي:</span><span class="val" style="color:${remaining>0?"#dc2626":"#0d7a6f"}">${remaining.toLocaleString()} ر.س</span></div>
+      <div class="sig">
+        <div>توقيع المستلم<div class="line">المحاسب</div></div>
+        <div>توقيع الزبون<div class="line">${contract.client}</div></div>
+      </div>
+      <div class="footer">
+        ${new Date().toLocaleString("ar-SA")} — مؤسسة قمة الفرصة التجارية — بريدة
+      </div>
+    </div>
+    </body></html>`);
+    w.document.close();
+  };
+
   const addPayment=()=>{
     if(!payAmount||!payModal)return;
-    const paid = _getPaid(payments, payModal.id) + parseFloat(payAmount);
-    setPayments(p=>[...p,{id:Date.now(),contractId:payModal.id,amount:parseFloat(payAmount),date:payDate,note:payNote||"قسط"}]);
+    const receiptNum = (payments.length+1);
+    const amt = parseFloat(payAmount);
+    const paid = _getPaid(payments, payModal.id) + amt;
+    setPayments(p=>[...p,{id:Date.now(),contractId:payModal.id,amount:amt,date:payDate,note:payNote||"قسط",receipt:receiptNum}]);
+    // طباعة الإيصال تلقائياً
+    setTimeout(()=>printReceipt(payModal, payAmount, payDate, payNote, receiptNum), 300);
     setPayAmount("");setPayNote("");
     if(paid>=(payModal.totalInst||0) && !doneIds.includes(payModal.id)){
       setPayModal(null);
       setCompletionAlert(payModal);
     } else {
-      toast("✅ تم تسجيل السداد");
+      toast("✅ تم تسجيل السداد — إيصال رقم "+receiptNum);
     }
   };
   const [search,setSearch] = useState("");
