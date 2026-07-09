@@ -2821,8 +2821,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
 
   const subTabs = [
     {key:"list",  label:"👥 المستثمرون"},
-    {key:"inv",   label:"💰 الحسابات"},
-    {key:"funds", label:"🏦 الصناديق"},
+    {key:"inv",   label:"💰 حسابات المستثمرين"},
     {key:"comm",  label:"📑 العمولات"},
   ];
 
@@ -2845,7 +2844,6 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
       {/* Commissions sub-page */}
       {subTab==="list" && <InvestorsPage investors={investors} contracts={contracts} settings={settings} payments={payments} txList={txList} onAdd={inv=>setInvestors(p=>[...p,inv])} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} toast={toast}/>}
       {subTab==="comm" && <CommissionsPage contracts={contracts} investors={investors} settings={settings}/>}
-      {subTab==="funds" && <FundsPanel investors={investors} contracts={contracts} settings={settings} setInvestors={setInvestors} toast={toast}/>}
 
       {/* Investor accounts sub-page */}
       {subTab==="inv" && <>
@@ -5259,7 +5257,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
 }
 
 // ─── Settings Page ───────────────────────────────────────────
-function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,setPayments,dailyOpen,setDailyOpen,setPage}) {
+function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,setPayments,dailyOpen,setDailyOpen,setPage,investors,contracts,setInvestors}) {
   // 🔒 قفل الإعدادات برقم سري
   const [settingsPin] = useState(()=>{ try{ return localStorage.getItem("qimma_settings_pin")||"1234"; }catch(e){ return "1234"; } });
   const [pinInput,setPinInput] = useState("");
@@ -5450,11 +5448,12 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
           </div>
         </div>
       </div>
+
+      {/* ═══ الصناديق ═══ */}
+      {investors && <FundsPanel investors={investors} contracts={contracts} settings={settings} setInvestors={setInvestors} toast={toast}/>}
     </div>
   );
 }
-
-// ─── Goods Page ─────────────────────────────────────────────
 function GoodsPage({investors, contracts, toast, gsWrite}) {
   const [priceOverrides, setPriceOverrides] = useState(()=>{
     try{return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}");}catch{return{};}
@@ -6363,7 +6362,7 @@ function App() {
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast} gsWrite={gsWrite}/>}
         {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast} setPage={setPage}/>}
-        {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup} payments={payments} setPayments={setPayments} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} setPage={setPage}/>}
+        {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup} payments={payments} setPayments={setPayments} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} setPage={setPage} investors={investors} contracts={activeContracts} setInvestors={setInvestors}/>}
       </div>
 
       <Toast msg={toastMsg} type={toastType}/>
