@@ -1394,15 +1394,25 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     const receiptNum = (payments.length+1);
     const amt = parseFloat(payAmount);
     const paid = _getPaid(payments, payModal.id) + amt;
+    const remaining = Math.max(0, (payModal.totalInst||0) - paid);
     setPayments(p=>[...p,{id:Date.now(),contractId:payModal.id,amount:amt,date:payDate,note:payNote||"قسط",receipt:receiptNum}]);
-    // طباعة الإيصال تلقائياً
-    setTimeout(()=>printReceipt(payModal, payAmount, payDate, payNote, receiptNum), 300);
+    // إرسال واتساب للزبون فقط
+    setTimeout(()=>{
+      if(payModal.cPhone){
+        if(window.confirm("📲 إرسال إشعار واتساب للزبون؟")){
+          const phone = payModal.cPhone.replace(/^0/,"966");
+          const rNum = String(receiptNum).padStart(5,"0");
+          const msg = "✅ مؤسسة قمة الفرصة التجارية\n\nتم استلام مبلغ: "+amt.toLocaleString()+" ر.س\nإيصال رقم: "+rNum+"\nالتاريخ: "+payDate+"\n\nالمتبقي: "+remaining.toLocaleString()+" ر.س\n\nشكراً لكم 🤝";
+          window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+        }
+      }
+    }, 300);
     setPayAmount("");setPayNote("");
     if(paid>=(payModal.totalInst||0) && !doneIds.includes(payModal.id)){
       setPayModal(null);
       setCompletionAlert(payModal);
     } else {
-      toast("✅ تم تسجيل السداد — إيصال رقم "+receiptNum);
+      toast("✅ تم تسجيل السداد");
     }
   };
   const [search,setSearch] = useState("");
@@ -4413,7 +4423,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
     <div>
       <button style={{...styles.btn("#0d9488","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px",marginBottom:14,fontWeight:800}} onClick={()=>setPage("search")}>🔍 بحث شامل</button>
       {/* دفتر اليومية مدمج في الرئيسية */}
-      <DailyPage daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} contracts={contracts} settings={settings} toast={toast} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} investors={investors}/>
+      <DailyPage daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} contracts={contracts} settings={settings} toast={toast} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} investors={investors} payments={payments}/>
 
       {/* لوحة شغل اليوم */}
       <div style={{fontSize:20,fontWeight:900,margin:"8px 0 16px",color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12}}>☀️ شغل اليوم — {todayStr}</div>
@@ -4618,7 +4628,7 @@ const DAILY_TYPES = [
   {key:"zakat",   label:"زكاة",          sign:-1, color:"#7c3aed"},
   {key:"salf",    label:"سلف",           sign:-1, color:"#7c3aed"},
 ];
-function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, settings, toast, zakatTx, setZakatTx, loans, setLoans, investors}) {
+function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, settings, toast, zakatTx, setZakatTx, loans, setLoans, investors, payments}) {
   const today = new Date().toISOString().split("T")[0];
   const [selDay,setSelDay] = useState(today);
   const [baseInput,setBaseInput] = useState("");
@@ -4866,6 +4876,64 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
       </div>
 
       {/* حساب المدير والمحاسب */}
+      {/* 📲 إرسال ملخص واتساب للمدير */}
+      <div style={{marginBottom:16}}>
+        <button style={{...styles.btn("#25D366","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px",borderRadius:14,fontWeight:800}}
+          onClick={()=>{
+            let mgrP = "";
+            try{ mgrP = localStorage.getItem("qimma_mgr_phone")||""; }catch(e){}
+            if(!mgrP){toast("⚠️ أضف رقم جوال المدير بالإعدادات","warn");return;}
+
+            let msg = "📊 ملخص يوم "+selDay+"\n";
+            msg += "━━━━━━━━━━━━━━━\n";
+
+            // 1. حركات اليومية
+            if(dayRows.length>0){
+              msg += "\n📒 دفتر اليومية ("+dayRows.length+" حركة):\n";
+              DAILY_TYPES.forEach(t=>{
+                const items = dayRows.filter(d=>d.type===t.key);
+                if(items.length>0){
+                  const sum = items.reduce((s,d)=>s+d.amount,0);
+                  msg += "\n"+t.label+" ("+items.length+") — "+sum.toLocaleString()+" ر.س:\n";
+                  items.forEach((d,i)=>{ msg += "  "+(i+1)+". "+(d.desc||"—")+" — "+d.amount.toLocaleString()+"\n"; });
+                }
+              });
+              msg += "\n💰 رصيد الصندوق: "+closingBalance.toLocaleString()+" ر.س\n";
+            } else {
+              msg += "\n📒 دفتر اليومية: لا توجد حركات\n";
+            }
+
+            // 2. سدادات التحصيل
+            const dayPayments = (payments||[]).filter(p=>p.date===selDay);
+            if(dayPayments.length>0){
+              const payTotal = dayPayments.reduce((s,p)=>s+p.amount,0);
+              msg += "\n━━━━━━━━━━━━━━━\n";
+              msg += "💳 تحصيل أقساط ("+dayPayments.length+" سداد) — "+payTotal.toLocaleString()+" ر.س:\n";
+              dayPayments.forEach((p,i)=>{
+                const c = contracts.find(x=>x.id===p.contractId);
+                msg += "  "+(i+1)+". "+(c?.client||"—")+" — "+p.amount.toLocaleString()+" ر.س\n";
+              });
+            }
+
+            // 3. عقود جديدة
+            const newContracts = contracts.filter(c=>c.date===selDay && !c.deleted);
+            if(newContracts.length>0){
+              msg += "\n━━━━━━━━━━━━━━━\n";
+              msg += "📄 عقود جديدة ("+newContracts.length+"):\n";
+              newContracts.forEach((c,i)=>{
+                msg += "  "+(i+1)+". "+c.client+" — "+((c.totalInst||0)).toLocaleString()+" ر.س (قسط "+(c.instAmt||0).toLocaleString()+")\n";
+              });
+            }
+
+            msg += "\n━━━━━━━━━━━━━━━\n";
+            msg += "مؤسسة قمة الفرصة التجارية";
+
+            const mgrNum = mgrP.replace(/^0/,"966");
+            window.open("https://wa.me/"+mgrNum+"?text="+encodeURIComponent(msg),"_blank");
+          }}>
+          📲 إرسال ملخص اليوم للمدير — {selDay===today?"اليوم":selDay}
+        </button>
+      </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
         <div style={{...styles.card,borderTop:"4px solid #b45309"}}>
           <div style={{fontSize:15,fontWeight:800,color:"#b45309",marginBottom:8}}>👔 حساب المدير</div>
@@ -5407,6 +5475,7 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
   const [baseInput,setBaseInput] = useState(base?String(baseAmount):"");
   const [baseDateInput,setBaseDateInput] = useState(baseDate||new Date().toISOString().split("T")[0]);
   const [editingBase,setEditingBase] = useState(false);
+  const [mgrPhone,setMgrPhone] = useState(()=>{ try{ return localStorage.getItem("qimma_mgr_phone")||""; }catch(e){ return ""; } });
 
   if(!unlocked){
     return (
@@ -5454,6 +5523,17 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
         )}
       </div>
       <button style={{...styles.btn("#475569","#fff"),width:"100%",justifyContent:"center",fontSize:16,padding:"12px",marginBottom:16}} onClick={()=>setPage&&setPage("activity")}>📜 سجل النشاط</button>
+
+      {/* 📱 رقم جوال المدير */}
+      <div style={{...styles.card,marginBottom:16,background:"#f0fdf4",border:"1px solid #16a34a"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}>
+          <div style={{flex:1}}>
+            <label style={{fontSize:14,fontWeight:800,color:"#166534",display:"block",marginBottom:6}}>📱 رقم جوال المدير (للإشعارات)</label>
+            <input type="tel" placeholder="05xxxxxxxx" style={{...styles.input,width:"100%",fontSize:16,fontWeight:700,direction:"ltr"}} value={mgrPhone} onChange={e=>{setMgrPhone(e.target.value);try{localStorage.setItem("qimma_mgr_phone",e.target.value)}catch(x){}}}/>
+          </div>
+        </div>
+        <div style={{fontSize:12,color:"#6b7280",marginTop:6}}>يُستخدم لإرسال ملخص السدادات اليومية عبر واتساب</div>
+      </div>
 
       {/* رصيد بداية الصندوق */}
       <div style={{...styles.card,marginBottom:16,background:"#fffbf0",border:"1px solid "+C.gold}}>
