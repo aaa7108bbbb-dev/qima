@@ -4456,6 +4456,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
   return (
     <div>
       <button style={{...styles.btn("#0d9488","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px",marginBottom:14,fontWeight:800}} onClick={()=>setPage("search")}>🔍 بحث شامل</button>
+      <button style={{...styles.btn("#7c3aed","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px",marginBottom:14,fontWeight:800}} onClick={()=>setPage("profitloss")}>📊 تقرير الأرباح والخسائر</button>
       {/* دفتر اليومية مدمج في الرئيسية */}
       <DailyPage daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} contracts={contracts} settings={settings} toast={toast} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} investors={investors} payments={payments}/>
 
@@ -6279,6 +6280,302 @@ function OverduePage({contracts, investors, payments, goCollect}) {
   );
 }
 
+// ─── Profit & Loss Report (تقرير الأرباح والخسائر) ────────────
+function ProfitLossPage({contracts, daily, settings, payments, investors}) {
+  const SAR = v => (v||0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
+  const fiscalYM = d => { const mm=d.getMonth(), yy=d.getFullYear(); return d.getDate()>=21 ? (yy+"-"+String(mm+2).padStart(2,"0")) : (yy+"-"+String(mm+1).padStart(2,"0")); };
+  const allMonths = [];
+  const addM = d => { if(!d) return; const ym=fiscalYM(new Date(d)); if(ym&&!allMonths.includes(ym)) allMonths.push(ym); };
+  (contracts||[]).forEach(c=>addM(c.date));
+  (daily||[]).forEach(d=>addM(d.date));
+  allMonths.sort().reverse();
+  
+  const [mode, setMode] = React.useState("monthly"); // monthly / range
+  const [selMonth, setSelMonth] = React.useState(allMonths[0]||"");
+  const [rangeFrom, setRangeFrom] = React.useState(allMonths[allMonths.length-1]||"");
+  const [rangeTo, setRangeTo] = React.useState(allMonths[0]||"");
+  const [expanded, setExpanded] = React.useState(null);
+
+  const mLabel = ym => { if(!ym) return ""; const [y,m]=ym.split("-"); const mNames=["","يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"]; return mNames[+m]+" "+y; };
+
+  const getMonths = () => {
+    if(mode==="monthly") return selMonth?[selMonth]:[];
+    return allMonths.filter(m=>m>=rangeFrom&&m<=rangeTo).sort();
+  };
+
+  const calcPeriod = (months) => {
+    const activeC = (contracts||[]).filter(c=>!c.deleted&&!c.isOldContract);
+    const mc = activeC.filter(c=>{if(!c.date)return false; const ym=fiscalYM(new Date(c.date)); return months.includes(ym);});
+    
+    // === الإيرادات ===
+    let instShare=0, adminFees=0, accComm=0, totalProfit=0, investorNet=0;
+    mc.forEach(c=>{
+      const r=calcContract(+c.amount||0, settings, c.totalInst);
+      totalProfit += r.profit;
+      instShare += r.inst;
+      adminFees += r.admin;
+      accComm += r.acc;
+      investorNet += r.net;
+    });
+    
+    // دفتر اليومية - سداد (إيراد)
+    const periodDaily = (daily||[]).filter(d=>{if(!d.date)return false; const ym=fiscalYM(new Date(d.date)); return months.includes(ym);});
+    const sadadTotal = periodDaily.filter(d=>d.type==="sadad").reduce((s,d)=>s+(+d.amount||0),0);
+    
+    // محصّل الأقساط
+    const collected = (payments||[]).filter(p=>{if(!p.date)return false; const ym=fiscalYM(new Date(p.date)); return months.includes(ym);}).reduce((s,p)=>s+(+p.amount||0),0);
+    
+    // === المصروفات ===
+    const masroof = periodDaily.filter(d=>d.type==="masroof").reduce((s,d)=>s+(+d.amount||0),0);
+    const sahb = periodDaily.filter(d=>d.type==="sahb").reduce((s,d)=>s+(+d.amount||0),0);
+    const estilam = periodDaily.filter(d=>d.type==="estilam").reduce((s,d)=>s+(+d.amount||0),0);
+    const mgrWithdraw = periodDaily.filter(d=>d.type==="mgr").reduce((s,d)=>s+(+d.amount||0),0);
+    const accWithdraw = periodDaily.filter(d=>d.type==="acc").reduce((s,d)=>s+(+d.amount||0),0);
+    const zakatTotal = periodDaily.filter(d=>d.type==="zakat").reduce((s,d)=>s+(+d.amount||0),0);
+    const salfTotal = periodDaily.filter(d=>d.type==="salf").reduce((s,d)=>s+(+d.amount||0),0);
+    
+    // تفصيل المصروفات
+    const masroofDetails = periodDaily.filter(d=>d.type==="masroof").map(d=>({desc:d.desc||"—",amount:+d.amount||0,date:d.date}));
+    
+    // === حساب صافي المؤسسة ===
+    const totalRevenue = instShare + adminFees; // إيراد المؤسسة = نصيبها + الرسوم الإدارية
+    const totalExpenses = masroof + zakatTotal; // مصروفات فعلية
+    const netProfit = totalRevenue - totalExpenses;
+    
+    // === عدد العقود ومبالغ ===
+    const contractCount = mc.length;
+    const cashAmount = mc.reduce((s,c)=>s+(+c.amount||0),0);
+    const totalWithProfit = mc.reduce((s,c)=>s+(+c.totalInst||+c.amount||0),0);
+
+    // === حسب المستثمر ===
+    const byInvestor = (investors||[]).map(iv=>{
+      const ic = mc.filter(c=>String(c.investorId)===String(iv.id));
+      if(ic.length===0) return null;
+      let inv_profit=0, inv_inst=0, inv_acc=0, inv_admin=0, inv_net=0;
+      ic.forEach(c=>{const r=calcContract(+c.amount||0,settings,c.totalInst);inv_profit+=r.profit;inv_inst+=r.inst;inv_acc+=r.acc;inv_admin+=r.admin;inv_net+=r.net;});
+      return {name:iv.name, count:ic.length, cash:ic.reduce((s,c)=>s+(+c.amount||0),0), profit:inv_profit, instShare:inv_inst, accComm:inv_acc, admin:inv_admin, net:inv_net};
+    }).filter(Boolean);
+
+    return {
+      contractCount, cashAmount, totalWithProfit, collected,
+      totalProfit, instShare, adminFees, accComm, investorNet,
+      totalRevenue, masroof, zakatTotal, salfTotal, totalExpenses, netProfit,
+      sadadTotal, sahb, estilam, mgrWithdraw, accWithdraw,
+      masroofDetails, byInvestor
+    };
+  };
+
+  const months = getMonths();
+  const d = months.length>0 ? calcPeriod(months) : null;
+  const periodLabel = mode==="monthly" ? mLabel(selMonth) : mLabel(rangeFrom)+" → "+mLabel(rangeTo);
+
+  const Card = ({icon,label,value,color,sub,onClick}) => (
+    <div onClick={onClick} style={{background:"#fff",borderRadius:14,padding:"16px 14px",border:"2px solid "+(color||"#e5e7eb"),cursor:onClick?"pointer":"default",position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:0,right:0,width:60,height:60,background:(color||"#e5e7eb")+"15",borderRadius:"0 0 0 60px"}}></div>
+      <div style={{fontSize:13,color:"#78716c",fontWeight:700,marginBottom:4}}>{icon} {label}</div>
+      <div style={{fontSize:22,fontWeight:900,color:color||C.ink}}>{value}</div>
+      {sub && <div style={{fontSize:12,color:"#999",marginTop:4}}>{sub}</div>}
+    </div>
+  );
+
+  const Section = ({title,icon,children,color}) => (
+    <div style={{marginBottom:16}}>
+      <div style={{fontSize:16,fontWeight:900,color:color||C.ink,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+        <span>{icon}</span><span>{title}</span>
+        <div style={{flex:1,height:2,background:(color||C.ink)+"22",borderRadius:2,marginRight:8}}></div>
+      </div>
+      {children}
+    </div>
+  );
+
+  const Row = ({label,value,bold,color,indent}) => (
+    <div style={{display:"flex",justifyContent:"space-between",padding:"6px "+(indent?"24px":"0"),fontSize:14,fontWeight:bold?800:500}}>
+      <span style={{color:color||"#374151"}}>{label}</span>
+      <span style={{color:color||C.ink,fontWeight:800,direction:"ltr"}}>{SAR(value)} ر.س</span>
+    </div>
+  );
+
+  const printReport = () => {
+    if(!d) return;
+    const w=window.open("","_blank"); if(!w) return;
+    w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>تقرير أرباح وخسائر</title>
+    <style>*{font-family:Arial;box-sizing:border-box}body{padding:20px;max-width:800px;margin:auto}
+    h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:18px 0 8px;padding:6px 10px;background:#f3f4f6;border-radius:6px}
+    .row{display:flex;justify-content:space-between;padding:4px 12px;font-size:13px;border-bottom:1px solid #eee}
+    .row.bold{font-weight:900;font-size:14px;background:#fefce8;border-radius:6px;border:none;margin:4px 0}
+    .row.total{font-weight:900;font-size:16px;padding:10px 12px;border-radius:8px;margin:8px 0;border:none}
+    .green{color:#15803d;background:#f0fdf4}.red{color:#dc2626;background:#fef2f2}
+    .grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin:10px 0}
+    .card{border:1px solid #ddd;border-radius:8px;padding:10px;text-align:center}
+    .card .v{font-size:18px;font-weight:900}.card .l{font-size:11px;color:#666}
+    table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0}th,td{border:1px solid #ccc;padding:5px;text-align:center}th{background:#f0f0f0}
+    @media print{@page{size:A4;margin:10mm}}</style></head>
+    <body onload="window.print()">
+    <h1>مؤسسة قمة الفرصة التجارية</h1>
+    <div style="color:#555;margin-bottom:16px">تقرير الأرباح والخسائر | ${periodLabel}</div>
+    <div class="grid">
+      <div class="card"><div class="l">عقود</div><div class="v">${d.contractCount}</div></div>
+      <div class="card"><div class="l">نقدي</div><div class="v">${SAR(d.cashAmount)}</div></div>
+      <div class="card"><div class="l">بالفائدة</div><div class="v">${SAR(d.totalWithProfit)}</div></div>
+      <div class="card"><div class="l">محصّل</div><div class="v">${SAR(d.collected)}</div></div>
+    </div>
+    <h2>📈 الإيرادات</h2>
+    <div class="row"><span>إجمالي الأرباح من العقود</span><span>${SAR(d.totalProfit)}</span></div>
+    <div class="row"><span>↳ نصيب المؤسسة</span><span>${SAR(d.instShare)}</span></div>
+    <div class="row"><span>↳ الرسوم الإدارية</span><span>${SAR(d.adminFees)}</span></div>
+    <div class="row"><span>↳ عمولة المحاسبين</span><span>${SAR(d.accComm)}</span></div>
+    <div class="row"><span>↳ صافي المستثمرين</span><span>${SAR(d.investorNet)}</span></div>
+    <div class="row bold"><span>إيراد المؤسسة (نصيب + رسوم)</span><span>${SAR(d.totalRevenue)}</span></div>
+    <h2>📉 المصروفات</h2>
+    <div class="row"><span>المصروفات التشغيلية</span><span>${SAR(d.masroof)}</span></div>
+    <div class="row"><span>الزكاة</span><span>${SAR(d.zakatTotal)}</span></div>
+    <div class="row bold"><span>إجمالي المصروفات</span><span>${SAR(d.totalExpenses)}</span></div>
+    <div class="row total ${d.netProfit>=0?"green":"red"}"><span>صافي ربح المؤسسة</span><span>${SAR(d.netProfit)} ر.س</span></div>
+    ${d.byInvestor.length>0?`<h2>👥 تفصيل المستثمرين</h2>
+    <table><thead><tr><th>المستثمر</th><th>العقود</th><th>النقدي</th><th>الربح</th><th>ن.المؤسسة</th><th>ع.محاسبين</th><th>رسوم</th><th>صافي المستثمر</th></tr></thead>
+    <tbody>${d.byInvestor.map(r=>`<tr><td>${r.name}</td><td>${r.count}</td><td>${SAR(r.cash)}</td><td>${SAR(r.profit)}</td><td>${SAR(r.instShare)}</td><td>${SAR(r.accComm)}</td><td>${SAR(r.admin)}</td><td>${SAR(r.net)}</td></tr>`).join("")}</tbody></table>`:""}
+    </body></html>`);
+    w.document.close();
+  };
+
+  return (
+    <div style={styles.main}>
+      <div style={styles.panel}>
+        <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+          <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>📊 تقرير الأرباح والخسائر</h2>
+          {d && <button style={{...styles.btn(C.gold),fontSize:13,padding:"7px 14px"}} onClick={printReport}>🖨️ طباعة</button>}
+        </div>
+        <div style={{padding:"16px 18px"}}>
+          {/* اختيار الفترة */}
+          <div style={{display:"flex",gap:0,marginBottom:16,background:"#f1f5f9",borderRadius:10,overflow:"hidden",width:"fit-content"}}>
+            <button onClick={()=>setMode("monthly")} style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:14,fontWeight:700,padding:"8px 20px",border:"none",cursor:"pointer",background:mode==="monthly"?C.teal:"transparent",color:mode==="monthly"?"#fff":C.ink2}}>شهر</button>
+            <button onClick={()=>setMode("range")} style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:14,fontWeight:700,padding:"8px 20px",border:"none",cursor:"pointer",background:mode==="range"?C.teal:"transparent",color:mode==="range"?"#fff":C.ink2}}>فترة</button>
+          </div>
+
+          {mode==="monthly" ? (
+            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:16}}>
+              {allMonths.slice(0,12).map(ym=>(
+                <button key={ym} onClick={()=>setSelMonth(ym)}
+                  style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:13,fontWeight:selMonth===ym?800:600,padding:"8px 14px",borderRadius:10,border:"2px solid "+(selMonth===ym?C.teal:"#e5e7eb"),background:selMonth===ym?C.teal:"#fff",color:selMonth===ym?"#fff":C.ink2,cursor:"pointer"}}>{mLabel(ym)}</button>
+              ))}
+            </div>
+          ) : (
+            <div style={{display:"flex",gap:10,marginBottom:16,alignItems:"center",flexWrap:"wrap"}}>
+              <select style={styles.select} value={rangeFrom} onChange={e=>setRangeFrom(e.target.value)}>
+                {allMonths.slice().reverse().map(ym=><option key={ym} value={ym}>{mLabel(ym)}</option>)}
+              </select>
+              <span style={{fontWeight:800}}>→</span>
+              <select style={styles.select} value={rangeTo} onChange={e=>setRangeTo(e.target.value)}>
+                {allMonths.map(ym=><option key={ym} value={ym}>{mLabel(ym)}</option>)}
+              </select>
+            </div>
+          )}
+
+          {!d ? (
+            <div style={{textAlign:"center",padding:40,color:"#999"}}>اختر فترة لعرض التقرير</div>
+          ) : (<>
+            {/* بطاقات سريعة */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
+              <Card icon="📝" label="عدد العقود" value={d.contractCount} color={C.teal}/>
+              <Card icon="💰" label="إجمالي بالفائدة" value={SAR(d.totalWithProfit)} color={C.gold} sub="ر.س"/>
+              <Card icon="✅" label="المحصّل" value={SAR(d.collected)} color={C.green} sub="ر.س"/>
+              <Card icon={d.netProfit>=0?"🟢":"🔴"} label="صافي المؤسسة" value={SAR(d.netProfit)} color={d.netProfit>=0?"#15803d":"#dc2626"} sub="ر.س"/>
+            </div>
+
+            {/* === الإيرادات === */}
+            <Section title="الإيرادات" icon="📈" color="#15803d">
+              <div style={{background:"#f0fdf4",borderRadius:12,padding:"12px 14px",border:"1px solid #bbf7d0"}}>
+                <Row label="إجمالي أرباح العقود" value={d.totalProfit} bold color="#15803d"/>
+                <div style={{height:1,background:"#d1fae5",margin:"6px 0"}}></div>
+                <Row label="↳ نصيب المؤسسة" value={d.instShare} indent/>
+                <Row label="↳ الرسوم الإدارية" value={d.adminFees} indent/>
+                <Row label="↳ عمولة المحاسبين" value={d.accComm} indent/>
+                <Row label="↳ صافي المستثمرين" value={d.investorNet} indent/>
+                <div style={{height:2,background:"#15803d44",margin:"8px 0"}}></div>
+                <Row label="💰 إيراد المؤسسة (نصيب + رسوم)" value={d.totalRevenue} bold color="#15803d"/>
+              </div>
+            </Section>
+
+            {/* === المصروفات === */}
+            <Section title="المصروفات" icon="📉" color="#dc2626">
+              <div style={{background:"#fef2f2",borderRadius:12,padding:"12px 14px",border:"1px solid #fecaca"}}>
+                <Row label="المصروفات التشغيلية" value={d.masroof} color="#dc2626"/>
+                {d.masroofDetails.length>0 && (
+                  <div style={{marginRight:20,marginTop:4,marginBottom:8}}>
+                    {d.masroofDetails.slice(0,expanded==="masroof"?999:3).map((m,i)=>(
+                      <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#888",padding:"2px 0"}}>
+                        <span>{m.desc}</span><span>{SAR(m.amount)}</span>
+                      </div>
+                    ))}
+                    {d.masroofDetails.length>3 && (
+                      <button onClick={()=>setExpanded(expanded==="masroof"?null:"masroof")} style={{fontSize:12,color:C.teal,background:"none",border:"none",cursor:"pointer",fontWeight:700,padding:0,marginTop:4}}>
+                        {expanded==="masroof"?"⬆️ أقل":"⬇️ عرض الكل ("+d.masroofDetails.length+")"}
+                      </button>
+                    )}
+                  </div>
+                )}
+                <Row label="الزكاة" value={d.zakatTotal} color="#7c3aed"/>
+                <div style={{height:2,background:"#dc262644",margin:"8px 0"}}></div>
+                <Row label="📍 إجمالي المصروفات" value={d.totalExpenses} bold color="#dc2626"/>
+              </div>
+            </Section>
+
+            {/* === صافي الربح === */}
+            <div style={{background:d.netProfit>=0?"linear-gradient(135deg,#f0fdf4,#dcfce7)":"linear-gradient(135deg,#fef2f2,#fee2e2)",borderRadius:16,padding:"20px 18px",textAlign:"center",border:"2px solid "+(d.netProfit>=0?"#22c55e":"#ef4444"),marginBottom:20}}>
+              <div style={{fontSize:14,color:"#78716c",fontWeight:700,marginBottom:4}}>{d.netProfit>=0?"🏆 صافي ربح المؤسسة":"⚠️ صافي خسارة المؤسسة"}</div>
+              <div style={{fontSize:32,fontWeight:900,color:d.netProfit>=0?"#15803d":"#dc2626"}}>{SAR(Math.abs(d.netProfit))}<span style={{fontSize:16}}> ر.س</span></div>
+              {d.cashAmount>0 && <div style={{fontSize:13,color:"#78716c",marginTop:6}}>نسبة الربح من رأس المال: <b style={{color:d.netProfit>=0?"#15803d":"#dc2626"}}>{Math.round((d.netProfit/d.cashAmount)*100)}%</b></div>}
+            </div>
+
+            {/* === حركة الصندوق === */}
+            <Section title="حركة الصندوق" icon="🏦" color={C.gold}>
+              <div style={{background:"#fffbeb",borderRadius:12,padding:"12px 14px",border:"1px solid #fde68a"}}>
+                <Row label="إجمالي السداد (وارد)" value={d.sadadTotal} color="#15803d"/>
+                <Row label="السحوبات" value={d.sahb} color="#dc2626"/>
+                <Row label="استلام نقدي" value={d.estilam} color="#dc2626"/>
+                <Row label="استلام مدير" value={d.mgrWithdraw} color="#b45309"/>
+                <Row label="استلام محاسب" value={d.accWithdraw} color="#b45309"/>
+                <Row label="السلف" value={d.salfTotal} color="#7c3aed"/>
+              </div>
+            </Section>
+
+            {/* === تفصيل المستثمرين === */}
+            {d.byInvestor.length>0 && (
+              <Section title="تفصيل المستثمرين" icon="👥" color={C.teal}>
+                <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:600}}>
+                    <thead>
+                      <tr style={{background:"#f1f5f9"}}>
+                        {["المستثمر","عقود","النقدي","الربح","ن.المؤسسة","ع.محاسبين","رسوم","صافي"].map(h=>(
+                          <th key={h} style={{padding:"8px 6px",fontWeight:800,borderBottom:"2px solid #cbd5e1",whiteSpace:"nowrap"}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {d.byInvestor.map((r,i)=>(
+                        <tr key={i} style={{background:i%2===0?"#fff":"#f8fafc"}}>
+                          <td style={{padding:"7px 6px",fontWeight:700,borderBottom:"1px solid #e5e7eb"}}>{r.name}</td>
+                          <td style={{padding:"7px 6px",textAlign:"center",borderBottom:"1px solid #e5e7eb"}}>{r.count}</td>
+                          <td style={{padding:"7px 6px",textAlign:"center",borderBottom:"1px solid #e5e7eb"}}>{SAR(r.cash)}</td>
+                          <td style={{padding:"7px 6px",textAlign:"center",borderBottom:"1px solid #e5e7eb",color:C.green,fontWeight:700}}>{SAR(r.profit)}</td>
+                          <td style={{padding:"7px 6px",textAlign:"center",borderBottom:"1px solid #e5e7eb"}}>{SAR(r.instShare)}</td>
+                          <td style={{padding:"7px 6px",textAlign:"center",borderBottom:"1px solid #e5e7eb"}}>{SAR(r.accComm)}</td>
+                          <td style={{padding:"7px 6px",textAlign:"center",borderBottom:"1px solid #e5e7eb"}}>{SAR(r.admin)}</td>
+                          <td style={{padding:"7px 6px",textAlign:"center",borderBottom:"1px solid #e5e7eb",fontWeight:800,color:C.teal}}>{SAR(r.net)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Section>
+            )}
+          </>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Activity Log Page ───────────────────────────────────────
 function ActivityPage({activity, setActivity, toast, setPage}){
   const [filter,setFilter] = React.useState("all");
@@ -6678,6 +6975,7 @@ function App() {
         {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast}/>}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast} gsWrite={gsWrite}/>}
+        {page==="profitloss" && <ProfitLossPage contracts={activeContracts} daily={daily} settings={settings} payments={payments} investors={investors}/>}
         {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast} setPage={setPage}/>}
         {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup} payments={payments} setPayments={setPayments} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} setPage={setPage} investors={investors} contracts={activeContracts} setInvestors={setInvestors}/>}
       </div>
