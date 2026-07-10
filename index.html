@@ -4456,7 +4456,6 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
   return (
     <div>
       <button style={{...styles.btn("#0d9488","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px",marginBottom:14,fontWeight:800}} onClick={()=>setPage("search")}>🔍 بحث شامل</button>
-      <button style={{...styles.btn("#7c3aed","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px",marginBottom:14,fontWeight:800}} onClick={()=>setPage("profitloss")}>📊 تقرير الأرباح والخسائر</button>
       {/* دفتر اليومية مدمج في الرئيسية */}
       <DailyPage daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} contracts={contracts} settings={settings} toast={toast} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} investors={investors} payments={payments}/>
 
