@@ -5500,6 +5500,7 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
   };
 
   const [s,setS]=useState({...settings});
+  const upd = (k,v) => { const ns={...s,[k]:v}; setS(ns); onSave(ns); };
   const r=calcContract(10000,s);
   // رصيد بداية الصندوق
   const _do = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
@@ -5662,6 +5663,51 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
             </label>
           </div>
           <div style={{fontSize:13,color:C.red,marginTop:12,fontWeight:700}}>⚠️ الاسترجاع يستبدل كل البيانات الحالية بالكامل.</div>
+
+          {/* إعدادات النسخ التلقائي */}
+          <div style={{marginTop:24,paddingTop:20,borderTop:"2px dashed "+C.border}}>
+            <div style={{fontSize:15,fontWeight:800,color:C.ink,marginBottom:12}}>🔄 نسخ احتياطي تلقائي للإيميل</div>
+            <div style={{fontSize:13,color:"#555",marginBottom:14,lineHeight:1.7}}>يرسل نسخة من كل بياناتك لإيميلك تلقائياً كل فترة بدون أي تدخل منك.</div>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+              <button
+                style={{...styles.btn(s.autoBackup?C.green:"#e5e7eb",s.autoBackup?"#fff":C.ink),fontSize:14,padding:"8px 16px"}}
+                onClick={()=>upd("autoBackup",!s.autoBackup)}>
+                {s.autoBackup?"✅ مفعّل":"⬜ معطّل"}
+              </button>
+              {s.autoBackup && (
+                <select style={{...styles.select,flex:1}} value={s.autoBackupHours||"24"} onChange={e=>upd("autoBackupHours",e.target.value)}>
+                  <option value="12">كل 12 ساعة</option>
+                  <option value="24">كل 24 ساعة</option>
+                  <option value="48">كل 48 ساعة</option>
+                  <option value="72">كل 3 أيام</option>
+                  <option value="168">كل أسبوع</option>
+                </select>
+              )}
+            </div>
+            {s.autoBackup && (<>
+              <div style={{marginBottom:10}}>
+                <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>📧 الإيميل</label>
+                <input style={styles.input} type="email" placeholder="example@gmail.com" value={s.backupEmail||""} onChange={e=>upd("backupEmail",e.target.value)}/>
+              </div>
+              <div style={{marginBottom:10}}>
+                <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>🔗 رابط السكربت (Google Apps Script)</label>
+                <input style={styles.input} type="url" dir="ltr" placeholder="https://script.google.com/macros/s/..." value={s.backupScriptUrl||""} onChange={e=>upd("backupScriptUrl",e.target.value)}/>
+                <div style={{fontSize:11,color:"#999",marginTop:4,lineHeight:1.6}}>أنشئ سكربت Google جديد والصق الرابط هنا. اسأل Claude عن طريقة إنشاء السكربت.</div>
+              </div>
+              <div style={{fontSize:12,color:C.green,fontWeight:700}}>✅ آخر نسخة: {localStorage.getItem("qimma_last_auto_backup")?new Date(parseInt(localStorage.getItem("qimma_last_auto_backup"))).toLocaleString("ar-SA"):"لم تُرسل بعد"}</div>
+              <button style={{...styles.btn(C.teal,"#fff"),fontSize:13,padding:"8px 14px",marginTop:8}} onClick={async()=>{
+                if(!s.backupEmail||!s.backupScriptUrl){toast("حدد الإيميل ورابط السكربت أولاً","error");return;}
+                try{
+                  const out={};Object.keys(localStorage).forEach(k=>{if(k.indexOf("qimma_")===0){try{out[k]=JSON.parse(localStorage.getItem(k));}catch{out[k]=localStorage.getItem(k);}}});
+                  toast("⏳ جارٍ الإرسال...");
+                  const resp=await fetch(s.backupScriptUrl,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({email:s.backupEmail,backup:{_backup:"qima",_date:new Date().toISOString(),data:out}})});
+                  const r=await resp.json();
+                  if(r.success){localStorage.setItem("qimma_last_auto_backup",String(Date.now()));toast("✅ تم الإرسال بنجاح! تفقّد إيميلك");}
+                  else toast("⚠️ فشل الإرسال: "+(r.error||"خطأ"),"error");
+                }catch(e){toast("⚠️ تعذّر الاتصال بالسكربت","error");}
+              }}>📤 إرسال تجريبي الآن</button>
+            </>)}
+          </div>
 
           <div style={{marginTop:24,paddingTop:20,borderTop:"2px dashed "+C.border}}>
             <div style={{fontSize:15,fontWeight:800,color:C.red,marginBottom:8}}>🗑️ تصفير الدفعات (المحصّل)</div>
@@ -6406,6 +6452,47 @@ function App() {
     } catch(e){ toast("⚠️ تعذّر الاستيراد - تأكد من الملف","error"); }
   };
 
+  // ─── نسخ احتياطي تلقائي صامت (عبر Google Apps Script) ──────────
+  const [autoBackupStatus, setAutoBackupStatus] = useState("");
+  React.useEffect(()=>{
+    const runAutoBackup = async () => {
+      try {
+        const sRaw = localStorage.getItem("qimma_settings");
+        const s = sRaw ? JSON.parse(sRaw) : {};
+        if(!s.autoBackup || !s.backupEmail || !s.backupScriptUrl) return;
+        const last = localStorage.getItem("qimma_last_auto_backup");
+        const now = Date.now();
+        const hrs = parseFloat(s.autoBackupHours)||24;
+        if(last && (now - parseInt(last)) < hrs*3600000) return;
+
+        // جمّع البيانات
+        const out = {};
+        Object.keys(localStorage).forEach(k=>{ if(k.indexOf("qimma_")===0){ try{ out[k]=JSON.parse(localStorage.getItem(k)); }catch{ out[k]=localStorage.getItem(k); } } });
+        const backupData = {_backup:"qima", _date:new Date().toISOString(), data:out};
+
+        setAutoBackupStatus("sending");
+        const resp = await fetch(s.backupScriptUrl, {
+          method:"POST",
+          headers:{"Content-Type":"text/plain"},
+          body: JSON.stringify({email:s.backupEmail, backup:backupData})
+        });
+        const result = await resp.json();
+        if(result.success){
+          localStorage.setItem("qimma_last_auto_backup", String(Date.now()));
+          setAutoBackupStatus("success");
+          setTimeout(()=>setAutoBackupStatus(""),4000);
+        } else {
+          setAutoBackupStatus("error");
+          setTimeout(()=>setAutoBackupStatus(""),5000);
+        }
+      } catch(e){
+        setAutoBackupStatus("error");
+        setTimeout(()=>setAutoBackupStatus(""),5000);
+      }
+    };
+    setTimeout(runAutoBackup, 3000);
+  },[]);
+
   const [investors,setInvestorsRaw]=useState(()=>{
     // تنظيف لمرة واحدة: مسح أسماء المستثمرين القديمة المخزنة محلياً لإجبار القراءة الطازجة
     if(!localStorage.getItem("qimma_inv_names_fixed")){
@@ -6596,6 +6683,18 @@ function App() {
       </div>
 
       <Toast msg={toastMsg} type={toastType}/>
+
+      {/* مؤشر النسخ الاحتياطي التلقائي */}
+      {autoBackupStatus && (
+        <div style={{position:"fixed",top:12,left:"50%",transform:"translateX(-50%)",zIndex:9999,
+          background:autoBackupStatus==="sending"?"#1e40af":autoBackupStatus==="success"?"#15803d":"#b91c1c",
+          color:"#fff",padding:"10px 20px",borderRadius:12,fontSize:14,fontWeight:700,
+          boxShadow:"0 4px 20px rgba(0,0,0,0.3)",display:"flex",alignItems:"center",gap:8}}>
+          {autoBackupStatus==="sending" && <><span style={{animation:"spin 1s linear infinite",display:"inline-block"}}>⏳</span> جارٍ إرسال النسخة الاحتياطية...</>}
+          {autoBackupStatus==="success" && <>✅ تم إرسال النسخة الاحتياطية لإيميلك</>}
+          {autoBackupStatus==="error" && <>⚠️ تعذّر إرسال النسخة — تحقق من الإعدادات</>}
+        </div>
+      )}
     </div>
   );
 }
