@@ -786,7 +786,10 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
       {(c.note || c.deductEnabled) && (
         <div style={{marginTop:10,padding:"8px 14px",borderTop:"1px solid #000",fontSize:15}}>
           {c.note && <div style={{marginBottom:4}}><strong>ملاحظة:</strong> {c.note}</div>}
-          {c.deductEnabled && c.deductAmount && (
+          {c.deductEnabled && c.deducts && c.deducts.map((d,i)=>(
+            d.amount && <div key={i}><strong>يخصم مبلغ</strong> {parseFloat(d.amount).toLocaleString("en-US")} ريال سداد للمستثمر {investors&&investors.find(x=>String(x.id)===String(d.investorId))?.name||""}</div>
+          ))}
+          {c.deductEnabled && !c.deducts && c.deductAmount && (
             <div><strong>يخصم مبلغ</strong> {parseFloat(c.deductAmount).toLocaleString("en-US")} ريال سداد للمستثمر {investors&&investors.find(i=>String(i.id)===String(c.deductInvestorId))?.name||""}</div>
           )}
         </div>
@@ -804,7 +807,7 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
 function NewContractPage({investors, settings, contracts, onSave, toast, setInvTxList}) {
   const today = new Date().toISOString().split("T")[0];
   const nextNum = contracts.length ? Math.max(...contracts.map(c=>parseInt(c.num)||0).filter(n=>n>0), 0) + 1 : (settings.startNum||1);
-  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:"",contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",bankAccount:"",stockName:"",stockQty:"",isOldContract:false});
+  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}],contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",bankAccount:"",stockName:"",stockQty:"",isOldContract:false});
   const set = (k,v) => {
     setForm(f=>({...f,[k]:v}));
     // Auto-fill if idNum entered and matches existing contract
@@ -857,25 +860,38 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
       investorId:parseInt(form.investorId),
       profit:form.isOldContract?0:deferProfit, admin:form.isOldContract?0:rr.admin, acc:form.isOldContract?0:rr.acc, inst:form.isOldContract?0:rr.inst, net:form.isOldContract?0:rr.net, total:rr.total,
       isOldContract:form.isOldContract||false};
+    // migrate deducts array to contract
+    const activeDeducts = (form.deducts||[]).filter(d=>d.amount && d.investorId);
+    if(form.deductEnabled && activeDeducts.length>0){
+      contract.deductEnabled=true;
+      contract.deducts=activeDeducts;
+      // backward compat: keep first deduct in old fields
+      contract.deductAmount=activeDeducts[0].amount;
+      contract.deductInvestorId=activeDeducts[0].investorId;
+    }
     onSave(contract);
-    // Add deduct to investor account
-    if(form.deductEnabled && form.deductAmount && form.deductInvestorId && setInvTxList) {
-      const amt = parseFloat(form.deductAmount)||0;
-      const txId = Date.now()+"_deduct";
+    // Add deducts to investor accounts
+    if(form.deductEnabled && activeDeducts.length>0 && setInvTxList) {
       setInvTxList(prev => {
-        const invId = parseInt(form.deductInvestorId);
-        return {...prev, [invId]: [...(prev[invId]||[]), {
-          id: txId,
-          date: form.date,
-          type: "deposit",
-          amount: amt,
-          note: "سداد من عميل: "+form.client+" | عقد رقم "+form.num
-        }]};
+        const next = {...prev};
+        activeDeducts.forEach((d,idx)=>{
+          const amt = parseFloat(d.amount)||0;
+          const invId = parseInt(d.investorId);
+          const txId = Date.now()+"_deduct_"+idx;
+          next[invId] = [...(next[invId]||[]), {
+            id: txId,
+            date: form.date,
+            type: "deposit",
+            amount: amt,
+            note: "سداد من عميل: "+form.client+" | عقد رقم "+form.num
+          }];
+        });
+        return next;
       });
     }
     toast("✅ تم حفظ العقد بنجاح");
     const nn = parseInt(form.num)+1;
-    setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nn),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:"",isOldContract:false});
+    setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nn),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}],isOldContract:false});
   };
 
   const fields1 = [
@@ -1011,18 +1027,6 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
                 </div>
               </div>
             )}
-          </div>
-
-          {/* عقد قديم */}
-          <div style={{marginBottom:14,background:form.isOldContract?"#fef3c7":"#f8fafc",border:"2px solid "+(form.isOldContract?"#f59e0b":C.border),borderRadius:12,padding:"14px 16px",cursor:"pointer"}}
-            onClick={()=>set("isOldContract",!form.isOldContract)}>
-            <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <div style={{width:24,height:24,borderRadius:6,border:"2px solid "+(form.isOldContract?"#f59e0b":C.border),background:form.isOldContract?"#f59e0b":"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:"#fff",fontWeight:900,flexShrink:0}}>{form.isOldContract?"✓":""}</div>
-              <div>
-                <div style={{fontSize:15,fontWeight:800,color:form.isOldContract?"#92400e":C.ink2}}>📋 عقد قديم (بدون خصم)</div>
-                <div style={{fontSize:12,color:"#78716c",marginTop:2}}>يُسجّل العقد ويضاف على إجمالي المستثمر فقط — بدون عمولات أو خصومات</div>
-              </div>
-            </div>
           </div>
 
           {/* نوع السداد */}
@@ -1163,25 +1167,41 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
               {form.deductEnabled && <span style={{fontSize:14,color:"#333"}}>سيطلع في العقد المطبوع</span>}
             </div>
             {form.deductEnabled && (
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:8}}>
-                <div>
-                  <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المبلغ (ريال)</label>
-                  <input style={styles.input} type="number" placeholder="مثال: 3000" value={form.deductAmount||""} onChange={e=>set("deductAmount",e.target.value)}/>
-                </div>
-                <div>
-                  <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المستثمر</label>
-                  <select style={styles.select} value={form.deductInvestorId||""} onChange={e=>set("deductInvestorId",e.target.value)}>
-                    <option value="">اختر مستثمر</option>
-                    {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
-                  </select>
-                </div>
+              <div style={{display:"flex",flexDirection:"column",gap:10,marginTop:8}}>
+                {(form.deducts||[]).map((d,idx)=>(
+                  <div key={idx} style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,alignItems:"end",background:idx%2===0?"#fefce8":"#fff",padding:"8px 10px",borderRadius:10,border:"1px solid #e5e7eb"}}>
+                    <div>
+                      <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:3}}>المبلغ (ريال) {idx+1}</label>
+                      <input style={styles.input} type="number" placeholder="مثال: 3000" value={d.amount||""} onChange={e=>{const dd=[...(form.deducts||[])];dd[idx]={...dd[idx],amount:e.target.value};setForm(f=>({...f,deducts:dd}));}}/>
+                    </div>
+                    <div>
+                      <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:3}}>المستثمر {idx+1}</label>
+                      <select style={styles.select} value={d.investorId||""} onChange={e=>{const dd=[...(form.deducts||[])];dd[idx]={...dd[idx],investorId:e.target.value};setForm(f=>({...f,deducts:dd}));}}>
+                        <option value="">اختر مستثمر</option>
+                        {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
+
+            {/* عقد قديم */}
+            <div style={{marginTop:14,marginBottom:4,background:form.isOldContract?"#fef3c7":"#f8fafc",border:"2px solid "+(form.isOldContract?"#f59e0b":C.border),borderRadius:12,padding:"14px 16px",cursor:"pointer"}}
+              onClick={()=>set("isOldContract",!form.isOldContract)}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{width:24,height:24,borderRadius:6,border:"2px solid "+(form.isOldContract?"#f59e0b":C.border),background:form.isOldContract?"#f59e0b":"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:"#fff",fontWeight:900,flexShrink:0}}>{form.isOldContract?"✓":""}</div>
+                <div>
+                  <div style={{fontSize:15,fontWeight:800,color:form.isOldContract?"#92400e":C.ink2}}>📋 عقد قديم (بدون خصم)</div>
+                  <div style={{fontSize:12,color:"#78716c",marginTop:2}}>يُسجّل ويضاف على إجمالي المستثمر فقط — بدون عمولات</div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div style={{display:"flex",gap:10,marginTop:16}}>
             <button style={styles.btn(C.teal)} onClick={save}>💾 حفظ العقد</button>
-            <button style={styles.btn("transparent",C.ink2)} onClick={()=>setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:"",isOldContract:false})}>مسح</button>
+            <button style={styles.btn("transparent",C.ink2)} onClick={()=>setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}],isOldContract:false})}>مسح</button>
           </div>
         </div>
       </div>
@@ -3139,7 +3159,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
         if(isCard){
           return {
             id:"c_"+c.id, date:c.date,
-            supportClient:(c.deductEnabled&&c.deductAmount)?parseFloat(c.deductAmount)||0:0,
+            supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,
             supportAcc:0,
             withdrawnQty:parseInt(c.qty)||0,
             price:0, cashOnly:false,
@@ -3148,7 +3168,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
         // سلعة نقدية (أسهم/سيارة/جوال): قيمتها النقدية تُخصم من نقدي السلع، بلا لمس البطاقات
         return {
           id:"c_"+c.id, date:c.date,
-          supportClient:(c.deductEnabled&&c.deductAmount)?parseFloat(c.deductAmount)||0:0,
+          supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,
           supportAcc:-(parseFloat(c.amount)||0),
           withdrawnQty:0,
           price:0, cashOnly:true,
@@ -5700,7 +5720,7 @@ function GoodsPage({investors, contracts, toast, gsWrite}) {
         contractAmount:parseFloat(c.amount)||0,
         client:c.client,
         investor:inv?invLabel(inv):"—",
-        supportClient:(c.deductEnabled&&c.deductAmount)?parseFloat(c.deductAmount)||0:0,
+        supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,
         supportAcc:0,
         withdrawnQty:parseInt(c.qty)||0,
         fromContract:true,
@@ -5713,7 +5733,7 @@ function GoodsPage({investors, contracts, toast, gsWrite}) {
         contractAmount:parseFloat(c.amount)||0,
         client:c.client+" — "+(c.goods||"سلعة")+stockInfo,
         investor:inv?invLabel(inv):"—",
-        supportClient:(c.deductEnabled&&c.deductAmount)?parseFloat(c.deductAmount)||0:0,
+        supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,
         supportAcc:-(parseFloat(c.amount)||0),  // سالبة: تخصم قيمة العقد النقدية من الإجمالي النقدي
         withdrawnQty:0,
         fromContract:true,
