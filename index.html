@@ -350,7 +350,7 @@ function calcContract(amount, s = {profit:50, admin:2.5, acc:10, inst:10}, total
   return { profit, admin, acc, inst, net, total };
 }
 // مساعد: يحسب العقد باستخدام إجماليه الفعلي (totalInst)
-function calcC(c, settings){ return calcContract(+c.amount||0, settings, c.totalInst); }
+function calcC(c, settings){ if(c.isOldContract) return {profit:0,admin:0,acc:0,inst:0,net:0,total:+c.totalInst||+c.amount||0}; return calcContract(+c.amount||0, settings, c.totalInst); }
 
 function numToWords(n) {
   n = Math.round(n);
@@ -804,7 +804,7 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
 function NewContractPage({investors, settings, contracts, onSave, toast, setInvTxList}) {
   const today = new Date().toISOString().split("T")[0];
   const nextNum = contracts.length ? Math.max(...contracts.map(c=>parseInt(c.num)||0).filter(n=>n>0), 0) + 1 : (settings.startNum||1);
-  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:"",contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",bankAccount:"",stockName:"",stockQty:""});
+  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:"",contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",bankAccount:"",stockName:"",stockQty:"",isOldContract:false});
   const set = (k,v) => {
     setForm(f=>({...f,[k]:v}));
     // Auto-fill if idNum entered and matches existing contract
@@ -855,7 +855,8 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
     const deferProfit = isDefer ? (_totalInst - amount) : rr.profit;
     const contract = {id, ...saveForm, amount, totalInst:_totalInst, instAmt:_instAmt, lastInst:_lastInst, numMonths:_numMonths,
       investorId:parseInt(form.investorId),
-      profit:deferProfit, admin:rr.admin, acc:rr.acc, inst:rr.inst, net:rr.net, total:rr.total};
+      profit:form.isOldContract?0:deferProfit, admin:form.isOldContract?0:rr.admin, acc:form.isOldContract?0:rr.acc, inst:form.isOldContract?0:rr.inst, net:form.isOldContract?0:rr.net, total:rr.total,
+      isOldContract:form.isOldContract||false};
     onSave(contract);
     // Add deduct to investor account
     if(form.deductEnabled && form.deductAmount && form.deductInvestorId && setInvTxList) {
@@ -874,7 +875,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
     }
     toast("✅ تم حفظ العقد بنجاح");
     const nn = parseInt(form.num)+1;
-    setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nn),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:""});
+    setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nn),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:"",isOldContract:false});
   };
 
   const fields1 = [
@@ -1010,6 +1011,18 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
                 </div>
               </div>
             )}
+          </div>
+
+          {/* عقد قديم */}
+          <div style={{marginBottom:14,background:form.isOldContract?"#fef3c7":"#f8fafc",border:"2px solid "+(form.isOldContract?"#f59e0b":C.border),borderRadius:12,padding:"14px 16px",cursor:"pointer"}}
+            onClick={()=>set("isOldContract",!form.isOldContract)}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{width:24,height:24,borderRadius:6,border:"2px solid "+(form.isOldContract?"#f59e0b":C.border),background:form.isOldContract?"#f59e0b":"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:"#fff",fontWeight:900,flexShrink:0}}>{form.isOldContract?"✓":""}</div>
+              <div>
+                <div style={{fontSize:15,fontWeight:800,color:form.isOldContract?"#92400e":C.ink2}}>📋 عقد قديم (بدون خصم)</div>
+                <div style={{fontSize:12,color:"#78716c",marginTop:2}}>يُسجّل العقد ويضاف على إجمالي المستثمر فقط — بدون عمولات أو خصومات</div>
+              </div>
+            </div>
           </div>
 
           {/* نوع السداد */}
@@ -1168,7 +1181,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
 
           <div style={{display:"flex",gap:10,marginTop:16}}>
             <button style={styles.btn(C.teal)} onClick={save}>💾 حفظ العقد</button>
-            <button style={styles.btn("transparent",C.ink2)} onClick={()=>setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:""})}>مسح</button>
+            <button style={styles.btn("transparent",C.ink2)} onClick={()=>setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deductAmount:"",deductInvestorId:"",isOldContract:false})}>مسح</button>
           </div>
         </div>
       </div>
@@ -1552,7 +1565,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                 <div key={c.id} style={{...styles.card,padding:"12px 14px",borderRight:"5px solid "+(c.lateAmt>0?C.red:C.green)}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8,flexWrap:"wrap",gap:6}}>
                     <div>
-                      <div style={{fontSize:16,fontWeight:800}}>{c.client} {c.contractType==="defer"&&<span style={{fontSize:12,color:"#a87520"}}>🕒 مؤجل</span>}</div>
+                      <div style={{fontSize:16,fontWeight:800}}>{c.client} {c.contractType==="defer"&&<span style={{fontSize:12,color:"#a87520"}}>🕒 مؤجل</span>}{c.isOldContract&&<span style={{fontSize:12,color:"#92400e",background:"#fef3c7",padding:"1px 6px",borderRadius:6,marginRight:4}}>📋 قديم</span>}</div>
                       <div style={{fontSize:13,color:"#1f2937"}}>{inv?invLabel(inv):"—"} · عقد {c.num}</div>
                     </div>
                     {c.lateAmt>0
@@ -2514,6 +2527,7 @@ function CommissionsPage({contracts, investors, settings}) {
   const mLabel=ym=>{const[y,m]=ym.split("-");return"شهر "+parseInt(m)+" - "+y;};
 
   const mc = contracts.filter(c=>{
+    if(c.isOldContract) return false;
     const d=new Date(c.date);
     return fiscalYM(d)===selMonth;
   });
@@ -2829,7 +2843,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
 
   // Auto-transactions from contracts
   const myContracts = contracts.filter(c=>c.investorId===selInv);
-  const autoTx = myContracts.map(c=>{
+  const autoTx = myContracts.filter(c=>!c.isOldContract).map(c=>{
     const r = calcC(c, settings);
     // ينخصم: قيمة العقد النقدية + عمولة المحاسبين + نصيب المؤسسة + الرسوم الإدارية
     const deduct = c.amount + r.acc + r.inst + r.admin;
@@ -3178,7 +3192,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     const capital = inv?.capital||0;
     const myContracts = contracts.filter(c=>c.investorId===id);
     const myManualTx = (txList[id]||[]);
-    const autoDeduct = myContracts.reduce((s,c)=>{
+    const autoDeduct = myContracts.filter(c=>!c.isOldContract).reduce((s,c)=>{
       const r=calcC(c,settings);
       return s-(c.amount+r.acc+r.inst+r.admin);
     },0);
