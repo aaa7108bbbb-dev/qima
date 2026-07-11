@@ -4360,6 +4360,38 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
             </tbody>
           </table>
         </div>
+        <div style={{fontSize:17,fontWeight:900,color:C.ink,borderRight:"4px solid #2563eb",paddingRight:12,marginTop:28,marginBottom:12}}>📊 إجمالي المتبقي لكل مستثمر</div>
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",borderRadius:10,overflow:"hidden"}}>
+            <thead><tr>
+              <th style={th}>المستثمر</th><th style={th}>عدد العقود</th><th style={th}>رأس المال</th>
+              <th style={th}>الإجمالي بالفائدة</th><th style={th}>المحصّل</th>
+              <th style={th}>المتبقي</th><th style={th}>نسبة التحصيل</th>
+            </tr></thead>
+            <tbody>
+              {investors.map((iv,i)=>{
+                const ic=allC.filter(c=>String(c.investorId)===String(iv.id));
+                const cash=ic.reduce((s,c)=>s+(+c.amount||0),0);
+                const total=ic.reduce((s,c)=>s+(+c.totalInst||+c.amount||0),0);
+                const paid=ic.reduce((s,c)=>s+_getPaid(payments,c.id),0);
+                const rem=Math.max(0,total-paid);
+                const pct=total>0?Math.round((paid/total)*100):0;
+                return(<tr key={i} style={{background:i%2?"#fafafa":"#fff"}}>
+                  <td style={{...td,textAlign:"right",fontWeight:800}}>{invLabel(iv)}</td>
+                  <td style={{...td,fontWeight:700}}>{ic.length}</td>
+                  <td style={td}>{SAR(cash)}</td>
+                  <td style={{...td,color:"#7c3aed"}}>{SAR(total)}</td>
+                  <td style={{...td,color:C.green,fontWeight:700}}>{SAR(paid)}</td>
+                  <td style={{...td,color:rem>0?C.red:C.green,fontWeight:800}}>{SAR(rem)}</td>
+                  <td style={{...td,fontWeight:700}}><div style={{background:"#e5e7eb",borderRadius:6,overflow:"hidden",height:18,position:"relative"}}><div style={{background:pct>=80?"#34d399":pct>=50?"#fbbf24":"#f87171",height:"100%",width:pct+"%",borderRadius:6,transition:"width 0.5s"}}/><span style={{position:"absolute",top:0,right:0,left:0,textAlign:"center",fontSize:11,lineHeight:"18px",fontWeight:800}}>{pct}%</span></div></td>
+                </tr>);
+              })}
+            </tbody>
+            <tfoot><tr style={{background:"#f1f5f9"}}>
+              {(()=>{const tc=allC,cash=tc.reduce((s,c)=>s+(+c.amount||0),0),total=tc.reduce((s,c)=>s+(+c.totalInst||+c.amount||0),0),paid=tc.reduce((s,c)=>s+_getPaid(payments,c.id),0),rem=Math.max(0,total-paid),pct=total>0?Math.round((paid/total)*100):0;return(<><td style={{...td,fontWeight:900}}>المجموع</td><td style={{...td,fontWeight:900}}>{tc.length}</td><td style={{...td,fontWeight:900}}>{SAR(cash)}</td><td style={{...td,fontWeight:900,color:"#7c3aed"}}>{SAR(total)}</td><td style={{...td,fontWeight:900,color:C.green}}>{SAR(paid)}</td><td style={{...td,fontWeight:900,color:rem>0?C.red:C.green}}>{SAR(rem)}</td><td style={{...td,fontWeight:900}}>{pct}%</td></>);})()}
+            </tr></tfoot>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -6575,6 +6607,167 @@ function ProfitLossPage({contracts, daily, settings, payments, investors}) {
   );
 }
 
+// ─── Cash Flow & Simulator (البوصلة المالية) ────────────────
+function CashFlowPage({contracts, investors, settings, payments}) {
+  const SAR = v => (v||0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
+  const [tab, setTab] = useState("actual");
+  const allC = (contracts||[]).filter(c=>!c.deleted);
+  const today = new Date();
+  const profitRate = +settings.profit||50;
+  const adminRate = +settings.admin||2.5;
+  const accRate = +settings.acc||10;
+  const instRate = +settings.inst||10;
+
+  // ═══ تبويب ١: التدفق الفعلي ═══
+  const ActualFlow = () => {
+    const months = [];
+    for(let i=0;i<12;i++){
+      const d = new Date(today.getFullYear(), today.getMonth()+i, 1);
+      const ym = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+      const label = "شهر "+parseInt(d.getMonth()+1)+" - "+d.getFullYear();
+      months.push({ym, label, income:0, count:0});
+    }
+    allC.forEach(c=>{
+      const inst = +c.instAmt||0, total = +c.totalInst||+c.amount||0;
+      if(inst<=0||!c.firstInst||total<=0) return;
+      const first = new Date(c.firstInst);
+      const totalCount = Math.max(1, Math.round(total/inst));
+      const paid = (payments||[]).filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
+      const paidCount = Math.min(totalCount, Math.floor(paid/inst));
+      for(let q=paidCount; q<totalCount; q++){
+        const dueDate = new Date(first.getFullYear(), first.getMonth()+q, first.getDate());
+        const dueYM = dueDate.getFullYear()+"-"+String(dueDate.getMonth()+1).padStart(2,"0");
+        const mo = months.find(m=>m.ym===dueYM);
+        if(mo){ mo.income += inst; mo.count++; }
+      }
+    });
+    const maxIncome = Math.max(...months.map(m=>m.income), 1);
+    const totalYear = months.reduce((s,m)=>s+m.income,0);
+    return (<div>
+      <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:14,marginBottom:16,fontSize:13,lineHeight:1.8,color:"#1e40af"}}>الأقساط المتوقع تحصيلها خلال 12 شهر القادمة بناءً على العقود الحالية</div>
+      <div style={{display:"flex",alignItems:"flex-end",gap:4,height:200,marginBottom:20,padding:"0 4px",borderBottom:"2px solid #e5e7eb"}}>
+        {months.map((m,i)=>{const h=Math.max(4,(m.income/maxIncome)*170);return(<div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+          <div style={{fontSize:9,fontWeight:700,color:C.teal}}>{m.income>0?SAR(m.income):""}</div>
+          <div style={{width:"100%",height:h,background:"linear-gradient(to top, #0d9488, #34d399)",borderRadius:"6px 6px 0 0",transition:"height 0.5s",minWidth:16}}/>
+          <div style={{fontSize:9,color:"#6b7280"}}>{parseInt(m.ym.split("-")[1])}</div>
+        </div>);})}
+      </div>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}}>
+        <div style={{flex:1,minWidth:120,background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:14,textAlign:"center"}}>
+          <div style={{fontSize:13,color:"#555"}}>إجمالي متوقع 12 شهر</div>
+          <div style={{fontSize:22,fontWeight:900,color:C.green}}>{SAR(totalYear)}</div>
+        </div>
+        <div style={{flex:1,minWidth:120,background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:14,textAlign:"center"}}>
+          <div style={{fontSize:13,color:"#555"}}>متوسط شهري</div>
+          <div style={{fontSize:22,fontWeight:900,color:"#2563eb"}}>{SAR(totalYear/12)}</div>
+        </div>
+      </div>
+      <div style={{background:"#fff",borderRadius:12,border:"1px solid #e5e7eb",overflow:"hidden"}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+          <thead><tr style={{background:"#f9fafb"}}><th style={{padding:"10px 8px",textAlign:"right",fontWeight:700}}>الشهر</th><th style={{padding:"10px 8px",textAlign:"center",fontWeight:700}}>عدد الأقساط</th><th style={{padding:"10px 8px",textAlign:"center",fontWeight:700}}>المتوقع</th></tr></thead>
+          <tbody>{months.map((m,i)=>(<tr key={i} style={{borderBottom:"1px solid #f3f4f6",background:i%2===0?"#fff":"#fafbfc"}}><td style={{padding:"10px 8px",fontWeight:600}}>{m.label}</td><td style={{padding:"10px 8px",textAlign:"center"}}>{m.count}</td><td style={{padding:"10px 8px",textAlign:"center",fontWeight:700,color:m.income>0?C.green:"#999"}}>{SAR(m.income)}</td></tr>))}</tbody>
+        </table>
+      </div>
+    </div>);
+  };
+
+  // ═══ تبويب ٢: محاكي التدوير ═══
+  const Simulator = () => {
+    const [capital, setCapital] = useState(100000);
+    const [numMonths, setNumMonths] = useState(24);
+    const [instCount, setInstCount] = useState(16);
+    const simData = React.useMemo(()=>{
+      const batches = [];
+      const months = [];
+      const firstProfit = capital * (profitRate/100);
+      const firstTotal = capital + firstProfit;
+      const firstInst = Math.round(firstTotal / instCount);
+      batches.push({instAmt: firstInst, startMonth: 1, months: instCount});
+      let totalMashed = capital, totalAdminFees = 0, totalAccFees = 0, totalInstFees = 0, totalInvProfit = 0;
+      const firstAdmin = capital * (adminRate/100);
+      const firstAcc = firstProfit * (accRate/100);
+      const firstInstFee = firstProfit * (instRate/100);
+      const firstInvNet = firstProfit - firstAdmin - firstAcc - firstInstFee;
+      totalAdminFees += firstAdmin; totalAccFees += firstAcc; totalInstFees += firstInstFee; totalInvProfit += firstInvNet;
+      for(let m=1; m<=numMonths; m++){
+        let returning = 0;
+        batches.forEach(b=>{ if(m >= b.startMonth+1 && m <= b.startMonth + b.months) returning += b.instAmt; });
+        let newMashed=0,newProfit=0,monthAdmin=0,monthAcc=0,monthInstFee=0,monthInvNet=0;
+        if(returning > 0 && m > 1){
+          newMashed = returning;
+          newProfit = newMashed * (profitRate/100);
+          const newTotal = newMashed + newProfit;
+          const newInst = Math.round(newTotal / instCount);
+          monthAdmin = newMashed * (adminRate/100);
+          monthAcc = newProfit * (accRate/100);
+          monthInstFee = newProfit * (instRate/100);
+          monthInvNet = newProfit - monthAdmin - monthAcc - monthInstFee;
+          batches.push({instAmt: newInst, startMonth: m, months: instCount});
+          totalMashed += newMashed; totalAdminFees += monthAdmin; totalAccFees += monthAcc; totalInstFees += monthInstFee; totalInvProfit += monthInvNet;
+        }
+        const d = new Date(today.getFullYear(), today.getMonth()+m-1, 1);
+        months.push({month:m,label:"شهر "+parseInt(d.getMonth()+1)+" - "+d.getFullYear(),mashed:m===1?capital:newMashed,profit:m===1?firstProfit:newProfit,returning:m===1?0:returning,admin:m===1?firstAdmin:monthAdmin,acc:m===1?firstAcc:monthAcc,instFee:m===1?firstInstFee:monthInstFee,invNet:m===1?firstInvNet:monthInvNet,activeBatches:batches.filter(b=>m>=b.startMonth&&m<b.startMonth+b.months).length});
+      }
+      return {months,totalMashed,totalAdminFees,totalAccFees,totalInstFees,totalInvProfit,totalProfit:totalAdminFees+totalAccFees+totalInstFees+totalInvProfit,capital};
+    },[capital,numMonths,instCount,profitRate,adminRate,accRate,instRate]);
+    const maxBar = Math.max(...simData.months.map(m=>Math.max(m.mashed, m.returning)),1);
+    return (<div>
+      <div style={{background:"#fff",borderRadius:14,padding:16,marginBottom:20,border:"1px solid #e2e8f0"}}>
+        <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"flex-end"}}>
+          <div style={{flex:1,minWidth:100}}><label style={{fontSize:11,fontWeight:700,color:"#555",display:"block",marginBottom:4}}>رأس المال (مرة وحدة)</label><input type="number" value={capital} onChange={e=>setCapital(+e.target.value||0)} style={{width:"100%",padding:"10px",borderRadius:10,border:"1.5px solid #d1d5db",fontSize:15,fontWeight:700,textAlign:"center"}}/></div>
+          <div style={{flex:1,minWidth:80}}><label style={{fontSize:11,fontWeight:700,color:"#555",display:"block",marginBottom:4}}>عدد الأشهر</label><input type="number" value={numMonths} onChange={e=>setNumMonths(Math.min(60,Math.max(1,+e.target.value||1)))} style={{width:"100%",padding:"10px",borderRadius:10,border:"1.5px solid #d1d5db",fontSize:15,fontWeight:700,textAlign:"center"}}/></div>
+          <div style={{flex:1,minWidth:80}}><label style={{fontSize:11,fontWeight:700,color:"#555",display:"block",marginBottom:4}}>أقساط العقد</label><input type="number" value={instCount} onChange={e=>setInstCount(Math.max(1,+e.target.value||1))} style={{width:"100%",padding:"10px",borderRadius:10,border:"1.5px solid #d1d5db",fontSize:15,fontWeight:700,textAlign:"center"}}/></div>
+        </div>
+      </div>
+      <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:14,marginBottom:16,fontSize:13,lineHeight:1.8,color:"#1e40af"}}>💡 <strong>التدوير:</strong> تحط {SAR(capital)} مرة وحدة — كل ما ترجع أقساط تتمشّى تلقائي بعقود جديدة.</div>
+      <div style={{fontSize:13,fontWeight:700,textAlign:"center",marginBottom:10}}>🔄 التدوير — التمشية vs الأقساط الراجعة</div>
+      <div style={{display:"flex",alignItems:"flex-end",gap:3,height:200,marginBottom:8,padding:"0 4px",borderBottom:"2px solid #e5e7eb"}}>
+        {simData.months.map((m,i)=>{const hMash=Math.max(2,(m.mashed/maxBar)*170);const hRet=Math.max(0,(m.returning/maxBar)*170);return(<div key={i} style={{flex:1,minWidth:14,display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
+          <div style={{width:"100%",display:"flex",flexDirection:"column",gap:1}}><div style={{height:hMash,background:m.month===1?"#60a5fa":"#34d399",borderRadius:"4px 4px 0 0",transition:"height 0.4s"}}/>{hRet>0&&<div style={{height:hRet,background:"#fbbf24",borderRadius:"0 0 4px 4px",transition:"height 0.4s"}}/>}</div>
+          <div style={{fontSize:8,color:"#6b7280"}}>{m.month}</div>
+        </div>);})}
+      </div>
+      <div style={{display:"flex",justifyContent:"center",gap:16,fontSize:11,marginBottom:20}}>
+        <span><span style={{display:"inline-block",width:10,height:10,background:"#60a5fa",borderRadius:2,marginLeft:4}}/>رأس المال</span>
+        <span><span style={{display:"inline-block",width:10,height:10,background:"#34d399",borderRadius:2,marginLeft:4}}/>تدوير</span>
+        <span><span style={{display:"inline-block",width:10,height:10,background:"#fbbf24",borderRadius:2,marginLeft:4}}/>راجع</span>
+      </div>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:10}}>
+        <div style={{flex:1,minWidth:100,background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:14,textAlign:"center"}}><div style={{fontSize:11,color:"#555"}}>رأس المال المدفوع</div><div style={{fontSize:18,fontWeight:900,color:"#2563eb"}}>{SAR(simData.capital)}</div></div>
+        <div style={{flex:1,minWidth:100,background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:14,textAlign:"center"}}><div style={{fontSize:11,color:"#555"}}>إجمالي التدوير</div><div style={{fontSize:18,fontWeight:900,color:C.green}}>{SAR(simData.totalMashed)}</div></div>
+      </div>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:10}}>
+        <div style={{flex:1,minWidth:100,background:"#fefce8",border:"1px solid #fde68a",borderRadius:12,padding:14,textAlign:"center"}}><div style={{fontSize:11,color:"#555"}}>صافي المستثمر</div><div style={{fontSize:18,fontWeight:900,color:"#b45309"}}>{SAR(simData.totalInvProfit)}</div></div>
+        <div style={{flex:1,minWidth:100,background:"#fdf2f8",border:"1px solid #fbcfe8",borderRadius:12,padding:14,textAlign:"center"}}><div style={{fontSize:11,color:"#555"}}>المدير (إدارية)</div><div style={{fontSize:18,fontWeight:900,color:"#be185d"}}>{SAR(simData.totalAdminFees)}</div></div>
+      </div>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}}>
+        <div style={{flex:1,minWidth:100,background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:12,padding:14,textAlign:"center"}}><div style={{fontSize:11,color:"#555"}}>المحاسب</div><div style={{fontSize:18,fontWeight:900,color:"#7c3aed"}}>{SAR(simData.totalAccFees)}</div></div>
+        <div style={{flex:1,minWidth:100,background:"#ecfdf5",border:"1px solid #a7f3d0",borderRadius:12,padding:14,textAlign:"center"}}><div style={{fontSize:11,color:"#555"}}>التحصيل</div><div style={{fontSize:18,fontWeight:900,color:"#059669"}}>{SAR(simData.totalInstFees)}</div></div>
+      </div>
+      <div style={{overflowX:"auto"}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:550,background:"#fff",borderRadius:12,overflow:"hidden",border:"1px solid #e5e7eb"}}>
+          <thead><tr style={{background:"#f1f5f9"}}><th style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>#</th><th style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>تمشية</th><th style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>الربح</th><th style={{padding:"8px 6px",textAlign:"center",fontWeight:700,color:"#c8922a"}}>راجع</th><th style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>عقود</th><th style={{padding:"8px 6px",textAlign:"center",fontWeight:700,color:C.green}}>صافي المستثمر</th><th style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>المدير</th><th style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>المحاسب</th></tr></thead>
+          <tbody>{simData.months.map((m,i)=>(<tr key={i} style={{borderBottom:"1px solid #f3f4f6",background:i%2===0?"#fff":"#fafbfc"}}><td style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>{m.month}</td><td style={{padding:"8px 6px",textAlign:"center"}}>{SAR(m.mashed)}</td><td style={{padding:"8px 6px",textAlign:"center",color:C.green}}>{SAR(m.profit)}</td><td style={{padding:"8px 6px",textAlign:"center",color:"#c8922a",fontWeight:700}}>{SAR(m.returning)}</td><td style={{padding:"8px 6px",textAlign:"center"}}>{m.activeBatches}</td><td style={{padding:"8px 6px",textAlign:"center",color:C.green,fontWeight:700}}>{SAR(m.invNet)}</td><td style={{padding:"8px 6px",textAlign:"center"}}>{SAR(m.admin)}</td><td style={{padding:"8px 6px",textAlign:"center"}}>{SAR(m.acc)}</td></tr>))}</tbody>
+          <tfoot><tr style={{background:"#f1f5f9",fontWeight:900}}><td style={{padding:"10px 6px",textAlign:"center"}}>المجموع</td><td style={{padding:"10px 6px",textAlign:"center"}}>{SAR(simData.totalMashed)}</td><td style={{padding:"10px 6px",textAlign:"center",color:C.green}}>{SAR(simData.totalProfit)}</td><td style={{padding:"10px 6px",textAlign:"center"}}>—</td><td style={{padding:"10px 6px",textAlign:"center"}}>—</td><td style={{padding:"10px 6px",textAlign:"center",color:C.green}}>{SAR(simData.totalInvProfit)}</td><td style={{padding:"10px 6px",textAlign:"center"}}>{SAR(simData.totalAdminFees)}</td><td style={{padding:"10px 6px",textAlign:"center"}}>{SAR(simData.totalAccFees)}</td></tr></tfoot>
+        </table>
+      </div>
+    </div>);
+  };
+
+  return (
+    <div style={{padding:16,maxWidth:900,margin:"0 auto"}}>
+      <div style={{fontSize:22,fontWeight:900,textAlign:"center",marginBottom:4,color:C.ink}}>🧭 البوصلة المالية</div>
+      <div style={{fontSize:13,color:"#6b7280",textAlign:"center",marginBottom:20}}>شوف مستقبلك المالي — بالأرقام</div>
+      <div style={{display:"flex",gap:0,marginBottom:24,borderRadius:12,overflow:"hidden",border:"2px solid "+C.teal}}>
+        {[["actual","📊 التدفق الفعلي"],["simulator","🔄 محاكي التدوير"]].map(([id,label])=>(
+          <button key={id} onClick={()=>setTab(id)} style={{flex:1,padding:"12px 8px",fontSize:14,fontWeight:700,border:"none",cursor:"pointer",background:tab===id?C.teal:"#fff",color:tab===id?"#fff":C.teal,transition:"all 0.2s",fontFamily:"inherit"}}>{label}</button>
+        ))}
+      </div>
+      {tab==="actual" ? <ActualFlow/> : <Simulator/>}
+    </div>
+  );
+}
+
 // ─── Activity Log Page ───────────────────────────────────────
 function ActivityPage({activity, setActivity, toast, setPage}){
   const [filter,setFilter] = React.useState("all");
@@ -6905,6 +7098,7 @@ function App() {
     {id:"goods",label:"📦",name:"البضاعة",color:"#78350f"},
     {id:"portfolio",label:"📊",name:"المحفظة الشهرية",color:"#0d9488"},
     {id:"profitloss",label:"📈",name:"أرباح وخسائر",color:"#7c3aed"},
+    {id:"cashflow",label:"🧭",name:"البوصلة المالية",color:"#0369a1"},
     {id:"settings",label:"⚙️",name:"الإعدادات",color:"#4b5563"},
   ];
   // ترتيب التبويبات حسب المحفوظ
@@ -6976,6 +7170,7 @@ function App() {
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast} gsWrite={gsWrite}/>}
         {page==="profitloss" && <ProfitLossPage contracts={activeContracts} daily={daily} settings={settings} payments={payments} investors={investors}/>}
+        {page==="cashflow" && <CashFlowPage contracts={activeContracts} investors={investors} settings={settings} payments={payments}/>}
         {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast} setPage={setPage}/>}
         {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup} payments={payments} setPayments={setPayments} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} setPage={setPage} investors={investors} contracts={activeContracts} setInvestors={setInvestors}/>}
       </div>
