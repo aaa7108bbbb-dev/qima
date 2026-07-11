@@ -6618,56 +6618,231 @@ function CashFlowPage({contracts, investors, settings, payments}) {
   const accRate = +settings.acc||10;
   const instRate = +settings.inst||10;
 
-  // ═══ تبويب ١: التدفق الفعلي ═══
+  // ═══ تبويب ١: التدفق الفعلي (مطوّر) ═══
   const ActualFlow = () => {
+    const [forecastMonths, setForecastMonths] = useState(24);
+    const allPayments = payments||[];
+
+    // ── حسابات أساسية ──
+    const totalCapitalOut = allC.reduce((s,c)=>s+(+c.amount||0),0);
+    const totalWithProfit = allC.reduce((s,c)=>s+(+c.totalInst||+c.amount||0),0);
+    const totalProfit = totalWithProfit - totalCapitalOut;
+    const totalPaid = allC.reduce((s,c)=>s+_getPaid(allPayments,c.id),0);
+    const totalRemaining = Math.max(0, totalWithProfit - totalPaid);
+    const completionPct = totalWithProfit>0 ? Math.round((totalPaid/totalWithProfit)*100) : 0;
+
+    // ── حساب حصص الأرباح الإجمالية ──
+    const totalCalc = allC.reduce((s,c)=>{const r=calcC(c,settings);return{admin:s.admin+r.admin,acc:s.acc+r.acc,inst:s.inst+r.inst,net:s.net+r.net};},{admin:0,acc:0,inst:0,net:0});
+
+    // ── معدّل الأداء الشهري (من البيانات الفعلية) ──
+    const contractsByMonth = {};
+    allC.forEach(c=>{if(c.date){const d=new Date(c.date);const ym=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");if(!contractsByMonth[ym])contractsByMonth[ym]={count:0,amount:0};contractsByMonth[ym].count++;contractsByMonth[ym].amount+=(+c.amount||0);}});
+    const activeMonths = Object.keys(contractsByMonth);
+    const avgContractsPerMonth = activeMonths.length>0 ? Math.round(allC.length / activeMonths.length) : 0;
+    const avgAmountPerContract = allC.length>0 ? Math.round(totalCapitalOut / allC.length) : 0;
+    const avgMonthlyCapital = avgContractsPerMonth * avgAmountPerContract;
+
+    // ── التحصيل الفعلي شهرياً ──
+    const collByMonth = {};
+    allPayments.forEach(p=>{if(p.date){const d=new Date(p.date);const ym=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");if(!collByMonth[ym])collByMonth[ym]=0;collByMonth[ym]+=(+p.amount||0);}});
+
+    // ── التدفق الشهري المفصّل (12 شهر) ──
     const months = [];
     for(let i=0;i<12;i++){
       const d = new Date(today.getFullYear(), today.getMonth()+i, 1);
       const ym = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
       const label = "شهر "+parseInt(d.getMonth()+1)+" - "+d.getFullYear();
-      months.push({ym, label, income:0, count:0});
+      months.push({ym, label, capitalReturn:0, profitReturn:0, adminFee:0, accFee:0, instFee:0, invNet:0, count:0});
     }
     allC.forEach(c=>{
-      const inst = +c.instAmt||0, total = +c.totalInst||+c.amount||0;
+      const amt=+c.amount||0, inst=+c.instAmt||0, total=+c.totalInst||+c.amount||0;
       if(inst<=0||!c.firstInst||total<=0) return;
-      const first = new Date(c.firstInst);
-      const totalCount = Math.max(1, Math.round(total/inst));
-      const paid = (payments||[]).filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
-      const paidCount = Math.min(totalCount, Math.floor(paid/inst));
-      for(let q=paidCount; q<totalCount; q++){
-        const dueDate = new Date(first.getFullYear(), first.getMonth()+q, first.getDate());
-        const dueYM = dueDate.getFullYear()+"-"+String(dueDate.getMonth()+1).padStart(2,"0");
-        const mo = months.find(m=>m.ym===dueYM);
-        if(mo){ mo.income += inst; mo.count++; }
+      const first=new Date(c.firstInst);
+      const totalCount=Math.max(1,Math.round(total/inst));
+      const profit=total-amt;
+      const profitPerInst=profit/totalCount;
+      const capitalPerInst=amt/totalCount;
+      const r=calcC(c,settings);
+      const adminPerInst=r.admin/totalCount;
+      const accPerInst=r.acc/totalCount;
+      const instFeePerInst=r.inst/totalCount;
+      const invNetPerInst=r.net/totalCount;
+      const paid=allPayments.filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
+      const paidCount=Math.min(totalCount,Math.floor(paid/inst));
+      for(let q=paidCount;q<totalCount;q++){
+        const dueDate=new Date(first.getFullYear(),first.getMonth()+q,first.getDate());
+        const dueYM=dueDate.getFullYear()+"-"+String(dueDate.getMonth()+1).padStart(2,"0");
+        const mo=months.find(m=>m.ym===dueYM);
+        if(mo){mo.capitalReturn+=capitalPerInst;mo.profitReturn+=profitPerInst;mo.adminFee+=adminPerInst;mo.accFee+=accPerInst;mo.instFee+=instFeePerInst;mo.invNet+=invNetPerInst;mo.count++;}
       }
     });
-    const maxIncome = Math.max(...months.map(m=>m.income), 1);
-    const totalYear = months.reduce((s,m)=>s+m.income,0);
+
+    // ── التوقع المستقبلي الذكي ──
+    const forecast = [];
+    let cumCapital=totalCapitalOut, cumProfit=totalProfit, cumCollected=totalPaid;
+    for(let i=0;i<forecastMonths;i++){
+      const d=new Date(today.getFullYear(),today.getMonth()+i,1);
+      const ym=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+      const label="شهر "+parseInt(d.getMonth()+1)+" - "+d.getFullYear();
+      const mo=months.find(m=>m.ym===ym);
+      const expectedIncome=mo?(mo.capitalReturn+mo.profitReturn):0;
+      const newContracts=avgMonthlyCapital;
+      const newProfit=newContracts*(profitRate/100);
+      cumCapital+=newContracts;
+      cumProfit+=newProfit;
+      cumCollected+=expectedIncome;
+      forecast.push({label,ym,month:i+1,expectedIncome,newContracts,newProfit,cumCapital,cumProfit,cumCollected,existing:!!mo});
+    }
+
+    // ── مؤشرات الصحة المالية ──
+    const collectionRate = totalWithProfit>0?Math.round((totalPaid/totalWithProfit)*100):0;
+    const overdueC = allC.filter(c=>{
+      const inst=+c.instAmt||0,total=+c.totalInst||+c.amount||0;
+      if(inst<=0||!c.firstInst)return false;
+      const first=new Date(c.firstInst);
+      const totalCount=Math.max(1,Math.round(total/inst));
+      let elapsed=Math.floor((today-first)/(30.44*24*3600*1000));
+      const dueCount=Math.min(Math.max(0,elapsed+1),totalCount);
+      const paid=_getPaid(allPayments,c.id);
+      return (dueCount*inst)-paid>inst;
+    });
+    const defaultRate = allC.length>0?Math.round((overdueC.length/allC.length)*100):0;
+    // تركّز المخاطر: أعلى مستثمر
+    const invTotals = {};
+    allC.forEach(c=>{const id=c.investorId||"none";invTotals[id]=(invTotals[id]||0)+(+c.totalInst||+c.amount||0);});
+    const maxInvPct = totalWithProfit>0?Math.round((Math.max(...Object.values(invTotals),0)/totalWithProfit)*100):0;
+    // معدل النمو
+    const sortedMonths=Object.keys(contractsByMonth).sort();
+    let growthRate=0;
+    if(sortedMonths.length>=2){
+      const last=contractsByMonth[sortedMonths[sortedMonths.length-1]]?.amount||0;
+      const prev=contractsByMonth[sortedMonths[sortedMonths.length-2]]?.amount||0;
+      growthRate=prev>0?Math.round(((last-prev)/prev)*100):0;
+    }
+
+    const maxIncome=Math.max(...months.map(m=>m.capitalReturn+m.profitReturn),1);
+    const circleR=54,circleC=2*Math.PI*circleR,circleOff=circleC-(circleC*completionPct/100);
+
+    const healthColor=v=>v>=70?"#059669":v>=40?"#d97706":"#dc2626";
+    const riskColor=v=>v<=20?"#059669":v<=40?"#d97706":"#dc2626";
+
     return (<div>
-      <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:14,marginBottom:16,fontSize:13,lineHeight:1.8,color:"#1e40af"}}>الأقساط المتوقع تحصيلها خلال 12 شهر القادمة بناءً على العقود الحالية</div>
-      <div style={{display:"flex",alignItems:"flex-end",gap:4,height:200,marginBottom:20,padding:"0 4px",borderBottom:"2px solid #e5e7eb"}}>
-        {months.map((m,i)=>{const h=Math.max(4,(m.income/maxIncome)*170);return(<div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-          <div style={{fontSize:9,fontWeight:700,color:C.teal}}>{m.income>0?SAR(m.income):""}</div>
-          <div style={{width:"100%",height:h,background:"linear-gradient(to top, #0d9488, #34d399)",borderRadius:"6px 6px 0 0",transition:"height 0.5s",minWidth:16}}/>
-          <div style={{fontSize:9,color:"#6b7280"}}>{parseInt(m.ym.split("-")[1])}</div>
+      {/* ═══ ١. ملخص لحظي ═══ */}
+      <div style={{fontSize:16,fontWeight:900,color:C.ink,borderRight:"4px solid "+C.teal,paddingRight:12,marginBottom:16}}>📋 الملخص اللحظي</div>
+      <div style={{display:"flex",gap:12,marginBottom:20,flexWrap:"wrap",alignItems:"center"}}>
+        <div style={{display:"flex",flexDirection:"column",gap:10,flex:1,minWidth:200}}>
+          <div style={{display:"flex",gap:8}}>
+            <div style={{flex:1,background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:12,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>رأس المال المُشغّل</div><div style={{fontSize:18,fontWeight:900,color:"#2563eb"}}>{SAR(totalCapitalOut)}</div></div>
+            <div style={{flex:1,background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:12,padding:12,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>الإجمالي بالفائدة</div><div style={{fontSize:18,fontWeight:900,color:"#7c3aed"}}>{SAR(totalWithProfit)}</div></div>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <div style={{flex:1,background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:12,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>المحصّل فعلياً</div><div style={{fontSize:18,fontWeight:900,color:C.green}}>{SAR(totalPaid)}</div></div>
+            <div style={{flex:1,background:"#fef2f2",border:"1px solid #fecaca",borderRadius:12,padding:12,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>المتبقي</div><div style={{fontSize:18,fontWeight:900,color:C.red}}>{SAR(totalRemaining)}</div></div>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <div style={{flex:1,background:"#fefce8",border:"1px solid #fde68a",borderRadius:12,padding:12,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>إجمالي الأرباح</div><div style={{fontSize:18,fontWeight:900,color:"#b45309"}}>{SAR(totalProfit)}</div></div>
+            <div style={{flex:1,background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:12,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>صافي المستثمرين</div><div style={{fontSize:18,fontWeight:900,color:C.green}}>{SAR(totalCalc.net)}</div></div>
+          </div>
+        </div>
+        {/* دائرة الإنجاز */}
+        <div style={{width:140,textAlign:"center"}}>
+          <svg width="130" height="130" viewBox="0 0 130 130">
+            <circle cx="65" cy="65" r={circleR} fill="none" stroke="#e5e7eb" strokeWidth="10"/>
+            <circle cx="65" cy="65" r={circleR} fill="none" stroke={completionPct>=70?"#059669":completionPct>=40?"#d97706":"#dc2626"} strokeWidth="10" strokeDasharray={circleC} strokeDashoffset={circleOff} strokeLinecap="round" transform="rotate(-90 65 65)" style={{transition:"stroke-dashoffset 1s ease"}}/>
+            <text x="65" y="60" textAnchor="middle" fontSize="22" fontWeight="900" fill={C.ink}>{completionPct}%</text>
+            <text x="65" y="80" textAnchor="middle" fontSize="10" fill="#6b7280">نسبة الإنجاز</text>
+          </svg>
+        </div>
+      </div>
+
+      {/* توزيع الأرباح */}
+      <div style={{display:"flex",gap:8,marginBottom:24,flexWrap:"wrap"}}>
+        <div style={{flex:1,minWidth:70,background:"#fdf2f8",border:"1px solid #fbcfe8",borderRadius:10,padding:10,textAlign:"center"}}><div style={{fontSize:9,color:"#555"}}>المدير</div><div style={{fontSize:15,fontWeight:900,color:"#be185d"}}>{SAR(totalCalc.admin)}</div></div>
+        <div style={{flex:1,minWidth:70,background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:10,padding:10,textAlign:"center"}}><div style={{fontSize:9,color:"#555"}}>المحاسب</div><div style={{fontSize:15,fontWeight:900,color:"#7c3aed"}}>{SAR(totalCalc.acc)}</div></div>
+        <div style={{flex:1,minWidth:70,background:"#ecfdf5",border:"1px solid #a7f3d0",borderRadius:10,padding:10,textAlign:"center"}}><div style={{fontSize:9,color:"#555"}}>التحصيل</div><div style={{fontSize:15,fontWeight:900,color:"#059669"}}>{SAR(totalCalc.inst)}</div></div>
+      </div>
+
+      {/* ═══ ٢. التدفق الشهري المفصّل ═══ */}
+      <div style={{fontSize:16,fontWeight:900,color:C.ink,borderRight:"4px solid #2563eb",paddingRight:12,marginBottom:12}}>📊 التدفق الشهري المفصّل — 12 شهر</div>
+      <div style={{display:"flex",alignItems:"flex-end",gap:3,height:200,marginBottom:8,padding:"0 4px",borderBottom:"2px solid #e5e7eb"}}>
+        {months.map((m,i)=>{const total=m.capitalReturn+m.profitReturn;const hCap=Math.max(1,(m.capitalReturn/maxIncome)*160);const hProf=Math.max(0,(m.profitReturn/maxIncome)*160);return(<div key={i} style={{flex:1,minWidth:14,display:"flex",flexDirection:"column",alignItems:"center",gap:0}}>
+          <div style={{fontSize:8,fontWeight:700,color:C.teal}}>{total>0?SAR(Math.round(total)):""}</div>
+          <div style={{width:"100%",display:"flex",flexDirection:"column"}}><div style={{height:hProf,background:"#fbbf24",borderRadius:"4px 4px 0 0"}}/><div style={{height:hCap,background:"#0d9488",borderRadius:hProf>0?"0":"4px 4px 0 0"}}/></div>
+          <div style={{fontSize:8,color:"#6b7280"}}>{parseInt(m.ym.split("-")[1])}</div>
         </div>);})}
       </div>
-      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}}>
-        <div style={{flex:1,minWidth:120,background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:14,textAlign:"center"}}>
-          <div style={{fontSize:13,color:"#555"}}>إجمالي متوقع 12 شهر</div>
-          <div style={{fontSize:22,fontWeight:900,color:C.green}}>{SAR(totalYear)}</div>
-        </div>
-        <div style={{flex:1,minWidth:120,background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:14,textAlign:"center"}}>
-          <div style={{fontSize:13,color:"#555"}}>متوسط شهري</div>
-          <div style={{fontSize:22,fontWeight:900,color:"#2563eb"}}>{SAR(totalYear/12)}</div>
-        </div>
+      <div style={{display:"flex",justifyContent:"center",gap:14,fontSize:10,marginBottom:16}}>
+        <span><span style={{display:"inline-block",width:10,height:10,background:"#0d9488",borderRadius:2,marginLeft:4}}/>رأس مال</span>
+        <span><span style={{display:"inline-block",width:10,height:10,background:"#fbbf24",borderRadius:2,marginLeft:4}}/>ربح</span>
       </div>
-      <div style={{background:"#fff",borderRadius:12,border:"1px solid #e5e7eb",overflow:"hidden"}}>
-        <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
-          <thead><tr style={{background:"#f9fafb"}}><th style={{padding:"10px 8px",textAlign:"right",fontWeight:700}}>الشهر</th><th style={{padding:"10px 8px",textAlign:"center",fontWeight:700}}>عدد الأقساط</th><th style={{padding:"10px 8px",textAlign:"center",fontWeight:700}}>المتوقع</th></tr></thead>
-          <tbody>{months.map((m,i)=>(<tr key={i} style={{borderBottom:"1px solid #f3f4f6",background:i%2===0?"#fff":"#fafbfc"}}><td style={{padding:"10px 8px",fontWeight:600}}>{m.label}</td><td style={{padding:"10px 8px",textAlign:"center"}}>{m.count}</td><td style={{padding:"10px 8px",textAlign:"center",fontWeight:700,color:m.income>0?C.green:"#999"}}>{SAR(m.income)}</td></tr>))}</tbody>
+      <div style={{overflowX:"auto",marginBottom:24}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:10,minWidth:550,background:"#fff",borderRadius:12,overflow:"hidden",border:"1px solid #e5e7eb"}}>
+          <thead><tr style={{background:"#f1f5f9"}}><th style={{padding:"8px 4px",textAlign:"center",fontWeight:700}}>الشهر</th><th style={{padding:"8px 4px",textAlign:"center",fontWeight:700}}>أقساط</th><th style={{padding:"8px 4px",textAlign:"center",fontWeight:700}}>أصل</th><th style={{padding:"8px 4px",textAlign:"center",fontWeight:700}}>ربح</th><th style={{padding:"8px 4px",textAlign:"center",fontWeight:700}}>المدير</th><th style={{padding:"8px 4px",textAlign:"center",fontWeight:700}}>المحاسب</th><th style={{padding:"8px 4px",textAlign:"center",fontWeight:700}}>تحصيل</th><th style={{padding:"8px 4px",textAlign:"center",fontWeight:700,color:C.green}}>صافي مستثمر</th></tr></thead>
+          <tbody>{months.map((m,i)=>(<tr key={i} style={{borderBottom:"1px solid #f3f4f6",background:i%2===0?"#fff":"#fafbfc"}}><td style={{padding:"7px 4px",textAlign:"center",fontWeight:600,fontSize:11}}>{m.label}</td><td style={{padding:"7px 4px",textAlign:"center"}}>{m.count}</td><td style={{padding:"7px 4px",textAlign:"center"}}>{SAR(Math.round(m.capitalReturn))}</td><td style={{padding:"7px 4px",textAlign:"center",color:"#b45309"}}>{SAR(Math.round(m.profitReturn))}</td><td style={{padding:"7px 4px",textAlign:"center",color:"#be185d"}}>{SAR(Math.round(m.adminFee))}</td><td style={{padding:"7px 4px",textAlign:"center",color:"#7c3aed"}}>{SAR(Math.round(m.accFee))}</td><td style={{padding:"7px 4px",textAlign:"center"}}>{SAR(Math.round(m.instFee))}</td><td style={{padding:"7px 4px",textAlign:"center",color:C.green,fontWeight:700}}>{SAR(Math.round(m.invNet))}</td></tr>))}</tbody>
+          <tfoot><tr style={{background:"#f1f5f9",fontWeight:900}}><td style={{padding:"10px 4px",textAlign:"center"}}>المجموع</td><td style={{padding:"10px 4px",textAlign:"center"}}>{months.reduce((s,m)=>s+m.count,0)}</td><td style={{padding:"10px 4px",textAlign:"center"}}>{SAR(Math.round(months.reduce((s,m)=>s+m.capitalReturn,0)))}</td><td style={{padding:"10px 4px",textAlign:"center",color:"#b45309"}}>{SAR(Math.round(months.reduce((s,m)=>s+m.profitReturn,0)))}</td><td style={{padding:"10px 4px",textAlign:"center",color:"#be185d"}}>{SAR(Math.round(months.reduce((s,m)=>s+m.adminFee,0)))}</td><td style={{padding:"10px 4px",textAlign:"center",color:"#7c3aed"}}>{SAR(Math.round(months.reduce((s,m)=>s+m.accFee,0)))}</td><td style={{padding:"10px 4px",textAlign:"center"}}>{SAR(Math.round(months.reduce((s,m)=>s+m.instFee,0)))}</td><td style={{padding:"10px 4px",textAlign:"center",color:C.green}}>{SAR(Math.round(months.reduce((s,m)=>s+m.invNet,0)))}</td></tr></tfoot>
         </table>
       </div>
+
+      {/* ═══ ٣. التوقع المستقبلي الذكي ═══ */}
+      <div style={{fontSize:16,fontWeight:900,color:C.ink,borderRight:"4px solid #7c3aed",paddingRight:12,marginBottom:12}}>🔮 التوقع المستقبلي — لو استمريت بنفس الوتيرة</div>
+      <div style={{background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:12,padding:14,marginBottom:16,fontSize:12,lineHeight:1.8,color:"#5b21b6"}}>
+        📈 معدّلك: <strong>{avgContractsPerMonth} عقد/شهر</strong> بمتوسط <strong>{SAR(avgAmountPerContract)}</strong> للعقد = تمشية شهرية <strong>{SAR(avgMonthlyCapital)}</strong>
+      </div>
+      <div style={{display:"flex",gap:8,marginBottom:12}}>
+        <div style={{flex:1,minWidth:100}}><label style={{fontSize:10,fontWeight:700,color:"#555",display:"block",marginBottom:4}}>عدد أشهر التوقع</label><input type="number" value={forecastMonths} onChange={e=>setForecastMonths(Math.min(60,Math.max(6,+e.target.value||6)))} style={{width:"100%",padding:8,borderRadius:10,border:"1.5px solid #d1d5db",fontSize:14,fontWeight:700,textAlign:"center"}}/></div>
+      </div>
+      {forecast.length>0 && (
+        <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}}>
+          <div style={{flex:1,minWidth:100,background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:14,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>إجمالي رأس المال بعد {forecastMonths} شهر</div><div style={{fontSize:20,fontWeight:900,color:"#2563eb"}}>{SAR(Math.round(forecast[forecast.length-1].cumCapital))}</div></div>
+          <div style={{flex:1,minWidth:100,background:"#fefce8",border:"1px solid #fde68a",borderRadius:12,padding:14,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>إجمالي الأرباح المتوقعة</div><div style={{fontSize:20,fontWeight:900,color:"#b45309"}}>{SAR(Math.round(forecast[forecast.length-1].cumProfit))}</div></div>
+        </div>
+      )}
+
+      {/* ═══ ٤. مؤشرات الصحة المالية ═══ */}
+      <div style={{fontSize:16,fontWeight:900,color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12,marginBottom:12,marginTop:8}}>🏥 مؤشرات الصحة المالية</div>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:24}}>
+        <div style={{flex:1,minWidth:130,background:"#fff",border:"2px solid "+healthColor(collectionRate),borderRadius:14,padding:14,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>نسبة التحصيل</div><div style={{fontSize:28,fontWeight:900,color:healthColor(collectionRate)}}>{collectionRate}%</div><div style={{fontSize:10,color:healthColor(collectionRate),fontWeight:700}}>{collectionRate>=70?"ممتاز":collectionRate>=40?"متوسط":"ضعيف"}</div></div>
+        <div style={{flex:1,minWidth:130,background:"#fff",border:"2px solid "+riskColor(defaultRate),borderRadius:14,padding:14,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>نسبة التعثر</div><div style={{fontSize:28,fontWeight:900,color:riskColor(defaultRate)}}>{defaultRate}%</div><div style={{fontSize:10,color:"#555"}}>{overdueC.length} من {allC.length} عقد</div></div>
+        <div style={{flex:1,minWidth:130,background:"#fff",border:"2px solid "+(maxInvPct>60?"#dc2626":maxInvPct>40?"#d97706":"#059669"),borderRadius:14,padding:14,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>تركّز المخاطر</div><div style={{fontSize:28,fontWeight:900,color:maxInvPct>60?"#dc2626":maxInvPct>40?"#d97706":"#059669"}}>{maxInvPct}%</div><div style={{fontSize:10,color:"#555"}}>أعلى مستثمر</div></div>
+        <div style={{flex:1,minWidth:130,background:"#fff",border:"2px solid "+(growthRate>0?"#059669":growthRate===0?"#d97706":"#dc2626"),borderRadius:14,padding:14,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>معدل النمو</div><div style={{fontSize:28,fontWeight:900,color:growthRate>0?"#059669":"#dc2626"}}>{growthRate>0?"+":""}{growthRate}%</div><div style={{fontSize:10,color:"#555"}}>مقارنة بالشهر السابق</div></div>
+      </div>
+
+      {/* ═══ ٥. رسم بياني: المتوقع vs المحصّل ═══ */}
+      <div style={{fontSize:16,fontWeight:900,color:C.ink,borderRight:"4px solid "+C.green,paddingRight:12,marginBottom:12}}>📈 المتوقع مقابل المحصّل — آخر 6 أشهر</div>
+      {(()=>{
+        const last6=[];
+        for(let i=5;i>=0;i--){
+          const d=new Date(today.getFullYear(),today.getMonth()-i,1);
+          const ym=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+          const label="شهر "+parseInt(d.getMonth()+1);
+          const expected=allC.reduce((s,c)=>{
+            const inst=+c.instAmt||0,total=+c.totalInst||+c.amount||0;
+            if(inst<=0||!c.firstInst)return s;
+            const first=new Date(c.firstInst);
+            const totalCount=Math.max(1,Math.round(total/inst));
+            const dueDate=new Date(d.getFullYear(),d.getMonth(),first.getDate());
+            const mDiff=(d.getFullYear()-first.getFullYear())*12+(d.getMonth()-first.getMonth());
+            if(mDiff>=0&&mDiff<totalCount)return s+inst;
+            return s;
+          },0);
+          const collected=collByMonth[ym]||0;
+          last6.push({label,expected,collected});
+        }
+        const maxVal=Math.max(...last6.map(m=>Math.max(m.expected,m.collected)),1);
+        return(<div>
+          <div style={{display:"flex",alignItems:"flex-end",gap:8,height:160,marginBottom:8,padding:"0 4px",borderBottom:"2px solid #e5e7eb"}}>
+            {last6.map((m,i)=>(<div key={i} style={{flex:1,display:"flex",gap:3,alignItems:"flex-end",justifyContent:"center"}}>
+              <div style={{width:"40%",height:Math.max(4,(m.expected/maxVal)*140),background:"#bfdbfe",borderRadius:"4px 4px 0 0"}} title={"متوقع: "+SAR(m.expected)}/>
+              <div style={{width:"40%",height:Math.max(4,(m.collected/maxVal)*140),background:"#34d399",borderRadius:"4px 4px 0 0"}} title={"محصّل: "+SAR(m.collected)}/>
+            </div>))}
+          </div>
+          <div style={{display:"flex",justifyContent:"space-around",fontSize:9,color:"#6b7280",marginBottom:6}}>{last6.map((m,i)=><span key={i}>{m.label}</span>)}</div>
+          <div style={{display:"flex",justifyContent:"center",gap:16,fontSize:10,marginBottom:4}}>
+            <span><span style={{display:"inline-block",width:10,height:10,background:"#bfdbfe",borderRadius:2,marginLeft:4}}/>المتوقع</span>
+            <span><span style={{display:"inline-block",width:10,height:10,background:"#34d399",borderRadius:2,marginLeft:4}}/>المحصّل</span>
+          </div>
+        </div>);
+      })()}
     </div>);
   };
 
