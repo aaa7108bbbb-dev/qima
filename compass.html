@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>البوصلة المالية 🧭 | قمة الفرصة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+:root{--ink:#1e293b;--ink2:#334155;--teal:#0d9488;--green:#059669;--red:#dc2626;--gold:#c8922a;--bg:#f1f5f9;--card:#fff;--border:#e2e8f0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--ink);direction:rtl}
+.header{background:linear-gradient(135deg,#0f1e33,#1a3352);padding:16px;text-align:center;color:#fff;position:sticky;top:0;z-index:100}
+.header h1{font-size:20px;font-weight:900;margin-bottom:2px}
+.header p{font-size:12px;opacity:0.7}
+.back-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.15);border:none;color:#fff;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.tabs{display:flex;gap:0;margin:16px;border-radius:12px;overflow:hidden;border:2px solid var(--teal)}
+.tab-btn{flex:1;padding:12px 8px;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:inherit;transition:all 0.2s}
+.tab-btn.active{background:var(--teal);color:#fff}
+.tab-btn:not(.active){background:#fff;color:var(--teal)}
+.container{padding:0 16px 100px}
+.control-box{background:var(--card);border-radius:14px;padding:16px;margin-bottom:20px;border:1px solid var(--border)}
+.control-row{display:flex;gap:12px;flex-wrap:wrap}
+.control-item{flex:1;min-width:100px}
+.control-item label{display:block;font-size:11px;font-weight:700;color:#666;margin-bottom:4px}
+.control-item input,.control-item select{width:100%;padding:10px;border-radius:10px;border:1.5px solid #d1d5db;font-size:15px;font-weight:700;text-align:center;font-family:inherit}
+.summary-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.summary-card{flex:1;min-width:100px;border-radius:12px;padding:14px;text-align:center;border:1px solid}
+.summary-card .label{font-size:11px;color:#666;margin-bottom:4px}
+.summary-card .value{font-size:18px;font-weight:900}
+.chart-area{height:220px;display:flex;align-items:flex-end;gap:3px;padding:0 4px;border-bottom:2px solid #e5e7eb;margin-bottom:8px;overflow-x:auto}
+.chart-bar{flex:1;min-width:14px;display:flex;flex-direction:column;align-items:center;gap:1px}
+.legend{display:flex;justify-content:center;gap:16px;font-size:11px;margin-bottom:20px}
+.legend span{display:flex;align-items:center;gap:4px}
+.legend .dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+table{width:100%;border-collapse:collapse;font-size:12px;background:var(--card);border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+th{padding:10px 6px;font-weight:700;background:#f1f5f9;position:sticky;top:0;text-align:center}
+td{padding:9px 6px;text-align:center;border-bottom:1px solid #f3f4f6}
+tfoot td{background:#f1f5f9;font-weight:900;padding:12px 6px}
+.positive{color:var(--green);font-weight:700}
+.negative{color:var(--red);font-weight:700}
+.highlight-row{background:#f0fdf4 !important}
+.info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.8;color:#1e40af}
+@media(max-width:500px){.summary-card .value{font-size:15px}.control-row{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+
+<script type="text/babel">
+const {useState, useEffect, useMemo} = React;
+
+// ─── قراءة بيانات النظام من localStorage ───
+function loadSystemData(){
+  try{
+    const contracts = JSON.parse(localStorage.getItem("qimma_contracts")||"[]").filter(c=>!c.deleted);
+    const investors = JSON.parse(localStorage.getItem("qimma_investors")||"[]").filter(i=>!i.deleted);
+    const payments = JSON.parse(localStorage.getItem("qimma_payments")||"[]");
+    const settings = JSON.parse(localStorage.getItem("qimma_settings")||"{}");
+    return {contracts, investors, payments, settings};
+  }catch(e){ return {contracts:[], investors:[], payments:[], settings:{}}; }
+}
+
+const SAR = v => (v||0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
+
+function App(){
+  const [tab, setTab] = useState("simulator");
+  const {contracts, investors, payments, settings} = useMemo(()=>loadSystemData(),[]);
+  const today = new Date();
+
+  // ═══════════════════════════════════════════════════
+  // تبويب ١: التدفق الفعلي
+  // ═══════════════════════════════════════════════════
+  function ActualFlow(){
+    const allC = contracts;
+    const months = [];
+    for(let i=0;i<12;i++){
+      const d = new Date(today.getFullYear(), today.getMonth()+i, 1);
+      const ym = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+      const label = "شهر "+parseInt(d.getMonth()+1)+" - "+d.getFullYear();
+      months.push({ym, label, d, income:0, count:0});
+    }
+    allC.forEach(c=>{
+      const inst = +c.instAmt||0;
+      const total = +c.totalInst||+c.amount||0;
+      if(inst<=0||!c.firstInst||total<=0) return;
+      const first = new Date(c.firstInst);
+      const totalCount = Math.max(1, Math.round(total/inst));
+      const paid = (payments||[]).filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
+      const paidCount = Math.min(totalCount, Math.floor(paid/inst));
+      for(let q=paidCount; q<totalCount; q++){
+        const dueDate = new Date(first.getFullYear(), first.getMonth()+q, first.getDate());
+        const dueYM = dueDate.getFullYear()+"-"+String(dueDate.getMonth()+1).padStart(2,"0");
+        const mo = months.find(m=>m.ym===dueYM);
+        if(mo){ mo.income += inst; mo.count++; }
+      }
+    });
+    const maxIncome = Math.max(...months.map(m=>m.income), 1);
+    const totalYear = months.reduce((s,m)=>s+m.income,0);
+
+    return (<div>
+      <div className="info-box">الأقساط المتوقع تحصيلها خلال 12 شهر القادمة بناءً على العقود الحالية</div>
+      
+      <div className="chart-area">
+        {months.map((m,i)=>{
+          const h = Math.max(4,(m.income/maxIncome)*180);
+          return (<div className="chart-bar" key={i}>
+            <div style={{fontSize:9,fontWeight:700,color:"var(--teal)"}}>{m.income>0?SAR(m.income):""}</div>
+            <div style={{width:"100%",height:h,background:"linear-gradient(to top, #0d9488, #34d399)",borderRadius:"6px 6px 0 0",transition:"height 0.5s",minWidth:16}}/>
+            <div style={{fontSize:9,color:"#6b7280"}}>{parseInt(m.ym.split("-")[1])}</div>
+          </div>);
+        })}
+      </div>
+
+      <div className="summary-row">
+        <div className="summary-card" style={{background:"#f0fdf4",borderColor:"#bbf7d0"}}>
+          <div className="label">إجمالي متوقع 12 شهر</div>
+          <div className="value positive">{SAR(totalYear)}</div>
+        </div>
+        <div className="summary-card" style={{background:"#eff6ff",borderColor:"#bfdbfe"}}>
+          <div className="label">متوسط شهري</div>
+          <div className="value" style={{color:"#2563eb"}}>{SAR(totalYear/12)}</div>
+        </div>
+      </div>
+
+      <div style={{overflowX:"auto"}}>
+        <table>
+          <thead><tr><th>الشهر</th><th>عدد الأقساط</th><th>المتوقع</th></tr></thead>
+          <tbody>{months.map((m,i)=>(
+            <tr key={i} style={{background:i%2===0?"#fff":"#fafbfc"}}>
+              <td style={{fontWeight:600,textAlign:"right",paddingRight:12}}>{m.label}</td>
+              <td>{m.count}</td>
+              <td className={m.income>0?"positive":""}>{SAR(m.income)}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>
+    </div>);
+  }
+
+  // ═══════════════════════════════════════════════════
+  // تبويب ٢: محاكي التدوير
+  // ═══════════════════════════════════════════════════
+  function Simulator(){
+    const [capital, setCapital] = useState(100000);
+    const [numMonths, setNumMonths] = useState(24);
+    const [instCount, setInstCount] = useState(16);
+    
+    const profitRate = +settings.profit||50;
+    const adminRate = +settings.admin||2.5;
+    const accRate = +settings.acc||10;
+    const instRate = +settings.inst||10;
+
+    // محاكاة التدوير
+    const simData = useMemo(()=>{
+      // كل "دفعة" تمشية لها أقساط ترجع لعدة أشهر
+      // batches[i] = {instAmt, startMonth, endMonth}
+      const batches = [];
+      const months = [];
+      
+      // الشهر 1: نمشّي رأس المال الأصلي
+      const firstProfit = capital * (profitRate/100);
+      const firstTotal = capital + firstProfit;
+      const firstInst = Math.round(firstTotal / instCount);
+      batches.push({instAmt: firstInst, startMonth: 1, months: instCount});
+      
+      let totalMashed = capital; // إجمالي اللي مشّيناه
+      let totalAdminFees = 0;
+      let totalAccFees = 0;
+      let totalInstFees = 0;
+      let totalInvProfit = 0;
+      
+      // حساب رسوم الدفعة الأولى
+      const firstAdmin = capital * (adminRate/100);
+      const firstAcc = firstProfit * (accRate/100);
+      const firstInstFee = firstProfit * (instRate/100);
+      const firstInvNet = firstProfit - firstAdmin - firstAcc - firstInstFee;
+      totalAdminFees += firstAdmin;
+      totalAccFees += firstAcc;
+      totalInstFees += firstInstFee;
+      totalInvProfit += firstInvNet;
+
+      for(let m=1; m<=numMonths; m++){
+        // كم يرجع هذا الشهر من كل الدفعات السابقة
+        let returning = 0;
+        batches.forEach(b=>{
+          if(m >= b.startMonth+1 && m <= b.startMonth + b.months){
+            returning += b.instAmt;
+          }
+        });
+        
+        // الراجع يتدوّر: نمشّيه كعقود جديدة
+        let newMashed = 0;
+        let newProfit = 0;
+        let monthAdmin = 0;
+        let monthAcc = 0;
+        let monthInstFee = 0;
+        let monthInvNet = 0;
+        
+        if(returning > 0 && m > 1){
+          newMashed = returning;
+          newProfit = newMashed * (profitRate/100);
+          const newTotal = newMashed + newProfit;
+          const newInst = Math.round(newTotal / instCount);
+          
+          monthAdmin = newMashed * (adminRate/100);
+          monthAcc = newProfit * (accRate/100);
+          monthInstFee = newProfit * (instRate/100);
+          monthInvNet = newProfit - monthAdmin - monthAcc - monthInstFee;
+          
+          batches.push({instAmt: newInst, startMonth: m, months: instCount});
+          
+          totalMashed += newMashed;
+          totalAdminFees += monthAdmin;
+          totalAccFees += monthAcc;
+          totalInstFees += monthInstFee;
+          totalInvProfit += monthInvNet;
+        }
+        
+        // إجمالي الأقساط الراجعة التراكمية (لكل الدفعات)
+        let totalReturning = 0;
+        batches.forEach(b=>{
+          if(m >= b.startMonth+1 && m <= b.startMonth + b.months){
+            totalReturning += b.instAmt;
+          }
+        });
+        
+        const d = new Date(today.getFullYear(), today.getMonth()+m-1, 1);
+        months.push({
+          month: m,
+          label: "شهر "+parseInt(d.getMonth()+1)+" - "+d.getFullYear(),
+          mashed: m===1 ? capital : newMashed,
+          profit: m===1 ? firstProfit : newProfit,
+          returning: m===1 ? 0 : returning,
+          totalReturning,
+          admin: m===1 ? firstAdmin : monthAdmin,
+          acc: m===1 ? firstAcc : monthAcc,
+          instFee: m===1 ? firstInstFee : monthInstFee,
+          invNet: m===1 ? firstInvNet : monthInvNet,
+          activeBatches: batches.filter(b=> m >= b.startMonth && m < b.startMonth + b.months).length
+        });
+      }
+      
+      return {
+        months,
+        totalMashed,
+        totalAdminFees,
+        totalAccFees,
+        totalInstFees,
+        totalInvProfit,
+        totalProfit: totalAdminFees + totalAccFees + totalInstFees + totalInvProfit,
+        capital
+      };
+    },[capital, numMonths, instCount, profitRate, adminRate, accRate, instRate]);
+
+    const maxBar = Math.max(...simData.months.map(m=>Math.max(m.mashed, m.returning)),1);
+
+    return (<div>
+      {/* Controls */}
+      <div className="control-box">
+        <div className="control-row">
+          <div className="control-item">
+            <label>رأس المال (مرة وحدة)</label>
+            <input type="number" value={capital} onChange={e=>setCapital(+e.target.value||0)}/>
+          </div>
+          <div className="control-item">
+            <label>عدد الأشهر</label>
+            <input type="number" value={numMonths} onChange={e=>setNumMonths(Math.min(60,Math.max(1,+e.target.value||1)))}/>
+          </div>
+          <div className="control-item">
+            <label>أقساط العقد</label>
+            <input type="number" value={instCount} onChange={e=>setInstCount(Math.max(1,+e.target.value||1))}/>
+          </div>
+        </div>
+      </div>
+
+      <div className="info-box">
+        💡 <strong>التدوير:</strong> تحط {SAR(capital)} مرة وحدة — كل ما ترجع أقساط تتمشّى تلقائياً بعقود جديدة. كرة الثلج تكبر كل شهر.
+      </div>
+
+      {/* Chart */}
+      <div style={{fontSize:13,fontWeight:700,textAlign:"center",marginBottom:10}}>🔄 التدوير — التمشية vs الأقساط الراجعة</div>
+      <div className="chart-area">
+        {simData.months.map((m,i)=>{
+          const hMash = Math.max(2,(m.mashed/maxBar)*170);
+          const hRet = Math.max(0,(m.returning/maxBar)*170);
+          return (<div className="chart-bar" key={i}>
+            <div style={{width:"100%",display:"flex",flexDirection:"column",gap:1}}>
+              <div style={{height:hMash,background:m.month===1?"#60a5fa":"#34d399",borderRadius:"4px 4px 0 0",transition:"height 0.4s"}}/>
+              {hRet>0 && <div style={{height:hRet,background:"#fbbf24",borderRadius:"0 0 4px 4px",transition:"height 0.4s"}}/>}
+            </div>
+            <div style={{fontSize:8,color:"#6b7280"}}>{m.month}</div>
+          </div>);
+        })}
+      </div>
+      <div className="legend">
+        <span><span className="dot" style={{background:"#60a5fa"}}/>رأس المال الأولي</span>
+        <span><span className="dot" style={{background:"#34d399"}}/>تدوير</span>
+        <span><span className="dot" style={{background:"#fbbf24"}}/>أقساط راجعة</span>
+      </div>
+
+      {/* Summary */}
+      <div className="summary-row">
+        <div className="summary-card" style={{background:"#eff6ff",borderColor:"#bfdbfe"}}>
+          <div className="label">رأس المال المدفوع</div>
+          <div className="value" style={{color:"#2563eb"}}>{SAR(simData.capital)}</div>
+        </div>
+        <div className="summary-card" style={{background:"#f0fdf4",borderColor:"#bbf7d0"}}>
+          <div className="label">إجمالي التدوير</div>
+          <div className="value positive">{SAR(simData.totalMashed)}</div>
+        </div>
+      </div>
+      <div className="summary-row">
+        <div className="summary-card" style={{background:"#fefce8",borderColor:"#fde68a"}}>
+          <div className="label">صافي المستثمر</div>
+          <div className="value" style={{color:"#b45309"}}>{SAR(simData.totalInvProfit)}</div>
+        </div>
+        <div className="summary-card" style={{background:"#fdf2f8",borderColor:"#fbcfe8"}}>
+          <div className="label">المدير (إدارية)</div>
+          <div className="value" style={{color:"#be185d"}}>{SAR(simData.totalAdminFees)}</div>
+        </div>
+      </div>
+      <div className="summary-row">
+        <div className="summary-card" style={{background:"#f5f3ff",borderColor:"#ddd6fe"}}>
+          <div className="label">المحاسب</div>
+          <div className="value" style={{color:"#7c3aed"}}>{SAR(simData.totalAccFees)}</div>
+        </div>
+        <div className="summary-card" style={{background:"#ecfdf5",borderColor:"#a7f3d0"}}>
+          <div className="label">التحصيل</div>
+          <div className="value" style={{color:"#059669"}}>{SAR(simData.totalInstFees)}</div>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div style={{overflowX:"auto"}}>
+        <table>
+          <thead><tr>
+            <th>#</th>
+            <th>تمشية</th>
+            <th>الربح</th>
+            <th style={{color:"var(--gold)"}}>راجع</th>
+            <th>عقود نشطة</th>
+            <th style={{color:"var(--green)"}}>صافي المستثمر</th>
+            <th>المدير</th>
+            <th>المحاسب</th>
+          </tr></thead>
+          <tbody>{simData.months.map((m,i)=>(
+            <tr key={i} className={m.returning>m.mashed?"highlight-row":""} style={{background:i%2===0?"#fff":"#fafbfc"}}>
+              <td style={{fontWeight:700}}>{m.month}</td>
+              <td>{SAR(m.mashed)}</td>
+              <td className="positive">{SAR(m.profit)}</td>
+              <td style={{color:"var(--gold)",fontWeight:700}}>{SAR(m.returning)}</td>
+              <td>{m.activeBatches}</td>
+              <td className="positive">{SAR(m.invNet)}</td>
+              <td>{SAR(m.admin)}</td>
+              <td>{SAR(m.acc)}</td>
+            </tr>
+          ))}</tbody>
+          <tfoot><tr>
+            <td>المجموع</td>
+            <td>{SAR(simData.totalMashed)}</td>
+            <td className="positive">{SAR(simData.totalProfit)}</td>
+            <td>—</td>
+            <td>—</td>
+            <td className="positive">{SAR(simData.totalInvProfit)}</td>
+            <td>{SAR(simData.totalAdminFees)}</td>
+            <td>{SAR(simData.totalAccFees)}</td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>);
+  }
+
+  return (
+    <div>
+      <div className="header">
+        <a className="back-btn" href="https://app.qimatalforsa.com">→ النظام</a>
+        <h1>🧭 البوصلة المالية</h1>
+        <p>شوف مستقبلك المالي — بالأرقام</p>
+      </div>
+
+      <div className="tabs">
+        <button className={"tab-btn"+(tab==="actual"?" active":"")} onClick={()=>setTab("actual")}>📊 التدفق الفعلي</button>
+        <button className={"tab-btn"+(tab==="simulator"?" active":"")} onClick={()=>setTab("simulator")}>🔄 محاكي التدوير</button>
+      </div>
+
+      <div className="container">
+        {tab==="actual" ? <ActualFlow/> : <Simulator/>}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
