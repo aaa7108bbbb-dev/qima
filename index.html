@@ -3157,7 +3157,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     if(key==="cards") {
       // مطابقة كشف البضاعة (GoodsPage) بالضبط: نميّز البطاقة عن السلعة النقدية،
       // ونرجّع الإجمالي النقدي = نقدي البطاقات + نقدي السلع (العمود الأخير في الكشف).
-      const cRows = contracts.map(c=>{
+      const cRows = contracts.filter(c=>!c.isOldContract).map(c=>{
         const isCard = (c.goods||"").trim().startsWith("بطاقة");
         if(isCard){
           return {
