@@ -1763,7 +1763,6 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
         </select>
         {filterInv && <button style={{...styles.btn(C.red,"#fff"),fontSize:13,padding:"6px 10px"}} onClick={()=>setFilterInv("")}>✕ إلغاء الفلتر</button>}
-        <button style={{...styles.btn(C.green,"#fff"),fontSize:14,padding:"6px 12px"}} onClick={exportExcel}>⬇️ تصدير Excel</button>
       </div>
       <div style={{display:"flex",gap:8,marginBottom:16}}>
         <button onClick={()=>setStatusTab("active")} style={{...styles.btn(statusTab==="active"?C.teal:"#e5e7eb",statusTab==="active"?"#fff":C.ink),fontSize:15,padding:"6px 14px"}}>
@@ -2930,8 +2929,8 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
 
   const subTabs = [
     {key:"list",  label:"👥 المستثمرون"},
-    {key:"special", label:"🏢 حسابات خاصة"},
     {key:"inv",   label:"💰 حسابات المستثمرين"},
+    {key:"special", label:"🏢 حسابات خاصة"},
     {key:"comm",  label:"📑 العمولات"},
   ];
 
@@ -2952,7 +2951,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
       </div>
 
       {/* Commissions sub-page */}
-      {subTab==="list" && <InvestorsPage investors={investors} contracts={contracts} settings={settings} payments={payments} txList={txList} onAdd={inv=>setInvestors(p=>[...p,inv])} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} toast={toast}/>}
+      {subTab==="list" && <InvestorsPage investors={investors} contracts={contracts} settings={settings} payments={payments} txList={txList} onAdd={inv=>setInvestors(p=>[...p,inv])} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} setInvestors={setInvestors} toast={toast}/>}
 
       {/* حسابات خاصة */}
       {subTab==="special" && (()=>{
@@ -2961,44 +2960,50 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
           const nm = (inv.name||"").trim();
           return specialNames.some(n=>nm.includes("الفرصة "+n) || nm.includes("الفرصة"+n) || nm.endsWith(" "+n) || nm.endsWith(n));
         });
-        let grandNet=0, grandLeft=0, grandTotal=0;
+        let grandNet=0, grandLeft=0, grandTotal=0, grandAmt=0, grandProfit=0, grandCapital=0;
+        const rows = specialInvs.map(inv=>{
+          const myCon=contracts.filter(c=>c.investorId===inv.id);
+          const totalAmt=myCon.reduce((s,c)=>s+c.amount,0);
+          const totalProfit=myCon.reduce((s,c)=>s+calcC(c,settings).net,0);
+          const _autoContractSum = myCon.reduce((s,c)=>{const rr=calcC(c,settings);return s - (c.amount + rr.acc + rr.inst + rr.admin);},0);
+          const _paymentsSum = (payments||[]).filter(p=>myCon.some(c=>c.id===p.contractId)).reduce((s,p)=>s+(p.amount||0),0);
+          const _manualSum = ((txList&&txList[inv.id])||[]).reduce((s,t)=>s+(t.amount||0),0);
+          const netCash = (inv.capital||0) + _autoContractSum + _paymentsSum + _manualSum;
+          const leftAll = myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
+          const grand = netCash + leftAll;
+          grandNet+=netCash; grandLeft+=leftAll; grandTotal+=grand; grandAmt+=totalAmt; grandProfit+=totalProfit; grandCapital+=(inv.capital||0);
+          return {inv, myCon, totalAmt, totalProfit, netCash, leftAll, grand};
+        });
         return (
           <div>
             <div style={{fontSize:19,fontWeight:800,marginBottom:16}}>🏢 حسابات خاصة</div>
             <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
               <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14,background:C.white,borderRadius:14,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,.08)"}}>
                 <thead>
-                  <tr>{["المستثمر","رأس المال","النقدي الصافي","العقود","المتبقي عند الزبائن","الإجمالي"].map(h=>(
+                  <tr>{["المستثمر","رأس المال","قيمة العقود","صافي الأرباح","النقدي الصافي","المتبقي عند الزبائن","الإجمالي"].map(h=>(
                     <th key={h} style={{...styles.th,padding:"14px 10px",fontSize:13,whiteSpace:"nowrap"}}>{h}</th>
                   ))}</tr>
                 </thead>
                 <tbody>
-                  {specialInvs.map((inv,idx)=>{
-                    const myCon=contracts.filter(c=>c.investorId===inv.id);
-                    const _autoContractSum = myCon.reduce((s,c)=>{const rr=calcC(c,settings);return s - (c.amount + rr.acc + rr.inst + rr.admin);},0);
-                    const _paymentsSum = (payments||[]).filter(p=>myCon.some(c=>c.id===p.contractId)).reduce((s,p)=>s+(p.amount||0),0);
-                    const _manualSum = ((txList&&txList[inv.id])||[]).reduce((s,t)=>s+(t.amount||0),0);
-                    const netCash = (inv.capital||0) + _autoContractSum + _paymentsSum + _manualSum;
-                    const leftAll = myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
-                    const grand = netCash + leftAll;
-                    grandNet+=netCash; grandLeft+=leftAll; grandTotal+=grand;
-                    return (
-                      <tr key={inv.id} style={{background:idx%2===0?C.white:"#f8fafc"}}>
-                        <td style={{...styles.td,fontWeight:800,fontSize:15,color:C.teal,whiteSpace:"nowrap"}}>{inv.name}</td>
-                        <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}>{SAR(inv.capital)}</td>
-                        <td style={{...styles.td,fontWeight:800,color:netCash>=0?C.green:C.red,whiteSpace:"nowrap"}}>{SAR(netCash)}</td>
-                        <td style={{...styles.td,textAlign:"center"}}><span style={styles.badge(C.tealLt,C.teal)}>{myCon.length}</span></td>
-                        <td style={{...styles.td,fontWeight:700,color:C.red,whiteSpace:"nowrap"}}>{SAR(leftAll)}</td>
-                        <td style={{...styles.td,fontWeight:900,color:grand>=0?C.teal:C.red,whiteSpace:"nowrap"}}>{SAR(grand)}</td>
-                      </tr>
-                    );
-                  })}
+                  {rows.map((r,idx)=>(
+                    <tr key={r.inv.id} style={{background:idx%2===0?C.white:"#f8fafc"}}>
+                      <td style={{...styles.td,fontWeight:800,fontSize:15,color:C.teal,whiteSpace:"nowrap"}}>{r.inv.name}</td>
+                      <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}>{SAR(r.inv.capital||0)}</td>
+                      <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}>{SAR(r.totalAmt)}</td>
+                      <td style={{...styles.td,fontWeight:800,color:r.totalProfit>=0?C.green:C.red,whiteSpace:"nowrap"}}>{SAR(r.totalProfit)}</td>
+                      <td style={{...styles.td,fontWeight:800,color:r.netCash>=0?C.green:C.red,whiteSpace:"nowrap"}}>{SAR(r.netCash)}</td>
+                      <td style={{...styles.td,fontWeight:700,color:C.red,whiteSpace:"nowrap"}}>{SAR(r.leftAll)}</td>
+                      <td style={{...styles.td,fontWeight:900,color:r.grand>=0?C.teal:C.red,whiteSpace:"nowrap"}}>{SAR(r.grand)}</td>
+                    </tr>
+                  ))}
                 </tbody>
                 <tfoot>
                   <tr style={{background:"#f0fdfa"}}>
-                    <td colSpan={2} style={{...styles.td,fontWeight:900,fontSize:15,color:C.teal}}>الإجمالي</td>
+                    <td style={{...styles.td,fontWeight:900,fontSize:15,color:C.teal}}>الإجمالي</td>
+                    <td style={{...styles.td,fontWeight:900}}>{SAR(grandCapital)}</td>
+                    <td style={{...styles.td,fontWeight:900}}>{SAR(grandAmt)}</td>
+                    <td style={{...styles.td,fontWeight:900,color:grandProfit>=0?C.green:C.red}}>{SAR(grandProfit)}</td>
                     <td style={{...styles.td,fontWeight:900,color:grandNet>=0?C.green:C.red}}>{SAR(grandNet)}</td>
-                    <td style={styles.td}></td>
                     <td style={{...styles.td,fontWeight:900,color:C.red}}>{SAR(grandLeft)}</td>
                     <td style={{...styles.td,fontWeight:900,fontSize:16,color:grandTotal>=0?C.teal:C.red}}>{SAR(grandTotal)}</td>
                   </tr>
@@ -5173,14 +5178,23 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
 }
 
 // ─── Investors Page ──────────────────────────────────────────
-function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,onDelete,toast}) {
+function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,onDelete,setInvestors,toast}) {
   const [show,setShow]=useState(false);
   const [confirmId,setConfirmId]=useState(null);
   const [stmtInv,setStmtInv]=useState(null);
   const [yearInv,setYearInv]=useState(null);
   const [stmtType,setStmtType]=useState("brief"); // brief | detailed
+  const [editCapId,setEditCapId]=useState(null);
+  const [editCapVal,setEditCapVal]=useState("");
   const [form,setForm]=useState({name:"",code:"",fund:"",capital:"",date:""});
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const saveCapital=(id)=>{
+    if(setInvestors){
+      setInvestors(prev=>prev.map(i=>i.id===id?{...i,capital:parseFloat(editCapVal)||0}:i));
+      toast("✅ تم تعديل رأس المال");
+    }
+    setEditCapId(null); setEditCapVal("");
+  };
   const save=()=>{
     if(!form.name){toast("أدخل اسم المستثمر","warn");return;}
     onAdd({id:Date.now(),...form,capital:parseFloat(form.capital)||0});
@@ -5233,7 +5247,17 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
               return (
                 <tr key={inv.id} style={{background:idx%2===0?C.white:"#f8fafc",borderBottom:"1px solid "+C.border}}>
                   <td style={{...styles.td,fontWeight:800,fontSize:15,color:C.teal,whiteSpace:"nowrap"}}>{inv.name}</td>
-                  <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}>{SAR(inv.capital)}</td>
+                  <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",cursor:"pointer"}} onClick={()=>{setEditCapId(inv.id);setEditCapVal(String(inv.capital||0));}}>
+                    {editCapId===inv.id ? (
+                      <div style={{display:"flex",gap:4,alignItems:"center"}}>
+                        <input type="number" autoFocus value={editCapVal} onChange={e=>setEditCapVal(e.target.value)}
+                          onKeyDown={e=>{if(e.key==="Enter")saveCapital(inv.id);if(e.key==="Escape")setEditCapId(null);}}
+                          style={{...styles.input,width:100,fontSize:13,padding:"4px 6px"}} onClick={e=>e.stopPropagation()}/>
+                        <button style={{...styles.btn(C.green),fontSize:11,padding:"3px 6px"}} onClick={e=>{e.stopPropagation();saveCapital(inv.id);}}>✓</button>
+                        <button style={{...styles.btn(C.red),fontSize:11,padding:"3px 6px"}} onClick={e=>{e.stopPropagation();setEditCapId(null);}}>✕</button>
+                      </div>
+                    ) : SAR(inv.capital)}
+                  </td>
                   <td style={{...styles.td,fontWeight:800,color:netCash>=0?C.green:C.red,whiteSpace:"nowrap"}}>{SAR(netCash)}</td>
                   <td style={{...styles.td,textAlign:"center"}}><span style={styles.badge(C.tealLt,C.teal)}>{myCon.length}</span></td>
                   <td style={{...styles.td,fontWeight:700,color:C.red,whiteSpace:"nowrap"}}>{SAR(leftAll)}</td>
