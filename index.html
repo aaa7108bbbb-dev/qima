@@ -1241,6 +1241,7 @@ const assessRisk = (c, payments) => {
 
 function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate,payments,setPayments,toast,completionAlert,setCompletionAlert,onSaveNew,setInvTxList,startCollect,setPage,logAct}) {
   const [showNew,setShowNew]=useState(false);
+  const [showMigrated,setShowMigrated]=useState(false);
   const [showCollect,setShowCollect]=useState(!!startCollect);
   const [collectDate,setCollectDate]=useState(new Date().toISOString().split("T")[0]);
   const [collectSearch,setCollectSearch]=useState("");
@@ -1501,6 +1502,79 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   };
 
 
+  // ═══ شاشة عقد مرحّل ═══
+  if(showMigrated){
+    const [mf,setMF] = [showMigrated===true?{investorId:"",client:"",remaining:"",instAmt:"",phone:"",note:""}:showMigrated, v=>setShowMigrated(typeof v==="function"?v(typeof showMigrated==="object"?showMigrated:{investorId:"",client:"",remaining:"",instAmt:"",phone:"",note:""}):v)];
+    const saveMigrated=()=>{
+      if(!mf.investorId){toast("اختر المستثمر","warn");return;}
+      if(!mf.client){toast("أدخل اسم الزبون","warn");return;}
+      if(!mf.remaining){toast("أدخل المبلغ المتبقي","warn");return;}
+      const rem=parseFloat(mf.remaining)||0;
+      const inst=parseFloat(mf.instAmt)||0;
+      const c={
+        id:Date.now(),
+        investorId:parseInt(mf.investorId),
+        client:mf.client.trim(),
+        phone:mf.phone||"",
+        amount:0,
+        totalInst:rem,
+        instAmt:inst,
+        months:inst>0?Math.ceil(rem/inst):0,
+        firstInst:new Date().toISOString().slice(0,10),
+        date:new Date().toISOString().slice(0,10),
+        goods:"مرحّل",
+        contractType:"migrated",
+        note:mf.note||"عقد مرحّل من البرنامج القديم",
+      };
+      onSaveNew(c);
+      toast("✅ تم إضافة عقد مرحّل — "+mf.client);
+      setShowMigrated(true);
+    };
+    return (
+      <div>
+        <button style={{...styles.btn("#e5e7eb",C.ink),marginBottom:16}} onClick={()=>setShowMigrated(false)}>← رجوع للعقود</button>
+        <div style={{...styles.panel,padding:20}}>
+          <h3 style={{margin:"0 0 16px",fontSize:18,fontWeight:800,color:"#b45309"}}>📦 عقد مرحّل</h3>
+          <div style={{fontSize:13,color:"#64748b",marginBottom:16,background:"#fef9ec",padding:"10px 14px",borderRadius:8,border:"1px solid #f59e0b"}}>
+            العقد المرحّل يُضاف فقط في "المتبقي عند الزبائن" بدون خصم من النقدي — لأنه مخصوم أصلاً في البرنامج القديم.
+          </div>
+          <div style={{display:"grid",gap:14}}>
+            <div>
+              <label style={{fontSize:14,fontWeight:700,display:"block",marginBottom:4}}>المستثمر *</label>
+              <select style={{...styles.input,width:"100%"}} value={mf.investorId} onChange={e=>setMF(p=>({...p,investorId:e.target.value}))}>
+                <option value="">-- اختار المستثمر --</option>
+                {investors.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{fontSize:14,fontWeight:700,display:"block",marginBottom:4}}>اسم الزبون *</label>
+              <input style={{...styles.input,width:"100%"}} placeholder="الاسم الكامل" value={mf.client} onChange={e=>setMF(p=>({...p,client:e.target.value}))}/>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+              <div>
+                <label style={{fontSize:14,fontWeight:700,display:"block",marginBottom:4}}>المتبقي عليه (ر.س) *</label>
+                <input type="number" style={{...styles.input,width:"100%"}} placeholder="0" value={mf.remaining} onChange={e=>setMF(p=>({...p,remaining:e.target.value}))}/>
+              </div>
+              <div>
+                <label style={{fontSize:14,fontWeight:700,display:"block",marginBottom:4}}>القسط الشهري</label>
+                <input type="number" style={{...styles.input,width:"100%"}} placeholder="0" value={mf.instAmt} onChange={e=>setMF(p=>({...p,instAmt:e.target.value}))}/>
+              </div>
+            </div>
+            <div>
+              <label style={{fontSize:14,fontWeight:700,display:"block",marginBottom:4}}>الجوال</label>
+              <input type="tel" style={{...styles.input,width:"100%",direction:"ltr"}} placeholder="05xxxxxxxx" value={mf.phone} onChange={e=>setMF(p=>({...p,phone:e.target.value}))}/>
+            </div>
+            <div>
+              <label style={{fontSize:14,fontWeight:700,display:"block",marginBottom:4}}>ملاحظة</label>
+              <input style={{...styles.input,width:"100%"}} placeholder="اختياري" value={mf.note} onChange={e=>setMF(p=>({...p,note:e.target.value}))}/>
+            </div>
+            <button style={{...styles.btn("#b45309","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px",fontWeight:800}} onClick={saveMigrated}>💾 حفظ العقد المرحّل</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if(showNew){
     return (
       <div>
@@ -1642,10 +1716,13 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
 
   return (
     <div>
-      <button style={{...styles.btn("#0d9488","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px",marginBottom:14,fontWeight:800}} onClick={()=>setPage("search")}>🔍 بحث شامل</button>
+      <div style={{display:"flex",gap:8,marginBottom:8}}>
+        <button style={{...styles.btn("#0d9488","#fff"),fontSize:16,padding:"12px 20px",flex:1,justifyContent:"center",fontWeight:800}} onClick={()=>setPage("search")}>🔍 بحث شامل</button>
+        <button style={{...styles.btn("#0891b2","#fff"),fontSize:16,padding:"12px 20px",flex:1,justifyContent:"center",fontWeight:800}} onClick={()=>setShowDeduct(true)}>🏦 الاستقطاعات</button>
+      </div>
       <div style={{display:"flex",gap:8,marginBottom:16}}>
         <button style={{...styles.btn(C.green),fontSize:16,padding:"10px 20px",flex:1,justifyContent:"center"}} onClick={()=>setShowNew(true)}>➕ عقد جديد</button>
-        <button style={{...styles.btn("#0891b2"),fontSize:16,padding:"10px 20px",flex:1,justifyContent:"center"}} onClick={()=>setShowDeduct(true)}>🏦 الاستقطاعات</button>
+        <button style={{...styles.btn("#b45309","#fff"),fontSize:16,padding:"10px 20px",flex:1,justifyContent:"center"}} onClick={()=>setShowMigrated(true)}>📦 عقد مرحّل</button>
       </div>
       {/* Investor Report */}
       <div style={{...styles.panel,marginBottom:16,padding:"14px 18px"}}>
@@ -2863,7 +2940,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
 
   // Auto-transactions from contracts
   const myContracts = contracts.filter(c=>c.investorId===selInv);
-  const autoTx = myContracts.filter(c=>!c.isOldContract).map(c=>{
+  const autoTx = myContracts.filter(c=>!c.isOldContract && c.contractType!=="migrated").map(c=>{
     const r = calcC(c, settings);
     // ينخصم: قيمة العقد النقدية + عمولة المحاسبين + نصيب المؤسسة + الرسوم الإدارية
     const deduct = c.amount + r.acc + r.inst + r.admin;
@@ -2965,7 +3042,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
           const myCon=contracts.filter(c=>c.investorId===inv.id);
           const totalAmt=myCon.reduce((s,c)=>s+c.amount,0);
           const totalProfit=myCon.reduce((s,c)=>s+calcC(c,settings).net,0);
-          const _autoContractSum = myCon.reduce((s,c)=>{const rr=calcC(c,settings);return s - (c.amount + rr.acc + rr.inst + rr.admin);},0);
+          const _autoContractSum = myCon.filter(c=>c.contractType!=="migrated").reduce((s,c)=>{const rr=calcC(c,settings);return s - (c.amount + rr.acc + rr.inst + rr.admin);},0);
           const _paymentsSum = (payments||[]).filter(p=>myCon.some(c=>c.id===p.contractId)).reduce((s,p)=>s+(p.amount||0),0);
           const _manualSum = ((txList&&txList[inv.id])||[]).reduce((s,t)=>s+(t.amount||0),0);
           const netCash = (inv.capital||0) + _autoContractSum + _paymentsSum + _manualSum;
@@ -3257,7 +3334,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     const capital = inv?.capital||0;
     const myContracts = contracts.filter(c=>c.investorId===id);
     const myManualTx = (txList[id]||[]);
-    const autoDeduct = myContracts.filter(c=>!c.isOldContract).reduce((s,c)=>{
+    const autoDeduct = myContracts.filter(c=>!c.isOldContract && c.contractType!=="migrated").reduce((s,c)=>{
       const r=calcC(c,settings);
       return s-(c.amount+r.acc+r.inst+r.admin);
     },0);
@@ -5238,7 +5315,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
               const myCon=contracts.filter(c=>c.investorId===inv.id);
               const totalNet=myCon.reduce((s,c)=>s+calcC(c,settings).net,0);
               const totalAmt=myCon.reduce((s,c)=>s+c.amount,0);
-              const _autoContractSum = myCon.reduce((s,c)=>{const rr=calcC(c,settings);return s - (c.amount + rr.acc + rr.inst + rr.admin);},0);
+              const _autoContractSum = myCon.filter(c=>c.contractType!=="migrated").reduce((s,c)=>{const rr=calcC(c,settings);return s - (c.amount + rr.acc + rr.inst + rr.admin);},0);
               const _paymentsSum = (payments||[]).filter(p=>myCon.some(c=>c.id===p.contractId)).reduce((s,p)=>s+(p.amount||0),0);
               const _manualSum = ((txList&&txList[inv.id])||[]).reduce((s,t)=>s+(t.amount||0),0);
               const netCash = (inv.capital||0) + _autoContractSum + _paymentsSum + _manualSum;
