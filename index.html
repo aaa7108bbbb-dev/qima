@@ -1652,7 +1652,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         <div style={{fontWeight:800,fontSize:16,marginBottom:10}}>🔍 كشف المستثمر</div>
         <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
           <select style={{...styles.input,flex:1,minWidth:180}} value={invSearch} onChange={e=>setInvSearch(e.target.value)}>
-            <option value="">-- اختاري المستثمر --</option>
+            <option value="">-- اختار المستثمر --</option>
             {[...new Set(investors.map(i=>i.name))].sort().map(name=>(
               <option key={name} value={name}>{name}</option>
             ))}
@@ -2930,6 +2930,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
 
   const subTabs = [
     {key:"list",  label:"👥 المستثمرون"},
+    {key:"special", label:"🏢 حسابات خاصة"},
     {key:"inv",   label:"💰 حسابات المستثمرين"},
     {key:"comm",  label:"📑 العمولات"},
   ];
@@ -2952,6 +2953,62 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
 
       {/* Commissions sub-page */}
       {subTab==="list" && <InvestorsPage investors={investors} contracts={contracts} settings={settings} payments={payments} txList={txList} onAdd={inv=>setInvestors(p=>[...p,inv])} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} toast={toast}/>}
+
+      {/* حسابات خاصة */}
+      {subTab==="special" && (()=>{
+        const specialNames = ["4","7","8","9","11"];
+        const specialInvs = investors.filter(inv=>{
+          const nm = (inv.name||"").trim();
+          return specialNames.some(n=>nm.includes("الفرصة "+n) || nm.includes("الفرصة"+n) || nm.endsWith(" "+n) || nm.endsWith(n));
+        });
+        let grandNet=0, grandLeft=0, grandTotal=0;
+        return (
+          <div>
+            <div style={{fontSize:19,fontWeight:800,marginBottom:16}}>🏢 حسابات خاصة</div>
+            <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
+              <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14,background:C.white,borderRadius:14,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,.08)"}}>
+                <thead>
+                  <tr>{["المستثمر","رأس المال","النقدي الصافي","العقود","المتبقي عند الزبائن","الإجمالي"].map(h=>(
+                    <th key={h} style={{...styles.th,padding:"14px 10px",fontSize:13,whiteSpace:"nowrap"}}>{h}</th>
+                  ))}</tr>
+                </thead>
+                <tbody>
+                  {specialInvs.map((inv,idx)=>{
+                    const myCon=contracts.filter(c=>c.investorId===inv.id);
+                    const _autoContractSum = myCon.reduce((s,c)=>{const rr=calcC(c,settings);return s - (c.amount + rr.acc + rr.inst + rr.admin);},0);
+                    const _paymentsSum = (payments||[]).filter(p=>myCon.some(c=>c.id===p.contractId)).reduce((s,p)=>s+(p.amount||0),0);
+                    const _manualSum = ((txList&&txList[inv.id])||[]).reduce((s,t)=>s+(t.amount||0),0);
+                    const netCash = (inv.capital||0) + _autoContractSum + _paymentsSum + _manualSum;
+                    const leftAll = myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
+                    const grand = netCash + leftAll;
+                    grandNet+=netCash; grandLeft+=leftAll; grandTotal+=grand;
+                    return (
+                      <tr key={inv.id} style={{background:idx%2===0?C.white:"#f8fafc"}}>
+                        <td style={{...styles.td,fontWeight:800,fontSize:15,color:C.teal,whiteSpace:"nowrap"}}>{inv.name}</td>
+                        <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}>{SAR(inv.capital)}</td>
+                        <td style={{...styles.td,fontWeight:800,color:netCash>=0?C.green:C.red,whiteSpace:"nowrap"}}>{SAR(netCash)}</td>
+                        <td style={{...styles.td,textAlign:"center"}}><span style={styles.badge(C.tealLt,C.teal)}>{myCon.length}</span></td>
+                        <td style={{...styles.td,fontWeight:700,color:C.red,whiteSpace:"nowrap"}}>{SAR(leftAll)}</td>
+                        <td style={{...styles.td,fontWeight:900,color:grand>=0?C.teal:C.red,whiteSpace:"nowrap"}}>{SAR(grand)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr style={{background:"#f0fdfa"}}>
+                    <td colSpan={2} style={{...styles.td,fontWeight:900,fontSize:15,color:C.teal}}>الإجمالي</td>
+                    <td style={{...styles.td,fontWeight:900,color:grandNet>=0?C.green:C.red}}>{SAR(grandNet)}</td>
+                    <td style={styles.td}></td>
+                    <td style={{...styles.td,fontWeight:900,color:C.red}}>{SAR(grandLeft)}</td>
+                    <td style={{...styles.td,fontWeight:900,fontSize:16,color:grandTotal>=0?C.teal:C.red}}>{SAR(grandTotal)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
+
       {subTab==="comm" && <CommissionsPage contracts={contracts} investors={investors} settings={settings}/>}
 
       {/* Investor accounts sub-page */}
@@ -2970,24 +3027,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
           <option value="zakat">🌙 صندوق الزكاة</option>
           <option value="pending">📌 المتبقي</option>
         </select>
-        {invSubTab==="inv" && inv && (
-          <div style={{display:"flex",gap:12,marginRight:"auto",flexWrap:"wrap"}}>
-            <div style={{textAlign:"center",background:C.tealLt,borderRadius:8,padding:"6px 14px"}}>
-              <div style={{fontSize:13,color:"#1f2937",marginBottom:2}}>رأس المال</div>
-              <div style={{fontSize:16,fontWeight:800,color:C.teal}}>{SAR(inv.capital||0)}</div>
-            </div>
-            <div style={{textAlign:"center",background:C.greenLt,borderRadius:8,padding:"6px 14px"}}>
-              <div style={{fontSize:13,color:"#1f2937",marginBottom:2}}>الرصيد الحالي</div>
-              <div style={{fontSize:16,fontWeight:800,color:C.green}}>{SAR(finalBalance)}</div>
-            </div>
-            <div style={{textAlign:"center",background:finalBalance>=0?C.greenLt:C.redLt,borderRadius:8,padding:"6px 14px"}}>
-              <div style={{fontSize:13,color:"#1f2937",marginBottom:2}}>الفرق</div>
-              <div style={{fontSize:16,fontWeight:800,color:finalBalance>=(inv?.capital||0)?C.green:C.red}}>
-                {SAR(finalBalance-(inv?.capital||0))}
-              </div>
-            </div>
-          </div>
-        )}
+        {invSubTab==="inv" && inv && null}
       </div>
 
       {/* Add transaction */}
@@ -3026,10 +3066,6 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
           <h3 style={{margin:0,fontSize:15,fontWeight:700}}>
             📋 كشف حساب — {inv?invLabel(inv):""}
           </h3>
-          <div style={{display:"flex",gap:10,fontSize:15}}>
-            <span style={{color:C.green,fontWeight:700}}>إجمالي الدعم: {SAR(totalDeposits)}</span>
-            <span style={{color:C.red,fontWeight:700}}>إجمالي الخصومات: {SAR(totalWithdraws)}</span>
-          </div>
         </div>
         <div style={{padding:"8px 14px"}}>
           <input type="text" placeholder="🔍 بحث بالاسم أو البيان..." value={acctSearch||""} onChange={e=>setAcctSearch(e.target.value)}
@@ -5064,15 +5100,6 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                   })}</tr>
                 </thead>
                 <tbody>
-                  {/* سطر الرصيد السابق */}
-                  {baseAmount !== 0 && (
-                    <tr style={{background:"#f0fdfa"}}>
-                      <td style={{...styles.td,whiteSpace:"nowrap",color:"#0d9488",fontWeight:800}}>{baseDate !== "0000-00-00" ? dLabel(baseDate) : "—"}</td>
-                      <td style={styles.td}><span style={styles.badge("#0d9488"+"22","#0d9488")}>رصيد سابق</span></td>
-                      <td style={{...styles.td,fontWeight:800,position:"sticky",right:0,background:"#f0fdfa",zIndex:5,borderLeft:"2px solid #e2e8f0",color:"#0d9488"}}>رصيد بداية الصندوق</td>
-                      <td style={{...styles.td,fontWeight:900,color:"#0d9488",whiteSpace:"nowrap"}}>{SAR(baseAmount)}</td>
-                    </tr>
-                  )}
                   {stmtDetailRows.length===0 ? (
                     <tr><td colSpan={4} style={{...styles.td,textAlign:"center",padding:24,color:"#64748b"}}>
                       {isFiltering ? "لا توجد حركات مطابقة" : "لا توجد حركات"}
@@ -5107,8 +5134,15 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                 <tr>{["نوع الحركة","عدد الحركات","الإجمالي"].map(h=>(<th key={h} style={styles.th}>{h}</th>))}</tr>
               </thead>
               <tbody>
+                {baseAmount !== 0 && (
+                  <tr style={{background:"#f0fdfa"}}>
+                    <td style={styles.td}><span style={styles.badge("#0d9488"+"22","#0d9488")}>رصيد سابق</span></td>
+                    <td style={{...styles.td,textAlign:"center",fontWeight:700}}>—</td>
+                    <td style={{...styles.td,fontWeight:900,color:"#0d9488"}}>+{SAR(baseAmount)}</td>
+                  </tr>
+                )}
                 {(stmtShowAll ? stmtTotals : stmtTotals.slice(0,10)).map((t,i)=>(
-                  <tr key={t.key} style={{background:i%2===0?C.white:C.gray}}>
+                  <tr key={t.key} style={{background:(baseAmount?i+1:i)%2===0?C.white:C.gray}}>
                     <td style={styles.td}><span style={styles.badge(t.color+"22",t.color)}>{t.label}</span></td>
                     <td style={{...styles.td,textAlign:"center",fontWeight:700}}>{t.count}</td>
                     <td style={{...styles.td,fontWeight:800,color:t.color}}>{t.sign<0?"−":"+"}{SAR(t.total)}</td>
@@ -5122,9 +5156,9 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
               </tbody>
               <tfoot>
                 <tr style={{background:"#f0fdfa"}}>
-                  <td style={{...styles.td,fontWeight:800,color:"#0d9488"}}>الداخل: {SAR(stmtIn)} · الخارج: {SAR(stmtOut)}</td>
+                  <td style={{...styles.td,fontWeight:800,color:"#0d9488"}}>الداخل: {SAR(stmtIn+(baseAmount||0))} · الخارج: {SAR(stmtOut)}</td>
                   <td style={{...styles.td,fontWeight:800,color:"#0d9488"}}>الصافي</td>
-                  <td style={{...styles.td,fontWeight:900,fontSize:16,color:stmtNet>=0?"#0d9488":C.red}}>{SAR(stmtNet)}</td>
+                  <td style={{...styles.td,fontWeight:900,fontSize:16,color:(stmtNet+(baseAmount||0))>=0?"#0d9488":C.red}}>{SAR(stmtNet+(baseAmount||0))}</td>
                 </tr>
               </tfoot>
             </table>
