@@ -5788,7 +5788,7 @@ function GoodsPage({investors, contracts, toast, gsWrite}) {
   };
 
   // Build rows from contracts + manual
-  const contractRows = contracts.map(c=>{
+  const contractRows = contracts.filter(c=>!c.isOldContract).map(c=>{
     const inv = investors.find(i=>String(i.id)===String(c.investorId));
     // بطاقة (سوا/موبايلي/زين) → تخصم العدد من رصيد البطاقات
     // غيرها (أسهم/جوال/سيارة) → سلعة نقدية: تخصم قيمة العقد النقدية من الإجمالي النقدي
