@@ -4045,7 +4045,8 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
   const getPeriod = d => fiscalYM(d);
   const mLabel = ym => { const [y,m]=ym.split("-"); return "شهر "+parseInt(m)+" - "+y; };
   const allC = contracts.filter(c=>!c.deleted);
-  const months = [...new Set(contracts.map(c=>getPeriod(c.date)))].sort().reverse();
+  const allMonths = [...new Set(contracts.map(c=>getPeriod(c.date)))].sort().reverse();
+  const months = allMonths.filter(ym=>!(monthClose&&monthClose[ym]));
 
   const calcMonth = (ym) => {
     const mc = contracts.filter(c=>getPeriod(c.date)===ym);
