@@ -1642,6 +1642,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
 
   return (
     <div>
+      <button style={{...styles.btn("#0d9488","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px",marginBottom:14,fontWeight:800}} onClick={()=>setPage("search")}>🔍 بحث شامل</button>
       <div style={{display:"flex",gap:8,marginBottom:16}}>
         <button style={{...styles.btn(C.green),fontSize:16,padding:"10px 20px",flex:1,justifyContent:"center"}} onClick={()=>setShowNew(true)}>➕ عقد جديد</button>
         <button style={{...styles.btn("#0891b2"),fontSize:16,padding:"10px 20px",flex:1,justifyContent:"center"}} onClick={()=>setShowDeduct(true)}>🏦 الاستقطاعات</button>
@@ -4492,26 +4493,18 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
 
   return (
     <div>
-      <button style={{...styles.btn("#0d9488","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px",marginBottom:14,fontWeight:800}} onClick={()=>setPage("search")}>🔍 بحث شامل</button>
-      {/* دفتر اليومية مدمج في الرئيسية */}
-      <DailyPage daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} contracts={contracts} settings={settings} toast={toast} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} investors={investors} payments={payments}/>
-
-      {/* لوحة شغل اليوم */}
-      <div style={{fontSize:20,fontWeight:900,margin:"8px 0 16px",color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12}}>☀️ شغل اليوم — {todayStr}</div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
-        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.green}}>
-          <div style={{fontSize:13,color:"#1f2937",fontWeight:700,marginBottom:6}}>💵 حصّلت اليوم</div>
-          <div style={{fontSize:22,fontWeight:900,color:C.green}}>{SAR(collectedToday)}</div>
-        </div>
-        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid #f97316"}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid #f97316",cursor:"pointer"}} onClick={()=>{const el=document.getElementById("dueSoonList");if(el)el.scrollIntoView({behavior:"smooth"});}}>
           <div style={{fontSize:13,color:"#1f2937",fontWeight:700,marginBottom:6}}>⏰ أقساط خلال أسبوع</div>
           <div style={{fontSize:22,fontWeight:900,color:"#f97316"}}>{dueSoon.length}</div>
         </div>
-        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.red}}>
+        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.red,cursor:"pointer"}} onClick={()=>{const el=document.getElementById("troubledList");if(el)el.scrollIntoView({behavior:"smooth"});}}>
           <div style={{fontSize:13,color:"#1f2937",fontWeight:700,marginBottom:6}}>🚨 يحتاجون متابعة</div>
           <div style={{fontSize:22,fontWeight:900,color:C.red}}>{troubled.length}</div>
         </div>
       </div>
+      {/* دفتر اليومية مدمج في الرئيسية */}
+      <DailyPage daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} contracts={contracts} settings={settings} toast={toast} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} investors={investors} payments={payments}/>
 
       {/* قائمة المتابعة العاجلة */}
       {troubled.length>0 && (
@@ -4713,6 +4706,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   const [stmtTo,setStmtTo]     = useState("");
   const [stmtQuery,setStmtQuery] = useState("");   // نص البحث (اسم/وصف)
   const [stmtTypeFilter,setStmtTypeFilter] = useState("all"); // فلتر النوع
+  const [stmtShowAll,setStmtShowAll] = useState(false); // عرض كل التفاصيل أم أعلى 10
 
   // حركات اليوم المحدد
   const dayRows = (Array.isArray(daily)?daily:[]).filter(d=>d.date===selDay).sort((a,b)=>a.id-b.id);
@@ -5054,22 +5048,6 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
             {stmtQuery && <button onClick={()=>setStmtQuery("")} style={{border:"none",background:"#e2e8f0",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:14,fontWeight:700,color:"#475569"}}>✕</button>}
           </div>
 
-          {/* فلتر النوع (أزرار) */}
-          <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>
-            <button onClick={()=>setStmtTypeFilter("all")}
-              style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:14,fontWeight:700,padding:"7px 14px",borderRadius:20,cursor:"pointer",
-                border:"2px solid "+(stmtTypeFilter==="all"?C.teal:"#e2e8f0"),background:stmtTypeFilter==="all"?C.teal:"#fff",color:stmtTypeFilter==="all"?"#fff":"#475569"}}>
-              الكل
-            </button>
-            {DAILY_TYPES.map(t=>(
-              <button key={t.key} onClick={()=>setStmtTypeFilter(t.key)}
-                style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:14,fontWeight:700,padding:"7px 14px",borderRadius:20,cursor:"pointer",
-                  border:"2px solid "+(stmtTypeFilter===t.key?t.color:"#e2e8f0"),background:stmtTypeFilter===t.key?t.color:"#fff",color:stmtTypeFilter===t.key?"#fff":t.color}}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-
           {/* بطاقات الإجماليات لكل نوع (انقر لعرض تفاصيل النوع) */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:14}}>
             {stmtTotals.map(t=>(
@@ -5106,7 +5084,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                     <tr><td colSpan={4} style={{...styles.td,textAlign:"center",padding:24,color:"#64748b"}}>
                       {isFiltering ? "لا توجد حركات مطابقة" : "لا توجد حركات"}
                     </td></tr>
-                  ) : stmtDetailRows.map((d,i)=>{
+                  ) : (stmtShowAll ? stmtDetailRows : stmtDetailRows.slice(0,10)).map((d,i)=>{
                     const t=DAILY_TYPES.find(x=>x.key===d.type);
                     return (
                       <tr key={d.id} style={{background:i%2===0?C.white:C.gray}}>
@@ -5117,6 +5095,13 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                       </tr>
                     );
                   })}
+                  {!stmtShowAll && stmtDetailRows.length>10 && (
+                    <tr><td colSpan={4} style={{textAlign:"center",padding:12}}>
+                      <button onClick={()=>setStmtShowAll(true)} style={{...styles.btn("#64748b"),fontSize:14,padding:"8px 20px",margin:"0 auto"}}>
+                        عرض الكل ({stmtDetailRows.length} حركة) ▼
+                      </button>
+                    </td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -5129,13 +5114,18 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                 <tr>{["نوع الحركة","عدد الحركات","الإجمالي"].map(h=>(<th key={h} style={styles.th}>{h}</th>))}</tr>
               </thead>
               <tbody>
-                {stmtTotals.map((t,i)=>(
+                {(stmtShowAll ? stmtTotals : stmtTotals.slice(0,10)).map((t,i)=>(
                   <tr key={t.key} style={{background:i%2===0?C.white:C.gray}}>
                     <td style={styles.td}><span style={styles.badge(t.color+"22",t.color)}>{t.label}</span></td>
                     <td style={{...styles.td,textAlign:"center",fontWeight:700}}>{t.count}</td>
                     <td style={{...styles.td,fontWeight:800,color:t.color}}>{t.sign<0?"−":"+"}{SAR(t.total)}</td>
                   </tr>
                 ))}
+                {!stmtShowAll && stmtTotals.length>10 && (
+                  <tr><td colSpan={3} style={{textAlign:"center",padding:12}}>
+                    <button onClick={()=>setStmtShowAll(true)} style={{...styles.btn("#64748b"),fontSize:14,padding:"8px 20px"}}>عرض الكل ▼</button>
+                  </td></tr>
+                )}
               </tbody>
               <tfoot>
                 <tr style={{background:"#f0fdfa"}}>
