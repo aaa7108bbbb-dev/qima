@@ -1552,7 +1552,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       <div>
         {!startCollect && <button style={{...styles.btn("#e5e7eb",C.ink),marginBottom:16}} onClick={()=>setShowCollect(false)}>← رجوع للعقود</button>}
         <div style={{...styles.card,marginBottom:16,borderTop:"4px solid "+C.green}}>
-          {startCollect && setPage && <button style={{...styles.btn("#b91c1c","#fff"),width:"100%",justifyContent:"center",fontSize:16,padding:"12px",marginBottom:12,fontWeight:800}} onClick={()=>setPage("overdue")}>⚠️ المتأخرون</button>}
+          {/* تم حذف زر المتأخرون */}
           <div style={{fontSize:19,fontWeight:900,marginBottom:12}}>⚡ تحصيل سريع</div>
           <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center",marginBottom:12}}>
             <label style={{fontWeight:700,fontSize:15}}>تاريخ التحصيل:</label>
@@ -4941,6 +4941,21 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
       </div>
 
       {/* حساب المدير والمحاسب */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
+        <div style={{...styles.card,borderTop:"4px solid #b45309"}}>
+          <div style={{fontSize:15,fontWeight:800,color:"#b45309",marginBottom:8}}>👔 حساب المدير</div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستحق (كل العقود)</span><span style={{fontWeight:700}}>{SAR(mgrEarnedAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(mgrTakenAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginTop:6,paddingTop:6,borderTop:"1px solid "+C.border}}><span style={{fontWeight:800}}>الباقي له</span><span style={{fontWeight:900,color:mgrLeft>=0?"#b45309":C.red}}>{SAR(mgrLeft)}</span></div>
+        </div>
+        <div style={{...styles.card,borderTop:"4px solid #0891b2"}}>
+          <div style={{fontSize:15,fontWeight:800,color:"#0891b2",marginBottom:8}}>🧮 حساب المحاسب</div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستحق (كل العقود)</span><span style={{fontWeight:700}}>{SAR(accEarnedAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(accTakenAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginTop:6,paddingTop:6,borderTop:"1px solid "+C.border}}><span style={{fontWeight:800}}>الباقي له</span><span style={{fontWeight:900,color:accLeft>=0?"#0891b2":C.red}}>{SAR(accLeft)}</span></div>
+        </div>
+      </div>
+
       {/* 📲 إرسال ملخص واتساب للمدير */}
       <div style={{marginBottom:16}}>
         <button style={{...styles.btn("#25D366","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px",borderRadius:14,fontWeight:800}}
@@ -4999,20 +5014,6 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
           📲 إرسال ملخص اليوم للمدير — {selDay===today?"اليوم":selDay}
         </button>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
-        <div style={{...styles.card,borderTop:"4px solid #b45309"}}>
-          <div style={{fontSize:15,fontWeight:800,color:"#b45309",marginBottom:8}}>👔 حساب المدير</div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستحق (كل العقود)</span><span style={{fontWeight:700}}>{SAR(mgrEarnedAll)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(mgrTakenAll)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginTop:6,paddingTop:6,borderTop:"1px solid "+C.border}}><span style={{fontWeight:800}}>الباقي له</span><span style={{fontWeight:900,color:mgrLeft>=0?"#b45309":C.red}}>{SAR(mgrLeft)}</span></div>
-        </div>
-        <div style={{...styles.card,borderTop:"4px solid #0891b2"}}>
-          <div style={{fontSize:15,fontWeight:800,color:"#0891b2",marginBottom:8}}>🧮 حساب المحاسب</div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستحق (كل العقود)</span><span style={{fontWeight:700}}>{SAR(accEarnedAll)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(accTakenAll)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginTop:6,paddingTop:6,borderTop:"1px solid "+C.border}}><span style={{fontWeight:800}}>الباقي له</span><span style={{fontWeight:900,color:accLeft>=0?"#0891b2":C.red}}>{SAR(accLeft)}</span></div>
-        </div>
-      </div>
 
       {/* ═══ كشف حساب شامل ═══ */}
       <div style={{...styles.panel,marginBottom:16}}>
@@ -5022,23 +5023,6 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
             onClick={()=>printAccountStatement(stmtFrom,stmtTo,stmtTotals,stmtIn,stmtOut,stmtNet)}>🖨️ طباعة الكشف</button>
         </div>
         <div style={{padding:"14px 18px"}}>
-          {/* اختيار الفترة */}
-          <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"flex-end",marginBottom:14}}>
-            <div>
-              <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>من تاريخ</label>
-              <input type="date" style={styles.input} value={stmtFrom} onChange={e=>setStmtFrom(e.target.value)}/>
-            </div>
-            <div>
-              <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>إلى تاريخ</label>
-              <input type="date" style={styles.input} value={stmtTo} onChange={e=>setStmtTo(e.target.value)}/>
-            </div>
-            <button style={{...styles.btn("#64748b"),fontSize:14,padding:"10px 16px"}}
-              onClick={()=>{setStmtFrom("");setStmtTo("");}}>♻️ كل الفترات</button>
-          </div>
-          <div style={{fontSize:13,color:"#64748b",marginBottom:12}}>
-            {(stmtFrom||stmtTo) ? ("الفترة: "+(stmtFrom?dLabel(stmtFrom):"البداية")+" ← "+(stmtTo?dLabel(stmtTo):"اليوم")) : "يعرض إجمالي كل الحركات المسجّلة في دفتر اليومية"}
-          </div>
-
           {/* 🔍 بحث عن شخص/وصف داخل اليومية */}
           <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:12,background:"#f8fafc",border:"2px solid "+C.border,borderRadius:12,padding:"8px 12px"}}>
             <span style={{fontSize:18}}>🔍</span>
@@ -5080,6 +5064,15 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                   })}</tr>
                 </thead>
                 <tbody>
+                  {/* سطر الرصيد السابق */}
+                  {baseAmount !== 0 && (
+                    <tr style={{background:"#f0fdfa"}}>
+                      <td style={{...styles.td,whiteSpace:"nowrap",color:"#0d9488",fontWeight:800}}>{baseDate !== "0000-00-00" ? dLabel(baseDate) : "—"}</td>
+                      <td style={styles.td}><span style={styles.badge("#0d9488"+"22","#0d9488")}>رصيد سابق</span></td>
+                      <td style={{...styles.td,fontWeight:800,position:"sticky",right:0,background:"#f0fdfa",zIndex:5,borderLeft:"2px solid #e2e8f0",color:"#0d9488"}}>رصيد بداية الصندوق</td>
+                      <td style={{...styles.td,fontWeight:900,color:"#0d9488",whiteSpace:"nowrap"}}>{SAR(baseAmount)}</td>
+                    </tr>
+                  )}
                   {stmtDetailRows.length===0 ? (
                     <tr><td colSpan={4} style={{...styles.td,textAlign:"center",padding:24,color:"#64748b"}}>
                       {isFiltering ? "لا توجد حركات مطابقة" : "لا توجد حركات"}
@@ -5185,74 +5178,52 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
           </div>
         </div>
       )}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:14}}>
-        {investors.map(inv=>{
-          const myCon=contracts.filter(c=>c.investorId===inv.id);
-          const totalNet=myCon.reduce((s,c)=>s+calcC(c,settings).net,0);
-          const totalAmt=myCon.reduce((s,c)=>s+c.amount,0);
-          // النقدي الصافي = رأس المال − (خصم العقود) + السدادات + الحركات اليدوية (دعم/سحب/مصروفات)
-          const _autoContractSum = myCon.reduce((s,c)=>{const rr=calcC(c,settings);return s - (c.amount + rr.acc + rr.inst + rr.admin);},0);
-          const _paymentsSum = (payments||[]).filter(p=>myCon.some(c=>c.id===p.contractId)).reduce((s,p)=>s+(p.amount||0),0);
-          const _manualSum = ((txList&&txList[inv.id])||[]).reduce((s,t)=>s+(t.amount||0),0);
-          const netCash = (inv.capital||0) + _autoContractSum + _paymentsSum + _manualSum;
-          return (
-            <div key={inv.id} style={{...styles.card,borderTop:"4px solid "+C.teal}}>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
-                <div>
-                  <div style={{fontSize:16,fontWeight:800}}>{inv.name}</div>
-    
-                </div>
-                <span style={styles.badge(C.tealLt,C.teal)}>{myCon.length} عقد</span>
-              </div>
-              {[["رأس المال",SAR(inv.capital)],["النقدي الصافي المتوفر",SAR(netCash)],["إجمالي العقود",SAR(totalAmt)],["تاريخ الدخول",inv.date||"—"]].map(([l,v])=>(
-                <div key={l} style={{display:"flex",justifyContent:"space-between",fontSize:15,marginBottom:6}}>
-                  <span style={{color:"#1f2937"}}>{l}</span><span style={{fontWeight:700}}>{v}</span>
-                </div>
-              ))}
-              <div style={{borderTop:"1px solid "+C.border,paddingTop:10,marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontSize:14,fontWeight:700,color:"#1f2937"}}>إجمالي صافي الربح</span>
-                <span style={{fontSize:19,fontWeight:800,color:C.green}}>{SAR(totalNet)}</span>
-              </div>
-              <div style={{background:C.redLt,borderRadius:8,padding:"8px 12px",marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontSize:14,fontWeight:700,color:C.red}}>💰 إجمالي المتبقي عند الزبائن</span>
-                <span style={{fontSize:18,fontWeight:900,color:C.red}}>{SAR(myCon.filter(c=>c.contractType!=="defer").reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0))}</span>
-              </div>
-              {myCon.some(c=>c.contractType==="defer") && (
-                <div style={{background:"#fef9ec",borderRadius:8,padding:"8px 12px",marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <span style={{fontSize:14,fontWeight:700,color:"#a87520"}}>🕒 المتبقي من المؤجل</span>
-                  <span style={{fontSize:18,fontWeight:900,color:"#a87520"}}>{SAR(myCon.filter(c=>c.contractType==="defer").reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0))}</span>
-                </div>
-              )}
-              {(()=>{
-                // الإجمالي = النقدي الصافي (رأس المال − عقود + سدادات + دعم − سحب) + المتبقي عند الزبائن
-                const leftAll = myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
-                const grand = netCash + leftAll;
-                return (
-                  <div style={{background:C.tealLt,borderRadius:8,padding:"10px 12px",marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center",border:"2px solid "+C.teal}}>
-                    <span style={{fontSize:14,fontWeight:800,color:C.teal}}>📊 الإجمالي (النقدي + المتبقي)</span>
-                    <span style={{fontSize:19,fontWeight:900,color:grand>=0?C.teal:C.red}}>{SAR(grand)}</span>
-                  </div>
-                );
-              })()}
-              {confirmId===inv.id ? (
-                <div style={{marginTop:10,background:C.redLt,borderRadius:8,padding:"8px 12px",fontSize:15}}>
-                  <div style={{marginBottom:6,fontWeight:700,color:C.red}}>تأكيد الحذف؟</div>
-                  <div style={{display:"flex",gap:8}}>
-                    <button style={{...styles.btn(C.red),fontSize:14,padding:"5px 12px"}} onClick={()=>{onDelete(inv.id);setConfirmId(null);toast("تم الحذف");}}>نعم، احذف</button>
-                    <button style={{...styles.btn(C.border,"#333"),fontSize:14,padding:"5px 12px"}} onClick={()=>setConfirmId(null)}>إلغاء</button>
-                  </div>
-                </div>
-              ) : (
-                <div style={{display:"flex",gap:8,marginTop:10}}>
-                <button style={{...styles.btn(C.teal),fontSize:14,padding:"5px 12px"}} onClick={()=>{setStmtInv(inv);setStmtType("brief");}}>📄 مختصر</button>
-                <button style={{...styles.btn(C.ink),fontSize:14,padding:"5px 12px"}} onClick={()=>{setStmtInv(inv);setStmtType("detailed");}}>📋 مفصل</button>
-                <button style={{...styles.btn(C.gold),fontSize:14,padding:"5px 12px"}} onClick={()=>setYearInv(inv)}>📅 سنوي</button>
-                <button style={{...styles.btn(C.red),fontSize:14,padding:"5px 10px"}} onClick={()=>setConfirmId(inv.id)}>🗑️</button>
-              </div>
-              )}
-            </div>
-          );
-        })}
+      <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch",marginBottom:16}}>
+        <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14,background:C.white,borderRadius:14,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,.08)"}}>
+          <thead>
+            <tr>{["المستثمر","رأس المال","النقدي الصافي","العقود","المتبقي عند الزبائن","الإجمالي",""].map(h=>(
+              <th key={h} style={{...styles.th,padding:"14px 10px",fontSize:13,whiteSpace:"nowrap",position:"sticky",top:0,zIndex:10,background:C.ink}}>{h}</th>
+            ))}</tr>
+          </thead>
+          <tbody>
+            {investors.map((inv,idx)=>{
+              const myCon=contracts.filter(c=>c.investorId===inv.id);
+              const totalNet=myCon.reduce((s,c)=>s+calcC(c,settings).net,0);
+              const totalAmt=myCon.reduce((s,c)=>s+c.amount,0);
+              const _autoContractSum = myCon.reduce((s,c)=>{const rr=calcC(c,settings);return s - (c.amount + rr.acc + rr.inst + rr.admin);},0);
+              const _paymentsSum = (payments||[]).filter(p=>myCon.some(c=>c.id===p.contractId)).reduce((s,p)=>s+(p.amount||0),0);
+              const _manualSum = ((txList&&txList[inv.id])||[]).reduce((s,t)=>s+(t.amount||0),0);
+              const netCash = (inv.capital||0) + _autoContractSum + _paymentsSum + _manualSum;
+              const leftAll = myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
+              const grand = netCash + leftAll;
+              return (
+                <tr key={inv.id} style={{background:idx%2===0?C.white:"#f8fafc",borderBottom:"1px solid "+C.border}}>
+                  <td style={{...styles.td,fontWeight:800,fontSize:15,color:C.teal,whiteSpace:"nowrap"}}>{inv.name}</td>
+                  <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}>{SAR(inv.capital)}</td>
+                  <td style={{...styles.td,fontWeight:800,color:netCash>=0?C.green:C.red,whiteSpace:"nowrap"}}>{SAR(netCash)}</td>
+                  <td style={{...styles.td,textAlign:"center"}}><span style={styles.badge(C.tealLt,C.teal)}>{myCon.length}</span></td>
+                  <td style={{...styles.td,fontWeight:700,color:C.red,whiteSpace:"nowrap"}}>{SAR(leftAll)}</td>
+                  <td style={{...styles.td,fontWeight:900,color:grand>=0?C.teal:C.red,whiteSpace:"nowrap"}}>{SAR(grand)}</td>
+                  <td style={{...styles.td,whiteSpace:"nowrap"}}>
+                    <div style={{display:"flex",gap:4}}>
+                      <button style={{...styles.btn(C.teal),fontSize:12,padding:"4px 8px"}} onClick={()=>{setStmtInv(inv);setStmtType("brief");}}>مختصر</button>
+                      <button style={{...styles.btn(C.ink),fontSize:12,padding:"4px 8px"}} onClick={()=>{setStmtInv(inv);setStmtType("detailed");}}>مفصل</button>
+                      <button style={{...styles.btn(C.gold),fontSize:12,padding:"4px 8px"}} onClick={()=>setYearInv(inv)}>سنوي</button>
+                      {confirmId===inv.id ? (
+                        <span style={{display:"flex",gap:4}}>
+                          <button style={{...styles.btn(C.red),fontSize:12,padding:"4px 8px"}} onClick={()=>{onDelete(inv.id);setConfirmId(null);toast("تم الحذف");}}>تأكيد</button>
+                          <button style={{...styles.btn(C.border,"#333"),fontSize:12,padding:"4px 8px"}} onClick={()=>setConfirmId(null)}>إلغاء</button>
+                        </span>
+                      ) : (
+                        <button style={{...styles.btn(C.red),fontSize:12,padding:"4px 8px"}} onClick={()=>setConfirmId(inv.id)}>🗑️</button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
       {/* Statement Modal */}
       <Modal open={!!yearInv} onClose={()=>setYearInv(null)} title={"📅 كشف سنوي — "+(yearInv?.name||"")} titleBg={C.gold} wide>
