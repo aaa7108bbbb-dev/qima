@@ -3120,6 +3120,9 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
   const priceOv = (() => {
     try{ return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}"); }catch{ return {}; }
   })();
+  const defPrice2 = (() => {
+    try{ return parseFloat(localStorage.getItem("qimma_default_price"))||0; }catch{ return 0; }
+  })();
 
   const getVal = (key) => {
     // البطاقات والزكاة والاستقطاعات: تلقائية دائماً (تتجاهل أي قيمة يدوية قديمة)
@@ -3186,7 +3189,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
           runGoodsCash += parseFloat(r.supportAcc)||0;
           return;
         }
-        const rowPrice=parseFloat(priceOv[r.id]||r.price)||lastPrice2||1;
+        const rowPrice=parseFloat(priceOv[r.id]||r.price)||defPrice2||lastPrice2||1;
         if(rowPrice) lastPrice2=rowPrice;
         const supC=parseFloat(r.supportClient)||0;
         const supA=parseFloat(r.supportAcc)||0;
