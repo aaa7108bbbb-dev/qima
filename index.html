@@ -160,10 +160,11 @@
     @page { size: A4; margin: 7mm; }
     /* منطقة الطباعة تُنقل لـ body وتأخذ class print-host — نظهرها فقط */
     .print-host { display: block !important; position: static !important; left: 0 !important; width: 100% !important; background: #fff !important; }
-    #contract-print-area.print-host { padding: 5mm 7mm !important; font-size: 11px !important; }
-    #contract-print-area.print-host * { line-height: 1.4 !important; }
-    #contract-print-area.print-host h1, #contract-print-area.print-host h2, #contract-print-area.print-host h3 { margin: 4px 0 !important; }
-    #contract-print-area.print-host p, #contract-print-area.print-host div { margin-top: 2px !important; margin-bottom: 2px !important; }
+    #contract-print-area.print-host { padding: 3mm 5mm !important; font-size: 10px !important; }
+    #contract-print-area.print-host * { line-height: 1.25 !important; }
+    #contract-print-area.print-host h1, #contract-print-area.print-host h2, #contract-print-area.print-host h3 { margin: 2px 0 !important; font-size: 13px !important; }
+    #contract-print-area.print-host p, #contract-print-area.print-host div { margin-top: 1px !important; margin-bottom: 1px !important; }
+    #contract-print-area.print-host table td, #contract-print-area.print-host table th { padding: 2px 4px !important; }
     #bond-cl-print-area.print-host, #bond-gg-print-area.print-host { padding: 5mm 7mm !important; }
     #bond-cl-print-area.print-host .doc-half, #bond-gg-print-area.print-host .doc-half { font-size: 9px !important; }
     #bond-cl-print-area.print-host .doc-half *, #bond-gg-print-area.print-host .doc-half * { line-height: 1.25 !important; }
@@ -675,7 +676,7 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
   const lineW = (w) => ({display:"inline-block", minWidth:Math.min(w||80, 70), borderBottom:"1px dotted #999", textAlign:"center"});
 
   return (
-    <div style={{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",direction:"rtl",color:"#000",fontSize:15,maxWidth:740,margin:"0 auto",background:"#fff",lineHeight:1.8,padding:"20px 30px",fontWeight:500,border:"2px solid #000"}}>
+    <div style={{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",direction:"rtl",color:"#000",fontSize:13,maxWidth:740,margin:"0 auto",background:"#fff",lineHeight:1.5,padding:"12px 20px",fontWeight:500,border:"2px solid #000"}}>
 
       {/* ══ HEADER ══ */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",borderBottom:"2px solid #000",paddingBottom:5,marginBottom:8}}>
@@ -1354,7 +1355,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     }
     const w = window.open("","_blank");
     if(!w){ alert("الرجاء السماح بالنوافذ المنبثقة"); return; }
-    w.document.write(`<html dir="rtl"><head><meta charset="utf-8"><title>كشف المستثمر — ${invName}</title><style>*{font-family:Arial}body{padding:18px}h1{font-size:19px;text-align:center}table{width:100%;border-collapse:collapse;font-size:14px;margin-top:12px}th,td{border:1px solid #999;padding:8px;text-align:center}th{background:#1e2235;color:#fff}@media print{.noprint{display:none}}</style></head><body><div class="noprint" style="display:flex;gap:10px;margin-bottom:14px"><button onclick="window.print()" style="flex:1;background:#0d7a6f;color:#fff;border:none;border-radius:8px;padding:13px;font-size:16px;font-weight:800;cursor:pointer">🖨️ طباعة</button><button onclick="window.close()" style="background:#dc2626;color:#fff;border:none;border-radius:8px;padding:13px 20px;font-size:16px;font-weight:800;cursor:pointer">✕ إغلاق</button></div><h1>كشف المستثمر — ${invName} (${reportMode==="brief"?"مختصر":"مفصل"})</h1><table><thead>${thead}</thead><tbody>${rows}</tbody></table></body></html>`);
+    w.document.write(`<html dir="rtl"><head><meta charset="utf-8"><title>كشف المستثمر — ${invName}</title><style>*{font-family:Arial}body{padding:18px}h1{font-size:19px;text-align:center}table{width:100%;border-collapse:collapse;font-size:14px;margin-top:12px}th,td{border:1px solid #999;padding:8px;text-align:center}th{background:#1e2235;color:#fff}@media print{.noprint{display:none!important}button{display:none!important}}</style></head><body><div class="noprint" style="display:flex;gap:10px;margin-bottom:14px"><button onclick="window.print()" style="flex:1;background:#0d7a6f;color:#fff;border:none;border-radius:8px;padding:13px;font-size:16px;font-weight:800;cursor:pointer">🖨️ طباعة</button><button onclick="window.close()" style="background:#dc2626;color:#fff;border:none;border-radius:8px;padding:13px 20px;font-size:16px;font-weight:800;cursor:pointer">✕ إغلاق</button></div><h1>كشف المستثمر — ${invName} (${reportMode==="brief"?"مختصر":"مفصل"})</h1><table><thead>${thead}</thead><tbody>${rows}</tbody></table></body></html>`);
     w.document.close();
   };
   // طباعة إيصال سداد
@@ -2062,7 +2063,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                 const el = document.getElementById(id);
                 if(el) allHtml += (idx>0?'<div style="page-break-before:always"></div>':'')+el.innerHTML;
               });
-              w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><style>*{box-sizing:border-box;font-family:Arial,sans-serif}body{margin:0;padding:12px}@media print{.noprint{display:none!important}button{display:none!important}}</style></head><body>');
+              w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><style>*{box-sizing:border-box;font-family:Arial,sans-serif}body{margin:0;padding:8px}@media print{.noprint{display:none!important}button{display:none!important}@page{margin:5mm}}</style></head><body>');
               w.document.write('<div class="noprint" style="display:flex;gap:10px;margin-bottom:14px;position:sticky;top:0;background:#1e2235;padding:12px;border-radius:0 0 12px 12px"><button onclick="window.print()" style="flex:1;background:#0d7a6f;color:#fff;border:none;border-radius:10px;padding:14px;font-size:17px;font-weight:800;cursor:pointer">🖨️ طباعة</button><button onclick="window.close()" style="background:#dc2626;color:#fff;border:none;border-radius:10px;padding:14px 22px;font-size:17px;font-weight:800;cursor:pointer">✕ إغلاق</button></div>');
               w.document.write(allHtml);
               w.document.write('</body></html>');
@@ -4174,12 +4175,12 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
   const [openMonth, setOpenMonth] = React.useState(null);
   const getPeriod = d => fiscalYM(d);
   const mLabel = ym => { const [y,m]=ym.split("-"); return "شهر "+parseInt(m)+" - "+y; };
-  const allC = contracts.filter(c=>!c.deleted);
-  const allMonths = [...new Set(contracts.map(c=>getPeriod(c.date)))].sort().reverse();
+  const allC = contracts.filter(c=>!c.deleted && c.contractType!=="migrated");
+  const allMonths = [...new Set(contracts.filter(c=>c.contractType!=="migrated").map(c=>getPeriod(c.date)))].sort().reverse();
   const months = allMonths.filter(ym=>!(monthClose&&monthClose[ym]));
 
   const calcMonth = (ym) => {
-    const mc = contracts.filter(c=>getPeriod(c.date)===ym);
+    const mc = contracts.filter(c=>getPeriod(c.date)===ym && c.contractType!=="migrated");
     const tot = mc.reduce((a,c)=>{const r=calcC(c,settings);return{amt:a.amt+c.amount,profit:a.profit+r.profit,admin:a.admin+r.admin,acc:a.acc+r.acc,inst:a.inst+r.inst,net:a.net+r.net};},{amt:0,profit:0,admin:0,acc:0,inst:0,net:0});
     const collected = (payments||[]).filter(p=>p.date && getPeriod(p.date)===ym).reduce((s,p)=>s+(+p.amount||0),0);
     const [y,m]=ym.split("-").map(Number);
@@ -6729,7 +6730,7 @@ function ProfitLossPage({contracts, daily, settings, payments, investors}) {
 function CashFlowPage({contracts, investors, settings, payments}) {
   const SAR = v => (v||0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
   const [tab, setTab] = useState("actual");
-  const allC = (contracts||[]).filter(c=>!c.deleted);
+  const allC = (contracts||[]).filter(c=>!c.deleted && c.contractType!=="migrated");
   const today = new Date();
   const profitRate = +settings.profit||50;
   const adminRate = +settings.admin||2.5;
