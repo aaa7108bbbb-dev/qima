@@ -5662,6 +5662,7 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
   const [baseDateInput,setBaseDateInput] = useState(baseDate||new Date().toISOString().split("T")[0]);
   const [editingBase,setEditingBase] = useState(false);
   const [mgrPhone,setMgrPhone] = useState(()=>{ try{ return localStorage.getItem("qimma_mgr_phone")||""; }catch(e){ return ""; } });
+  const [bizPhone,setBizPhone] = useState(()=>{ try{ return localStorage.getItem("qimma_biz_phone")||""; }catch(e){ return ""; } });
 
   if(!unlocked){
     return (
@@ -5719,6 +5720,15 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
           </div>
         </div>
         <div style={{fontSize:12,color:"#6b7280",marginTop:6}}>يُستخدم لإرسال ملخص السدادات اليومية عبر واتساب</div>
+      </div>
+
+      {/* 📱 رقم واتساب المؤسسة */}
+      <div style={{...styles.card,marginBottom:16,background:"#eff6ff",border:"1px solid #3b82f6"}}>
+        <div style={{flex:1}}>
+          <label style={{fontSize:14,fontWeight:800,color:"#1e40af",display:"block",marginBottom:6}}>📱 رقم واتساب المؤسسة</label>
+          <input type="tel" placeholder="05xxxxxxxx" style={{...styles.input,width:"100%",fontSize:16,fontWeight:700,direction:"ltr"}} value={bizPhone} onChange={e=>{setBizPhone(e.target.value);try{localStorage.setItem("qimma_biz_phone",e.target.value)}catch(x){}}}/>
+        </div>
+        <div style={{fontSize:12,color:"#6b7280",marginTop:6}}>يُستخدم لإرسال كشوفات الزبائن عبر واتساب</div>
       </div>
 
       {/* رصيد بداية الصندوق */}
