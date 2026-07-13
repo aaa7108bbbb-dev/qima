@@ -3066,7 +3066,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
             <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
               <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14,background:C.white,borderRadius:14,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,.08)"}}>
                 <thead>
-                  <tr>{["المستثمر","رأس المال","قيمة العقود","صافي الأرباح","النقدي الصافي","المتبقي عند الزبائن","الإجمالي"].map(h=>(
+                  <tr>{["المستثمر","النقدي الصافي","العقود","المتبقي عند الزبائن","الإجمالي",""].map(h=>(
                     <th key={h} style={{...styles.th,padding:"14px 10px",fontSize:13,whiteSpace:"nowrap"}}>{h}</th>
                   ))}</tr>
                 </thead>
@@ -3074,24 +3074,28 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                   {rows.map((r,idx)=>(
                     <tr key={r.inv.id} style={{background:idx%2===0?C.white:"#f8fafc"}}>
                       <td style={{...styles.td,fontWeight:800,fontSize:15,color:C.teal,whiteSpace:"nowrap"}}>{r.inv.name}</td>
-                      <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}>{SAR(r.inv.capital||0)}</td>
-                      <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}>{SAR(r.totalAmt)}</td>
-                      <td style={{...styles.td,fontWeight:800,color:r.totalProfit>=0?C.green:C.red,whiteSpace:"nowrap"}}>{SAR(r.totalProfit)}</td>
                       <td style={{...styles.td,fontWeight:800,color:r.netCash>=0?C.green:C.red,whiteSpace:"nowrap"}}>{SAR(r.netCash)}</td>
+                      <td style={{...styles.td,textAlign:"center"}}><span style={styles.badge(C.tealLt,C.teal)}>{r.myCon.length}</span></td>
                       <td style={{...styles.td,fontWeight:700,color:C.red,whiteSpace:"nowrap"}}>{SAR(r.leftAll)}</td>
                       <td style={{...styles.td,fontWeight:900,color:r.grand>=0?C.teal:C.red,whiteSpace:"nowrap"}}>{SAR(r.grand)}</td>
+                      <td style={{...styles.td,whiteSpace:"nowrap"}}>
+                        <div style={{display:"flex",gap:4}}>
+                          <button style={{...styles.btn(C.teal),fontSize:12,padding:"4px 8px"}} onClick={()=>{setStmtInv(r.inv);setStmtType("brief");}}>مختصر</button>
+                          <button style={{...styles.btn(C.ink),fontSize:12,padding:"4px 8px"}} onClick={()=>{setStmtInv(r.inv);setStmtType("detailed");}}>مفصل</button>
+                          <button style={{...styles.btn(C.gold),fontSize:12,padding:"4px 8px"}} onClick={()=>setYearInv(r.inv)}>سنوي</button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr style={{background:"#f0fdfa"}}>
                     <td style={{...styles.td,fontWeight:900,fontSize:15,color:C.teal}}>الإجمالي</td>
-                    <td style={{...styles.td,fontWeight:900}}>{SAR(grandCapital)}</td>
-                    <td style={{...styles.td,fontWeight:900}}>{SAR(grandAmt)}</td>
-                    <td style={{...styles.td,fontWeight:900,color:grandProfit>=0?C.green:C.red}}>{SAR(grandProfit)}</td>
                     <td style={{...styles.td,fontWeight:900,color:grandNet>=0?C.green:C.red}}>{SAR(grandNet)}</td>
+                    <td style={styles.td}></td>
                     <td style={{...styles.td,fontWeight:900,color:C.red}}>{SAR(grandLeft)}</td>
                     <td style={{...styles.td,fontWeight:900,fontSize:16,color:grandTotal>=0?C.teal:C.red}}>{SAR(grandTotal)}</td>
+                    <td style={styles.td}></td>
                   </tr>
                 </tfoot>
               </table>
@@ -5324,7 +5328,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
       <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch",marginBottom:16}}>
         <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14,background:C.white,borderRadius:14,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,.08)"}}>
           <thead>
-            <tr>{["المستثمر","رأس المال","النقدي الصافي","العقود","المتبقي عند الزبائن","الإجمالي",""].map(h=>(
+            <tr>{["المستثمر","النقدي الصافي","العقود","المتبقي عند الزبائن","الإجمالي",""].map(h=>(
               <th key={h} style={{...styles.th,padding:"14px 10px",fontSize:13,whiteSpace:"nowrap",position:"sticky",top:0,zIndex:10,background:C.ink}}>{h}</th>
             ))}</tr>
           </thead>
@@ -5342,17 +5346,6 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
               return (
                 <tr key={inv.id} style={{background:idx%2===0?C.white:"#f8fafc",borderBottom:"1px solid "+C.border}}>
                   <td style={{...styles.td,fontWeight:800,fontSize:15,color:C.teal,whiteSpace:"nowrap"}}>{inv.name}</td>
-                  <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",cursor:"pointer"}} onClick={()=>{setEditCapId(inv.id);setEditCapVal(String(inv.capital||0));}}>
-                    {editCapId===inv.id ? (
-                      <div style={{display:"flex",gap:4,alignItems:"center"}}>
-                        <input type="number" autoFocus value={editCapVal} onChange={e=>setEditCapVal(e.target.value)}
-                          onKeyDown={e=>{if(e.key==="Enter")saveCapital(inv.id);if(e.key==="Escape")setEditCapId(null);}}
-                          style={{...styles.input,width:100,fontSize:13,padding:"4px 6px"}} onClick={e=>e.stopPropagation()}/>
-                        <button style={{...styles.btn(C.green),fontSize:11,padding:"3px 6px"}} onClick={e=>{e.stopPropagation();saveCapital(inv.id);}}>✓</button>
-                        <button style={{...styles.btn(C.red),fontSize:11,padding:"3px 6px"}} onClick={e=>{e.stopPropagation();setEditCapId(null);}}>✕</button>
-                      </div>
-                    ) : SAR(inv.capital)}
-                  </td>
                   <td style={{...styles.td,fontWeight:800,color:netCash>=0?C.green:C.red,whiteSpace:"nowrap"}}>{SAR(netCash)}</td>
                   <td style={{...styles.td,textAlign:"center"}}><span style={styles.badge(C.tealLt,C.teal)}>{myCon.length}</span></td>
                   <td style={{...styles.td,fontWeight:700,color:C.red,whiteSpace:"nowrap"}}>{SAR(leftAll)}</td>
