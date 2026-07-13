@@ -1186,17 +1186,6 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
               </div>
             )}
 
-            {/* عقد قديم */}
-            <div style={{marginTop:14,marginBottom:4,background:form.isOldContract?"#fef3c7":"#f8fafc",border:"2px solid "+(form.isOldContract?"#f59e0b":C.border),borderRadius:12,padding:"14px 16px",cursor:"pointer"}}
-              onClick={()=>set("isOldContract",!form.isOldContract)}>
-              <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <div style={{width:24,height:24,borderRadius:6,border:"2px solid "+(form.isOldContract?"#f59e0b":C.border),background:form.isOldContract?"#f59e0b":"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:"#fff",fontWeight:900,flexShrink:0}}>{form.isOldContract?"✓":""}</div>
-                <div>
-                  <div style={{fontSize:15,fontWeight:800,color:form.isOldContract?"#92400e":C.ink2}}>📋 عقد قديم (بدون خصم)</div>
-                  <div style={{fontSize:12,color:"#78716c",marginTop:2}}>يُسجّل ويضاف على إجمالي المستثمر فقط — بدون عمولات</div>
-                </div>
-              </div>
-            </div>
           </div>
 
           <div style={{display:"flex",gap:10,marginTop:16}}>
@@ -1730,8 +1719,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
           <select style={{...styles.input,flex:1,minWidth:180}} value={invSearch} onChange={e=>setInvSearch(e.target.value)}>
             <option value="">-- اختار المستثمر --</option>
-            {[...new Set(investors.map(i=>i.name))].sort().map(name=>(
-              <option key={name} value={name}>{name}</option>
+            {sortedInvestors(investors).map(i=>(
+              <option key={i.id} value={i.name}>{invLabel(i)}</option>
             ))}
           </select>
           <button style={styles.btn(reportMode==="detailed"?C.teal:"#e5e7eb",reportMode==="detailed"?"#fff":C.ink)} onClick={()=>setReportMode("detailed")}>📊 مفصل</button>
@@ -2045,15 +2034,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
             const c = printModal;
             const inv = investors.find(i=>String(i.id)===String(c.investorId));
             const r = calcContract(c.amount,settings,c.totalInst);
-            // نجمع كل المستندات المختارة في نافذة واحدة
-            const sections = [];
-            if(printSel.contract){ setContractDoc(c); setPrintModal(null); return; } // العقد يفتح في Modal خاص
-            if(printSel.bond) sections.push("bond");
-            if(printSel.cheque) sections.push("cheque");
-            if(hasG && printSel.bondG) sections.push("bondG");
-            if(hasG && printSel.chequeG) sections.push("chequeG");
-            if(sections.length===0){ setPrintModal(null); return; }
             // نعرض كل المحدد ثم نطبع مرة واحدة
+            if(printSel.contract) setContractDoc(c);
             if(printSel.bond) setBond(c);
             if(printSel.cheque) setCheque(c);
             if(hasG && printSel.bondG) setBondG(c);
@@ -2062,13 +2044,14 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
             // ننتظر React يرسم ثم نجمع ونطبع
             setTimeout(()=>{
               const ids = [];
-              if(printSel.bond) ids.push("bond-cl-print-area"); // سند + إقرار معاً
+              if(printSel.contract) ids.push("contract-print-area");
+              if(printSel.bond && printSel.cheque) ids.push("bond-cl-print-area");
+              else if(printSel.bond) ids.push("bond-print-area");
               else if(printSel.cheque) ids.push("cheque-print-area");
-              if(hasG && printSel.bondG) ids.push("bond-gg-print-area");
+              if(hasG && printSel.bondG && printSel.chequeG) ids.push("bond-gg-print-area");
+              else if(hasG && printSel.bondG) ids.push("bond-g-print-area");
               else if(hasG && printSel.chequeG) ids.push("cheque-g-print-area");
-              // لو سند بدون إقرار
-              if(printSel.bond && !printSel.cheque) ids[0] = "bond-print-area";
-              // نجمع كل الأقسام في نافذة واحدة
+              if(ids.length===0) return;
               const w = window.open("","_blank");
               if(!w) return;
               let allHtml = "";
@@ -2081,9 +2064,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               w.document.write(allHtml);
               w.document.write('</body></html>');
               w.document.close();
-              // نظّف
-              setTimeout(()=>{ setBond(null);setCheque(null);setBondG(null);setChequeG(null); },500);
-            },400);
+              setTimeout(()=>{ setContractDoc(null);setBond(null);setCheque(null);setBondG(null);setChequeG(null); },500);
+            },600);
           };
           const anySel = printSel.contract||printSel.bond||printSel.cheque||(hasG&&(printSel.bondG||printSel.chequeG));
           const allSel = printSel.contract&&printSel.bond&&printSel.cheque&&(!hasG||(printSel.bondG&&printSel.chequeG));
