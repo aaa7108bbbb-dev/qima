@@ -1832,14 +1832,14 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         )}
       </div>
 
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,flexWrap:"wrap",gap:8}}>
-        <div style={{fontSize:19,fontWeight:800}}>📋 العقود</div>
-        <input style={{...styles.input,width:200,fontSize:15}} placeholder="🔍 بحث..." value={search} onChange={e=>setSearch(e.target.value)}/>
-        <select style={{...styles.input,width:190,fontSize:15,cursor:"pointer"}} value={filterInv} onChange={e=>setFilterInv(e.target.value)}>
+      <div style={{fontSize:19,fontWeight:800,marginBottom:10}}>📋 العقود</div>
+      <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap"}}>
+        <input style={{...styles.input,flex:1,minWidth:140,fontSize:15}} placeholder="🔍 بحث..." value={search} onChange={e=>setSearch(e.target.value)}/>
+        <select style={{...styles.input,flex:1,minWidth:140,fontSize:15,cursor:"pointer"}} value={filterInv} onChange={e=>setFilterInv(e.target.value)}>
           <option value="">🏢 كل المستثمرين</option>
           {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
         </select>
-        {filterInv && <button style={{...styles.btn(C.red,"#fff"),fontSize:13,padding:"6px 10px"}} onClick={()=>setFilterInv("")}>✕ إلغاء الفلتر</button>}
+        {filterInv && <button style={{...styles.btn(C.red,"#fff"),fontSize:13,padding:"6px 10px"}} onClick={()=>setFilterInv("")}>✕</button>}
       </div>
       <div style={{display:"flex",gap:8,marginBottom:16}}>
         <button onClick={()=>setStatusTab("active")} style={{...styles.btn(statusTab==="active"?C.teal:"#e5e7eb",statusTab==="active"?"#fff":C.ink),fontSize:15,padding:"6px 14px"}}>
