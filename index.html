@@ -1543,7 +1543,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               <label style={{fontSize:14,fontWeight:700,display:"block",marginBottom:4}}>المستثمر *</label>
               <select style={{...styles.input,width:"100%"}} value={mf.investorId} onChange={e=>setMF(p=>({...p,investorId:e.target.value}))}>
                 <option value="">-- اختار المستثمر --</option>
-                {investors.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
+                {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
               </select>
             </div>
             <div>
@@ -1972,6 +1972,24 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
             <div>
               <div style={{display:"flex",gap:10,marginBottom:14}}>
                 <button style={{...styles.btn(C.gold,"#fff"),flex:1,justifyContent:"center",padding:"10px"}} onClick={()=>openContractCard(c)}>🖨️ كشف حساب</button>
+                <button style={{...styles.btn("#25D366","#fff"),flex:1,justifyContent:"center",padding:"10px"}} onClick={()=>{
+                  const paid=_getPaid(payments,c.id);
+                  const left=Math.max(0,(c.totalInst||0)-paid);
+                  const myPays=(payments||[]).filter(p=>p.contractId===c.id).sort((a,b)=>new Date(a.date)-new Date(b.date));
+                  let msg="📋 *كشف حساب*\n";
+                  msg+="👤 *"+c.client+"*\n";
+                  msg+="💰 إجمالي: "+SAR(c.totalInst||0)+" ر.س\n";
+                  msg+="✅ المسدد: "+SAR(paid)+" ر.س\n";
+                  msg+="🔴 المتبقي: "+SAR(left)+" ر.س\n";
+                  msg+="📅 القسط: "+SAR(c.instAmt||0)+" ر.س\n\n";
+                  if(myPays.length>0){
+                    msg+="📝 *السدادات:*\n";
+                    myPays.forEach((p,i)=>{msg+=(i+1)+". "+p.date+" — "+SAR(p.amount)+(p.note?" ("+p.note+")":"")+"\n";});
+                  }
+                  const phone=c.cPhone?c.cPhone.replace(/^0/,"966"):"";
+                  const url="https://wa.me/"+(phone||"")+"?text="+encodeURIComponent(msg);
+                  window.open(url,"_blank");
+                }}>📲 واتساب</button>
                 <button style={{...styles.btn(C.red,"#fff"),flex:1,justifyContent:"center",padding:"10px"}} onClick={()=>setCardModal(null)}>✕ إغلاق</button>
               </div>
               <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}}>
@@ -2068,9 +2086,16 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
             },400);
           };
           const anySel = printSel.contract||printSel.bond||printSel.cheque||(hasG&&(printSel.bondG||printSel.chequeG));
+          const allSel = printSel.contract&&printSel.bond&&printSel.cheque&&(!hasG||(printSel.bondG&&printSel.chequeG));
           return (
             <div>
-              <div style={{fontSize:14,color:"#555",marginBottom:14}}>اختر المستندات التي تريد طباعتها:</div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                <span style={{fontSize:14,color:"#555"}}>اختر المستندات التي تريد طباعتها:</span>
+                <button style={{...styles.btn(allSel?"#64748b":C.teal,"#fff"),fontSize:13,padding:"5px 12px"}} onClick={()=>{
+                  const v=!allSel;
+                  setPrintSel({contract:v,bond:v,cheque:v,bondG:v,chequeG:v});
+                }}>{allSel?"إلغاء الكل":"تحديد الكل"}</button>
+              </div>
               {opts.map(o=>(
                 <div key={o.key} onClick={()=>setPrintSel(s=>({...s,[o.key]:!s[o.key]}))}
                   style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",marginBottom:8,border:"1px solid "+(printSel[o.key]?C.teal:C.border),borderRadius:10,cursor:"pointer",background:printSel[o.key]?C.tealLt:"#fff"}}>
@@ -5172,6 +5197,15 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                 📋 التفاصيل {stmtTypeFilter!=="all" ? ("— "+(DAILY_TYPES.find(x=>x.key===stmtTypeFilter)||{}).label) : ""}{_q ? (" — بحث: “"+stmtQuery+"”") : ""}
               </h4>
               <span style={{fontSize:14,fontWeight:800,color:C.ink2}}>{stmtDetailRows.length} حركة · {SAR(Math.abs(stmtDetailTotal))}</span>
+              <button style={{...styles.btn(C.teal),fontSize:13,padding:"5px 12px"}} onClick={()=>{
+                const w=window.open("","_blank");if(!w)return;
+                let rows=stmtDetailRows.map(d=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return "<tr><td style='padding:6px 8px;border:1px solid #ddd'>"+dLabel(d.date)+"</td><td style='padding:6px 8px;border:1px solid #ddd'>"+(t?.label||d.type)+"</td><td style='padding:6px 8px;border:1px solid #ddd'>"+(d.desc||"—")+"</td><td style='padding:6px 8px;border:1px solid #ddd;color:"+(t?.sign<0?"#dc2626":"#16a34a")+"'>"+(t?.sign<0?"−":"+")+SAR(d.amount)+"</td></tr>";}).join("");
+                w.document.write("<!DOCTYPE html><html dir=rtl><head><meta charset=utf-8><style>*{font-family:Arial,sans-serif;box-sizing:border-box}body{margin:12px}table{width:100%;border-collapse:collapse;font-size:14px}th{background:#1e293b;color:#fff;padding:8px}@media print{button{display:none!important}}</style></head><body>");
+                w.document.write("<h2 style='text-align:center'>📋 تفاصيل الحركات</h2>");
+                w.document.write("<table><thead><tr><th>التاريخ</th><th>النوع</th><th>الاسم / الوصف</th><th>المبلغ</th></tr></thead><tbody>"+rows+"</tbody></table>");
+                w.document.write("<br><button onclick='window.print()' style='background:#0d7a6f;color:#fff;border:none;padding:12px 30px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer'>🖨️ طباعة</button>");
+                w.document.write("</body></html>");w.document.close();
+              }}>🖨️</button>
             </div>
             <div style={{overflowX:"auto",maxHeight:"70vh",overflowY:"auto",WebkitOverflowScrolling:"touch",position:"relative"}}>
               <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:15}}>
