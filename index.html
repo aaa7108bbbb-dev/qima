@@ -215,6 +215,11 @@
   .footer-text { text-align: center; color: rgba(255, 255, 255, 0.4); font-size: 12px; margin-top: 30px; line-height: 1.6; }
   .divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent); margin: 20px 0; }
   @media (max-width: 768px) { .login-card { padding: 40px 30px; } .login-title h1 { font-size: 24px; } .logo { width: 70px; height: 70px; font-size: 40px; } }
+  @media (min-width: 1024px) {
+    nav { justify-content: center !important; }
+    nav button div:first-child { width: 56px !important; height: 56px !important; font-size: 28px !important; border-radius: 12px !important; }
+    nav button span { font-size: 13px !important; }
+  }
 </style>
 <script>
 // شاشة الدخول الآن عبر Firebase (LoginGate) — الشاشة القديمة أُزيلت
@@ -425,10 +430,10 @@ const styles = {
   body:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",direction:"rtl",background:C.slate,minHeight:"100vh",margin:0},
   header:{background:"linear-gradient(135deg,#0f1923,#1a2e45)",color:"white",padding:"0 16px",display:"flex",alignItems:"center",justifyContent:"space-between",height:60,position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 20px rgba(0,0,0,0.25)"},
   logo:{width:44,height:44,borderRadius:8,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"},
-  nav:{background:C.white,borderBottom:"1px solid "+C.border,display:"flex",overflowX:"auto",padding:"0 8px"},
+  nav:{background:C.white,borderBottom:"1px solid "+C.border,display:"flex",overflowX:"auto",padding:"0 8px",justifyContent:"center",flexWrap:"wrap"},
   navBtn:{padding:"12px 14px",fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,fontWeight:700,color:"#1f2937",background:"none",border:"none",borderBottom:"3px solid transparent",cursor:"pointer",whiteSpace:"nowrap"},
   navBtnActive:{color:C.teal,borderBottomColor:C.teal},
-  main:{maxWidth:1200,margin:"0 auto",padding:"20px 12px"},
+  main:{maxWidth:1600,margin:"0 auto",padding:"20px 12px"},
   card:{background:C.white,borderRadius:12,padding:"16px 18px",boxShadow:"0 2px 12px rgba(0,0,0,0.07)"},
   panel:{background:C.white,borderRadius:12,boxShadow:"0 2px 12px rgba(0,0,0,0.07)",overflow:"hidden",marginBottom:20},
   panelHdr:{padding:"14px 20px",borderBottom:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"space-between",background:"#fafbfc"},
@@ -2045,12 +2050,10 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
             setTimeout(()=>{
               const ids = [];
               if(printSel.contract) ids.push("contract-print-area");
-              if(printSel.bond && printSel.cheque) ids.push("bond-cl-print-area");
-              else if(printSel.bond) ids.push("bond-print-area");
-              else if(printSel.cheque) ids.push("cheque-print-area");
-              if(hasG && printSel.bondG && printSel.chequeG) ids.push("bond-gg-print-area");
-              else if(hasG && printSel.bondG) ids.push("bond-g-print-area");
-              else if(hasG && printSel.chequeG) ids.push("cheque-g-print-area");
+              if(printSel.bond) ids.push("bond-print-area");
+              if(printSel.cheque) ids.push("cheque-print-area");
+              if(hasG && printSel.bondG) ids.push("bond-g-print-area");
+              if(hasG && printSel.chequeG) ids.push("cheque-g-print-area");
               if(ids.length===0) return;
               const w = window.open("","_blank");
               if(!w) return;
@@ -2215,8 +2218,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
 
       <Modal open={!!bond} onClose={()=>setBond(null)} title="📜 سند الأمر">
         <div style={{padding:"10px 12px 0",textAlign:"left",display:"flex",gap:8,flexWrap:"wrap"}}>
-          <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-print-area")}>🖨️ سند الزبون فقط</button>
-          <button style={styles.btn(C.teal)} onClick={()=>printContent("bond-cl-print-area")}>🖨️ سند الزبون + إقرار</button>
+          <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-print-area")}>🖨️ سند الزبون</button>
         </div>
         <div id="bond-print-area">{bond && <BondContent c={bond} inv={investors.find(i=>String(i.id)===String(bond.investorId))} r={calcContract(bond.amount,settings,bond.totalInst)}/>}</div>
         <div id="bond-cl-print-area" style={{position:"absolute",left:"-9999px",top:0}}>
@@ -2229,8 +2231,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       {/* Cheque Modal */}
       <Modal open={!!bondG} onClose={()=>setBondG(null)} title="📜 سند الأمر">
         <div style={{padding:"10px 12px 0",textAlign:"left",display:"flex",gap:8,flexWrap:"wrap"}}>
-          <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-g-print-area")}>🖨️ سند الكفيل فقط</button>
-          <button style={styles.btn(C.teal)} onClick={()=>printContent("bond-gg-print-area")}>🖨️ سند الكفيل + إقرار</button>
+          <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-g-print-area")}>🖨️ سند الكفيل</button>
         </div>
         <div id="bond-g-print-area">{bondG && <BondGuarantorContent c={bondG} inv={investors.find(i=>String(i.id)===String(bondG.investorId))} r={calcContract(bondG.amount,settings,bondG.totalInst)}/>}</div>
         <div id="bond-gg-print-area" style={{position:"absolute",left:"-9999px",top:0}}>
