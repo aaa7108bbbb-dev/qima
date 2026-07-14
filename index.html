@@ -3365,17 +3365,17 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     });
   };
 
-  // مع المستثمرين (خصوم)
+  // بنود "له عندي" (التزامات)
   const invRows = [
-    {key:"cards",      name:"رصيد البطاقات",           sign:1,  hint:"قيمة البضاعة الموجودة"},
-    {key:"zakat",      name:"صندوق الزكاة",            sign:1,  hint:"الزكاة المجمّعة"},
-    {key:"deductions", name:"المتبقي من الاستقطاعات",  sign:1,  hint:"أرصدة معلقة مجهولة"},
+    {key:"deductions", name:"المتبقي من الاستقطاعات",  sign:1,  hint:"ناس لهم فلوس عندي"},
+    {key:"zakat",      name:"صندوق الزكاة",            sign:1,  hint:"زكاة مدفوعة مقدماً"},
   ];
-  // الأصول
+  // بنود "لي عنده" (أصول)
   const otherRows = [
-    {key:"cash",       name:"الرصيد النقدي",           sign:1,  hint:"الكاش الفعلي بالمؤسسة"},
-    {key:"accounts",   name:"رصيد الحسابات البنكية",   sign:1,  hint:"إجمالي الحسابات البنكية"},
-    {key:"loans",      name:"السلف",                   sign:1,  hint:"مبالغ أسلفتها لأشخاص"},
+    {key:"cash",       name:"الرصيد النقدي",           sign:1,  hint:"كاش الصندوق"},
+    {key:"accounts",   name:"رصيد الحسابات البنكية",   sign:1,  hint:"رصيد البنك"},
+    {key:"cards",      name:"رصيد البطاقات",           sign:1,  hint:"قيمة البضاعة الموجودة"},
+    {key:"loans",      name:"السلف",                   sign:1,  hint:"مبالغ مسلّفة لأشخاص"},
   ];
 
   // calc totals with correct signs
@@ -3386,14 +3386,12 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
   });
   invRows.forEach(r=>{
     const v = getVal(r.key)||0;
-    // يتبع اللون الظاهر: موجب في الأخضر، سالب في الأحمر (مطابق للعرض)
     if(v>=0) totalMojab+=v; else totalSalib+=Math.abs(v);
   });
   otherRows.forEach(r=>{
     const v = getVal(r.key)||0;
-    // النقدي والبنكية والسلف تظهر في العمود الأحمر دائماً، فتُحسب في السالب بقيمتها المطلقة
-    if(r.key==="cash"||r.key==="accounts"||r.key==="loans"){ totalSalib+=Math.abs(v); }
-    else if(v>=0) totalMojab+=v; else totalSalib+=Math.abs(v);
+    // الأصول (كاش/بنك/بضاعة/سلف) دائماً "لي عنده"
+    totalSalib+=Math.abs(v);
   });
   const farq = totalMojab - totalSalib;
 
@@ -3444,11 +3442,11 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
           <div style={{color:"white",fontWeight:900,fontSize:17}}>📊 الجرد — {mLabel(selMonth)}</div>
           <div style={{display:"flex",gap:16,alignItems:"center"}}>
             <div style={{textAlign:"center"}}>
-              <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",marginBottom:2}}>الموجب</div>
+              <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",marginBottom:2}}>له عندي</div>
               <div style={{fontSize:18,fontWeight:900,color:"#5cd98a"}}>{totalMojab.toLocaleString("en-US")}</div>
             </div>
             <div style={{textAlign:"center"}}>
-              <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",marginBottom:2}}>السالب</div>
+              <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",marginBottom:2}}>لي عنده</div>
               <div style={{fontSize:18,fontWeight:900,color:"#ff8080"}}>{totalSalib.toLocaleString("en-US")}</div>
             </div>
             <div style={{background:farq>=0?"rgba(92,217,138,0.2)":"rgba(255,128,128,0.2)",borderRadius:10,padding:"8px 16px",textAlign:"center"}}>
@@ -3467,8 +3465,8 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
             <thead>
               <tr>
                 <th style={{...thS,width:"45%",textAlign:"right"}}>البند</th>
-                <th style={{...thS,color:"#a8f0c6",textAlign:"center"}}>الموجب ✏️</th>
-                <th style={{...thS,color:"#ff9999",textAlign:"center"}}>السالب ✏️</th>
+                <th style={{...thS,color:"#a8f0c6",textAlign:"center"}}>له عندي ✏️</th>
+                <th style={{...thS,color:"#ff9999",textAlign:"center"}}>لي عنده ✏️</th>
               </tr>
             </thead>
             <tbody>
@@ -3500,10 +3498,10 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
                   auto={true} hideMojab={false}/>;
               })}
 
-              {/* Section: الأصول */}
+              {/* Section: لي عنده (أصول) */}
               <tr>
-                <td colSpan={3} style={{background:"#e8f5e9",color:"#1b5e20",fontWeight:800,fontSize:15,padding:"8px 14px",borderRight:"4px solid #4caf50"}}>
-                  الأصول
+                <td colSpan={3} style={{background:"#fef2f2",color:"#991b1b",fontWeight:800,fontSize:15,padding:"8px 14px",borderRight:"4px solid #ef4444"}}>
+                  لي عنده (أصول)
                 </td>
               </tr>
               {otherRows.map((row,i)=>{
