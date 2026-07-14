@@ -356,7 +356,7 @@ function calcContract(amount, s = {profit:50, admin:2.5, acc:10, inst:10}, total
   return { profit, admin, acc, inst, net, total };
 }
 // مساعد: يحسب العقد باستخدام إجماليه الفعلي (totalInst)
-function calcC(c, settings){ if(c.isOldContract) return {profit:0,admin:0,acc:0,inst:0,net:0,total:+c.totalInst||+c.amount||0}; return calcContract(+c.amount||0, settings, c.totalInst); }
+function calcC(c, settings){ if(c.isOldContract||c.contractType==='migrated') return {profit:0,admin:0,acc:0,inst:0,net:0,total:+c.totalInst||+c.amount||0}; return calcContract(+c.amount||0, settings, c.totalInst); }
 
 function numToWords(n) {
   n = Math.round(n);
@@ -1602,8 +1602,12 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       .filter(c=>!collectSearch || c.client.includes(collectSearch) || (c.cPhone||"").includes(collectSearch))
       .sort((a,b)=>b.lateAmt-a.lateAmt);  // المتأخرين فوق
 
-    // سدادات اليوم (التحصيل الحالي)
-    const todayPaid = (payments||[]).filter(p=>p.date===collectDate);
+    // سدادات اليوم (التحصيل الحالي) — تفلتر حسب المستثمر المختار
+    const allTodayPaid = (payments||[]).filter(p=>p.date===collectDate);
+    const todayPaid = collectInv==="all" ? allTodayPaid : allTodayPaid.filter(p=>{
+      const pc=contracts.find(cc=>cc.id===p.contractId);
+      return pc && String(pc.investorId)===String(collectInv);
+    });
     const countToday = new Set(todayPaid.map(p=>p.contractId)).size;
     const sumToday = todayPaid.reduce((s,p)=>s+p.amount,0);
 
@@ -1611,6 +1615,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       const amt = parseFloat(collectAmounts[c.id]!=null?collectAmounts[c.id]:c.instAmt)||0;
       if(amt<=0){toast("⚠️ المبلغ غير صحيح","warn");return;}
       const realAmt = Math.min(amt, c.left);
+      if(!window.confirm("تأكيد سداد "+SAR(realAmt)+" لـ "+c.client+"؟")) return;
       const newPaid = c.paid + realAmt;
       setPayments(p=>[...p,{id:Date.now()+Math.floor(Math.random()*1000),contractId:c.id,amount:realAmt,date:collectDate,note:"تحصيل"}]);
       if(newPaid>=(c.totalInst||0)){ markDone(c.id); }
@@ -1651,25 +1656,27 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               const inv=investors.find(i=>String(i.id)===String(c.investorId));
               const amtVal = collectAmounts[c.id]!=null?collectAmounts[c.id]:String(c.instAmt||"");
               return (
-                <div key={c.id} style={{...styles.card,padding:"12px 14px",borderRight:"5px solid "+(c.lateAmt>0?C.red:C.green)}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8,flexWrap:"wrap",gap:6}}>
+                <div key={c.id} style={{...styles.card,padding:0,overflow:"hidden",borderRadius:14,border:"1px solid "+(c.lateAmt>0?"#fecaca":"#d1fae5")}}>
+                  <div style={{background:c.lateAmt>0?"#fef2f2":"#f0fdf4",padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:6}}>
                     <div>
-                      <div style={{fontSize:16,fontWeight:800}}>{c.client} {c.contractType==="defer"&&<span style={{fontSize:12,color:"#a87520"}}>🕒 مؤجل</span>}{c.isOldContract&&<span style={{fontSize:12,color:"#92400e",background:"#fef3c7",padding:"1px 6px",borderRadius:6,marginRight:4}}>📋 قديم</span>}</div>
-                      <div style={{fontSize:13,color:"#1f2937"}}>{inv?invLabel(inv):"—"} · عقد {c.num}</div>
+                      <div style={{fontSize:17,fontWeight:800,color:C.ink}}>{c.client}</div>
+                      <div style={{fontSize:12,color:"#6b7280",marginTop:2}}>{inv?invLabel(inv):"—"} · عقد {c.num} {c.contractType==="defer"&&<span style={{color:"#a87520"}}> · 🕒 مؤجل</span>}{c.contractType==="migrated"&&<span style={{color:"#6366f1"}}> · 📋 مرحّل</span>}</div>
                     </div>
                     {c.lateAmt>0
-                      ? <span style={styles.badge(C.redLt,C.red)}>🔴 متأخر {SAR(c.lateAmt)}</span>
-                      : <span style={styles.badge(C.tealLt,C.green)}>🟢 منتظم</span>}
+                      ? <span style={{fontSize:13,fontWeight:800,color:C.red,background:"#fee2e2",padding:"4px 12px",borderRadius:20}}>متأخر {SAR(c.lateAmt)}</span>
+                      : <span style={{fontSize:13,fontWeight:800,color:C.green,background:"#dcfce7",padding:"4px 12px",borderRadius:20}}>منتظم</span>}
                   </div>
-                  <div style={{display:"flex",gap:10,fontSize:13,color:"#1f2937",marginBottom:10,flexWrap:"wrap"}}>
-                    <span>القسط: <b style={{color:C.ink}}>{SAR(c.instAmt||0)}</b></span>
-                    <span>المتبقي: <b style={{color:C.red}}>{SAR(c.left)}</b></span>
-                    <span>الواصل: <b style={{color:C.green}}>{SAR(c.paid)}</b></span>
-                  </div>
-                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                    <input type="number" style={{...styles.input,flex:1,fontWeight:700,borderColor:C.green}} value={amtVal}
-                      onChange={e=>setCollectAmounts(p=>({...p,[c.id]:e.target.value}))}/>
-                    <button style={{...styles.btn(C.green),fontSize:15,padding:"10px 20px",whiteSpace:"nowrap"}} onClick={()=>doCollect(c)}>✅ سدّد</button>
+                  <div style={{padding:"12px 16px"}}>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12,textAlign:"center"}}>
+                      <div style={{background:"#f8fafc",borderRadius:8,padding:"8px 4px"}}><div style={{fontSize:11,color:"#6b7280"}}>القسط</div><div style={{fontSize:15,fontWeight:800,color:C.ink}}>{SAR(c.instAmt||0)}</div></div>
+                      <div style={{background:"#fef2f2",borderRadius:8,padding:"8px 4px"}}><div style={{fontSize:11,color:"#6b7280"}}>المتبقي</div><div style={{fontSize:15,fontWeight:800,color:C.red}}>{SAR(c.left)}</div></div>
+                      <div style={{background:"#f0fdf4",borderRadius:8,padding:"8px 4px"}}><div style={{fontSize:11,color:"#6b7280"}}>الواصل</div><div style={{fontSize:15,fontWeight:800,color:C.green}}>{SAR(c.paid)}</div></div>
+                    </div>
+                    <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                      <input type="number" style={{...styles.input,flex:1,fontWeight:700,fontSize:16,borderColor:C.teal,borderWidth:2,borderRadius:10,padding:"10px 14px"}} placeholder="المبلغ" value={amtVal}
+                        onChange={e=>setCollectAmounts(p=>({...p,[c.id]:e.target.value}))}/>
+                      <button style={{...styles.btn(C.green),fontSize:16,fontWeight:800,padding:"12px 24px",whiteSpace:"nowrap",borderRadius:10,boxShadow:"0 2px 8px rgba(34,197,94,0.3)"}} onClick={()=>doCollect(c)}>💰 سدّد</button>
+                    </div>
                   </div>
                   {(()=>{
                     const hist=(payments||[]).filter(p=>p.contractId===c.id).slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
@@ -6467,7 +6474,7 @@ function ProfitLossPage({contracts, daily, settings, payments, investors}) {
     // === الإيرادات ===
     let instShare=0, adminFees=0, accComm=0, totalProfit=0, investorNet=0;
     mc.forEach(c=>{
-      const r=calcContract(+c.amount||0, settings, c.totalInst);
+      const r=calcC(c, settings);
       totalProfit += r.profit;
       instShare += r.inst;
       adminFees += r.admin;
@@ -6509,7 +6516,7 @@ function ProfitLossPage({contracts, daily, settings, payments, investors}) {
       const ic = mc.filter(c=>String(c.investorId)===String(iv.id));
       if(ic.length===0) return null;
       let inv_profit=0, inv_inst=0, inv_acc=0, inv_admin=0, inv_net=0;
-      ic.forEach(c=>{const r=calcContract(+c.amount||0,settings,c.totalInst);inv_profit+=r.profit;inv_inst+=r.inst;inv_acc+=r.acc;inv_admin+=r.admin;inv_net+=r.net;});
+      ic.forEach(c=>{const r=calcC(c,settings);inv_profit+=r.profit;inv_inst+=r.inst;inv_acc+=r.acc;inv_admin+=r.admin;inv_net+=r.net;});
       return {name:iv.name, count:ic.length, cash:ic.reduce((s,c)=>s+(+c.amount||0),0), profit:inv_profit, instShare:inv_inst, accComm:inv_acc, admin:inv_admin, net:inv_net};
     }).filter(Boolean);
 
