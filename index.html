@@ -3393,7 +3393,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     // الأصول (كاش/بنك/بضاعة/سلف) دائماً "لي عنده"
     totalSalib+=Math.abs(v);
   });
-  const farq = totalMojab - totalSalib;
+  const farq = totalSalib - totalMojab;
 
   const thS = {...styles.th, padding:"10px 14px"};
   const tdS = {...styles.td, padding:"9px 12px", verticalAlign:"middle"};
@@ -3525,6 +3525,12 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
                   // رصيد الحسابات البنكية: يظهر في العمود الأيسر فقط (تلقائي، بلا خانة يمين) مثل السلف
                   return <Row key={row.key} i={i} name={row.name} hint="من كشف الراجحي المستورد تلقائياً"
                     mojab={""} salib={v}
+                    onMojab={()=>{}} onSalib={()=>{}}
+                    autoSalib={true} hideMojab={true}/>;
+                }
+                if(row.key==="cards"){
+                  return <Row key={row.key} i={i} name={row.name} hint={row.hint}
+                    mojab={""} salib={Math.abs(v)}
                     onMojab={()=>{}} onSalib={()=>{}}
                     autoSalib={true} hideMojab={true}/>;
                 }
