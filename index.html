@@ -6734,7 +6734,7 @@ function ProfitLossPage({contracts, daily, settings, payments, investors}) {
 }
 
 // ─── Cash Flow & Simulator (البوصلة المالية) ────────────────
-function CashFlowPage({contracts, investors, settings, payments}) {
+function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpen, txList, loans, zakatTx, pending, bankTx}) {
   const SAR = v => (v||0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
   const [tab, setTab] = useState("actual");
   const allC = (contracts||[]).filter(c=>!c.deleted && c.contractType!=="migrated");
@@ -7055,16 +7055,284 @@ function CashFlowPage({contracts, investors, settings, payments}) {
     </div>);
   };
 
+  // ═══ تبويب ٣: القوائم المالية ═══
+  const FinancialStatements = () => {
+    const [stmtTab, setStmtTab] = useState("income");
+    const [stmtMonth, setStmtMonth] = useState(fiscalYM(today));
+    const stmtMonths = [...new Set(allC.map(c=>fiscalYM(c.date)))].sort().reverse();
+    if(!stmtMonths.includes(stmtMonth) && !stmtMonths.includes(fiscalYM(today))) stmtMonths.unshift(fiscalYM(today));
+    if(!stmtMonths.includes(stmtMonth)) stmtMonths.unshift(stmtMonth);
+    const mLabel2 = ym=>{const[y,m]=ym.split("-");return"شهر "+parseInt(m)+" - "+y;};
+    const _daily = Array.isArray(daily)?daily:[];
+    const allPayments = payments||[];
+
+    // ── عقود الشهر المحدد ──
+    const monthContracts = allC.filter(c=>fiscalYM(c.date)===stmtMonth && !c.isOldContract && c.contractType!=="migrated");
+
+    // ══════ ١. قائمة الدخل ══════
+    const incomeCalc = (() => {
+      // إيرادات: أرباح العقود المُبرمة بالشهر
+      const contractProfits = monthContracts.reduce((s,c)=>{const r=calcC(c,settings);return s+r.profit;},0);
+      // العمولة الإدارية (حصة المدير)
+      const adminFees = monthContracts.reduce((s,c)=>{const r=calcC(c,settings);return s+r.admin;},0);
+      const totalRevenue = contractProfits + adminFees;
+      // مصروفات
+      const accFees = monthContracts.reduce((s,c)=>{const r=calcC(c,settings);return s+r.acc;},0);
+      const instFees = monthContracts.reduce((s,c)=>{const r=calcC(c,settings);return s+r.inst;},0);
+      // مصروفات تشغيلية من دفتر اليومية
+      const monthStart = stmtMonth+"-21";
+      const [sy,sm] = stmtMonth.split("-").map(Number);
+      const nextM = sm===12?(sy+1)+"-01":(sy)+"-"+String(sm+1).padStart(2,"0");
+      const monthEnd = nextM+"-20";
+      const opex = _daily.filter(d=>d.type==="masroof"&&d.date>=monthStart&&d.date<=monthEnd).reduce((s,d)=>s+(+d.amount||0),0);
+      const totalExpenses = accFees + instFees + opex;
+      const netProfit = totalRevenue - totalExpenses;
+      // صافي ربح المستثمرين
+      const invNet = monthContracts.reduce((s,c)=>{const r=calcC(c,settings);return s+r.net;},0);
+      return {contractProfits, adminFees, totalRevenue, accFees, instFees, opex, totalExpenses, netProfit, invNet, contractCount:monthContracts.length, capitalOut:monthContracts.reduce((s,c)=>s+(+c.amount||0),0)};
+    })();
+
+    // ══════ ٢. قائمة المركز المالي ══════
+    const balanceCalc = (() => {
+      // كاش الصندوق
+      const _do = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
+      const base = _do.__base && typeof _do.__base==="object" ? _do.__base : null;
+      const baseAmount = base ? (+base.amount||0) : 0;
+      const baseDate = base ? base.date : "0000-00-00";
+      const cashBox = baseAmount + _daily.filter(d=>d.date>=baseDate).reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
+      // بنك
+      const bt = _arr(bankTx);
+      const cashBank = bt.length>0 ? (bt[bt.length-1].balance||0) : 0;
+      // بضاعة
+      const goodsData2 = (()=>{try{return JSON.parse(localStorage.getItem("qimma_goods3")||"[]");}catch{return[];}})();
+      const priceOv2 = (()=>{try{return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}");}catch{return{};}})();
+      const defPrice3 = (()=>{try{return parseFloat(localStorage.getItem("qimma_default_price"))||0;}catch{return 0;}})();
+      const goodsVal = (()=>{
+        const cRows=contracts.filter(c=>!c.deleted&&!c.isOldContract).map(c=>{
+          const isCard=(c.goods||"").trim().startsWith("بطاقة");
+          if(isCard) return{id:"c_"+c.id,date:c.date,supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,supportAcc:0,withdrawnQty:parseInt(c.qty)||0,price:0,cashOnly:false};
+          return{id:"c_"+c.id,date:c.date,supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,supportAcc:-(parseFloat(c.amount)||0),withdrawnQty:0,price:0,cashOnly:true};
+        });
+        const allR=[...cRows,...goodsData2].sort((a,b)=>{const d2=new Date(a.date)-new Date(b.date);return d2!==0?d2:0;});
+        let runCards=0,lastP=0,runGC=0;
+        allR.forEach(r=>{if(r.cashOnly){runGC+=parseFloat(r.supportAcc)||0;return;}const rp=parseFloat(priceOv2[r.id]||r.price)||defPrice3||lastP||1;if(rp)lastP=rp;const sC=parseFloat(r.supportClient)||0;const sA=parseFloat(r.supportAcc)||0;const sup=sC||sA?Math.floor((sC+sA)/rp):0;runCards=runCards+sup-(parseInt(r.withdrawnQty)||0);});
+        return runCards*lastP+runGC;
+      })();
+      // المتبقي عند الزبائن
+      const remaining = allC.reduce((s,c)=>{
+        const total=+c.totalInst||+c.amount||0;
+        const paid=allPayments.filter(p=>p.contractId===c.id).reduce((ss,p)=>ss+(+p.amount||0),0);
+        return s+Math.max(0,total-paid);
+      },0);
+      // سلف
+      const loansVal = (loans||[]).reduce((s,l)=>{const paid=(l.payments||[]).reduce((ss,p)=>ss+p.amount,0);return s+Math.max(0,(l.amount||0)-paid);},0);
+      const totalAssets = cashBox + cashBank + goodsVal + remaining + loansVal;
+      // التزامات
+      const invBalances = investors.map(inv=>{
+        const capital=inv?.capital||0;
+        const myC=contracts.filter(c=>!c.deleted&&c.investorId===inv.id);
+        const autoDeduct=myC.filter(c=>!c.isOldContract&&c.contractType!=="migrated").reduce((s,c)=>{const r=calcC(c,settings);return s-(c.amount+r.acc+r.inst+r.admin);},0);
+        const autoPaid=allPayments.filter(p=>myC.find(c=>c.id===p.contractId)).reduce((s,p)=>s+p.amount,0);
+        const manualTotal=((txList&&txList[inv.id])||[]).reduce((s,t)=>s+t.amount,0);
+        return{name:inv.name,balance:capital+autoDeduct+autoPaid+manualTotal};
+      });
+      const invTotal = invBalances.filter(i=>i.balance>0).reduce((s,i)=>s+i.balance,0);
+      const deductionsVal = (pending||[]).reduce((s,p)=>s+p.amount,0);
+      const zakatVal = (zakatTx||[]).reduce((s,t)=>s+(t.type==="collect"?t.amount:-t.amount),0);
+      const totalLiabilities = invTotal + deductionsVal + Math.max(0,zakatVal);
+      const equity = totalAssets - totalLiabilities;
+      return {cashBox,cashBank,goodsVal,remaining,loansVal,totalAssets,invTotal,deductionsVal,zakatVal:Math.max(0,zakatVal),totalLiabilities,equity};
+    })();
+
+    // ══════ ٣. قائمة التدفقات النقدية ══════
+    const cashflowCalc = (() => {
+      const [sy,sm] = stmtMonth.split("-").map(Number);
+      const monthStart = stmtMonth+"-21";
+      const nextM = sm===12?(sy+1)+"-01":(sy)+"-"+String(sm+1).padStart(2,"0");
+      const monthEnd = nextM+"-20";
+      const mDaily = _daily.filter(d=>d.date>=monthStart&&d.date<=monthEnd);
+      // سدادات (sadad)
+      const sadadIn = mDaily.filter(d=>d.type==="sadad").reduce((s,d)=>s+(+d.amount||0),0);
+      // استلمت نقدي
+      const estilamIn = mDaily.filter(d=>d.type==="estilam").reduce((s,d)=>s+(+d.amount||0),0);
+      const totalIn = sadadIn + estilamIn;
+      // خارج
+      const masroofOut = mDaily.filter(d=>d.type==="masroof").reduce((s,d)=>s+(+d.amount||0),0);
+      const sahbOut = mDaily.filter(d=>d.type==="sahb").reduce((s,d)=>s+(+d.amount||0),0);
+      const mgrOut = mDaily.filter(d=>d.type==="mgr").reduce((s,d)=>s+(+d.amount||0),0);
+      const accOut = mDaily.filter(d=>d.type==="acc").reduce((s,d)=>s+(+d.amount||0),0);
+      const zakatOut = mDaily.filter(d=>d.type==="zakat").reduce((s,d)=>s+(+d.amount||0),0);
+      const salfOut = mDaily.filter(d=>d.type==="salf").reduce((s,d)=>s+(+d.amount||0),0);
+      const totalOut = masroofOut + sahbOut + mgrOut + accOut + zakatOut + salfOut;
+      // رصيد أول الشهر (تقريبي)
+      const _do = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
+      const base = _do.__base && typeof _do.__base==="object" ? _do.__base : null;
+      const baseAmount = base ? (+base.amount||0) : 0;
+      const baseDate = base ? base.date : "0000-00-00";
+      const beforeMonth = _daily.filter(d=>d.date>=baseDate&&d.date<monthStart).reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
+      const openBal = baseAmount + beforeMonth;
+      const closeBal = openBal + totalIn - totalOut;
+      return {openBal,sadadIn,estilamIn,totalIn,masroofOut,sahbOut,mgrOut,accOut,zakatOut,salfOut,totalOut,closeBal};
+    })();
+
+    // ══════ ٤. قائمة الدخل الشامل ══════
+    // ══════ ٥. قائمة التغيرات في حقوق الملكية ══════
+    // (مبسّطة لأنها أقرب لشركات مساهمة)
+
+    const secStyle = {marginBottom:16,background:"#fff",borderRadius:14,border:"1px solid "+C.border,overflow:"hidden"};
+    const secHdr = (color,title) => (<div style={{padding:"11px 16px",background:color+"12",borderBottom:"2px solid "+color,fontSize:14,fontWeight:800,color,display:"flex",justifyContent:"space-between"}}><span>{title}</span></div>);
+    const rowS = (i) => ({display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 16px",borderBottom:"1px solid #f3f4f6",background:i%2===0?"#fff":"#fafbfc"});
+    const totR = (color) => ({display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 16px",background:color+"12",borderTop:"2px solid "+color,fontWeight:900,fontSize:15});
+    const bigBox = (color,bg) => ({margin:"0 0 20px",padding:"14px",borderRadius:14,background:bg,border:"2px solid "+color,textAlign:"center"});
+    const RRow = ({name,amount,color,hint,i}) => (<div style={rowS(i)}><div><div style={{fontWeight:600,fontSize:13}}>{name}</div>{hint&&<div style={{fontSize:10,color:"#9ca3af"}}>{hint}</div>}</div><div style={{fontWeight:800,color:color||C.ink,fontSize:15}}>{SAR(Math.abs(amount))}</div></div>);
+
+    const stmtTabs = [
+      {id:"income",label:"قائمة الدخل",icon:"📊"},
+      {id:"balance",label:"المركز المالي",icon:"⚖️"},
+      {id:"cashflow",label:"التدفقات النقدية",icon:"💰"},
+      {id:"comprehensive",label:"الدخل الشامل",icon:"📈"},
+      {id:"equity",label:"حقوق الملكية",icon:"🏛️"},
+    ];
+
+    return (<div>
+      {/* اختيار الشهر */}
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,flexWrap:"wrap"}}>
+        <label style={{fontWeight:700,fontSize:14}}>📅 الفترة:</label>
+        <select value={stmtMonth} onChange={e=>setStmtMonth(e.target.value)} style={{padding:"8px 12px",borderRadius:10,border:"1.5px solid #d1d5db",fontSize:14,fontWeight:700,fontFamily:"inherit"}}>
+          {stmtMonths.map(m=><option key={m} value={m}>{mLabel2(m)}</option>)}
+        </select>
+      </div>
+
+      {/* تبويبات فرعية */}
+      <div style={{display:"flex",gap:6,marginBottom:20,overflowX:"auto",paddingBottom:4}}>
+        {stmtTabs.map(t=>(
+          <button key={t.id} onClick={()=>setStmtTab(t.id)} style={{padding:"8px 12px",fontSize:12,fontWeight:700,border:stmtTab===t.id?"2px solid "+C.teal:"1.5px solid #d1d5db",borderRadius:10,cursor:"pointer",background:stmtTab===t.id?C.teal:"#fff",color:stmtTab===t.id?"#fff":C.ink,whiteSpace:"nowrap",fontFamily:"inherit",transition:"all 0.2s"}}>{t.icon} {t.label}</button>
+        ))}
+      </div>
+
+      {/* ══════ قائمة الدخل ══════ */}
+      {stmtTab==="income" && (<div>
+        <div style={{fontSize:11,color:"#6b7280",textAlign:"center",marginBottom:12}}>عدد العقود: {incomeCalc.contractCount} — رأس مال مُشغّل: {SAR(incomeCalc.capitalOut)}</div>
+        <div style={secStyle}>
+          {secHdr(C.green,"الإيرادات")}
+          <RRow name="أرباح العقود المُبرمة" amount={incomeCalc.contractProfits} color={C.green} hint={"إجمالي الربح من "+incomeCalc.contractCount+" عقد"} i={0}/>
+          <RRow name="العمولة الإدارية (حصة المدير)" amount={incomeCalc.adminFees} color={C.green} hint={adminRate+"% من رأس المال"} i={1}/>
+          <div style={totR(C.green)}><span style={{color:C.green}}>إجمالي الإيرادات</span><span style={{color:C.green,fontSize:17}}>{SAR(incomeCalc.totalRevenue)}</span></div>
+        </div>
+        <div style={secStyle}>
+          {secHdr(C.red,"المصروفات")}
+          <RRow name="عمولة المحاسب" amount={incomeCalc.accFees} color={C.red} hint={accRate+"% من الأرباح"} i={0}/>
+          <RRow name="عمولة التحصيل" amount={incomeCalc.instFees} color={C.red} hint={instRate+"% من الأرباح"} i={1}/>
+          <RRow name="مصروفات تشغيلية" amount={incomeCalc.opex} color={C.red} hint="من دفتر اليومية" i={2}/>
+          <div style={totR(C.red)}><span style={{color:C.red}}>إجمالي المصروفات</span><span style={{color:C.red,fontSize:17}}>{SAR(incomeCalc.totalExpenses)}</span></div>
+        </div>
+        <div style={bigBox(incomeCalc.netProfit>=0?C.green:C.red,incomeCalc.netProfit>=0?"#f0fdf4":"#fef2f2")}>
+          <div style={{fontSize:12,color:"#555",marginBottom:4}}>صافي الربح</div>
+          <div style={{fontSize:26,fontWeight:900,color:incomeCalc.netProfit>=0?C.green:C.red}}>{SAR(incomeCalc.netProfit)}</div>
+          <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:10,fontSize:11,color:"#555"}}>
+            <span>صافي المستثمرين: <strong style={{color:C.teal}}>{SAR(incomeCalc.invNet)}</strong></span>
+            <span>حصة المدير: <strong style={{color:"#be185d"}}>{SAR(incomeCalc.adminFees)}</strong></span>
+          </div>
+        </div>
+      </div>)}
+
+      {/* ══════ المركز المالي ══════ */}
+      {stmtTab==="balance" && (<div>
+        <div style={secStyle}>
+          {secHdr("#2563eb","الأصول (لي)")}
+          <RRow name="رصيد الصندوق" amount={balanceCalc.cashBox} color="#2563eb" hint="كاش بالصندوق" i={0}/>
+          <RRow name="رصيد الحسابات البنكية" amount={balanceCalc.cashBank} color="#2563eb" hint="آخر رصيد بنكي" i={1}/>
+          <RRow name="البضاعة (بطاقات + سلع)" amount={balanceCalc.goodsVal} color="#2563eb" hint="قيمة المخزون" i={2}/>
+          <RRow name="المتبقي عند الزبائن" amount={balanceCalc.remaining} color="#2563eb" hint="أقساط لم تُسدد" i={3}/>
+          <RRow name="السلف" amount={balanceCalc.loansVal} color="#2563eb" hint="مبالغ مسلّفة" i={4}/>
+          <div style={totR("#2563eb")}><span style={{color:"#2563eb"}}>إجمالي الأصول</span><span style={{color:"#2563eb",fontSize:17}}>{SAR(balanceCalc.totalAssets)}</span></div>
+        </div>
+        <div style={secStyle}>
+          {secHdr("#b45309","الالتزامات (عليّ)")}
+          <RRow name="أرصدة المستثمرين" amount={balanceCalc.invTotal} color="#b45309" hint="إجمالي أموال المستثمرين" i={0}/>
+          <RRow name="الاستقطاعات المعلقة" amount={balanceCalc.deductionsVal} color="#b45309" hint="مبالغ معلقة" i={1}/>
+          <RRow name="صندوق الزكاة" amount={balanceCalc.zakatVal} color="#b45309" hint="زكاة مجموعة" i={2}/>
+          <div style={totR("#b45309")}><span style={{color:"#b45309"}}>إجمالي الالتزامات</span><span style={{color:"#b45309",fontSize:17}}>{SAR(balanceCalc.totalLiabilities)}</span></div>
+        </div>
+        <div style={bigBox(balanceCalc.equity>=0?C.teal:C.red,balanceCalc.equity>=0?"#f0fdfa":"#fef2f2")}>
+          <div style={{fontSize:12,color:"#555",marginBottom:4}}>حقوق الملكية (الأصول − الالتزامات)</div>
+          <div style={{fontSize:26,fontWeight:900,color:balanceCalc.equity>=0?C.teal:C.red}}>{SAR(balanceCalc.equity)}</div>
+          <div style={{fontSize:11,color:"#6b7280",marginTop:4}}>= ربحك الفعلي + رأس مالك الخاص</div>
+        </div>
+      </div>)}
+
+      {/* ══════ التدفقات النقدية ══════ */}
+      {stmtTab==="cashflow" && (<div>
+        <div style={bigBox("#2563eb","#eff6ff")}>
+          <div style={{fontSize:12,color:"#555",marginBottom:4}}>رصيد أول الشهر (الصندوق)</div>
+          <div style={{fontSize:22,fontWeight:900,color:"#2563eb"}}>{SAR(cashflowCalc.openBal)}</div>
+        </div>
+        <div style={secStyle}>
+          {secHdr(C.green,"⬇️ تدفقات داخلة")}
+          <RRow name="سدادات أقساط" amount={cashflowCalc.sadadIn} color={C.green} hint="حركات السداد" i={0}/>
+          <RRow name="استلامات نقدية" amount={cashflowCalc.estilamIn} color={C.green} hint="نقد مستلم" i={1}/>
+          <div style={totR(C.green)}><span style={{color:C.green}}>إجمالي الداخل</span><span style={{color:C.green,fontSize:17}}>+{SAR(cashflowCalc.totalIn)}</span></div>
+        </div>
+        <div style={secStyle}>
+          {secHdr(C.red,"⬆️ تدفقات خارجة")}
+          {cashflowCalc.sahbOut>0&&<RRow name="سحوبات مستثمرين" amount={cashflowCalc.sahbOut} color={C.red} hint="" i={0}/>}
+          {cashflowCalc.masroofOut>0&&<RRow name="مصروفات تشغيلية" amount={cashflowCalc.masroofOut} color={C.red} hint="" i={1}/>}
+          {cashflowCalc.mgrOut>0&&<RRow name="استلام مدير" amount={cashflowCalc.mgrOut} color={C.red} hint="" i={2}/>}
+          {cashflowCalc.accOut>0&&<RRow name="استلام محاسب" amount={cashflowCalc.accOut} color={C.red} hint="" i={3}/>}
+          {cashflowCalc.zakatOut>0&&<RRow name="زكاة" amount={cashflowCalc.zakatOut} color={C.red} hint="" i={4}/>}
+          {cashflowCalc.salfOut>0&&<RRow name="سلف" amount={cashflowCalc.salfOut} color={C.red} hint="" i={5}/>}
+          <div style={totR(C.red)}><span style={{color:C.red}}>إجمالي الخارج</span><span style={{color:C.red,fontSize:17}}>−{SAR(cashflowCalc.totalOut)}</span></div>
+        </div>
+        <div style={bigBox(cashflowCalc.closeBal>=cashflowCalc.openBal?C.green:C.red,cashflowCalc.closeBal>=cashflowCalc.openBal?"#f0fdf4":"#fef2f2")}>
+          <div style={{fontSize:12,color:"#555",marginBottom:4}}>رصيد آخر الشهر</div>
+          <div style={{fontSize:26,fontWeight:900,color:cashflowCalc.closeBal>=cashflowCalc.openBal?C.green:C.red}}>{SAR(cashflowCalc.closeBal)}</div>
+          <div style={{fontSize:11,color:"#6b7280",marginTop:4}}>
+            {cashflowCalc.closeBal>=cashflowCalc.openBal?"📈 +"+SAR(cashflowCalc.closeBal-cashflowCalc.openBal)+" عن أول الشهر":"📉 −"+SAR(cashflowCalc.openBal-cashflowCalc.closeBal)+" عن أول الشهر"}
+          </div>
+        </div>
+      </div>)}
+
+      {/* ══════ قائمة الدخل الشامل ══════ */}
+      {stmtTab==="comprehensive" && (<div>
+        <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:14,marginBottom:16,fontSize:13,lineHeight:1.9,color:"#1e40af"}}>
+          📈 قائمة الدخل الشامل تُظهر التغيرات في حقوق الملكية الناتجة عن المعاملات غير المدرجة في قائمة الدخل.
+        </div>
+        <div style={secStyle}>
+          {secHdr("#7c3aed","قائمة الدخل الشامل")}
+          <RRow name="صافي الربح (من قائمة الدخل)" amount={incomeCalc.netProfit} color={incomeCalc.netProfit>=0?C.green:C.red} hint="" i={0}/>
+          <RRow name="التغير في قيمة البضاعة" amount={0} color="#7c3aed" hint="فرق تقييم المخزون (إن وُجد)" i={1}/>
+          <RRow name="مكاسب / خسائر غير محققة" amount={0} color="#7c3aed" hint="تغيرات لم تتحقق بعد" i={2}/>
+          <div style={totR("#7c3aed")}><span style={{color:"#7c3aed"}}>الدخل الشامل</span><span style={{color:"#7c3aed",fontSize:17}}>{SAR(incomeCalc.netProfit)}</span></div>
+        </div>
+        <div style={{fontSize:11,color:"#9ca3af",textAlign:"center",marginTop:8}}>💡 حالياً الدخل الشامل يساوي صافي الربح — لعدم وجود بنود أخرى مسجّلة</div>
+      </div>)}
+
+      {/* ══════ قائمة التغيرات في حقوق الملكية ══════ */}
+      {stmtTab==="equity" && (<div>
+        <div style={{background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:12,padding:14,marginBottom:16,fontSize:13,lineHeight:1.9,color:"#5b21b6"}}>
+          🏛️ توضح التعديلات على رأس مال المؤسسة والأرباح المحتجزة خلال الفترة.
+        </div>
+        <div style={secStyle}>
+          {secHdr(C.teal,"التغيرات في حقوق الملكية")}
+          <RRow name="حقوق الملكية أول الفترة" amount={balanceCalc.equity - incomeCalc.netProfit} color={C.teal} hint="الرصيد السابق" i={0}/>
+          <RRow name="(+) صافي ربح الفترة" amount={incomeCalc.netProfit} color={C.green} hint="من قائمة الدخل" i={1}/>
+          <RRow name="(−) توزيعات / سحوبات" amount={cashflowCalc.sahbOut+cashflowCalc.mgrOut+cashflowCalc.accOut} color={C.red} hint="سحوبات + استلام مدير + محاسب" i={2}/>
+          <div style={totR(C.teal)}><span style={{color:C.teal}}>حقوق الملكية آخر الفترة</span><span style={{color:C.teal,fontSize:17}}>{SAR(balanceCalc.equity)}</span></div>
+        </div>
+      </div>)}
+    </div>);
+  };
+
   return (
     <div style={{padding:16,maxWidth:900,margin:"0 auto"}}>
       <div style={{fontSize:22,fontWeight:900,textAlign:"center",marginBottom:4,color:C.ink}}>🧭 البوصلة المالية</div>
       <div style={{fontSize:13,color:"#6b7280",textAlign:"center",marginBottom:20}}>شوف مستقبلك المالي — بالأرقام</div>
       <div style={{display:"flex",gap:0,marginBottom:24,borderRadius:12,overflow:"hidden",border:"2px solid "+C.teal}}>
-        {[["actual","📊 التدفق الفعلي"],["simulator","🔄 محاكي التدوير"]].map(([id,label])=>(
-          <button key={id} onClick={()=>setTab(id)} style={{flex:1,padding:"12px 8px",fontSize:14,fontWeight:700,border:"none",cursor:"pointer",background:tab===id?C.teal:"#fff",color:tab===id?"#fff":C.teal,transition:"all 0.2s",fontFamily:"inherit"}}>{label}</button>
+        {[["actual","📊 التدفق الفعلي"],["simulator","🔄 محاكي التدوير"],["statements","📋 القوائم المالية"]].map(([id,label])=>(
+          <button key={id} onClick={()=>setTab(id)} style={{flex:1,padding:"12px 8px",fontSize:13,fontWeight:700,border:"none",cursor:"pointer",background:tab===id?C.teal:"#fff",color:tab===id?"#fff":C.teal,transition:"all 0.2s",fontFamily:"inherit"}}>{label}</button>
         ))}
       </div>
-      {tab==="actual" ? <ActualFlow/> : <Simulator/>}
+      {tab==="actual" ? <ActualFlow/> : tab==="simulator" ? <Simulator/> : <FinancialStatements/>}
     </div>
   );
 }
@@ -7471,7 +7739,7 @@ function App() {
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast} gsWrite={gsWrite}/>}
         {page==="profitloss" && <ProfitLossPage contracts={activeContracts} daily={daily} settings={settings} payments={payments} investors={investors}/>}
-        {page==="cashflow" && <CashFlowPage contracts={activeContracts} investors={investors} settings={settings} payments={payments}/>}
+        {page==="cashflow" && <CashFlowPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>}
         {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast} setPage={setPage}/>}
         {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup} payments={payments} setPayments={setPayments} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} setPage={setPage} investors={investors} contracts={activeContracts} setInvestors={setInvestors}/>}
       </div>
