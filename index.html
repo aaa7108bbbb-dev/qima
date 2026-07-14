@@ -428,20 +428,20 @@ const C = {
 };
 
 const styles = {
-  body:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",direction:"rtl",background:C.slate,minHeight:"100vh",margin:0},
+  body:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",direction:"rtl",background:C.slate,minHeight:"100vh",margin:0,fontWeight:500},
   header:{background:"linear-gradient(135deg,#0f1923,#1a2e45)",color:"white",padding:"0 16px",display:"flex",alignItems:"center",justifyContent:"space-between",height:60,position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 20px rgba(0,0,0,0.25)"},
   logo:{width:44,height:44,borderRadius:8,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"},
   nav:{background:C.white,borderBottom:"1px solid "+C.border,display:"flex",overflowX:"auto",padding:"0 8px",justifyContent:"center",flexWrap:"wrap"},
   navBtn:{padding:"12px 14px",fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,fontWeight:700,color:"#1f2937",background:"none",border:"none",borderBottom:"3px solid transparent",cursor:"pointer",whiteSpace:"nowrap"},
   navBtnActive:{color:C.teal,borderBottomColor:C.teal},
   main:{maxWidth:1600,margin:"0 auto",padding:"20px 12px"},
-  card:{background:C.white,borderRadius:12,padding:"16px 18px",boxShadow:"0 2px 12px rgba(0,0,0,0.07)"},
+  card:{background:C.white,borderRadius:12,padding:"16px 18px",boxShadow:"0 2px 12px rgba(0,0,0,0.07)",border:"1px solid "+C.border},
   panel:{background:C.white,borderRadius:12,boxShadow:"0 2px 12px rgba(0,0,0,0.07)",overflow:"hidden",marginBottom:20},
   panelHdr:{padding:"14px 20px",borderBottom:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"space-between",background:"#fafbfc"},
-  th:{background:C.ink,color:C.white,padding:"10px 12px",textAlign:"start",verticalAlign:"middle",fontWeight:700,fontSize:15,whiteSpace:"nowrap"},
-  td:{padding:"9px 12px",borderBottom:"1px solid "+C.border,textAlign:"start",verticalAlign:"middle",fontSize:15},
-  input:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,padding:"9px 12px",border:"1.5px solid "+C.border,borderRadius:8,color:C.ink,background:C.white,width:"100%",boxSizing:"border-box",textAlign:"right"},
-  select:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,padding:"9px 12px",border:"1.5px solid "+C.border,borderRadius:8,color:C.ink,background:C.white,width:"100%",textAlign:"right"},
+  th:{background:C.ink,color:C.white,padding:"10px 12px",textAlign:"start",verticalAlign:"middle",fontWeight:800,fontSize:15,whiteSpace:"nowrap"},
+  td:{padding:"9px 12px",borderBottom:"2px solid "+C.border,textAlign:"start",verticalAlign:"middle",fontSize:15,fontWeight:600},
+  input:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,padding:"9px 12px",border:"2px solid "+C.border,borderRadius:8,color:C.ink,background:C.white,width:"100%",boxSizing:"border-box",textAlign:"right",fontWeight:600},
+  select:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,padding:"9px 12px",border:"2px solid "+C.border,borderRadius:8,color:C.ink,background:C.white,width:"100%",textAlign:"right",fontWeight:600},
   btn:(bg,color="#fff")=>({fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,fontWeight:700,padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",background:bg,color,display:"inline-flex",alignItems:"center",gap:4}),
   badge:(bg,color)=>({display:"inline-block",padding:"2px 9px",borderRadius:20,fontSize:14,fontWeight:700,background:bg,color}),
   calcBox:{background:"linear-gradient(135deg,#0f1923,#1a2e45)",borderRadius:12,padding:"16px 20px",marginTop:16,color:C.white},
@@ -1681,29 +1681,45 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                   {(()=>{
                     const hist=(payments||[]).filter(p=>p.contractId===c.id).slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
                     if(hist.length===0) return null;
+                    let running=c.totalInst||0;
+                    const rows=hist.map((p,idx)=>{running-=p.amount;return {...p,remaining:Math.max(0,running),idx};});
                     return (
-                      <div style={{marginTop:10,borderTop:"1px dashed "+C.border,paddingTop:8}}>
-                        <div style={{fontSize:13,fontWeight:800,color:C.ink,marginBottom:6}}>📋 السدادات السابقة ({hist.length})</div>
-                        {hist.map((p,idx)=>(
-                          <div key={p.id||idx} style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:13,padding:"6px 0",borderBottom:"1px solid #f0f0f0",flexWrap:"wrap",gap:6}}>
-                            <span style={{color:C.ink}}>{idx+1}. {fmtDate(p.date)} — <b style={{color:C.green}}>{SAR(p.amount)}</b></span>
-                            <span style={{display:"flex",gap:6}}>
-                              <button style={{...styles.btn("#e5e7eb",C.ink),fontSize:12,padding:"4px 10px"}} onClick={()=>{
-                                const v=window.prompt("تعديل مبلغ السداد:",p.amount);
-                                if(v===null) return;
-                                const n=parseFloat(v);
-                                if(isNaN(n)||n<=0){toast("⚠️ مبلغ غير صحيح","warn");return;}
-                                setPayments(arr=>arr.map(x=>x.id===p.id?{...x,amount:n}:x));
-                                toast("✅ تم تعديل السداد");
-                              }}>✏️ تعديل</button>
-                              <button style={{...styles.btn(C.redLt,C.red),fontSize:12,padding:"4px 10px"}} onClick={()=>{
-                                if(!window.confirm("حذف هذا السداد نهائياً؟")) return;
-                                setPayments(arr=>arr.filter(x=>x.id!==p.id));
-                                toast("🗑 تم حذف السداد");
-                              }}>🗑 حذف</button>
-                            </span>
-                          </div>
-                        ))}
+                      <div style={{marginTop:0,borderTop:"3px solid "+C.border,padding:"12px 16px"}}>
+                        <div style={{fontSize:15,fontWeight:900,color:C.ink,marginBottom:10}}>📋 السدادات السابقة ({hist.length})</div>
+                        <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
+                          <thead><tr style={{background:"#f1f5f9"}}>
+                            <th style={{padding:"8px 6px",fontWeight:800,borderBottom:"3px solid #94a3b8",textAlign:"center"}}>#</th>
+                            <th style={{padding:"8px 6px",fontWeight:800,borderBottom:"3px solid #94a3b8",textAlign:"center"}}>التاريخ</th>
+                            <th style={{padding:"8px 6px",fontWeight:800,borderBottom:"3px solid #94a3b8",textAlign:"center"}}>المبلغ</th>
+                            <th style={{padding:"8px 6px",fontWeight:800,borderBottom:"3px solid #94a3b8",textAlign:"center"}}>المتبقي</th>
+                            <th style={{padding:"8px 6px",fontWeight:800,borderBottom:"3px solid #94a3b8",textAlign:"center"}}></th>
+                          </tr></thead>
+                          <tbody>{rows.map(p=>(
+                            <tr key={p.id||p.idx} style={{borderBottom:"2px solid #e2e8f0"}}>
+                              <td style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>{p.idx+1}</td>
+                              <td style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>{fmtDate(p.date)}</td>
+                              <td style={{padding:"8px 6px",textAlign:"center",fontWeight:800,color:C.green}}>{SAR(p.amount)}</td>
+                              <td style={{padding:"8px 6px",textAlign:"center",fontWeight:800,color:C.red}}>{SAR(p.remaining)}</td>
+                              <td style={{padding:"8px 4px",textAlign:"center"}}>
+                                <span style={{display:"flex",gap:4,justifyContent:"center"}}>
+                                  <button style={{...styles.btn("#e5e7eb",C.ink),fontSize:13,padding:"6px 12px",fontWeight:700}} onClick={()=>{
+                                    const v=window.prompt("تعديل مبلغ السداد:",p.amount);
+                                    if(v===null) return;
+                                    const n=parseFloat(v);
+                                    if(isNaN(n)||n<=0){toast("⚠️ مبلغ غير صحيح","warn");return;}
+                                    setPayments(arr=>arr.map(x=>x.id===p.id?{...x,amount:n}:x));
+                                    toast("✅ تم تعديل السداد");
+                                  }}>✏️ تعديل</button>
+                                  <button style={{...styles.btn(C.redLt,C.red),fontSize:13,padding:"6px 12px",fontWeight:700}} onClick={()=>{
+                                    if(!window.confirm("حذف هذا السداد نهائياً؟")) return;
+                                    setPayments(arr=>arr.filter(x=>x.id!==p.id));
+                                    toast("🗑 حذف");
+                                  }}>🗑</button>
+                                </span>
+                              </td>
+                            </tr>
+                          ))}</tbody>
+                        </table>
                       </div>
                     );
                   })()}
@@ -3296,7 +3312,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     if(key==="cards") {
       // مطابقة كشف البضاعة (GoodsPage) بالضبط: نميّز البطاقة عن السلعة النقدية،
       // ونرجّع الإجمالي النقدي = نقدي البطاقات + نقدي السلع (العمود الأخير في الكشف).
-      const cRows = contracts.filter(c=>!c.isOldContract).map(c=>{
+      const cRows = contracts.filter(c=>(!c.isOldContract||c.contractType==='migrated')).map(c=>{
         const isCard = (c.goods||"").trim().startsWith("بطاقة");
         if(isCard){
           return {
@@ -6468,7 +6484,7 @@ function ProfitLossPage({contracts, daily, settings, payments, investors}) {
   };
 
   const calcPeriod = (months) => {
-    const activeC = (contracts||[]).filter(c=>!c.deleted&&!c.isOldContract);
+    const activeC = (contracts||[]).filter(c=>!c.deleted&&(!c.isOldContract||c.contractType==='migrated'));
     const mc = activeC.filter(c=>{if(!c.date)return false; const ym=fiscalYM(new Date(c.date)); return months.includes(ym);});
     
     // === الإيرادات ===
@@ -7115,7 +7131,7 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
       const priceOv2 = (()=>{try{return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}");}catch{return{};}})();
       const defPrice3 = (()=>{try{return parseFloat(localStorage.getItem("qimma_default_price"))||0;}catch{return 0;}})();
       const goodsVal = (()=>{
-        const cRows=contracts.filter(c=>!c.deleted&&!c.isOldContract).map(c=>{
+        const cRows=contracts.filter(c=>!c.deleted&&(!c.isOldContract||c.contractType==='migrated')).map(c=>{
           const isCard=(c.goods||"").trim().startsWith("بطاقة");
           if(isCard) return{id:"c_"+c.id,date:c.date,supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,supportAcc:0,withdrawnQty:parseInt(c.qty)||0,price:0,cashOnly:false};
           return{id:"c_"+c.id,date:c.date,supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,supportAcc:-(parseFloat(c.amount)||0),withdrawnQty:0,price:0,cashOnly:true};
