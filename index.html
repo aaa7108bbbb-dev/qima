@@ -4206,12 +4206,12 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
   const [openMonth, setOpenMonth] = React.useState(null);
   const getPeriod = d => fiscalYM(d);
   const mLabel = ym => { const [y,m]=ym.split("-"); return "شهر "+parseInt(m)+" - "+y; };
-  const allC = contracts.filter(c=>!c.deleted && c.contractType!=="migrated");
-  const allMonths = [...new Set(contracts.filter(c=>c.contractType!=="migrated").map(c=>getPeriod(c.date)))].sort().reverse();
+  const allC = contracts.filter(c=>!c.deleted);
+  const allMonths = [...new Set(contracts.map(c=>getPeriod(c.date)))].sort().reverse();
   const months = allMonths.filter(ym=>!(monthClose&&monthClose[ym]));
 
   const calcMonth = (ym) => {
-    const mc = contracts.filter(c=>getPeriod(c.date)===ym && c.contractType!=="migrated");
+    const mc = contracts.filter(c=>getPeriod(c.date)===ym && !c.deleted);
     const tot = mc.reduce((a,c)=>{const r=calcC(c,settings);return{amt:a.amt+c.amount,profit:a.profit+r.profit,admin:a.admin+r.admin,acc:a.acc+r.acc,inst:a.inst+r.inst,net:a.net+r.net};},{amt:0,profit:0,admin:0,acc:0,inst:0,net:0});
     const collected = (payments||[]).filter(p=>p.date && getPeriod(p.date)===ym).reduce((s,p)=>s+(+p.amount||0),0);
     const [y,m]=ym.split("-").map(Number);
@@ -5936,7 +5936,7 @@ function GoodsPage({investors, contracts, toast, gsWrite}) {
   };
 
   // Build rows from contracts + manual
-  const contractRows = contracts.filter(c=>!c.isOldContract).map(c=>{
+  const contractRows = contracts.filter(c=>(!c.isOldContract||c.contractType==="migrated")).map(c=>{
     const inv = investors.find(i=>String(i.id)===String(c.investorId));
     // بطاقة (سوا/موبايلي/زين) → تخصم العدد من رصيد البطاقات
     // غيرها (أسهم/جوال/سيارة) → سلعة نقدية: تخصم قيمة العقد النقدية من الإجمالي النقدي
@@ -6760,7 +6760,7 @@ function ProfitLossPage({contracts, daily, settings, payments, investors}) {
 function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpen, txList, loans, zakatTx, pending, bankTx}) {
   const SAR = v => (v||0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
   const [tab, setTab] = useState("actual");
-  const allC = (contracts||[]).filter(c=>!c.deleted && c.contractType!=="migrated");
+  const allC = (contracts||[]).filter(c=>!c.deleted);
   const today = new Date();
   const profitRate = +settings.profit||50;
   const adminRate = +settings.admin||2.5;
