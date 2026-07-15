@@ -1600,7 +1600,11 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       .filter(c=>c.left>0)
       .filter(c=>collectInv==="all" || String(c.investorId)===String(collectInv))
       .filter(c=>!collectSearch || c.client.includes(collectSearch) || (c.cPhone||"").includes(collectSearch))
-      .sort((a,b)=>b.lateAmt-a.lateAmt);  // المتأخرين فوق
+      .sort((a,b)=>{
+        const invA=String(a.investorId), invB=String(b.investorId);
+        if(invA!==invB) return invA.localeCompare(invB);
+        return (a.client||"").localeCompare(b.client||"");
+      });  // ترتيب ثابت حسب المستثمر ثم الاسم
 
     // سدادات اليوم (التحصيل الحالي) — تفلتر حسب المستثمر المختار
     const allTodayPaid = (payments||[]).filter(p=>p.date===collectDate);
