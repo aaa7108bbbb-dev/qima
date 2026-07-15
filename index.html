@@ -1622,7 +1622,15 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       if(!window.confirm("تأكيد سداد "+SAR(realAmt)+" لـ "+c.client+"؟")) return;
       const newPaid = c.paid + realAmt;
       setPayments(p=>[...p,{id:Date.now()+Math.floor(Math.random()*1000),contractId:c.id,amount:realAmt,date:collectDate,note:"تحصيل"}]);
-      if(newPaid>=(c.totalInst||0)){ markDone(c.id); }
+      if(newPaid>=(c.totalInst||0)){ 
+        toast("🎉 "+c.client+" — تم سداد العقد بالكامل!","success");
+        setTimeout(()=>{
+          if(window.confirm("✅ عقد "+c.client+" انتهى بالكامل.\nهل تريد إقفاله ونقله للعقود المنتهية؟")){
+            markDone(c.id);
+            toast("📁 تم إقفال العقد ونقله للمنتهية");
+          }
+        },300);
+      }
       toast("✅ "+c.client+" — "+SAR(realAmt));
     };
 
