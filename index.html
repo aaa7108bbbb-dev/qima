@@ -4234,7 +4234,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
     // نقدي/شهري + مجموع الأقساط الشهرية + الإجمالي بالفائدة
     const cashCount = mc.filter(c=>c.contractType==="defer").length;
     const monthlyCount = mc.filter(c=>c.contractType!=="defer").length;
-    const totalWithProfit = mc.reduce((s,c)=>s+(+c.totalInst||+c.amount||0),0);
+    const totalWithProfit = mc.reduce((s,c)=>s+Math.max(0,(+c.totalInst||+c.amount||0)-_getPaid(payments,c.id)),0);
     const instSum = mc.reduce((s,c)=>s+(+c.instAmt||0),0);
     // محصلة المستثمرين: كل المستثمرين، ولو بدون عقود يطلع أصفار
     const invRows = investors.map(iv=>{
@@ -4289,7 +4289,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
       cashCount: contractRows(mc.filter(c=>c.contractType==="defer"),c=>+c.amount||0),
       monthlyCount: contractRows(mc.filter(c=>c.contractType!=="defer"),c=>+c.amount||0),
       amt: contractRows(mc,c=>+c.amount||0),
-      totalWithProfit: contractRows(mc,c=>+c.totalInst||+c.amount||0),
+      totalWithProfit: contractRows(mc,c=>Math.max(0,(+c.totalInst||+c.amount||0)-_getPaid(payments,c.id))),
       instSum: contractRows(mc,c=>+c.instAmt||0),
       profit: contractRows(mc,c=>calcC(c,settings).profit),
       net: contractRows(mc,c=>{const r=calcC(c,settings);return r.profit-r.inst-r.acc;}),
@@ -6529,7 +6529,7 @@ function ProfitLossPage({contracts, daily, settings, payments, investors}) {
     // === عدد العقود ومبالغ ===
     const contractCount = mc.length;
     const cashAmount = mc.reduce((s,c)=>s+(+c.amount||0),0);
-    const totalWithProfit = mc.reduce((s,c)=>s+(+c.totalInst||+c.amount||0),0);
+    const totalWithProfit = mc.reduce((s,c)=>s+Math.max(0,(+c.totalInst||+c.amount||0)-_getPaid(payments,c.id)),0);
 
     // === حسب المستثمر ===
     const byInvestor = (investors||[]).map(iv=>{
@@ -6778,7 +6778,7 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
 
     // ── حسابات أساسية ──
     const totalCapitalOut = allC.reduce((s,c)=>s+(+c.amount||0),0);
-    const totalWithProfit = allC.reduce((s,c)=>s+(+c.totalInst||+c.amount||0),0);
+    const totalWithProfit = allC.reduce((s,c)=>s+Math.max(0,(+c.totalInst||+c.amount||0)-_getPaid(payments,c.id)),0);
     const totalProfit = totalWithProfit - totalCapitalOut;
     const totalPaid = allC.reduce((s,c)=>s+_getPaid(allPayments,c.id),0);
     const totalRemaining = Math.max(0, totalWithProfit - totalPaid);
