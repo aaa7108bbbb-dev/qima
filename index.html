@@ -1664,15 +1664,15 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           <div style={{...styles.card,textAlign:"center",color:"#1f2937",padding:30}}>✅ لا يوجد زبائن عليهم متبقي</div>
         ) : (
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            {activeForCollect.map(c=>{
+            {activeForCollect.map((c,ci)=>{
               const inv=investors.find(i=>String(i.id)===String(c.investorId));
               const amtVal = collectAmounts[c.id]!=null?collectAmounts[c.id]:String(c.instAmt||"");
               return (
                 <div key={c.id} style={{...styles.card,padding:0,overflow:"hidden",borderRadius:14,border:"1px solid "+(c.lateAmt>0?"#fecaca":"#d1fae5")}}>
                   <div style={{background:c.lateAmt>0?"#fef2f2":"#f0fdf4",padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:6}}>
                     <div>
-                      <div style={{fontSize:17,fontWeight:800,color:C.ink}}>{c.client}</div>
-                      <div style={{fontSize:12,color:"#6b7280",marginTop:2}}>{inv?invLabel(inv):"—"} · عقد {c.num} {c.contractType==="defer"&&<span style={{color:"#a87520"}}> · 🕒 مؤجل</span>}{c.contractType==="migrated"&&<span style={{color:"#6366f1"}}> · 📋 مرحّل</span>}</div>
+                      <div style={{fontSize:17,fontWeight:800,color:C.ink}}><span style={{color:"#9ca3af",marginLeft:6,fontSize:13}}>({ci+1})</span> {c.client}</div>
+                      <div style={{fontSize:12,color:"#6b7280",marginTop:2}}>{inv?invLabel(inv):"—"} {c.contractType==="defer"&&<span style={{color:"#a87520"}}> · 🕒 مؤجل</span>}{c.contractType==="migrated"&&<span style={{color:"#6366f1"}}> · 📋 مرحّل</span>}</div>
                     </div>
                     {c.lateAmt>0
                       ? <span style={{fontSize:13,fontWeight:800,color:C.red,background:"#fee2e2",padding:"4px 12px",borderRadius:20}}>متأخر {SAR(c.lateAmt)}</span>
@@ -1802,7 +1802,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                   }
                   return (
                     <tr key={c.id} style={{background:i%2===0?"#fff":"#f8f8f8"}}>
-                      <td style={styles.td}>{c.num}</td>
+                      <td style={styles.td}>{i+1}</td>
                       <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",position:"sticky",right:0,background:i%2===0?"#fff":"#f8f8f8",zIndex:5,borderLeft:"2px solid #e2e8f0"}}>{c.client}</td>
                       <td style={styles.td}>{c.cPhone||"—"}</td>
                       <td style={styles.td}>{c.gName||"—"}</td>
@@ -3324,7 +3324,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     if(key==="cards") {
       // مطابقة كشف البضاعة (GoodsPage) بالضبط: نميّز البطاقة عن السلعة النقدية،
       // ونرجّع الإجمالي النقدي = نقدي البطاقات + نقدي السلع (العمود الأخير في الكشف).
-      const cRows = contracts.filter(c=>(!c.isOldContract||c.contractType==='migrated')).map(c=>{
+      const cRows = contracts.filter(c=>!c.isOldContract && c.contractType!=='migrated').map(c=>{
         const isCard = (c.goods||"").trim().startsWith("بطاقة");
         if(isCard){
           return {
@@ -5948,7 +5948,7 @@ function GoodsPage({investors, contracts, toast, gsWrite}) {
   };
 
   // Build rows from contracts + manual
-  const contractRows = contracts.filter(c=>(!c.isOldContract||c.contractType==="migrated")).map(c=>{
+  const contractRows = contracts.filter(c=>!c.isOldContract && c.contractType!=="migrated").map(c=>{
     const inv = investors.find(i=>String(i.id)===String(c.investorId));
     // بطاقة (سوا/موبايلي/زين) → تخصم العدد من رصيد البطاقات
     // غيرها (أسهم/جوال/سيارة) → سلعة نقدية: تخصم قيمة العقد النقدية من الإجمالي النقدي
