@@ -1777,7 +1777,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           <div style={{overflowX:"auto",maxHeight:"75vh",overflowY:"auto"}}>
             <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14}}>
               <thead>
-                <tr>{["#","اسم الزبون","الجوال","اسم الكفيل","جوال الكفيل","نقداً","أقساط","القسط","الواصل","المتأخر","المتبقي"].map((h,hi)=>{
+                <tr>{["#","اسم الزبون","الجوال","اسم الكفيل","جوال الكفيل","نقداً","أقساط","القسط","الواصل","المتأخر","المتبقي","🚨"].map((h,hi)=>{
                   const isName = h==="اسم الزبون";
                   return <th key={h} style={{...styles.th,whiteSpace:"nowrap",position:"sticky",top:0,zIndex:isName?12:10,...(isName?{right:0,zIndex:12}:{})}}>{h}</th>;
                 })}</tr>
@@ -1813,6 +1813,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                       <td style={{...styles.td,color:C.green,fontWeight:700}}>{SAR(paid)}</td>
                       <td style={{...styles.td,color:lateAmount>0?C.red:"#9ca3af",fontWeight:700}}>{lateAmount>0?SAR(lateAmount):"—"}</td>
                       <td style={{...styles.td,color:left>0?C.red:C.green,fontWeight:700}}>{SAR(left)}</td>
+                      <td style={{...styles.td,padding:4}}><button onClick={()=>onUpdate({...c,defaulter:!c.defaulter})} title={c.defaulter?"إزالة من المتعثرين":"نقل للمتعثرين"} style={{border:"none",background:"none",cursor:"pointer",fontSize:18,opacity:c.defaulter?1:0.3}}>{c.defaulter?"🚨":"⚪"}</button></td>
                     </tr>
                   );
                 })}
@@ -6331,8 +6332,8 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
 
 
 // ─── Overdue Page (المتأخرون) ───────────────────────────────────
-function OverduePage({contracts, investors, payments, goCollect}) {
-  const [view, setView] = React.useState("consecutive"); // consecutive | intermittent
+function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
+  const [filterInv, setFilterInv] = React.useState("all");
   const active = (contracts||[]).filter(c => !c.deleted);
 
   const calcOverdue = (c) => {
@@ -6342,7 +6343,7 @@ function OverduePage({contracts, investors, payments, goCollect}) {
     const ps = (payments||[]).filter(p => p.contractId === c.id);
     const paidTotal = ps.reduce((s,p)=>s+(+p.amount||0), 0);
     const remaining = Math.max(0, totalInst - paidTotal);
-    if(remaining <= 0) return null; // مكتمل السداد
+    if(remaining <= 0) return null;
     const totalCount = Math.max(1, Math.round(totalInst / instAmt));
     const first = new Date(c.firstInst);
     const now = new Date();
@@ -6359,15 +6360,33 @@ function OverduePage({contracts, investors, payments, goCollect}) {
     return {monthsBehind, overdueAmt, remaining, monthsSinceLast, hasPaid: ps.length>0, lastPay};
   };
 
-  const rows = active.map(c => ({c, o: calcOverdue(c)})).filter(x => x.o && x.o.monthsBehind >= 3);
-  // متصلة: توقّف عن الدفع (آخر دفعة قبل 3 أشهر أو أكثر، أو لم يدفع)
-  const consecutive = rows.filter(x => !x.o.hasPaid || x.o.monthsSinceLast >= 3).sort((a,b)=>b.o.monthsBehind-a.o.monthsBehind);
-  // متقطعة: يدفع أحياناً لكن متراكم عليه
-  const intermittent = rows.filter(x => x.o.hasPaid && x.o.monthsSinceLast < 3).sort((a,b)=>b.o.monthsBehind-a.o.monthsBehind);
+  // جمع المتعثرين: تلقائي (3+ أشهر) + يدوي (defaulter flag)
+  const allRows = active.map(c => ({c, o: calcOverdue(c)}));
+  const autoRows = allRows.filter(x => x.o && x.o.monthsBehind >= 3);
+  const manualOnly = allRows.filter(x => x.c.defaulter && (!x.o || x.o.monthsBehind < 3));
+  const rows = [...autoRows, ...manualOnly].sort((a,b)=>(b.o?b.o.monthsBehind:0)-(a.o?a.o.monthsBehind:0));
 
-  const invName = (id) => (investors.find(i=>String(i.id)===String(id))||{}).name || "—";
+  const invNm = (id) => { const iv=investors.find(i=>String(i.id)===String(id)); return iv?invLabel(iv):"—"; };
 
-  // فتح واتساب برسالة تذكير جاهزة
+  // تجميع حسب المستثمر
+  const grouped = {};
+  rows.forEach(x => {
+    const iid = String(x.c.investorId);
+    if(filterInv!=="all" && iid!==filterInv) return;
+    if(!grouped[iid]) grouped[iid]={inv:investors.find(i=>String(i.id)===iid), items:[]};
+    grouped[iid].items.push(x);
+  });
+  const groups = Object.values(grouped).sort((a,b)=>{
+    const na=a.inv?(a.inv.code||a.inv.name):"", nb=b.inv?(b.inv.code||b.inv.name):"";
+    const ma=String(na).match(/(\d+)/), mb=String(nb).match(/(\d+)/);
+    return (ma?parseInt(ma[1]):9999)-(mb?parseInt(mb[1]):9999);
+  });
+
+  const filtered = rows.filter(x=>filterInv==="all"||String(x.c.investorId)===filterInv);
+  const totalDefaulters = filtered.length;
+  const totalOverdue = filtered.reduce((s,x)=>s+(x.o?x.o.overdueAmt:0),0);
+  const totalRemaining = filtered.reduce((s,x)=>s+(x.o?x.o.remaining:(+x.c.totalInst||0)-((payments||[]).filter(p=>p.contractId===x.c.id).reduce((ss,p)=>ss+p.amount,0))),0);
+
   const waRemind = (c, o) => {
     let ph = String(c.cPhone||"").replace(/[^0-9]/g,"");
     if(!ph){ alert("لا يوجد رقم جوال لهذا الزبون"); return; }
@@ -6375,102 +6394,98 @@ function OverduePage({contracts, investors, payments, goCollect}) {
     else if(ph.startsWith("0")) ph = "966"+ph.slice(1);
     else if(!ph.startsWith("966")) ph = "966"+ph;
     const msg = "السلام عليكم أخ "+(c.client||"")+"\n"+
-      "نذكّركم بأن لديكم مبلغ متأخر قدره "+NUM(o.overdueAmt)+" ريال"+
-      " (قسط شهري "+NUM(c.instAmt||0)+" ريال) على العقد رقم "+(c.num||"")+".\n"+
+      "نذكّركم بأن لديكم مبلغ متأخر قدره "+NUM(o?o.overdueAmt:0)+" ريال"+
+      " (قسط شهري "+NUM(c.instAmt||0)+" ريال)."+"\n"+
       "نأمل السداد في أقرب وقت. شكراً لتعاونكم.\nمؤسسة قمة الفرصة التجارية";
     window.open("https://wa.me/"+ph+"?text="+encodeURIComponent(msg),"_blank");
   };
 
-  const Card = ({c, o, accent}) => (
-    <div style={{...styles.card, borderRight:"5px solid "+accent, marginBottom:12}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
-        <div>
-          <div style={{fontWeight:900,fontSize:16,color:C.ink}}>👤 {c.client||"غير محدد"}</div>
-          <div style={{fontSize:13,color:"#1f2937",marginTop:3}}>عقد #{c.num} — {invName(c.investorId)}</div>
-          <div style={{fontSize:13,color:"#1f2937",marginTop:3}}>📱 {c.cPhone||"—"}</div>
-        </div>
-        <div style={{textAlign:"left"}}>
-          <div style={{display:"inline-block",background:accent,color:"#fff",borderRadius:8,padding:"4px 12px",fontWeight:900,fontSize:15}}>متأخر {o.monthsBehind} شهر</div>
-        </div>
-      </div>
-      <div style={{display:"flex",gap:10,marginTop:12,flexWrap:"wrap"}}>
-        <div style={{flex:1,minWidth:120,background:C.redLt,borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
-          <div style={{fontSize:12,color:"#1f2937"}}>المبلغ المتأخر</div>
-          <div style={{fontSize:17,fontWeight:900,color:C.red}}>{NUM(o.overdueAmt)}</div>
-        </div>
-        <div style={{flex:1,minWidth:120,background:C.gray,borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
-          <div style={{fontSize:12,color:"#1f2937"}}>إجمالي الباقي</div>
-          <div style={{fontSize:17,fontWeight:900,color:C.ink}}>{NUM(o.remaining)}</div>
-        </div>
-        <div style={{flex:1,minWidth:120,background:C.gray,borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
-          <div style={{fontSize:12,color:"#1f2937"}}>القسط</div>
-          <div style={{fontSize:17,fontWeight:900,color:C.ink}}>{NUM(c.instAmt||0)}</div>
-        </div>
-      </div>
-      <div style={{fontSize:12,color:"#1f2937",marginTop:8}}>
-        {o.lastPay ? "آخر سداد: "+fmtDate(o.lastPay) : "لم يُسجّل أي سداد"}
-      </div>
-      <div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}>
-        {c.cPhone && (
-          <button onClick={()=>waRemind(c,o)} style={{...styles.btn("#25D366","#fff"),flex:1,justifyContent:"center",padding:"10px"}}>💬 تذكير واتساب</button>
-        )}
-        {goCollect && (
-          <button onClick={()=>goCollect()} style={{...styles.btn(C.green,"#fff"),flex:1,justifyContent:"center",padding:"10px"}}>💵 تسجيل سداد</button>
-        )}
-      </div>
-    </div>
-  );
-
   return (
     <div style={styles.main}>
-      <div style={styles.panel}>
-        <div style={{...styles.panelHdr,display:"flex",alignItems:"center",gap:12}}>
-          {goCollect && (
-            <button onClick={()=>goCollect()} title="رجوع للتحصيل"
-              style={{border:"none",cursor:"pointer",borderRadius:10,padding:"8px 14px",background:"#f1f5f9",color:C.ink,fontSize:15,fontWeight:800,fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:6}}>
-              → رجوع للتحصيل
-            </button>
-          )}
-          <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>⚠️ المتأخرون (3 أشهر فأكثر)</h2>
-        </div>
-        <div style={{padding:"16px 20px",display:"flex",gap:12,flexWrap:"wrap"}}>
-          <button onClick={()=>setView("consecutive")}
-            style={{flex:1,minWidth:150,border:"none",cursor:"pointer",borderRadius:12,padding:"16px 12px",textAlign:"center",
-              background: view==="consecutive" ? C.red : "#fde8e8",
-              color: view==="consecutive" ? "#fff" : C.red,
-              boxShadow: view==="consecutive" ? "0 4px 12px rgba(185,28,28,0.3)" : "none", transition:"all 0.2s"}}>
-            <div style={{fontSize:28,fontWeight:900}}>{consecutive.length}</div>
-            <div style={{fontSize:14,fontWeight:800,marginTop:4}}>🔴 متأخر متصل</div>
-            <div style={{fontSize:12,marginTop:2,opacity:0.85}}>انقطعوا عن السداد</div>
-          </button>
-          <button onClick={()=>setView("intermittent")}
-            style={{flex:1,minWidth:150,border:"none",cursor:"pointer",borderRadius:12,padding:"16px 12px",textAlign:"center",
-              background: view==="intermittent" ? C.gold : "#fff4e0",
-              color: view==="intermittent" ? "#fff" : "#9a6a00",
-              boxShadow: view==="intermittent" ? "0 4px 12px rgba(200,146,42,0.3)" : "none", transition:"all 0.2s"}}>
-            <div style={{fontSize:28,fontWeight:900}}>{intermittent.length}</div>
-            <div style={{fontSize:14,fontWeight:800,marginTop:4}}>🟡 متأخر متقطّع</div>
-            <div style={{fontSize:12,marginTop:2,opacity:0.85}}>يسددون أحياناً</div>
-          </button>
+      <div style={{...styles.panel,borderTop:"4px solid "+C.red}}>
+        <div style={{padding:"16px 20px"}}>
+          <h2 style={{margin:"0 0 14px",fontSize:19,fontWeight:900,color:C.ink}}>🚨 المتعثرون</h2>
+          <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:14}}>
+            <div style={{flex:1,minWidth:100,background:C.redLt,borderRadius:10,padding:"10px 14px",textAlign:"center"}}>
+              <div style={{fontSize:13,color:C.red,fontWeight:700}}>عدد المتعثرين</div>
+              <div style={{fontSize:26,fontWeight:900,color:C.red}}>{totalDefaulters}</div>
+            </div>
+            <div style={{flex:1,minWidth:100,background:"#fef3c7",borderRadius:10,padding:"10px 14px",textAlign:"center"}}>
+              <div style={{fontSize:13,color:"#92400e",fontWeight:700}}>المبالغ المتأخرة</div>
+              <div style={{fontSize:20,fontWeight:900,color:"#92400e"}}>{NUM(totalOverdue)}</div>
+            </div>
+            <div style={{flex:1,minWidth:100,background:C.gray,borderRadius:10,padding:"10px 14px",textAlign:"center"}}>
+              <div style={{fontSize:13,color:C.ink,fontWeight:700}}>إجمالي المتبقي</div>
+              <div style={{fontSize:20,fontWeight:900,color:C.ink}}>{NUM(totalRemaining)}</div>
+            </div>
+          </div>
+          <select style={{...styles.select,marginBottom:0}} value={filterInv} onChange={e=>setFilterInv(e.target.value)}>
+            <option value="all">👥 كل المستثمرين</option>
+            {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
+          </select>
         </div>
       </div>
 
-      <div style={styles.panel}>
-        <div style={styles.panelHdr}>
-          <h2 style={{margin:0,fontSize:16,fontWeight:900,color: view==="consecutive"?C.red:C.gold}}>
-            {view==="consecutive" ? "🔴 متأخر متصل — انقطعوا عن السداد ("+consecutive.length+")" : "🟡 متأخر متقطّع — يسددون أحياناً ("+intermittent.length+")"}
-          </h2>
+      {groups.length===0 && (
+        <div style={{...styles.panel,textAlign:"center",padding:40,color:"#6b7280",fontSize:16}}>✅ لا يوجد متعثرون</div>
+      )}
+      {groups.map(g=>(
+        <div key={g.inv?g.inv.id:"x"} style={styles.panel}>
+          <div style={{...styles.panelHdr,background:"#1e2235",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <h3 style={{margin:0,fontSize:16,fontWeight:900,color:"#fff"}}>{g.inv?invLabel(g.inv):"—"}</h3>
+            <span style={{background:C.red,color:"#fff",borderRadius:20,padding:"3px 14px",fontSize:14,fontWeight:800}}>{g.items.length} متعثر</span>
+          </div>
+          <div style={{padding:12}}>
+            {g.items.map((x,xi)=>{
+              const {c,o} = x;
+              const paid = (payments||[]).filter(p=>p.contractId===c.id).reduce((s,p)=>s+p.amount,0);
+              const left = Math.max(0,(+c.totalInst||0)-paid);
+              return (
+                <div key={c.id} style={{background:xi%2===0?"#fff":"#fafafa",borderRadius:12,border:"1px solid "+(o&&o.monthsBehind>=6?"#fca5a5":"#e5e7eb"),padding:14,marginBottom:10,borderRight:"5px solid "+(o&&o.monthsBehind>=6?C.red:C.gold)}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:900,fontSize:16,color:C.ink}}>👤 {c.client}</div>
+                      <div style={{fontSize:13,color:"#6b7280",marginTop:3}}>📱 {c.cPhone||"—"}</div>
+                    </div>
+                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                      {o && o.monthsBehind>0 && <span style={{background:o.monthsBehind>=6?C.red:C.gold,color:"#fff",borderRadius:8,padding:"4px 12px",fontWeight:900,fontSize:14}}>متأخر {o.monthsBehind} شهر</span>}
+                      {c.defaulter && <span style={{background:"#7c3aed",color:"#fff",borderRadius:8,padding:"4px 10px",fontWeight:800,fontSize:12}}>📌 يدوي</span>}
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}>
+                    <div style={{flex:1,minWidth:90,background:C.redLt,borderRadius:8,padding:"6px 8px",textAlign:"center"}}>
+                      <div style={{fontSize:11,color:"#1f2937"}}>المتأخر</div>
+                      <div style={{fontSize:16,fontWeight:900,color:C.red}}>{NUM(o?o.overdueAmt:0)}</div>
+                    </div>
+                    <div style={{flex:1,minWidth:90,background:C.gray,borderRadius:8,padding:"6px 8px",textAlign:"center"}}>
+                      <div style={{fontSize:11,color:"#1f2937"}}>المتبقي</div>
+                      <div style={{fontSize:16,fontWeight:900,color:C.ink}}>{NUM(left)}</div>
+                    </div>
+                    <div style={{flex:1,minWidth:90,background:C.gray,borderRadius:8,padding:"6px 8px",textAlign:"center"}}>
+                      <div style={{fontSize:11,color:"#1f2937"}}>القسط</div>
+                      <div style={{fontSize:16,fontWeight:900,color:C.ink}}>{NUM(c.instAmt||0)}</div>
+                    </div>
+                  </div>
+                  <div style={{fontSize:12,color:"#6b7280",marginTop:6}}>
+                    {o&&o.lastPay ? "آخر سداد: "+fmtDate(o.lastPay) : "لم يُسجّل أي سداد"}
+                  </div>
+                  <div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}>
+                    {c.cPhone && <button onClick={()=>waRemind(c,o)} style={{...styles.btn("#25D366","#fff"),flex:1,justifyContent:"center",padding:"9px"}}>💬 واتساب</button>}
+                    {goCollect && <button onClick={()=>goCollect()} style={{...styles.btn(C.green,"#fff"),flex:1,justifyContent:"center",padding:"9px"}}>💵 سداد</button>}
+                    <button onClick={()=>onFlag&&onFlag(c.id,!c.defaulter)} style={{...styles.btn(c.defaulter?"#e5e7eb":"#7c3aed",c.defaulter?C.ink:"#fff"),justifyContent:"center",padding:"9px"}}>
+                      {c.defaulter?"✖ إزالة":"📌 تثبيت"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-        <div style={{padding:16}}>
-          {(view==="consecutive" ? consecutive : intermittent).length===0
-            ? <div style={{textAlign:"center",padding:30,color:"#1f2937"}}>لا يوجد</div>
-            : (view==="consecutive" ? consecutive : intermittent).map(x =>
-                <Card key={x.c.id} c={x.c} o={x.o} accent={view==="consecutive"?C.red:C.gold}/>)}
-        </div>
-      </div>
+      ))}
     </div>
   );
 }
+
 
 // ─── Profit & Loss Report (تقرير الأرباح والخسائر) ────────────
 function ProfitLossPage({contracts, daily, settings, payments, investors}) {
@@ -7700,6 +7715,7 @@ function App() {
     {id:"accounts",label:"💰",name:"الحسابات",color:"#b45309"},
     {id:"collect",label:"⚡",name:"التحصيل",color:"#0d9488"},
     {id:"goods",label:"📦",name:"البضاعة",color:"#78350f"},
+    {id:"overdue",label:"🚨",name:"المتعثرون",color:"#dc2626"},
     {id:"portfolio",label:"📊",name:"المحفظة الشهرية",color:"#0d9488"},
     {id:"profitloss",label:"📈",name:"أرباح وخسائر",color:"#7c3aed"},
     {id:"cashflow",label:"🧭",name:"البوصلة المالية",color:"#0369a1"},
@@ -7765,7 +7781,7 @@ function App() {
       </nav>
 
       <div style={styles.main}>
-        {page==="overdue" && <OverduePage contracts={contracts} investors={investors} payments={payments} goCollect={()=>setPage("collect")} />}
+        {page==="overdue" && <OverduePage contracts={activeContracts} investors={investors} payments={payments} goCollect={()=>setPage("collect")} onFlag={(id,val)=>{setContracts(p=>p.map(c=>c.id===id?{...c,defaulter:val}:c));}} />}
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={payments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="collect" && <ContractsPage startCollect={true} setPage={setPage} contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct}/>}
