@@ -356,7 +356,7 @@ function calcContract(amount, s = {profit:50, admin:2.5, acc:10, inst:10}, total
   return { profit, admin, acc, inst, net, total };
 }
 // مساعد: يحسب العقد باستخدام إجماليه الفعلي (totalInst)
-function calcC(c, settings){ if(c.isOldContract||c.contractType==='migrated') return {profit:0,admin:0,acc:0,inst:0,net:0,total:+c.totalInst||+c.amount||0}; return calcContract(+c.amount||0, settings, c.totalInst); }
+function calcC(c, settings){ if(c.isOldContract) return {profit:0,admin:0,acc:0,inst:0,net:0,total:+c.totalInst||+c.amount||0}; if(c.contractType==='migrated'){const t=+c.totalInst||0;const s=settings||{};const profitPct=(+s.profit||50)/100;const adminPct=(+s.admin||2.5)/100;const accPct=(+s.acc||10)/100;const instPct=(+s.inst||10)/100;const inst=Math.round(t*instPct);const admin=Math.round(t*adminPct);const acc=Math.round(t*accPct);const net=t-inst-admin-acc;return{profit:t,admin,acc,inst,net,total:t};} return calcContract(+c.amount||0, settings, c.totalInst); }
 
 function numToWords(n) {
   n = Math.round(n);
