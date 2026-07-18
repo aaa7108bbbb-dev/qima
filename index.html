@@ -3078,10 +3078,10 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
       {/* حسابات خاصة */}
       {subTab==="special" && (()=>{
         const specialNames = ["4","7","8","9","11"];
-        const specialInvs = investors.filter(inv=>{
+        const specialInvs = sortedInvestors(investors.filter(inv=>{
           const nm = (inv.name||"").trim();
           return specialNames.some(n=>nm.includes("الفرصة "+n) || nm.includes("الفرصة"+n) || nm.endsWith(" "+n) || nm.endsWith(n));
-        });
+        }));
         let grandNet=0, grandLeft=0, grandTotal=0, grandAmt=0, grandProfit=0, grandCapital=0;
         const rows = specialInvs.map(inv=>{
           const myCon=contracts.filter(c=>c.investorId===inv.id);
@@ -6557,7 +6557,6 @@ function ProfitLossPage({contracts, daily, settings, payments, investors}) {
     // === حسب المستثمر ===
     const byInvestor = sortedInvestors(investors||[]).map(iv=>{
       const ic = mc.filter(c=>String(c.investorId)===String(iv.id));
-      if(ic.length===0) return null;
       let inv_profit=0, inv_inst=0, inv_acc=0, inv_admin=0, inv_net=0;
       ic.forEach(c=>{const r=calcC(c,settings);inv_profit+=r.profit;inv_inst+=r.inst;inv_acc+=r.acc;inv_admin+=r.admin;inv_net+=r.net;});
       return {name:iv.name, count:ic.length, cash:ic.reduce((s,c)=>s+(+c.amount||0),0), profit:inv_profit, instShare:inv_inst, accComm:inv_acc, admin:inv_admin, net:inv_net};
