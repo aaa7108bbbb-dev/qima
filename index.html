@@ -169,6 +169,12 @@
     #bond-cl-print-area.print-host .doc-half, #bond-gg-print-area.print-host .doc-half { font-size: 9px !important; }
     #bond-cl-print-area.print-host .doc-half *, #bond-gg-print-area.print-host .doc-half * { line-height: 1.25 !important; }
     html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+    /* إخفاء القوائم والأيقونات والأزرار عند الطباعة */
+    nav, header, .noprint, select, button, [style*="cursor:pointer"], [style*="cursor: pointer"] { display: none !important; }
+    div[style*="position:fixed"], div[style*="position: fixed"], div[style*="position:sticky"], div[style*="position: sticky"] { position: static !important; }
+    div[style*="overflowX"], div[style*="overflow-x"] { overflow: visible !important; }
+    table { font-size: 12px !important; }
+    th, td { padding: 6px 8px !important; }
   }
   body { margin: 0; font-family: 'IBM Plex Sans Arabic', 'Poppins', Arial, sans-serif; background: #f4f4f6; }
   /* LOGIN PAGE STYLES */
@@ -6369,6 +6375,12 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
     if(!grouped[iid]) grouped[iid]={inv:investors.find(i=>String(i.id)===iid), items:[]};
     grouped[iid].items.push(x);
   });
+  // إضافة كل المستثمرين حتى لو ما عندهم متعثرين
+  const invList = filterInv==="all" ? sortedInvestors(investors) : investors.filter(i=>String(i.id)===filterInv);
+  invList.forEach(iv=>{
+    const iid=String(iv.id);
+    if(!grouped[iid]) grouped[iid]={inv:iv, items:[]};
+  });
   const groups = Object.values(grouped).sort((a,b)=>{
     const na=a.inv?(a.inv.code||a.inv.name):"", nb=b.inv?(b.inv.code||b.inv.name):"";
     const ma=String(na).match(/(\d+)/), mb=String(nb).match(/(\d+)/);
@@ -6434,6 +6446,9 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
                 </tr>
               </thead>
               <tbody>
+                {g.items.length===0 && (
+                  <tr><td colSpan={7} style={{...styles.td,textAlign:"center",padding:20,color:"#9ca3af",fontSize:14}}>✅ لا يوجد متعثرون</td></tr>
+                )}
                 {g.items.map((x,xi)=>{
                   const {c,o} = x;
                   const paid = (payments||[]).filter(p=>p.contractId===c.id).reduce((s,p)=>s+(p.amount||0),0);
@@ -6456,7 +6471,7 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
                   );
                 })}
               </tbody>
-              <tfoot>
+              <tfoot style={{display:g.items.length===0?"none":"table-footer-group"}}>
                 <tr style={{background:"#fef2f2",fontWeight:900}}>
                   <td style={{...styles.td}} colSpan={2}>الإجمالي ({g.items.length})</td>
                   <td style={{...styles.td,textAlign:"center"}}>{NUM(gCash)}</td>
