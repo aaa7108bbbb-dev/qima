@@ -3077,7 +3077,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
 
       {/* حسابات خاصة */}
       {subTab==="special" && (()=>{
-        const specialNames = ["4","7","8","9","11"];
+        const specialNames = ["1","2","4","7","8","9","11"];
         const specialInvs = sortedInvestors(investors.filter(inv=>{
           const nm = (inv.name||"").trim();
           return specialNames.some(n=>nm.includes("الفرصة "+n) || nm.includes("الفرصة"+n) || nm.endsWith(" "+n) || nm.endsWith(n));
@@ -6354,21 +6354,14 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
     const paidCount = Math.floor(paidTotal / instAmt);
     const monthsBehind = Math.max(0, due - paidCount);
     const overdueAmt = monthsBehind * instAmt;
-    const dates = ps.map(p=>new Date(p.date)).sort((a,b)=>b-a);
-    const lastPay = dates.length ? dates[0] : null;
-    const monthsSinceLast = lastPay ? ((now.getFullYear()-lastPay.getFullYear())*12 + (now.getMonth()-lastPay.getMonth())) : 999;
-    return {monthsBehind, overdueAmt, remaining, monthsSinceLast, hasPaid: ps.length>0, lastPay};
+    return {monthsBehind, overdueAmt, remaining, paidTotal};
   };
 
-  // جمع المتعثرين: تلقائي (3+ أشهر) + يدوي (defaulter flag)
   const allRows = active.map(c => ({c, o: calcOverdue(c)}));
   const autoRows = allRows.filter(x => x.o && x.o.monthsBehind >= 3);
   const manualOnly = allRows.filter(x => x.c.defaulter && (!x.o || x.o.monthsBehind < 3));
   const rows = [...autoRows, ...manualOnly].sort((a,b)=>(b.o?b.o.monthsBehind:0)-(a.o?a.o.monthsBehind:0));
 
-  const invNm = (id) => { const iv=investors.find(i=>String(i.id)===String(id)); return iv?invLabel(iv):"—"; };
-
-  // تجميع حسب المستثمر
   const grouped = {};
   rows.forEach(x => {
     const iid = String(x.c.investorId);
@@ -6385,20 +6378,11 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
   const filtered = rows.filter(x=>filterInv==="all"||String(x.c.investorId)===filterInv);
   const totalDefaulters = filtered.length;
   const totalOverdue = filtered.reduce((s,x)=>s+(x.o?x.o.overdueAmt:0),0);
-  const totalRemaining = filtered.reduce((s,x)=>s+(x.o?x.o.remaining:(+x.c.totalInst||0)-((payments||[]).filter(p=>p.contractId===x.c.id).reduce((ss,p)=>ss+p.amount,0))),0);
-
-  const waRemind = (c, o) => {
-    let ph = String(c.cPhone||"").replace(/[^0-9]/g,"");
-    if(!ph){ alert("لا يوجد رقم جوال لهذا الزبون"); return; }
-    if(ph.startsWith("00")) ph = ph.slice(2);
-    else if(ph.startsWith("0")) ph = "966"+ph.slice(1);
-    else if(!ph.startsWith("966")) ph = "966"+ph;
-    const msg = "السلام عليكم أخ "+(c.client||"")+"\n"+
-      "نذكّركم بأن لديكم مبلغ متأخر قدره "+NUM(o?o.overdueAmt:0)+" ريال"+
-      " (قسط شهري "+NUM(c.instAmt||0)+" ريال)."+"\n"+
-      "نأمل السداد في أقرب وقت. شكراً لتعاونكم.\nمؤسسة قمة الفرصة التجارية";
-    window.open("https://wa.me/"+ph+"?text="+encodeURIComponent(msg),"_blank");
-  };
+  const totalRemaining = filtered.reduce((s,x)=>{
+    const paid=(payments||[]).filter(p=>p.contractId===x.c.id).reduce((ss,p)=>ss+(p.amount||0),0);
+    return s+Math.max(0,(+x.c.totalInst||0)-paid);
+  },0);
+  const totalContracts = filtered.length;
 
   return (
     <div style={styles.main}>
@@ -6429,59 +6413,64 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
       {groups.length===0 && (
         <div style={{...styles.panel,textAlign:"center",padding:40,color:"#6b7280",fontSize:16}}>✅ لا يوجد متعثرون</div>
       )}
-      {groups.map(g=>(
+      {groups.map(g=>{
+        const gRemaining = g.items.reduce((s,x)=>{const pd=(payments||[]).filter(p=>p.contractId===x.c.id).reduce((ss,p)=>ss+(p.amount||0),0);return s+Math.max(0,(+x.c.totalInst||0)-pd);},0);
+        const gPaid = g.items.reduce((s,x)=>(payments||[]).filter(p=>p.contractId===x.c.id).reduce((ss,p)=>ss+(p.amount||0),s),0);
+        const gTotal = g.items.reduce((s,x)=>s+(+x.c.totalInst||0),0);
+        const gCash = g.items.reduce((s,x)=>s+(+x.c.amount||0),0);
+        return (
         <div key={g.inv?g.inv.id:"x"} style={styles.panel}>
           <div style={{...styles.panelHdr,background:"#1e2235",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <h3 style={{margin:0,fontSize:16,fontWeight:900,color:"#fff"}}>{g.inv?invLabel(g.inv):"—"}</h3>
             <span style={{background:C.red,color:"#fff",borderRadius:20,padding:"3px 14px",fontSize:14,fontWeight:800}}>{g.items.length} متعثر</span>
           </div>
-          <div style={{padding:12}}>
-            {g.items.map((x,xi)=>{
-              const {c,o} = x;
-              const paid = (payments||[]).filter(p=>p.contractId===c.id).reduce((s,p)=>s+p.amount,0);
-              const left = Math.max(0,(+c.totalInst||0)-paid);
-              return (
-                <div key={c.id} style={{background:xi%2===0?"#fff":"#fafafa",borderRadius:12,border:"1px solid "+(o&&o.monthsBehind>=6?"#fca5a5":"#e5e7eb"),padding:14,marginBottom:10,borderRight:"5px solid "+(o&&o.monthsBehind>=6?C.red:C.gold)}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
-                    <div style={{flex:1}}>
-                      <div style={{fontWeight:900,fontSize:16,color:C.ink}}>👤 {c.client}</div>
-                      <div style={{fontSize:13,color:"#6b7280",marginTop:3}}>📱 {c.cPhone||"—"}</div>
-                    </div>
-                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                      {o && o.monthsBehind>0 && <span style={{background:o.monthsBehind>=6?C.red:C.gold,color:"#fff",borderRadius:8,padding:"4px 12px",fontWeight:900,fontSize:14}}>متأخر {o.monthsBehind} شهر</span>}
-                      {c.defaulter && <span style={{background:"#7c3aed",color:"#fff",borderRadius:8,padding:"4px 10px",fontWeight:800,fontSize:12}}>📌 يدوي</span>}
-                    </div>
-                  </div>
-                  <div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}>
-                    <div style={{flex:1,minWidth:90,background:C.redLt,borderRadius:8,padding:"6px 8px",textAlign:"center"}}>
-                      <div style={{fontSize:11,color:"#1f2937"}}>المتأخر</div>
-                      <div style={{fontSize:16,fontWeight:900,color:C.red}}>{NUM(o?o.overdueAmt:0)}</div>
-                    </div>
-                    <div style={{flex:1,minWidth:90,background:C.gray,borderRadius:8,padding:"6px 8px",textAlign:"center"}}>
-                      <div style={{fontSize:11,color:"#1f2937"}}>المتبقي</div>
-                      <div style={{fontSize:16,fontWeight:900,color:C.ink}}>{NUM(left)}</div>
-                    </div>
-                    <div style={{flex:1,minWidth:90,background:C.gray,borderRadius:8,padding:"6px 8px",textAlign:"center"}}>
-                      <div style={{fontSize:11,color:"#1f2937"}}>القسط</div>
-                      <div style={{fontSize:16,fontWeight:900,color:C.ink}}>{NUM(c.instAmt||0)}</div>
-                    </div>
-                  </div>
-                  <div style={{fontSize:12,color:"#6b7280",marginTop:6}}>
-                    {o&&o.lastPay ? "آخر سداد: "+fmtDate(o.lastPay) : "لم يُسجّل أي سداد"}
-                  </div>
-                  <div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}>
-                    {c.cPhone && <button onClick={()=>waRemind(c,o)} style={{...styles.btn("#25D366","#fff"),flex:1,justifyContent:"center",padding:"9px"}}>💬 واتساب</button>}
-                    {goCollect && <button onClick={()=>goCollect()} style={{...styles.btn(C.green,"#fff"),flex:1,justifyContent:"center",padding:"9px"}}>💵 سداد</button>}
-                    <button onClick={()=>onFlag&&onFlag(c.id,!c.defaulter)} style={{...styles.btn(c.defaulter?"#e5e7eb":"#7c3aed",c.defaulter?C.ink:"#fff"),justifyContent:"center",padding:"9px"}}>
-                      {c.defaulter?"✖ إزالة":"📌 تثبيت"}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+          <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+              <thead>
+                <tr style={{background:"#f1f5f9"}}>
+                  {["#","اسم الزبون","نقدي","أقساط","الواصل","المتبقي",""].map(h=>(
+                    <th key={h} style={{...styles.th,padding:"10px 8px",fontSize:12,whiteSpace:"nowrap"}}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {g.items.map((x,xi)=>{
+                  const {c,o} = x;
+                  const paid = (payments||[]).filter(p=>p.contractId===c.id).reduce((s,p)=>s+(p.amount||0),0);
+                  const left = Math.max(0,(+c.totalInst||0)-paid);
+                  return (
+                    <tr key={c.id} style={{background:xi%2===0?"#fff":"#f8fafc",borderBottom:"1px solid #e5e7eb"}}>
+                      <td style={{...styles.td,textAlign:"center",color:"#9ca3af",fontSize:12}}>{xi+1}</td>
+                      <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}>
+                        {c.client}
+                        {c.defaulter && <span style={{background:"#7c3aed",color:"#fff",borderRadius:6,padding:"1px 6px",fontSize:10,fontWeight:700,marginRight:6}}>يدوي</span>}
+                      </td>
+                      <td style={{...styles.td,textAlign:"center"}}>{NUM(c.amount||0)}</td>
+                      <td style={{...styles.td,textAlign:"center"}}>{NUM(c.totalInst||0)}</td>
+                      <td style={{...styles.td,textAlign:"center",color:C.green,fontWeight:700}}>{NUM(paid)}</td>
+                      <td style={{...styles.td,textAlign:"center",color:C.red,fontWeight:700}}>{NUM(left)}</td>
+                      <td style={{...styles.td,textAlign:"center",padding:4}}>
+                        <button onClick={()=>onFlag&&onFlag(c.id,!c.defaulter)} style={{border:"none",background:"none",cursor:"pointer",fontSize:16,opacity:c.defaulter?1:0.3}}>{c.defaulter?"🚨":"⚪"}</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr style={{background:"#fef2f2",fontWeight:900}}>
+                  <td style={{...styles.td}} colSpan={2}>الإجمالي ({g.items.length})</td>
+                  <td style={{...styles.td,textAlign:"center"}}>{NUM(gCash)}</td>
+                  <td style={{...styles.td,textAlign:"center"}}>{NUM(gTotal)}</td>
+                  <td style={{...styles.td,textAlign:"center",color:C.green}}>{NUM(gPaid)}</td>
+                  <td style={{...styles.td,textAlign:"center",color:C.red}}>{NUM(gRemaining)}</td>
+                  <td style={styles.td}></td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
