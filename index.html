@@ -6351,11 +6351,11 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
 
 // ─── Overdue Page (المتأخرون) ───────────────────────────────────
 // ══════════════════════════════════════════════════════════════
-// ⚡ صفحة التحصيل — تصميم Dark Glassmorphism
+// ⚡ صفحة التحصيل — تصميم أبيض + بطاقات مستثمرين + مؤشر دائري
 // ══════════════════════════════════════════════════════════════
 function CollectionPage({contracts, investors, settings, payments, setPayments, toast, logAct}) {
   const [colDate, setColDate] = useState(new Date().toISOString().split("T")[0]);
-  const [colInv, setColInv] = useState("all");
+  const [selInv, setSelInv] = useState(null); // المستثمر المختار (null = شاشة الاختيار)
   const [colSearch, setColSearch] = useState("");
   const [colAmts, setColAmts] = useState({});
   const [expanded, setExpanded] = useState({});
@@ -6364,7 +6364,12 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
 
   const gP = (cid) => (payments||[]).filter(p=>p.contractId===cid).reduce((s,p)=>s+(+p.amount||0),0);
 
-  const rows = contracts.filter(c=>!c.deleted && !doneIds.includes(c.id))
+  // ألوان المستثمرين
+  const invColors=["#6366f1","#0d9488","#e11d48","#ea580c","#0284c7","#7c3aed","#059669","#b45309","#dc2626","#4f46e5","#0891b2"];
+  const getInvColor=(idx)=>invColors[idx%invColors.length];
+
+  // كل العقود النشطة مع الحسابات
+  const allRows = contracts.filter(c=>!c.deleted && !doneIds.includes(c.id))
     .map(c=>{
       const paid=gP(c.id), left=Math.max(0,(c.totalInst||0)-paid);
       let lateAmt=0; const inst=c.instAmt||0;
@@ -6377,30 +6382,27 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
       }
       return {...c,paid,left,lateAmt};
     })
-    .filter(c=>c.left>0)
-    .filter(c=>colInv==="all"||String(c.investorId)===String(colInv))
-    .filter(c=>!colSearch||c.client.includes(colSearch)||(c.cPhone||"").includes(colSearch));
-
-  // تجميع حسب المستثمر
-  const grp={};
-  rows.forEach(c=>{
-    const k=String(c.investorId);
-    if(!grp[k]) grp[k]={inv:investors.find(i=>String(i.id)===k),items:[]};
-    grp[k].items.push(c);
-  });
-  const groups=Object.values(grp).sort((a,b)=>{
-    const na=a.inv?(a.inv.code||a.inv.name):"",nb=b.inv?(b.inv.code||b.inv.name):"";
-    const ma=String(na).match(/(\d+)/),mb=String(nb).match(/(\d+)/);
-    return (ma?parseInt(ma[1]):9999)-(mb?parseInt(mb[1]):9999);
-  });
+    .filter(c=>c.left>0);
 
   // إحصائيات اليوم
   const dayPays=(payments||[]).filter(p=>p.date===colDate);
-  const filtPays=colInv==="all"?dayPays:dayPays.filter(p=>{const pc=contracts.find(x=>x.id===p.contractId);return pc&&String(pc.investorId)===String(colInv);});
-  const cntToday=new Set(filtPays.map(p=>p.contractId)).size;
-  const sumToday=filtPays.reduce((s,p)=>s+(+p.amount||0),0);
-  const totalLeft=rows.reduce((s,c)=>s+c.left,0);
-  const totalLate=rows.reduce((s,c)=>s+c.lateAmt,0);
+  const cntToday=new Set(dayPays.map(p=>p.contractId)).size;
+  const sumToday=dayPays.reduce((s,p)=>s+(+p.amount||0),0);
+
+  // تجميع حسب المستثمر لشاشة الاختيار
+  const invCards = sortedInvestors(investors).map((inv,idx)=>{
+    const items=allRows.filter(c=>String(c.investorId)===String(inv.id));
+    const lateCount=items.filter(c=>c.lateAmt>0).length;
+    const totalInst=items.reduce((s,c)=>s+(c.instAmt||0),0);
+    return {inv, items, lateCount, totalInst, color:getInvColor(idx)};
+  }).filter(g=>g.items.length>0);
+
+  // عقود المستثمر المختار
+  const selRows = selInv ? allRows
+    .filter(c=>String(c.investorId)===String(selInv.id))
+    .filter(c=>!colSearch||c.client.includes(colSearch)||(c.cPhone||"").includes(colSearch))
+    .sort((a,b)=>(a.client||"").localeCompare(b.client||""))
+    : [];
 
   const doCollect=(c)=>{
     const amt=parseFloat(colAmts[c.id]!=null?colAmts[c.id]:c.instAmt)||0;
@@ -6426,176 +6428,192 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
 
   const toggle=(id)=>setExpanded(p=>({...p,[id]:!p[id]}));
 
-  // أنماط الزجاج
-  const gl={background:"rgba(255,255,255,0.07)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",borderRadius:16,border:"1px solid rgba(255,255,255,0.12)"};
-  const glSm={...gl,borderRadius:12,padding:"10px 14px"};
-  const inp={background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:10,color:"#fff",padding:"10px 12px",fontSize:14,fontFamily:"inherit"};
+  // مؤشر دائري SVG
+  const CircleProgress=({pct,size=44,stroke=4})=>{
+    const r=(size-stroke)/2, circ=2*Math.PI*r;
+    const offset=circ-(Math.min(pct,100)/100)*circ;
+    const clr=pct>=70?"#22c55e":pct>=30?"#f59e0b":"#ef4444";
+    return React.createElement("svg",{width:size,height:size,style:{transform:"rotate(-90deg)",flexShrink:0}},
+      React.createElement("circle",{cx:size/2,cy:size/2,r:r,fill:"none",stroke:"#e5e7eb",strokeWidth:stroke}),
+      React.createElement("circle",{cx:size/2,cy:size/2,r:r,fill:"none",stroke:clr,strokeWidth:stroke,strokeDasharray:circ,strokeDashoffset:offset,strokeLinecap:"round",style:{transition:"stroke-dashoffset 0.5s ease"}}),
+      React.createElement("text",{x:size/2,y:size/2,textAnchor:"middle",dominantBaseline:"central",fill:clr,fontSize:size*0.26,fontWeight:900,style:{transform:"rotate(90deg)",transformOrigin:"center"}},pct+"%")
+    );
+  };
+
+  // ─── هيدر مشترك ───
+  const Header=({title})=>(
+    React.createElement("div",{style:{background:"linear-gradient(135deg,#0f1923,#1a2744)",borderRadius:16,padding:"16px 18px",marginBottom:16,color:"#fff"}},
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
+        React.createElement("div",{style:{fontSize:11,color:"rgba(255,255,255,0.5)"}},"\u0642\u0645\u0629 \u0627\u0644\u0641\u0631\u0635\u0629"),
+        React.createElement("div",{style:{fontSize:11,color:"rgba(255,255,255,0.5)"}},"محصّل اليوم")
+      ),
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
+        React.createElement("div",{style:{fontSize:20,fontWeight:900}},title),
+        React.createElement("div",{style:{fontSize:28,fontWeight:900,color:"#34d399"}},cntToday)
+      ),
+      sumToday>0 && React.createElement("div",{style:{textAlign:"left",fontSize:13,color:"#34d399",fontWeight:700,marginTop:4}},SAR(sumToday)+" ريال")
+    )
+  );
+
+  // ═══════════════════════════════════════
+  // شاشة 1: اختيار المستثمر (البطاقات)
+  // ═══════════════════════════════════════
+  if(!selInv){
+    return (
+      React.createElement("div",{style:{minHeight:"80vh"}},
+        React.createElement(Header,{title:"اختر المستثمر"}),
+        React.createElement("div",{style:{display:"flex",gap:8,marginBottom:14,alignItems:"center",flexWrap:"wrap"}},
+          React.createElement("label",{style:{fontSize:13,fontWeight:700,color:"#374151"}},"📅"),
+          React.createElement("input",{type:"date",value:colDate,onChange:e=>setColDate(e.target.value),style:{...styles.input,width:"auto",flex:1}})
+        ),
+        invCards.length===0 && React.createElement("div",{style:{...styles.card,textAlign:"center",padding:40,color:"#6b7280"}},"✅ لا يوجد عقود نشطة"),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+          invCards.map(g=>(
+            React.createElement("div",{key:g.inv.id,onClick:()=>{setSelInv(g.inv);setColSearch("");setExpanded({});},
+              style:{background:"#fff",borderRadius:16,padding:"18px 16px",cursor:"pointer",boxShadow:"0 2px 12px rgba(0,0,0,0.06)",borderRight:"5px solid "+g.color,position:"relative",transition:"transform 0.15s",overflow:"hidden"}},
+              g.lateCount>0 && React.createElement("span",{style:{position:"absolute",top:10,left:10,background:"#fef2f2",color:"#dc2626",borderRadius:8,padding:"2px 8px",fontSize:11,fontWeight:800}},g.lateCount+" متأخر"),
+              React.createElement("div",{style:{fontSize:18,fontWeight:900,color:"#1f2937",marginBottom:12}},invLabel(g.inv)),
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:4}},
+                React.createElement("span",{style:{fontSize:12,color:"#9ca3af"}},"العقود"),
+                React.createElement("span",{style:{fontSize:16,fontWeight:900,color:g.color}},g.items.length)
+              ),
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
+                React.createElement("span",{style:{fontSize:12,color:"#9ca3af"}},"الأقساط"),
+                React.createElement("span",{style:{fontSize:14,fontWeight:800,color:"#374151"}},SAR(g.totalInst))
+              )
+            )
+          ))
+        )
+      )
+    );
+  }
+
+  // ═══════════════════════════════════════
+  // شاشة 2: عقود المستثمر المختار
+  // ═══════════════════════════════════════
+  const selColor = getInvColor(sortedInvestors(investors).findIndex(i=>String(i.id)===String(selInv.id)));
 
   return (
-    <div style={{background:"linear-gradient(135deg,#0f1923 0%,#1a2744 50%,#0f2027 100%)",borderRadius:20,padding:16,minHeight:"80vh"}}>
+    React.createElement("div",{style:{minHeight:"80vh"}},
+      React.createElement(Header,{title:invLabel(selInv)}),
 
-      {/* ═══ الهيدر والإحصائيات ═══ */}
-      <div style={{...gl,padding:18,marginBottom:14}}>
-        <div style={{fontSize:20,fontWeight:900,color:"#fff",marginBottom:14,display:"flex",alignItems:"center",gap:8}}>⚡ <span>التحصيل السريع</span></div>
-        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14,alignItems:"center"}}>
-          <label style={{color:"rgba(255,255,255,0.7)",fontWeight:700,fontSize:13}}>📅</label>
-          <input type="date" value={colDate} onChange={e=>setColDate(e.target.value)} style={{...inp,fontWeight:700}}/>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-          <div style={{...glSm,textAlign:"center"}}><div style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>عدد المحصّل</div><div style={{fontSize:22,fontWeight:900,color:"#34d399"}}>{cntToday}</div></div>
-          <div style={{...glSm,textAlign:"center"}}><div style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>إجمالي المحصّل</div><div style={{fontSize:18,fontWeight:900,color:"#34d399"}}>{SAR(sumToday)}</div></div>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-          <div style={{...glSm,textAlign:"center"}}><div style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>إجمالي المتأخر</div><div style={{fontSize:16,fontWeight:900,color:"#f87171"}}>{SAR(totalLate)}</div></div>
-          <div style={{...glSm,textAlign:"center"}}><div style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>إجمالي المتبقي</div><div style={{fontSize:16,fontWeight:900,color:"#fbbf24"}}>{SAR(totalLeft)}</div></div>
-        </div>
-      </div>
+      React.createElement("button",{onClick:()=>setSelInv(null),style:{...styles.btn("#f3f4f6","#374151"),marginBottom:12,fontSize:14,fontWeight:700}},"← رجوع"),
 
-      {/* ═══ الفلاتر ═══ */}
-      <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
-        <select value={colInv} onChange={e=>setColInv(e.target.value)} style={{...inp,flex:1,minWidth:140}}>
-          <option value="all" style={{background:"#1a2744"}}>👥 كل المستثمرين</option>
-          {sortedInvestors(investors).map(i=><option key={i.id} value={i.id} style={{background:"#1a2744"}}>{invLabel(i)}</option>)}
-        </select>
-        <input placeholder="🔍 بحث بالاسم أو الجوال..." value={colSearch} onChange={e=>setColSearch(e.target.value)} style={{...inp,flex:1,minWidth:120}}/>
-      </div>
+      React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,alignItems:"center",flexWrap:"wrap"}},
+        React.createElement("input",{type:"date",value:colDate,onChange:e=>setColDate(e.target.value),style:{...styles.input,width:"auto"}}),
+        React.createElement("input",{placeholder:"🔍 بحث...",value:colSearch,onChange:e=>setColSearch(e.target.value),style:{...styles.input,flex:1}})
+      ),
 
-      {/* ═══ حالة فارغة ═══ */}
-      {groups.length===0 && (
-        <div style={{...gl,textAlign:"center",padding:40,color:"rgba(255,255,255,0.6)",fontSize:16}}>✅ لا يوجد زبائن عليهم متبقي</div>
-      )}
+      selRows.length===0 && React.createElement("div",{style:{...styles.card,textAlign:"center",padding:30,color:"#6b7280"}},"✅ لا يوجد عقود متبقية"),
 
-      {/* ═══ مجموعات المستثمرين ═══ */}
-      {groups.map(g=>{
-        const gLate=g.items.reduce((s,c)=>s+c.lateAmt,0);
-        const gLeft=g.items.reduce((s,c)=>s+c.left,0);
-        return (
-          <div key={g.inv?g.inv.id:"x"} style={{marginBottom:14}}>
-            {/* هيدر المستثمر */}
-            <div style={{background:"linear-gradient(90deg,#1e293b,#0f172a)",borderRadius:"14px 14px 0 0",padding:"12px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"2px solid #c8922a"}}>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <span style={{fontSize:18}}>💼</span>
-                <span style={{fontSize:16,fontWeight:900,color:"#fff"}}>{g.inv?invLabel(g.inv):"—"}</span>
-              </div>
-              <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-                {gLate>0 && <span style={{background:"rgba(248,113,113,0.2)",color:"#f87171",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:800}}>متأخر {SAR(gLate)}</span>}
-                <span style={{background:"rgba(200,146,42,0.2)",color:"#c8922a",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:800}}>{g.items.length} عقد · متبقي {SAR(gLeft)}</span>
-              </div>
-            </div>
+      // ─── جدول العملاء ───
+      selRows.length>0 && React.createElement("div",{style:{background:"#fff",borderRadius:16,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}},
+        // رأس الجدول
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 70px 70px 50px",padding:"10px 14px",background:"#f8fafc",borderBottom:"2px solid #e5e7eb",fontSize:12,fontWeight:800,color:"#6b7280"}},
+          React.createElement("span",null,"الزبون"),
+          React.createElement("span",{style:{textAlign:"center"}},"القسط"),
+          React.createElement("span",{style:{textAlign:"center"}},"الحالة"),
+          React.createElement("span",null,"")
+        ),
 
-            {/* بطاقات العملاء */}
-            <div style={{background:"rgba(15,25,35,0.5)",borderRadius:"0 0 14px 14px",padding:8}}>
-              {g.items.map((c,ci)=>{
-                const isExp=!!expanded[c.id];
-                const amtVal=colAmts[c.id]!=null?colAmts[c.id]:String(c.instAmt||"");
-                const hist=(payments||[]).filter(p=>p.contractId===c.id).sort((a,b)=>new Date(a.date)-new Date(b.date));
-                // حساب نسبة السداد
-                const pctPaid=c.totalInst>0?Math.round((c.paid/(c.totalInst))*100):0;
+        // صفوف العملاء
+        selRows.map((c,ci)=>{
+          const isExp=!!expanded[c.id];
+          const amtVal=colAmts[c.id]!=null?colAmts[c.id]:String(c.instAmt||"");
+          const hist=(payments||[]).filter(p=>p.contractId===c.id).sort((a,b)=>new Date(a.date)-new Date(b.date));
+          const pct=c.totalInst>0?Math.round((c.paid/c.totalInst)*100):0;
+          // لون النقطة
+          const dotClr=c.lateAmt>0?"#ef4444":pct>=50?"#22c55e":"#f59e0b";
 
-                return (
-                  <div key={c.id} style={{...gl,marginBottom:ci<g.items.length-1?8:0,overflow:"hidden"}}>
-                    {/* صف العميل — قابل للضغط */}
-                    <div onClick={()=>toggle(c.id)} style={{padding:"12px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",userSelect:"none"}}>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                          <span style={{fontSize:15,fontWeight:800,color:"#fff"}}>{c.client}</span>
-                          {c.contractType==="defer" && <span style={{fontSize:9,color:"#fbbf24",background:"rgba(251,191,36,0.15)",borderRadius:6,padding:"1px 6px"}}>مؤجل</span>}
-                          {c.contractType==="migrated" && <span style={{fontSize:9,color:"#818cf8",background:"rgba(129,140,248,0.15)",borderRadius:6,padding:"1px 6px"}}>مرحّل</span>}
-                        </div>
-                        <div style={{display:"flex",gap:12,marginTop:5,fontSize:12}}>
-                          <span style={{color:"rgba(255,255,255,0.45)"}}>القسط <b style={{color:"#e2e8f0"}}>{SAR(c.instAmt||0)}</b></span>
-                          <span style={{color:"rgba(255,255,255,0.45)"}}>المتبقي <b style={{color:"#f87171"}}>{SAR(c.left)}</b></span>
-                        </div>
-                        {/* شريط التقدم */}
-                        <div style={{marginTop:6,height:4,borderRadius:4,background:"rgba(255,255,255,0.08)",overflow:"hidden"}}>
-                          <div style={{height:"100%",borderRadius:4,background:pctPaid>=70?"#34d399":pctPaid>=30?"#fbbf24":"#f87171",width:pctPaid+"%",transition:"width 0.3s"}}/>
-                        </div>
-                      </div>
-                      <div style={{display:"flex",alignItems:"center",gap:8,marginRight:8}}>
-                        {c.lateAmt>0
-                          ? <span style={{background:"rgba(248,113,113,0.15)",color:"#f87171",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:800}}>متأخر</span>
-                          : <span style={{background:"rgba(52,211,153,0.15)",color:"#34d399",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:800}}>منتظم</span>}
-                        <span style={{color:"rgba(255,255,255,0.35)",fontSize:16,transition:"transform 0.25s",transform:isExp?"rotate(180deg)":"rotate(0)",display:"inline-block"}}>▾</span>
-                      </div>
-                    </div>
+          return React.createElement("div",{key:c.id},
+            // الصف الرئيسي
+            React.createElement("div",{onClick:()=>toggle(c.id),style:{display:"grid",gridTemplateColumns:"1fr 70px 70px 50px",padding:"12px 14px",alignItems:"center",cursor:"pointer",borderBottom:"1px solid #f1f5f9",background:ci%2===0?"#fff":"#fafbfc"}},
+              // الزبون
+              React.createElement("div",null,
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                  React.createElement("span",{style:{width:10,height:10,borderRadius:"50%",background:dotClr,flexShrink:0}}),
+                  React.createElement("span",{style:{fontWeight:700,fontSize:14,color:"#1f2937"}},c.client)
+                ),
+                React.createElement("div",{style:{fontSize:11,color:"#9ca3af",marginRight:16}},c.cPhone||"")
+              ),
+              // القسط
+              React.createElement("div",{style:{textAlign:"center",fontWeight:800,fontSize:14,color:"#374151"}},SAR(c.instAmt||0)),
+              // الحالة
+              React.createElement("div",{style:{textAlign:"center"}},
+                c.lateAmt>0
+                  ? React.createElement("span",{style:{background:"#fef2f2",color:"#dc2626",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:800}},"متأخر")
+                  : React.createElement("span",{style:{background:"#f0fdf4",color:"#16a34a",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:800}},"منتظم")
+              ),
+              // سهم
+              React.createElement("div",{style:{textAlign:"center",color:"#9ca3af",fontSize:14,transition:"transform 0.2s",transform:isExp?"rotate(180deg)":"",display:"inline-block"}},"▾")
+            ),
 
-                    {/* ═══ المحتوى الموسّع ═══ */}
-                    {isExp && (
-                      <div style={{borderTop:"1px solid rgba(255,255,255,0.08)",padding:"14px"}}>
-                        {/* بطاقات الأرقام */}
-                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
-                          <div style={{background:"rgba(255,255,255,0.05)",borderRadius:10,padding:"8px 6px",textAlign:"center"}}><div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>القسط</div><div style={{fontSize:14,fontWeight:800,color:"#e2e8f0"}}>{SAR(c.instAmt||0)}</div></div>
-                          <div style={{background:"rgba(248,113,113,0.08)",borderRadius:10,padding:"8px 6px",textAlign:"center"}}><div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>المتبقي</div><div style={{fontSize:14,fontWeight:800,color:"#f87171"}}>{SAR(c.left)}</div></div>
-                          <div style={{background:"rgba(52,211,153,0.08)",borderRadius:10,padding:"8px 6px",textAlign:"center"}}><div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>الواصل</div><div style={{fontSize:14,fontWeight:800,color:"#34d399"}}>{SAR(c.paid)}</div></div>
-                        </div>
+            // ═══ المحتوى الموسّع ═══
+            isExp && React.createElement("div",{style:{background:"#f8fafc",padding:"16px",borderBottom:"2px solid #e5e7eb"}},
+              // المؤشر الدائري + الأرقام
+              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:16,marginBottom:16}},
+                React.createElement(CircleProgress,{pct:pct,size:56,stroke:5}),
+                React.createElement("div",{style:{flex:1,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}},
+                  React.createElement("div",{style:{textAlign:"center"}},
+                    React.createElement("div",{style:{fontSize:10,color:"#9ca3af"}},"القسط"),
+                    React.createElement("div",{style:{fontSize:14,fontWeight:800,color:"#374151"}},SAR(c.instAmt||0))
+                  ),
+                  React.createElement("div",{style:{textAlign:"center"}},
+                    React.createElement("div",{style:{fontSize:10,color:"#9ca3af"}},"المتبقي"),
+                    React.createElement("div",{style:{fontSize:14,fontWeight:800,color:"#ef4444"}},SAR(c.left))
+                  ),
+                  React.createElement("div",{style:{textAlign:"center"}},
+                    React.createElement("div",{style:{fontSize:10,color:"#9ca3af"}},"المسدّد"),
+                    React.createElement("div",{style:{fontSize:14,fontWeight:800,color:"#22c55e"}},SAR(c.paid))
+                  )
+                )
+              ),
 
-                        {/* حقل الإدخال + زر السداد */}
-                        <div style={{display:"flex",gap:8,marginBottom:hist.length>0?14:0}}>
-                          <input type="number" placeholder="المبلغ" value={amtVal}
-                            onChange={e=>setColAmts(p=>({...p,[c.id]:e.target.value}))}
-                            onClick={e=>e.stopPropagation()}
-                            style={{flex:1,background:"rgba(255,255,255,0.1)",border:"2px solid rgba(13,148,136,0.5)",borderRadius:10,color:"#fff",padding:"10px 14px",fontSize:16,fontWeight:700,fontFamily:"inherit"}}/>
-                          <button onClick={(e)=>{e.stopPropagation();doCollect(c);}} style={{background:"linear-gradient(135deg,#0d9488,#059669)",border:"none",borderRadius:10,color:"#fff",padding:"10px 20px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"inherit",boxShadow:"0 4px 15px rgba(13,148,136,0.4)",whiteSpace:"nowrap"}}>💰 سدّد</button>
-                        </div>
+              // حقل السداد
+              React.createElement("div",{style:{display:"flex",gap:8,marginBottom:hist.length>0?14:0}},
+                React.createElement("input",{type:"number",placeholder:"المبلغ",value:amtVal,
+                  onChange:e=>setColAmts(p=>({...p,[c.id]:e.target.value})),
+                  onClick:e=>e.stopPropagation(),
+                  style:{...styles.input,flex:1,fontWeight:700,fontSize:16,borderColor:"#0d9488",borderWidth:2}}),
+                React.createElement("button",{onClick:e=>{e.stopPropagation();doCollect(c);},
+                  style:{...styles.btn("#0d9488","#fff"),fontSize:15,fontWeight:800,padding:"10px 20px",whiteSpace:"nowrap"}},"💰 سدّد")
+              ),
 
-                        {/* ═══ سجل السدادات — نمط الإيصال ═══ */}
-                        {hist.length>0 && (
-                          <div style={{background:"rgba(0,0,0,0.3)",borderRadius:12,padding:14,border:"1px dashed rgba(255,255,255,0.15)"}}>
-                            <div style={{textAlign:"center",marginBottom:10,paddingBottom:8,borderBottom:"1px dashed rgba(255,255,255,0.15)"}}>
-                              <div style={{fontSize:13,fontWeight:900,color:"rgba(255,255,255,0.8)",letterSpacing:1}}>📋 سجل السدادات</div>
-                              <div style={{fontSize:10,color:"rgba(255,255,255,0.35)",marginTop:2}}>{c.client} · {hist.length} دفعة</div>
-                            </div>
-                            {(()=>{
-                              let running=c.totalInst||0;
-                              return hist.map((p,pi)=>{
-                                running-=p.amount;
-                                const rem=Math.max(0,running);
-                                return (
-                                  <div key={p.id||pi} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:pi<hist.length-1?"1px dotted rgba(255,255,255,0.08)":"none"}}>
-                                    <div style={{display:"flex",alignItems:"center",gap:6}}>
-                                      <span style={{color:"rgba(255,255,255,0.25)",fontSize:11,fontWeight:700,minWidth:18}}>{pi+1}</span>
-                                      <span style={{color:"rgba(255,255,255,0.55)",fontSize:12}}>{fmtDate(p.date)}</span>
-                                    </div>
-                                    <div style={{display:"flex",alignItems:"center",gap:8}}>
-                                      <span style={{color:"#34d399",fontWeight:800,fontSize:13}}>{SAR(p.amount)}</span>
-                                      <span style={{color:"rgba(255,255,255,0.25)",fontSize:9}}>⇠</span>
-                                      <span style={{color:"#f87171",fontWeight:700,fontSize:12}}>{SAR(rem)}</span>
-                                      <span style={{display:"inline-flex",gap:2}}>
-                                        <button onClick={(e)=>{e.stopPropagation();
-                                          const v=window.prompt("تعديل مبلغ السداد:",p.amount);
-                                          if(v===null) return;
-                                          const n=parseFloat(v);
-                                          if(isNaN(n)||n<=0){toast("⚠️ مبلغ غير صحيح","warn");return;}
-                                          setPayments(arr=>arr.map(x=>x.id===p.id?{...x,amount:n}:x));
-                                          toast("✅ تم تعديل السداد");
-                                        }} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"rgba(255,255,255,0.35)",padding:"2px 4px"}}>✏️</button>
-                                        <button onClick={(e)=>{e.stopPropagation();
-                                          if(!window.confirm("حذف هذا السداد نهائياً؟")) return;
-                                          setPayments(arr=>arr.filter(x=>x.id!==p.id));
-                                          toast("🗑 حذف");
-                                        }} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"rgba(255,255,255,0.25)",padding:"2px 4px"}}>🗑</button>
-                                      </span>
-                                    </div>
-                                  </div>
-                                );
-                              });
-                            })()}
-                            <div style={{marginTop:8,paddingTop:8,borderTop:"1px dashed rgba(255,255,255,0.15)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                              <span style={{color:"rgba(255,255,255,0.5)",fontSize:11,fontWeight:700}}>إجمالي المسدّد</span>
-                              <span style={{color:"#34d399",fontSize:15,fontWeight:900}}>{SAR(c.paid)}</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
-    </div>
+              // سجل السدادات
+              hist.length>0 && React.createElement("div",{style:{background:"#fff",borderRadius:12,border:"1px solid #e5e7eb",overflow:"hidden"}},
+                React.createElement("div",{style:{background:"#f1f5f9",padding:"8px 14px",fontSize:13,fontWeight:800,color:"#374151"}},"📋 السدادات ("+hist.length+")"),
+                hist.map((p,pi)=>{
+                  const running=(c.totalInst||0)-hist.slice(0,pi+1).reduce((s,x)=>s+(+x.amount||0),0);
+                  return React.createElement("div",{key:p.id||pi,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 14px",borderBottom:pi<hist.length-1?"1px solid #f1f5f9":"none",fontSize:13}},
+                    React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+                      React.createElement("span",{style:{color:"#9ca3af",fontSize:11,fontWeight:700}},pi+1),
+                      React.createElement("span",{style:{color:"#6b7280"}},fmtDate(p.date))
+                    ),
+                    React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+                      React.createElement("span",{style:{color:"#22c55e",fontWeight:800}},SAR(p.amount)),
+                      React.createElement("span",{style:{color:"#d1d5db",fontSize:10}},"→"),
+                      React.createElement("span",{style:{color:"#ef4444",fontWeight:700,fontSize:12}},SAR(Math.max(0,running))),
+                      React.createElement("button",{onClick:e=>{e.stopPropagation();
+                        const v=window.prompt("تعديل مبلغ السداد:",p.amount);
+                        if(v===null) return; const n=parseFloat(v);
+                        if(isNaN(n)||n<=0){toast("⚠️ مبلغ غير صحيح","warn");return;}
+                        setPayments(arr=>arr.map(x=>x.id===p.id?{...x,amount:n}:x));
+                        toast("✅ تم تعديل السداد");
+                      },style:{background:"none",border:"none",cursor:"pointer",fontSize:12,padding:"2px"}},"✏️"),
+                      React.createElement("button",{onClick:e=>{e.stopPropagation();
+                        if(!window.confirm("حذف هذا السداد نهائياً؟")) return;
+                        setPayments(arr=>arr.filter(x=>x.id!==p.id));
+                        toast("🗑 حذف");
+                      },style:{background:"none",border:"none",cursor:"pointer",fontSize:12,padding:"2px"}},"🗑")
+                    )
+                  );
+                })
+              )
+            )
+          );
+        })
+      )
+    )
   );
 }
 
