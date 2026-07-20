@@ -7224,6 +7224,67 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
         <div style={{flex:1,minWidth:70,background:"#ecfdf5",border:"1px solid #a7f3d0",borderRadius:10,padding:10,textAlign:"center"}}><div style={{fontSize:9,color:"#555"}}>التحصيل</div><div style={{fontSize:15,fontWeight:900,color:"#059669"}}>{SAR(totalCalc.inst)}</div></div>
       </div>
 
+      {/* ═══ ١.٥ مؤشر الدوران — نايم vs شغّال ═══ */}
+      {(()=>{
+        // حساب النقدي (النايم)
+        const _do2 = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
+        const base2 = _do2.__base && typeof _do2.__base==="object" ? _do2.__base : null;
+        const baseAmt2 = base2 ? (+base2.amount||0) : 0;
+        const baseDate2 = base2 ? base2.date : "0000-00-00";
+        const _daily2 = daily||[];
+        const sleeping = Math.max(0, baseAmt2 + _daily2.filter(d=>d.date>=baseDate2).reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0));
+        // المتبقي عند الزبائن (الشغّال) — رأس مال فقط بدون الأرباح
+        const working = allC.reduce((s,c)=>{
+          const amt=+c.amount||0;
+          const paid2=_getPaid(allPayments,c.id);
+          const totalI=+c.totalInst||amt;
+          const remI=Math.max(0,totalI-paid2);
+          // نسبة رأس المال من الإجمالي
+          const capRatio=totalI>0?amt/totalI:1;
+          return s+Math.round(remI*capRatio);
+        },0);
+        const total2=sleeping+working;
+        const sleepPct=total2>0?Math.round((sleeping/total2)*100):0;
+        const workPct=total2>0?100-sleepPct:0;
+        // دونت تشارت
+        const sz=120,cx2=60,cy2=60,r2=48,circ2=2*Math.PI*r2;
+        const workOff=circ2-(circ2*workPct/100);
+        return (
+          <div style={{marginBottom:24}}>
+            <div style={{fontSize:16,fontWeight:900,color:C.ink,borderRight:"4px solid #f59e0b",paddingRight:12,marginBottom:14}}>💤🚀 مؤشر الدوران — نايم vs شغّال</div>
+            <div style={{display:"flex",alignItems:"center",gap:16,flexWrap:"wrap"}}>
+              {/* الدائرة */}
+              <div style={{width:sz,textAlign:"center",flexShrink:0}}>
+                <svg width={sz} height={sz} viewBox={"0 0 "+sz+" "+sz}>
+                  <circle cx={cx2} cy={cy2} r={r2} fill="none" stroke="#fecaca" strokeWidth="14"/>
+                  <circle cx={cx2} cy={cy2} r={r2} fill="none" stroke="#059669" strokeWidth="14" strokeDasharray={circ2} strokeDashoffset={workOff} strokeLinecap="round" transform={"rotate(-90 "+cx2+" "+cy2+")"} style={{transition:"stroke-dashoffset 1s ease"}}/>
+                  <text x={cx2} y={cy2-6} textAnchor="middle" fontSize="18" fontWeight="900" fill="#059669">{workPct}%</text>
+                  <text x={cx2} y={cy2+12} textAnchor="middle" fontSize="9" fill="#6b7280">شغّال</text>
+                </svg>
+              </div>
+              {/* البطاقات */}
+              <div style={{flex:1,display:"flex",flexDirection:"column",gap:8,minWidth:180}}>
+                <div style={{display:"flex",gap:8}}>
+                  <div style={{flex:1,background:"#f0fdf4",border:"2px solid #22c55e",borderRadius:12,padding:14,textAlign:"center"}}>
+                    <div style={{fontSize:11,color:"#555",marginBottom:4}}>🚀 شغّال (عند الزبائن)</div>
+                    <div style={{fontSize:20,fontWeight:900,color:"#059669"}}>{SAR(working)}</div>
+                    <div style={{fontSize:12,fontWeight:700,color:"#059669",marginTop:2}}>{workPct}%</div>
+                  </div>
+                  <div style={{flex:1,background:"#fef2f2",border:"2px solid #ef4444",borderRadius:12,padding:14,textAlign:"center"}}>
+                    <div style={{fontSize:11,color:"#555",marginBottom:4}}>💤 نايم (بالصندوق)</div>
+                    <div style={{fontSize:20,fontWeight:900,color:"#dc2626"}}>{SAR(sleeping)}</div>
+                    <div style={{fontSize:12,fontWeight:700,color:"#dc2626",marginTop:2}}>{sleepPct}%</div>
+                  </div>
+                </div>
+                <div style={{background:sleepPct>30?"#fef3c7":"#ecfdf5",border:"1px solid "+(sleepPct>30?"#fde68a":"#a7f3d0"),borderRadius:10,padding:10,fontSize:12,textAlign:"center",fontWeight:700,color:sleepPct>30?"#92400e":"#065f46"}}>
+                  {sleepPct>30?"⚠️ "+sleepPct+"% من فلوسك نايمة — قسّطها بسرعة!":"✅ معظم فلوسك شغّالة — ممتاز!"}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ═══ ٢. التدفق الشهري المفصّل ═══ */}
       <div style={{fontSize:16,fontWeight:900,color:C.ink,borderRight:"4px solid #2563eb",paddingRight:12,marginBottom:12}}>📊 التدفق الشهري المفصّل — 12 شهر</div>
       <div style={{display:"flex",alignItems:"flex-end",gap:3,height:200,marginBottom:8,padding:"0 4px",borderBottom:"2px solid #e5e7eb"}}>
