@@ -4997,8 +4997,15 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   const stmtNet = stmtIn - stmtOut;
 
   // ═══ الحركات التفصيلية المصفّاة (بحث + نوع) — تعرض "مَن" وراء كل حركة ═══
+  // التفاصيل تعرض الكل (قديم + جديد) مع فاصل "بداية الشهر الجديد"
+  // بينما الإجماليات (stmtRows) محصورة بالدورة الحالية فقط
+  const stmtDetailSource = _daily.filter(d=>{
+    if(stmtFrom && d.date < stmtFrom) return false;
+    if(stmtTo   && d.date > stmtTo)   return false;
+    return true;
+  });
   const _q = stmtQuery.trim().toLowerCase();
-  const stmtDetailRows = stmtRows
+  const stmtDetailRows = stmtDetailSource
     .filter(d => stmtTypeFilter==="all" ? true : d.type===stmtTypeFilter)
     .filter(d => !_q ? true : ((d.desc||"").toLowerCase().includes(_q)))
     .sort((a,b)=> (a.date<b.date?1:a.date>b.date?-1:0) || (b.id-a.id)); // الأحدث أولاً
@@ -5316,15 +5323,27 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                     <tr><td colSpan={4} style={{...styles.td,textAlign:"center",padding:24,color:"#64748b"}}>
                       {isFiltering ? "لا توجد حركات مطابقة" : "لا توجد حركات"}
                     </td></tr>
-                  ) : (stmtShowAll ? stmtDetailRows : stmtDetailRows.slice(0,10)).map((d,i)=>{
+                  ) : (stmtShowAll ? stmtDetailRows : stmtDetailRows.slice(0,10)).map((d,i,arr)=>{
                     const t=DAILY_TYPES.find(x=>x.key===d.type);
+                    // فاصل "بداية الشهر الجديد": يظهر بين آخر حركة جديدة وأول حركة قديمة (الترتيب تنازلي)
+                    const prev = i>0 ? arr[i-1] : null;
+                    const showSep = baseDate!=="0000-00-00" && d.date < baseDate && (i===0 || (prev && prev.date >= baseDate));
                     return (
-                      <tr key={d.id} style={{background:i%2===0?C.white:C.gray}}>
-                        <td style={{...styles.td,whiteSpace:"nowrap",color:"#475569",fontWeight:600}}>{dLabel(d.date)}</td>
-                        <td style={styles.td}><span style={styles.badge((t?.color||"#999")+"22",t?.color||"#999")}>{t?.label||d.type}</span></td>
-                        <td style={{...styles.td,fontWeight:700,position:"sticky",right:0,background:i%2===0?C.white:C.gray,zIndex:5,borderLeft:"2px solid #e2e8f0"}}>{d.desc||"—"}</td>
-                        <td style={{...styles.td,fontWeight:800,color:t&&t.color,whiteSpace:"nowrap"}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
-                      </tr>
+                      <React.Fragment key={d.id}>
+                        {showSep && (
+                          <tr>
+                            <td colSpan={4} style={{background:"linear-gradient(90deg,#1e3a5f,#0f2544)",color:"#fff",textAlign:"center",fontWeight:900,fontSize:14,padding:"10px 12px",letterSpacing:0.5}}>
+                              🔵 نهاية الشهر السابق — الحركات التالية مؤرشفة
+                            </td>
+                          </tr>
+                        )}
+                        <tr style={{background:d.date>=baseDate?(i%2===0?C.white:C.gray):"#f8fafc",opacity:d.date>=baseDate?1:0.65}}>
+                          <td style={{...styles.td,whiteSpace:"nowrap",color:"#475569",fontWeight:600}}>{dLabel(d.date)}</td>
+                          <td style={styles.td}><span style={styles.badge((t?.color||"#999")+"22",t?.color||"#999")}>{t?.label||d.type}</span></td>
+                          <td style={{...styles.td,fontWeight:700,position:"sticky",right:0,background:d.date>=baseDate?(i%2===0?C.white:C.gray):"#f8fafc",zIndex:5,borderLeft:"2px solid #e2e8f0"}}>{d.desc||"—"}</td>
+                          <td style={{...styles.td,fontWeight:800,color:t&&t.color,whiteSpace:"nowrap"}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
+                        </tr>
+                      </React.Fragment>
                     );
                   })}
                   {!stmtShowAll && stmtDetailRows.length>10 && (
