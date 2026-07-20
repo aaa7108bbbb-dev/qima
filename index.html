@@ -7226,41 +7226,78 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
 
       {/* ═══ ١.٥ مؤشر الكاش — وين فلوسك؟ ═══ */}
       {(()=>{
-        const _do2 = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
-        const base2 = _do2.__base && typeof _do2.__base==="object" ? _do2.__base : null;
-        const baseAmt2 = base2 ? (+base2.amount||0) : 0;
-        const baseDate2 = base2 ? base2.date : "0000-00-00";
+        // ═══ نفس منطق الجرد حرفياً (مع القيم اليدوية) ═══
+        const jardOv = (()=>{try{return JSON.parse(localStorage.getItem("qimma_jard_ov")||"{}");}catch{return{};}})();
+        const curYM = fiscalYM(today);
         const _daily2 = daily||[];
-        // الصندوق
-        const cBox = Math.max(0, baseAmt2 + _daily2.filter(d=>d.date>=baseDate2).reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0));
-        // البنك
-        const bt2 = _arr(bankTx);
-        const cBank = bt2.length>0 ? (bt2[bt2.length-1].balance||0) : 0;
-        // البضاعة
-        const goodsD = (()=>{try{return JSON.parse(localStorage.getItem("qimma_goods3")||"[]");}catch{return[];}})();
-        const priceOv = (()=>{try{return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}");}catch{return{};}})();
-        const defPr = (()=>{try{return parseFloat(localStorage.getItem("qimma_default_price"))||0;}catch{return 0;}})();
-        const cGoods = (()=>{
-          const cRows=contracts.filter(c=>!c.deleted&&(!c.isOldContract||c.contractType==='migrated')).map(c=>{
-            const isCard=(c.goods||"").trim().startsWith("بطاقة");
-            if(isCard) return{id:"c_"+c.id,date:c.date,supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,supportAcc:0,withdrawnQty:parseInt(c.qty)||0,price:0,cashOnly:false};
-            return{id:"c_"+c.id,date:c.date,supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,supportAcc:-(parseFloat(c.amount)||0),withdrawnQty:0,price:0,cashOnly:true};
-          });
-          const allR2=[...cRows,...goodsD].sort((a,b)=>new Date(a.date)-new Date(b.date));
-          let runC=0,lastP2=0,runGC=0;
-          allR2.forEach(r=>{if(r.cashOnly){runGC+=parseFloat(r.supportAcc)||0;return;}const rp=parseFloat(priceOv[r.id]||r.price)||defPr||lastP2||1;if(rp)lastP2=rp;const sC=parseFloat(r.supportClient)||0;const sA=parseFloat(r.supportAcc)||0;const sup=sC||sA?Math.floor((sC+sA)/rp):0;runC=runC+sup-(parseInt(r.withdrawnQty)||0);});
-          return runC*lastP2+runGC;
-        })();
-        // السلف
-        const cLoans = (loans||[]).reduce((s,l)=>{const pd=(l.payments||[]).reduce((ss,p)=>ss+p.amount,0);return s+Math.max(0,(l.amount||0)-pd);},0);
+        const jardVal = (key) => {
+          const alwaysAuto = ["cards","zakat","deductions","cash","accounts"];
+          if(!alwaysAuto.includes(key) && jardOv[curYM+"_"+key]!==undefined) return jardOv[curYM+"_"+key];
+          if(key==="accounts") {
+            const bt = _arr(bankTx);
+            if(bt.length > 0) return bt[bt.length-1].balance || 0;
+            return jardOv[curYM+"_accounts"] !== undefined ? jardOv[curYM+"_accounts"] : 0;
+          }
+          if(key==="cash") {
+            const _do = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
+            const base = _do.__base && typeof _do.__base==="object" ? _do.__base : null;
+            const baseAmount = base ? (+base.amount||0) : 0;
+            const baseDate = base ? base.date : "0000-00-00";
+            const net = _daily2.filter(d=>d.date >= baseDate)
+              .reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
+            return baseAmount + net;
+          }
+          if(key==="loans") {
+            return (loans||[]).reduce((s,l)=>{
+              const paid=(l.payments||[]).reduce((ss,p)=>ss+p.amount,0);
+              return s+Math.max(0,(l.amount||0)-paid);
+            },0);
+          }
+          if(key==="deductions") return (pending||[]).reduce((s,p)=>s+p.amount,0);
+          if(key==="cards") {
+            const goodsD = (()=>{try{return JSON.parse(localStorage.getItem("qimma_goods3")||"[]");}catch{return[];}})();
+            const priceOv = (()=>{try{return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}");}catch{return{};}})();
+            const defPr = (()=>{try{return parseFloat(localStorage.getItem("qimma_default_price"))||0;}catch{return 0;}})();
+            const cRows = contracts.filter(c=>!c.isOldContract && c.contractType!=='migrated').map(c=>{
+              const isCard = (c.goods||"").trim().startsWith("بطاقة");
+              if(isCard){
+                return {id:"c_"+c.id, date:c.date, supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0, supportAcc:0, withdrawnQty:parseInt(c.qty)||0, price:0, cashOnly:false};
+              }
+              return {id:"c_"+c.id, date:c.date, supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0, supportAcc:-(parseFloat(c.amount)||0), withdrawnQty:0, price:0, cashOnly:true};
+            });
+            const seqOf2 = r => { const n=parseInt(String(r.id).replace(/^c_/,""),10); return isNaN(n)?0:n; };
+            const allR = [...cRows,...goodsD].sort((a,b)=>{
+              const d=new Date(a.date)-new Date(b.date);
+              if(d!==0) return d;
+              return seqOf2(a)-seqOf2(b);
+            });
+            let runCards=0; let lastPrice2=0; let runGoodsCash=0;
+            allR.forEach(r=>{
+              if(r.cashOnly){ runGoodsCash += parseFloat(r.supportAcc)||0; return; }
+              const rowPrice=parseFloat(priceOv[r.id]||r.price)||defPr||lastPrice2||1;
+              if(rowPrice) lastPrice2=rowPrice;
+              const supC=parseFloat(r.supportClient)||0;
+              const supA=parseFloat(r.supportAcc)||0;
+              const supported=supC||supA?Math.floor((supC+supA)/rowPrice):0;
+              const withdrawn=parseInt(r.withdrawnQty)||0;
+              runCards=runCards+supported-withdrawn;
+            });
+            return runCards*lastPrice2 + runGoodsCash;
+          }
+          return 0;
+        };
+
+        const cBox = jardVal("cash");
+        const cBank = jardVal("accounts");
+        const cGoods = jardVal("cards");
+        const cLoans = jardVal("loans");
+        const cDeduct = jardVal("deductions");
         // مستحق الرئيس + المدير
         const mgrE = contracts.reduce((s,c)=>s+calcC(c,settings).inst,0);
         const accE = contracts.reduce((s,c)=>s+calcC(c,settings).acc,0);
         const mgrT = _daily2.filter(d=>d.type==="mgr").reduce((s,d)=>s+(d.amount||0),0);
         const accT = _daily2.filter(d=>d.type==="acc").reduce((s,d)=>s+(d.amount||0),0);
         const dueAdmin = Math.max(0,(mgrE-mgrT)+(accE-accT));
-        // الاستقطاعات
-        const cDeduct = (pending||[]).reduce((s,p)=>s+p.amount,0);
         // المتاح
         const sources = cBox + cBank + cGoods;
         const deductions = dueAdmin + cDeduct + cLoans;
