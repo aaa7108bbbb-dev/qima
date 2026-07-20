@@ -4232,7 +4232,7 @@ function BankPage({bankTx, setBankTx, toast}) {
   );
 }
 
-function MonthlyPortfolio({contracts, investors, settings, payments, monthClose, setMonthClose, JardComp, toast, BankComp}) {
+function MonthlyPortfolio({contracts, investors, settings, payments, monthClose, setMonthClose, JardComp, toast, BankComp, daily, dailyOpen, setDailyOpen}) {
   const [tab, setTab] = React.useState("ind");
   const [openMonth, setOpenMonth] = React.useState(null);
   const getPeriod = d => fiscalYM(d);
@@ -4331,6 +4331,51 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
   const totalRemaining = allC.reduce((s,c)=>s+Math.max(0,(+c.totalInst||+c.amount||0)-_getPaid(payments,c.id)),0);
   const closedMonths = Object.keys(monthClose||{}).sort().reverse();
 
+  // ═══ إقفال الدورة وبدء شهر جديد ═══
+  // يحفظ لقطة الشهر بالأرشيف + يحرّك رصيد بداية الصندوق لليوم بمبلغ المتبقي الحالي
+  // النتيجة: المصروف/استلام المدير/الرئيس/السداد تتصفّر تلقائياً (الحركات القديمة تصير قبل نقطة البداية)
+  // لا يُمسح أي شيء — كله محفوظ بالكشف الشامل والأرشيف
+  const closeCycleAndReset = () => {
+    // 1) حساب المتبقي الحالي في الصندوق
+    const _do = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
+    const base = _do.__base && typeof _do.__base==="object" ? _do.__base : null;
+    const baseAmount = base ? (+base.amount||0) : 0;
+    const baseDate = base ? base.date : "0000-00-00";
+    const _daily = daily||[];
+    const netSince = _daily.filter(d=>d.date >= baseDate)
+      .reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
+    const boxNow = baseAmount + netSince;
+
+    // 2) الشهر (الدورة) الحالي حسب السنة المالية
+    const nowD = new Date();
+    const curYM = fiscalYM(nowD);
+    const todayStr = nowD.toISOString().split("T")[0];
+
+    // تأكيد
+    if(!window.confirm(
+      "🔒 إقفال الدورة الحالية وبدء شهر جديد؟\n\n"+
+      "• سيُحفظ الشهر ("+mLabel(curYM)+") في الأرشيف\n"+
+      "• الرصيد الافتتاحي الجديد = "+SAR(boxNow)+"\n"+
+      "• تتصفّر: المصروف · استلام المدير · استلام الرئيس · السداد\n\n"+
+      "⚠️ لا يُمسح أي شيء — كل الحركات محفوظة بالكشف الشامل.\n\n"+
+      "متابعة؟"
+    )) return;
+
+    // 3) حفظ لقطة الشهر بالأرشيف
+    const d = calcMonth(curYM);
+    setMonthClose(p=>({...(p||{}),[curYM]:{
+      closedAt:new Date().toISOString(),
+      collected:d.collected, amt:d.tot.amt, profit:d.tot.profit,
+      admin:d.tot.admin, acc:d.tot.acc, inst:d.tot.inst, net:d.tot.net, count:d.count,
+      cycleReset:true, openingCarried:boxNow
+    }}));
+
+    // 4) تحريك نقطة بداية الصندوق لليوم بمبلغ المتبقي
+    setDailyOpen(p=>({...(p&&typeof p==="object"&&!Array.isArray(p)?p:{}), __base:{date:todayStr, amount:boxNow}}));
+
+    toast("✅ تم إقفال الدورة — بدأ شهر جديد برصيد "+SAR(boxNow));
+  };
+
   const printAll = (rows, title) => {
     const w=window.open("","_blank"); if(!w){alert("اسمح بالنوافذ المنبثقة");return;}
     const body=rows.map(r=>"<tr><td>"+mLabel(r.ym)+"</td><td>"+SAR(r.d.collected)+"</td><td>"+SAR(r.d.tot.amt)+"</td><td>"+SAR(r.d.tot.profit)+"</td><td>"+SAR(r.d.tot.net)+"</td><td>"+r.d.count+"</td></tr>").join("");
@@ -4361,8 +4406,9 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
         <div style={styles.panel}>
           <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
             <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>💼 مؤشرات المحفظة الشهرية</h2>
-            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
               <span style={{fontSize:13,color:"#1f2937",fontWeight:700}}>المتبقي الكلي: <span style={{color:C.red,fontWeight:900}}>{SAR(totalRemaining)}</span></span>
+              <button style={{...styles.btn(C.green,"#fff"),fontSize:13,padding:"7px 12px"}} onClick={closeCycleAndReset}>🔒 إقفال الدورة وبدء شهر جديد</button>
               <button style={{...styles.btn(C.gold),fontSize:13,padding:"7px 12px"}} onClick={()=>printAll(months.map(ym=>({ym,d:calcMonth(ym)})),"المؤشرات الشهرية")}>🖨️ طباعة</button>
             </div>
           </div>
@@ -8210,7 +8256,7 @@ function App() {
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="collect" && <CollectionPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} logAct={logAct}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct}/>}
-        {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast}/>}/>}
+        {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast}/>}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast} gsWrite={gsWrite}/>}
         {page==="profitloss" && <ProfitLossPage contracts={activeContracts} daily={daily} settings={settings} payments={payments} investors={investors}/>}
