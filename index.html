@@ -351,6 +351,15 @@ function printStatement(elementId) {
 
 // ─── helpers ───────────────────────────────────────────────
 const SAR = n => Math.round(+(n||0)).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
+// التاريخ المحلي (يحل مشكلة نقص يوم بسبب UTC في toISOString)
+const todayLocal = () => {
+  const d = new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+};
+const dateLocal = (dt) => {
+  const d = new Date(dt);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+};
 // رمز المستثمر: يُعرض الرمز إن وُجد، وإلا الاسم الكامل
 const invLabel = inv => (inv && inv.code && String(inv.code).trim()) ? String(inv.code).trim() : (inv ? inv.name : "—");
 // ترتيب المستثمرين حسب الرقم (3,4,7,8,9,10,11 ثم ل.ن, ح.ل)
@@ -400,7 +409,7 @@ function addMonths(dateStr, n) {
   if(!dateStr)return"";
   const d=new Date(dateStr);
   d.setMonth(d.getMonth()+n);
-  return d.toISOString().split("T")[0];
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 }
 
 // الشهر المالي يبدأ من يوم 21: أي يوم قبل 21 يُحسب على الشهر السابق
@@ -829,7 +838,7 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
 }
 // ─── New Contract Form ───────────────────────────────────────
 function NewContractPage({investors, settings, contracts, onSave, toast, setInvTxList}) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayLocal();
   const nextNum = contracts.length ? Math.max(...contracts.map(c=>parseInt(c.num)||0).filter(n=>n>0), 0) + 1 : (settings.startNum||1);
   const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}],contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",bankAccount:"",stockName:"",stockQty:"",isOldContract:false});
   const set = (k,v) => {
@@ -1256,7 +1265,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   const [showNew,setShowNew]=useState(false);
   const [showMigrated,setShowMigrated]=useState(false);
   const [showCollect,setShowCollect]=useState(!!startCollect);
-  const [collectDate,setCollectDate]=useState(new Date().toISOString().split("T")[0]);
+  const [collectDate,setCollectDate]=useState(todayLocal());
   const [collectSearch,setCollectSearch]=useState("");
   const [collectInv,setCollectInv]=useState("all");
   const [collectAmounts,setCollectAmounts]=useState({});
@@ -1267,7 +1276,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   const [showDeduct,setShowDeduct]=useState(false);
   const [printSel,setPrintSel]=useState({contract:true,bond:false,bondG:false,cheque:false,chequeG:false});
   const [payAmount,setPayAmount]=useState("");
-  const [payDate,setPayDate]=useState(new Date().toISOString().split("T")[0]);
+  const [payDate,setPayDate]=useState(todayLocal());
   const [payNote,setPayNote]=useState("");
   const [statusTab,setStatusTab]=useState("active");
   const [doneIds,setDoneIds]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_done")||"[]");}catch{return[];}});
@@ -1493,7 +1502,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     ? contracts.filter(c=>!c.deleted && (investors.find(i=>String(i.id)===String(c.investorId))?.name||"")===invSearch && !doneIds.includes(c.id))
     : [];
 
-  const today2 = new Date().toISOString().split("T")[0];
+  const today2 = todayLocal();
 
   // تصدير العقود المعروضة إلى Excel (CSV)
   const exportExcel = () => {
@@ -1991,7 +2000,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               <button style={{...styles.btn("#7c3aed","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px"}}
                 onClick={()=>{
                   if(!window.confirm("تأكيد السداد المبكر بمبلغ "+SAR(e.earlyDue)+"؟ سيُسجّل السداد ويُقفل العقد كمنتهي.")) return;
-                  setPayments(p=>[...p,{id:Date.now(),contractId:c.id,amount:e.earlyDue,date:new Date().toISOString().split("T")[0],note:"سداد مبكر — تصفية ("+e.pct.toFixed(1)+"% للمستثمر)"}]);
+                  setPayments(p=>[...p,{id:Date.now(),contractId:c.id,amount:e.earlyDue,date:todayLocal(),note:"سداد مبكر — تصفية ("+e.pct.toFixed(1)+"% للمستثمر)"}]);
                   markDone(c.id);
                   setEarlyModal(null);
                   toast("⚡ تم السداد المبكر وإقفال العقد");
@@ -2325,7 +2334,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
 
 // ─── Pending Page ────────────────────────────────────────────
 function PendingPage({pending, setPending}) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayLocal();
   const [form,setForm]=useState({name:"",amount:"",date:today,note:""});
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
 
@@ -2416,7 +2425,7 @@ function PendingPage({pending, setPending}) {
 
 // ─── Loans Page ──────────────────────────────────────────────
 function LoansPage({loans, setLoans}) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayLocal();
   const MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
   const [form,setForm]=useState({name:"",amount:"",monthly:"",date:today,note:""});
   const [selLoan,setSelLoan]=useState(null);
@@ -2561,7 +2570,7 @@ function LoansPage({loans, setLoans}) {
 
 // ─── Zakat Page ───────────────────────────────────────────────
 function ZakatPage({investors, contracts, settings, zakatTx, setZakatTx}) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayLocal();
   const [form,setForm]=useState({type:"collect",amount:"",name:"",date:today,note:""});
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
 
@@ -2985,7 +2994,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
   const [subTab, setSubTab] = useState("inv");
   const [selInv, setSelInv] = useState(investors[0]?.id||null);
   const [invSubTab, setInvSubTab] = useState("inv");
-  const [form, setForm] = useState({type:"deposit", amount:"", note:"", date:new Date().toISOString().split("T")[0]});
+  const [form, setForm] = useState({type:"deposit", amount:"", note:"", date:todayLocal()});
   const set = (k,v) => {
     setForm(f=>({...f,[k]:v}));
     // Auto-fill if idNum entered and matches existing contract
@@ -4239,7 +4248,8 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
   const mLabel = ym => { const [y,m]=ym.split("-"); return "شهر "+parseInt(m)+" - "+y; };
   const allC = contracts.filter(c=>!c.deleted);
   const allMonths = [...new Set(contracts.map(c=>getPeriod(c.date)))].sort().reverse();
-  const months = allMonths.filter(ym=>!(monthClose&&monthClose[ym]));
+  // كل الأشهر تظهر — المقفلة مالياً تتوسم بشارة 🔒 فقط (لا تختفي)
+  const months = allMonths;
 
   const calcMonth = (ym) => {
     const mc = contracts.filter(c=>getPeriod(c.date)===ym && !c.deleted);
@@ -4349,7 +4359,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
     // 2) الشهر (الدورة) الحالي حسب السنة المالية
     const nowD = new Date();
     const curYM = fiscalYM(nowD);
-    const todayStr = nowD.toISOString().split("T")[0];
+    const todayStr = todayLocal();
 
     // تأكيد
     if(!window.confirm(
@@ -4928,7 +4938,7 @@ const DAILY_TYPES = [
   {key:"salf",    label:"سلف",           sign:-1, color:"#7c3aed"},
 ];
 function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, settings, toast, zakatTx, setZakatTx, loans, setLoans, investors, payments}) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayLocal();
   const [selDay,setSelDay] = useState(today);
   const [baseInput,setBaseInput] = useState("");
   const [baseDateInput,setBaseDateInput] = useState(today);
@@ -5779,7 +5789,7 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
   const baseAmount = base ? (+base.amount||0) : 0;
   const baseDate = base ? base.date : "";
   const [baseInput,setBaseInput] = useState(base?String(baseAmount):"");
-  const [baseDateInput,setBaseDateInput] = useState(baseDate||new Date().toISOString().split("T")[0]);
+  const [baseDateInput,setBaseDateInput] = useState(baseDate||todayLocal());
   const [editingBase,setEditingBase] = useState(false);
   const [mgrPhone,setMgrPhone] = useState(()=>{ try{ return localStorage.getItem("qimma_mgr_phone")||""; }catch(e){ return ""; } });
   const [bizPhone,setBizPhone] = useState(()=>{ try{ return localStorage.getItem("qimma_biz_phone")||""; }catch(e){ return ""; } });
@@ -6019,7 +6029,7 @@ function GoodsPage({investors, contracts, toast, gsWrite}) {
     try{return JSON.parse(localStorage.getItem("qimma_goods3")||"[]");}catch{return[];}
   });
   const [showAdd, setShowAdd] = useState(false);
-  const [newRow, setNewRow] = useState({date:new Date().toISOString().split("T")[0],supportAcc:"",note:"",price:"",itemType:"cards",itemName:""});
+  const [newRow, setNewRow] = useState({date:todayLocal(),supportAcc:"",note:"",price:"",itemType:"cards",itemName:""});
   const [defaultPrice, setDefaultPrice] = useState(()=>{try{return localStorage.getItem("qimma_default_price")||"";}catch{return "";}});
   const saveDefaultPrice = v => { setDefaultPrice(v); try{localStorage.setItem("qimma_default_price",v);}catch(e){} };
   const ALL_COLS = ["اسم العميل","رقم العقد","قيمة العقد","اسم المستثمر","دعم العميل","دعم الحساب","سعر البطاقة","البطاقات المدعومة","البطاقات المسحوبة","رصيد البطاقات","نقدي البطاقات","نقدي السلع","الإجمالي النقدي"];
@@ -6161,7 +6171,7 @@ function GoodsPage({investors, contracts, toast, gsWrite}) {
             } else {
               saveManual([...manualRows,{id:Date.now(),date:newRow.date,contractNum:"—",contractAmount:0,client:newRow.note||"دعم حساب",investor:"—",supportClient:0,supportAcc:parseFloat(newRow.supportAcc)||0,withdrawnQty:0,fromContract:false,price:parseFloat(newRow.price)||0}]);
             }
-            setNewRow({date:new Date().toISOString().split("T")[0],supportAcc:"",note:"",price:"",itemType:"cards",itemName:""});
+            setNewRow({date:todayLocal(),supportAcc:"",note:"",price:"",itemType:"cards",itemName:""});
             setShowAdd(false);
             toast("✅ تم إضافة الدعم");
           }}>💾 حفظ</button>
@@ -6250,7 +6260,7 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
   const [q, setQ] = useState("");
   const [payModal, setPayModal] = useState(null);
   const [payAmount, setPayAmount] = useState("");
-  const [payDate, setPayDate] = useState(new Date().toISOString().split("T")[0]);
+  const [payDate, setPayDate] = useState(todayLocal());
 
   const results = q.length >= 2 ? contracts.filter(c =>
     c.client?.includes(q) ||
@@ -6345,7 +6355,7 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
                   const rem = Math.max(0,(c.totalInst||0)-paid);
                   const pay = Math.min(amt, rem);
                   if(!window.confirm("تسجيل سداد قسط "+SAR(pay)+" للعميل "+c.client+" بتاريخ اليوم؟")) return;
-                  setPayments(p=>[...p,{id:Date.now(),contractId:c.id,amount:pay,date:new Date().toISOString().split("T")[0],note:"قسط"}]);
+                  setPayments(p=>[...p,{id:Date.now(),contractId:c.id,amount:pay,date:todayLocal(),note:"قسط"}]);
                   toast("✅ تم تسجيل القسط");
                 }}>
                   ⚡ سدّد القسط
@@ -6423,7 +6433,7 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
 // ⚡ صفحة التحصيل — تصميم أبيض + بطاقات مستثمرين + مؤشر دائري
 // ══════════════════════════════════════════════════════════════
 function CollectionPage({contracts, investors, settings, payments, setPayments, toast, logAct}) {
-  const [colDate, setColDate] = useState(new Date().toISOString().split("T")[0]);
+  const [colDate, setColDate] = useState(todayLocal());
   const [selInv, setSelInv] = useState(null); // المستثمر المختار (null = شاشة الاختيار)
   const [colSearch, setColSearch] = useState("");
   const [colAmts, setColAmts] = useState({});
