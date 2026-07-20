@@ -7224,63 +7224,104 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
         <div style={{flex:1,minWidth:70,background:"#ecfdf5",border:"1px solid #a7f3d0",borderRadius:10,padding:10,textAlign:"center"}}><div style={{fontSize:9,color:"#555"}}>التحصيل</div><div style={{fontSize:15,fontWeight:900,color:"#059669"}}>{SAR(totalCalc.inst)}</div></div>
       </div>
 
-      {/* ═══ ١.٥ مؤشر الدوران — نايم vs شغّال ═══ */}
+      {/* ═══ ١.٥ مؤشر الكاش — وين فلوسك؟ ═══ */}
       {(()=>{
-        // حساب النقدي (النايم)
         const _do2 = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
         const base2 = _do2.__base && typeof _do2.__base==="object" ? _do2.__base : null;
         const baseAmt2 = base2 ? (+base2.amount||0) : 0;
         const baseDate2 = base2 ? base2.date : "0000-00-00";
         const _daily2 = daily||[];
-        const sleeping = Math.max(0, baseAmt2 + _daily2.filter(d=>d.date>=baseDate2).reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0));
-        // المتبقي عند الزبائن (الشغّال) — رأس مال فقط بدون الأرباح
-        const working = allC.reduce((s,c)=>{
-          const amt=+c.amount||0;
-          const paid2=_getPaid(allPayments,c.id);
-          const totalI=+c.totalInst||amt;
-          const remI=Math.max(0,totalI-paid2);
-          // نسبة رأس المال من الإجمالي
-          const capRatio=totalI>0?amt/totalI:1;
-          return s+Math.round(remI*capRatio);
-        },0);
-        const total2=sleeping+working;
-        const sleepPct=total2>0?Math.round((sleeping/total2)*100):0;
-        const workPct=total2>0?100-sleepPct:0;
-        // دونت تشارت
-        const sz=120,cx2=60,cy2=60,r2=48,circ2=2*Math.PI*r2;
-        const workOff=circ2-(circ2*workPct/100);
+        // الصندوق
+        const cBox = Math.max(0, baseAmt2 + _daily2.filter(d=>d.date>=baseDate2).reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0));
+        // البنك
+        const bt2 = _arr(bankTx);
+        const cBank = bt2.length>0 ? (bt2[bt2.length-1].balance||0) : 0;
+        // البضاعة
+        const goodsD = (()=>{try{return JSON.parse(localStorage.getItem("qimma_goods3")||"[]");}catch{return[];}})();
+        const priceOv = (()=>{try{return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}");}catch{return{};}})();
+        const defPr = (()=>{try{return parseFloat(localStorage.getItem("qimma_default_price"))||0;}catch{return 0;}})();
+        const cGoods = (()=>{
+          const cRows=contracts.filter(c=>!c.deleted&&(!c.isOldContract||c.contractType==='migrated')).map(c=>{
+            const isCard=(c.goods||"").trim().startsWith("بطاقة");
+            if(isCard) return{id:"c_"+c.id,date:c.date,supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,supportAcc:0,withdrawnQty:parseInt(c.qty)||0,price:0,cashOnly:false};
+            return{id:"c_"+c.id,date:c.date,supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,supportAcc:-(parseFloat(c.amount)||0),withdrawnQty:0,price:0,cashOnly:true};
+          });
+          const allR2=[...cRows,...goodsD].sort((a,b)=>new Date(a.date)-new Date(b.date));
+          let runC=0,lastP2=0,runGC=0;
+          allR2.forEach(r=>{if(r.cashOnly){runGC+=parseFloat(r.supportAcc)||0;return;}const rp=parseFloat(priceOv[r.id]||r.price)||defPr||lastP2||1;if(rp)lastP2=rp;const sC=parseFloat(r.supportClient)||0;const sA=parseFloat(r.supportAcc)||0;const sup=sC||sA?Math.floor((sC+sA)/rp):0;runC=runC+sup-(parseInt(r.withdrawnQty)||0);});
+          return runC*lastP2+runGC;
+        })();
+        // السلف
+        const cLoans = (loans||[]).reduce((s,l)=>{const pd=(l.payments||[]).reduce((ss,p)=>ss+p.amount,0);return s+Math.max(0,(l.amount||0)-pd);},0);
+        // مستحق الرئيس + المدير
+        const mgrE = contracts.reduce((s,c)=>s+calcC(c,settings).inst,0);
+        const accE = contracts.reduce((s,c)=>s+calcC(c,settings).acc,0);
+        const mgrT = _daily2.filter(d=>d.type==="mgr").reduce((s,d)=>s+(d.amount||0),0);
+        const accT = _daily2.filter(d=>d.type==="acc").reduce((s,d)=>s+(d.amount||0),0);
+        const dueAdmin = Math.max(0,(mgrE-mgrT)+(accE-accT));
+        // الاستقطاعات
+        const cDeduct = (pending||[]).reduce((s,p)=>s+p.amount,0);
+        // المتاح
+        const sources = cBox + cBank + cGoods;
+        const deductions = dueAdmin + cDeduct + cLoans;
+        const available = Math.max(0, sources - deductions);
+        // الربح الضايع
+        const dailyLost = Math.round(available * 0.5 / 20 / 30);
+        const monthlyLost = Math.round(available * 0.5 / 20);
+        const potentialReturn = Math.round(available * 1.5);
+
+        const dRow=(clr,icon,name,hint,amount,sign)=>(
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",background:"#fff",borderRadius:12,marginBottom:8,boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{width:10,height:10,borderRadius:"50%",background:clr,flexShrink:0}}/>
+              <div><div style={{fontSize:14,fontWeight:700,color:"#374151"}}>{name}</div><div style={{fontSize:11,color:"#9ca3af"}}>{hint}</div></div>
+            </div>
+            <div style={{fontSize:16,fontWeight:900,color:sign==="+"?"#059669":"#dc2626"}}>{sign}{SAR(amount)}</div>
+          </div>
+        );
+
         return (
           <div style={{marginBottom:24}}>
-            <div style={{fontSize:16,fontWeight:900,color:C.ink,borderRight:"4px solid #f59e0b",paddingRight:12,marginBottom:14}}>💤🚀 مؤشر الدوران — نايم vs شغّال</div>
-            <div style={{display:"flex",alignItems:"center",gap:16,flexWrap:"wrap"}}>
-              {/* الدائرة */}
-              <div style={{width:sz,textAlign:"center",flexShrink:0}}>
-                <svg width={sz} height={sz} viewBox={"0 0 "+sz+" "+sz}>
-                  <circle cx={cx2} cy={cy2} r={r2} fill="none" stroke="#fecaca" strokeWidth="14"/>
-                  <circle cx={cx2} cy={cy2} r={r2} fill="none" stroke="#059669" strokeWidth="14" strokeDasharray={circ2} strokeDashoffset={workOff} strokeLinecap="round" transform={"rotate(-90 "+cx2+" "+cy2+")"} style={{transition:"stroke-dashoffset 1s ease"}}/>
-                  <text x={cx2} y={cy2-6} textAnchor="middle" fontSize="18" fontWeight="900" fill="#059669">{workPct}%</text>
-                  <text x={cx2} y={cy2+12} textAnchor="middle" fontSize="9" fill="#6b7280">شغّال</text>
-                </svg>
-              </div>
-              {/* البطاقات */}
-              <div style={{flex:1,display:"flex",flexDirection:"column",gap:8,minWidth:180}}>
-                <div style={{display:"flex",gap:8}}>
-                  <div style={{flex:1,background:"#f0fdf4",border:"2px solid #22c55e",borderRadius:12,padding:14,textAlign:"center"}}>
-                    <div style={{fontSize:11,color:"#555",marginBottom:4}}>🚀 شغّال (عند الزبائن)</div>
-                    <div style={{fontSize:20,fontWeight:900,color:"#059669"}}>{SAR(working)}</div>
-                    <div style={{fontSize:12,fontWeight:700,color:"#059669",marginTop:2}}>{workPct}%</div>
-                  </div>
-                  <div style={{flex:1,background:"#fef2f2",border:"2px solid #ef4444",borderRadius:12,padding:14,textAlign:"center"}}>
-                    <div style={{fontSize:11,color:"#555",marginBottom:4}}>💤 نايم (بالصندوق)</div>
-                    <div style={{fontSize:20,fontWeight:900,color:"#dc2626"}}>{SAR(sleeping)}</div>
-                    <div style={{fontSize:12,fontWeight:700,color:"#dc2626",marginTop:2}}>{sleepPct}%</div>
-                  </div>
-                </div>
-                <div style={{background:sleepPct>30?"#fef3c7":"#ecfdf5",border:"1px solid "+(sleepPct>30?"#fde68a":"#a7f3d0"),borderRadius:10,padding:10,fontSize:12,textAlign:"center",fontWeight:700,color:sleepPct>30?"#92400e":"#065f46"}}>
-                  {sleepPct>30?"⚠️ "+sleepPct+"% من فلوسك نايمة — قسّطها بسرعة!":"✅ معظم فلوسك شغّالة — ممتاز!"}
-                </div>
-              </div>
+            <div style={{fontSize:16,fontWeight:900,color:C.ink,borderRight:"4px solid #f59e0b",paddingRight:12,marginBottom:14}}>💰 مؤشر الكاش — وين فلوسك؟</div>
+            {/* البطاقة الرئيسية */}
+            <div style={{background:"linear-gradient(135deg,#0f1923,#1a2744)",borderRadius:20,padding:20,marginBottom:16,color:"#fff"}}>
+              <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginBottom:4}}>المتاح للتقسيط الآن</div>
+              <div style={{fontSize:32,fontWeight:900,color:"#34d399"}}>{SAR(available)}</div>
+              <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginTop:4}}>هذا المبلغ تقدر تقسّطه اليوم لو جاك زبون</div>
             </div>
+            {/* المصادر */}
+            <div style={{fontSize:13,fontWeight:800,color:"#6b7280",marginBottom:8}}>📥 المصادر:</div>
+            {dRow("#0d9488","","الصندوق","كاش نقدي",cBox,"+")}
+            {cBank>0 && dRow("#2563eb","","البنك","رصيد الحساب",cBank,"+")}
+            {cGoods>0 && dRow("#7c3aed","","البضاعة","مخزون قابل للتقسيط",cGoods,"+")}
+            {/* فاصل */}
+            <div style={{border:"none",borderTop:"2px dashed #e5e7eb",margin:"12px 0"}}/>
+            {/* الخصومات */}
+            <div style={{fontSize:13,fontWeight:800,color:"#6b7280",marginBottom:8}}>📤 الخصومات:</div>
+            {dueAdmin>0 && dRow("#dc2626","","مستحق الرئيس + المدير","عمولات لم تُسلّم",dueAdmin,"-")}
+            {cDeduct>0 && dRow("#ea580c","","استقطاعات متبقية","مستحقة للمستثمرين",cDeduct,"-")}
+            {cLoans>0 && dRow("#d97706","","السلف","قروض حسنة — محبوسة",cLoans,"-")}
+            {deductions===0 && <div style={{padding:"10px 16px",fontSize:13,color:"#9ca3af",textAlign:"center"}}>لا يوجد خصومات حالياً ✅</div>}
+            {/* فاصل */}
+            <div style={{border:"none",borderTop:"2px dashed #e5e7eb",margin:"12px 0"}}/>
+            {/* الإجمالي */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",background:"#f0fdf4",border:"2px solid #22c55e",borderRadius:14,marginBottom:12}}>
+              <div style={{fontWeight:900,fontSize:15,color:"#065f46"}}>✅ المتاح للتقسيط</div>
+              <div style={{fontWeight:900,fontSize:22,color:"#059669"}}>{SAR(available)}</div>
+            </div>
+            {/* تنبيه الربح الضايع */}
+            {available>0 && (
+              <div style={{background:"linear-gradient(135deg,#fef2f2,#fff1f2)",border:"2px solid #fca5a5",borderRadius:16,padding:18,textAlign:"center",marginTop:16}}>
+                <div style={{fontSize:13,color:"#991b1b",fontWeight:700,marginBottom:8}}>💸 الربح الضايع يومياً</div>
+                <div style={{fontSize:28,fontWeight:900,color:"#dc2626"}}>{SAR(dailyLost)} ريال</div>
+                <div style={{fontSize:12,color:"#9ca3af",marginTop:4}}>≈ {SAR(monthlyLost)} ريال شهرياً · بناءً على 50% ربح / 20 شهر</div>
+              </div>
+            )}
+            {available>0 && (
+              <div style={{background:"#ecfdf5",border:"1px solid #a7f3d0",borderRadius:12,padding:14,fontSize:13,color:"#065f46",fontWeight:700,textAlign:"center",marginTop:12}}>
+                💡 لو قسّطت الـ {SAR(available)} اليوم بتجيبك {SAR(potentialReturn)} خلال 20 شهر
+              </div>
+            )}
           </div>
         );
       })()}
