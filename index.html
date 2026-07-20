@@ -7292,16 +7292,15 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
             {/* المصادر */}
             <div style={{fontSize:13,fontWeight:800,color:"#6b7280",marginBottom:8}}>📥 المصادر:</div>
             {dRow("#0d9488","","الصندوق","كاش نقدي",cBox,"+")}
-            {cBank>0 && dRow("#2563eb","","البنك","رصيد الحساب",cBank,"+")}
-            {cGoods>0 && dRow("#7c3aed","","البضاعة","مخزون قابل للتقسيط",cGoods,"+")}
+            {dRow("#2563eb","","البنك","رصيد الحساب",cBank,"+")}
+            {dRow("#7c3aed","","البضاعة","مخزون قابل للتقسيط",cGoods,"+")}
             {/* فاصل */}
             <div style={{border:"none",borderTop:"2px dashed #e5e7eb",margin:"12px 0"}}/>
             {/* الخصومات */}
             <div style={{fontSize:13,fontWeight:800,color:"#6b7280",marginBottom:8}}>📤 الخصومات:</div>
-            {dueAdmin>0 && dRow("#dc2626","","مستحق الرئيس + المدير","عمولات لم تُسلّم",dueAdmin,"-")}
-            {cDeduct>0 && dRow("#ea580c","","استقطاعات متبقية","مستحقة للمستثمرين",cDeduct,"-")}
-            {cLoans>0 && dRow("#d97706","","السلف","قروض حسنة — محبوسة",cLoans,"-")}
-            {deductions===0 && <div style={{padding:"10px 16px",fontSize:13,color:"#9ca3af",textAlign:"center"}}>لا يوجد خصومات حالياً ✅</div>}
+            {dRow("#dc2626","","مستحق الرئيس + المدير","عمولات لم تُسلّم",dueAdmin,"-")}
+            {dRow("#ea580c","","استقطاعات متبقية","مستحقة للمستثمرين",cDeduct,"-")}
+            {dRow("#d97706","","السلف","قروض حسنة — محبوسة",cLoans,"-")}
             {/* فاصل */}
             <div style={{border:"none",borderTop:"2px dashed #e5e7eb",margin:"12px 0"}}/>
             {/* الإجمالي */}
