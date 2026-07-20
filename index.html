@@ -6852,7 +6852,7 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
 // ─── Profit & Loss Report (تقرير الأرباح والخسائر) ────────────
 function ProfitLossPage({contracts, daily, settings, payments, investors}) {
   const SAR = v => (v||0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
-  const fiscalYM = d => { const mm=d.getMonth(), yy=d.getFullYear(); return d.getDate()>=21 ? (yy+"-"+String(mm+2).padStart(2,"0")) : (yy+"-"+String(mm+1).padStart(2,"0")); };
+  // استخدام fiscalYM العامة الصحيحة (المحلية كانت معطوبة: تحسب أواخر الشهر على الشهر التالي)
   const allMonths = [];
   const addM = d => { if(!d) return; const ym=fiscalYM(new Date(d)); if(ym&&!allMonths.includes(ym)) allMonths.push(ym); };
   (contracts||[]).forEach(c=>addM(c.date));
