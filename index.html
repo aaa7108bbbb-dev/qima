@@ -4969,16 +4969,20 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   const mgrShare = dayContracts.reduce((s,c)=>s+calcC(c,settings).inst,0);
   const accShare = dayContracts.reduce((s,c)=>s+calcC(c,settings).acc,0);
 
-  // الحساب الكامل: المستحق من كل العقود - المستلم من اليومية
-  const mgrEarnedAll = contracts.reduce((s,c)=>s+calcC(c,settings).inst,0);
-  const accEarnedAll = contracts.reduce((s,c)=>s+calcC(c,settings).acc,0);
-  const mgrTakenAll = _daily.filter(d=>d.type==="mgr").reduce((s,d)=>s+(d.amount||0),0);
-  const accTakenAll = _daily.filter(d=>d.type==="acc").reduce((s,d)=>s+(d.amount||0),0);
+  // الحساب الكامل: المستحق من عقود الدورة الحالية - المستلم من يومية الدورة الحالية
+  // العقود قبل بداية الدورة (baseDate) مؤرشفة، استحقاقها احتُسب في دورة سابقة
+  const cycleContracts = contracts.filter(c=>!c.date || c.date >= baseDate);
+  const mgrEarnedAll = cycleContracts.reduce((s,c)=>s+calcC(c,settings).inst,0);
+  const accEarnedAll = cycleContracts.reduce((s,c)=>s+calcC(c,settings).acc,0);
+  const mgrTakenAll = _daily.filter(d=>d.type==="mgr" && d.date>=baseDate).reduce((s,d)=>s+(d.amount||0),0);
+  const accTakenAll = _daily.filter(d=>d.type==="acc" && d.date>=baseDate).reduce((s,d)=>s+(d.amount||0),0);
   const mgrLeft = mgrEarnedAll - mgrTakenAll;
   const accLeft = accEarnedAll - accTakenAll;
 
   // ═══ كشف حساب شامل عبر كل الأيام (أو ضمن فترة محددة) ═══
+  // يحترم بداية الدورة الحالية (baseDate): الحركات قبلها مؤرشفة ولا تظهر
   const stmtRows = _daily.filter(d=>{
+    if(d.date < baseDate) return false;  // قبل بداية الدورة = مؤرشف
     if(stmtFrom && d.date < stmtFrom) return false;
     if(stmtTo   && d.date > stmtTo)   return false;
     return true;
@@ -5179,13 +5183,13 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
         <div style={{...styles.card,borderTop:"4px solid #b45309"}}>
           <div style={{fontSize:15,fontWeight:800,color:"#b45309",marginBottom:8}}>👔 الرئيس التنفيذي</div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستحق (كل العقود)</span><span style={{fontWeight:700}}>{SAR(mgrEarnedAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستحق (الدورة)</span><span style={{fontWeight:700}}>{SAR(mgrEarnedAll)}</span></div>
           <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(mgrTakenAll)}</span></div>
           <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginTop:6,paddingTop:6,borderTop:"1px solid "+C.border}}><span style={{fontWeight:800}}>الباقي له</span><span style={{fontWeight:900,color:mgrLeft>=0?"#b45309":C.red}}>{SAR(mgrLeft)}</span></div>
         </div>
         <div style={{...styles.card,borderTop:"4px solid #0891b2"}}>
           <div style={{fontSize:15,fontWeight:800,color:"#0891b2",marginBottom:8}}>🧮 المدير المباشر</div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستحق (كل العقود)</span><span style={{fontWeight:700}}>{SAR(accEarnedAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستحق (الدورة)</span><span style={{fontWeight:700}}>{SAR(accEarnedAll)}</span></div>
           <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(accTakenAll)}</span></div>
           <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginTop:6,paddingTop:6,borderTop:"1px solid "+C.border}}><span style={{fontWeight:800}}>الباقي له</span><span style={{fontWeight:900,color:accLeft>=0?"#0891b2":C.red}}>{SAR(accLeft)}</span></div>
         </div>
