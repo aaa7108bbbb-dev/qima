@@ -6850,7 +6850,7 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
 
 
 // ─── Profit & Loss Report (تقرير الأرباح والخسائر) ────────────
-function ProfitLossPage({contracts, daily, settings, payments, investors}) {
+function ProfitLossPage({contracts, daily, settings, payments, investors, monthClose}) {
   const SAR = v => (v||0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
   // استخدام fiscalYM العامة الصحيحة (المحلية كانت معطوبة: تحسب أواخر الشهر على الشهر التالي)
   const allMonths = [];
@@ -6865,7 +6865,7 @@ function ProfitLossPage({contracts, daily, settings, payments, investors}) {
   const [rangeTo, setRangeTo] = React.useState(allMonths[0]||"");
   const [expanded, setExpanded] = React.useState(null);
 
-  const mLabel = ym => { if(!ym) return ""; const [y,m]=ym.split("-"); const mNames=["","يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"]; return mNames[+m]+" "+y; };
+  const mLabel = ym => { if(!ym) return ""; const [y,m]=ym.split("-"); return "شهر "+(+m)+" - "+y; };
 
   const getMonths = () => {
     if(mode==="monthly") return selMonth?[selMonth]:[];
@@ -6903,20 +6903,33 @@ function ProfitLossPage({contracts, daily, settings, payments, investors}) {
     const zakatTotal = periodDaily.filter(d=>d.type==="zakat").reduce((s,d)=>s+(+d.amount||0),0);
     const salfTotal = periodDaily.filter(d=>d.type==="salf").reduce((s,d)=>s+(+d.amount||0),0);
     
+    // === هل الفترة مقفلة؟ إذا كانت كل الأشهر مقفلة، الأجزاء النقدية تتصفّر ===
+    // (المحصّل، المصروفات، حركة الصندوق، صافي المؤسسة) — أما العقود وأرباحها فتبقى سجلاً تاريخياً
+    const allClosed = months.length>0 && months.every(ym=>monthClose && monthClose[ym]);
+
     // تفصيل المصروفات
-    const masroofDetails = periodDaily.filter(d=>d.type==="masroof").map(d=>({desc:d.desc||"—",amount:+d.amount||0,date:d.date}));
+    const masroofDetails = allClosed ? [] : periodDaily.filter(d=>d.type==="masroof").map(d=>({desc:d.desc||"—",amount:+d.amount||0,date:d.date}));
     
-    // === حساب صافي المؤسسة ===
-    const totalRevenue = instShare + adminFees; // إيراد المؤسسة = نصيبها + الرسوم الإدارية
-    const totalExpenses = masroof + zakatTotal; // مصروفات فعلية
-    const netProfit = totalRevenue - totalExpenses;
+    // === حساب صافي المؤسسة (نقدي — يتصفّر عند الإقفال) ===
+    const _collected = allClosed ? 0 : collected;
+    const _masroof = allClosed ? 0 : masroof;
+    const _zakat = allClosed ? 0 : zakatTotal;
+    const _salf = allClosed ? 0 : salfTotal;
+    const _sadad = allClosed ? 0 : sadadTotal;
+    const _sahb = allClosed ? 0 : sahb;
+    const _estilam = allClosed ? 0 : estilam;
+    const _mgrW = allClosed ? 0 : mgrWithdraw;
+    const _accW = allClosed ? 0 : accWithdraw;
+    const totalRevenue = instShare + adminFees; // إيراد المؤسسة من العقود (سجل — يبقى)
+    const totalExpenses = _masroof + _zakat; // مصروفات فعلية (نقدي — يتصفّر)
+    const netProfit = allClosed ? 0 : (totalRevenue - totalExpenses);
     
-    // === عدد العقود ومبالغ ===
+    // === عدد العقود ومبالغ (سجل تاريخي — يبقى) ===
     const contractCount = mc.length;
     const cashAmount = mc.reduce((s,c)=>s+(+c.amount||0),0);
     const totalWithProfit = mc.reduce((s,c)=>s+Math.max(0,(+c.totalInst||+c.amount||0)-_getPaid(payments,c.id)),0);
 
-    // === حسب المستثمر ===
+    // === حسب المستثمر (سجل — يبقى) ===
     const byInvestor = sortedInvestors(investors||[]).map(iv=>{
       const ic = mc.filter(c=>String(c.investorId)===String(iv.id));
       let inv_profit=0, inv_inst=0, inv_acc=0, inv_admin=0, inv_net=0;
@@ -6925,11 +6938,11 @@ function ProfitLossPage({contracts, daily, settings, payments, investors}) {
     }).filter(Boolean);
 
     return {
-      contractCount, cashAmount, totalWithProfit, collected,
+      contractCount, cashAmount, totalWithProfit, collected:_collected,
       totalProfit, instShare, adminFees, accComm, investorNet,
-      totalRevenue, masroof, zakatTotal, salfTotal, totalExpenses, netProfit,
-      sadadTotal, sahb, estilam, mgrWithdraw, accWithdraw,
-      masroofDetails, byInvestor
+      totalRevenue, masroof:_masroof, zakatTotal:_zakat, salfTotal:_salf, totalExpenses, netProfit,
+      sadadTotal:_sadad, sahb:_sahb, estilam:_estilam, mgrWithdraw:_mgrW, accWithdraw:_accW,
+      masroofDetails, byInvestor, allClosed
     };
   };
 
@@ -7089,10 +7102,20 @@ function ProfitLossPage({contracts, daily, settings, payments, investors}) {
             </Section>
 
             {/* === صافي الربح === */}
-            <div style={{background:d.netProfit>=0?"linear-gradient(135deg,#f0fdf4,#dcfce7)":"linear-gradient(135deg,#fef2f2,#fee2e2)",borderRadius:16,padding:"20px 18px",textAlign:"center",border:"2px solid "+(d.netProfit>=0?"#22c55e":"#ef4444"),marginBottom:20}}>
-              <div style={{fontSize:14,color:"#78716c",fontWeight:700,marginBottom:4}}>{d.netProfit>=0?"🏆 صافي ربح المؤسسة":"⚠️ صافي خسارة المؤسسة"}</div>
-              <div style={{fontSize:32,fontWeight:900,color:d.netProfit>=0?"#15803d":"#dc2626"}}>{SAR(Math.abs(d.netProfit))}<span style={{fontSize:16}}> ر.س</span></div>
-              {d.cashAmount>0 && <div style={{fontSize:13,color:"#78716c",marginTop:6}}>نسبة الربح من رأس المال: <b style={{color:d.netProfit>=0?"#15803d":"#dc2626"}}>{Math.round((d.netProfit/d.cashAmount)*100)}%</b></div>}
+            <div style={{background:d.allClosed?"linear-gradient(135deg,#f1f5f9,#e2e8f0)":(d.netProfit>=0?"linear-gradient(135deg,#f0fdf4,#dcfce7)":"linear-gradient(135deg,#fef2f2,#fee2e2)"),borderRadius:16,padding:"20px 18px",textAlign:"center",border:"2px solid "+(d.allClosed?"#94a3b8":(d.netProfit>=0?"#22c55e":"#ef4444")),marginBottom:20}}>
+              {d.allClosed ? (
+                <React.Fragment>
+                  <div style={{fontSize:14,color:"#475569",fontWeight:700,marginBottom:4}}>🔒 شهر مقفل</div>
+                  <div style={{fontSize:24,fontWeight:900,color:"#64748b"}}>0<span style={{fontSize:16}}> ر.س</span></div>
+                  <div style={{fontSize:12,color:"#94a3b8",marginTop:6}}>تم إقفال هذا الشهر — الأرباح النقدية صُفّرت وبدأت دورة جديدة</div>
+                </React.Fragment>
+              ) : (
+                <React.Fragment>
+                  <div style={{fontSize:14,color:"#78716c",fontWeight:700,marginBottom:4}}>{d.netProfit>=0?"🏆 صافي ربح المؤسسة":"⚠️ صافي خسارة المؤسسة"}</div>
+                  <div style={{fontSize:32,fontWeight:900,color:d.netProfit>=0?"#15803d":"#dc2626"}}>{SAR(Math.abs(d.netProfit))}<span style={{fontSize:16}}> ر.س</span></div>
+                  {d.cashAmount>0 && <div style={{fontSize:13,color:"#78716c",marginTop:6}}>نسبة الربح من رأس المال: <b style={{color:d.netProfit>=0?"#15803d":"#dc2626"}}>{Math.round((d.netProfit/d.cashAmount)*100)}%</b></div>}
+                </React.Fragment>
+              )}
             </div>
 
             {/* === حركة الصندوق === */}
@@ -8292,7 +8315,7 @@ function App() {
         {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast}/>}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast} gsWrite={gsWrite}/>}
-        {page==="profitloss" && <ProfitLossPage contracts={activeContracts} daily={daily} settings={settings} payments={payments} investors={investors}/>}
+        {page==="profitloss" && <ProfitLossPage contracts={activeContracts} daily={daily} settings={settings} payments={payments} investors={investors} monthClose={monthClose}/>}
         {page==="cashflow" && <CashFlowPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>}
         {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast} setPage={setPage}/>}
         {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup} payments={payments} setPayments={setPayments} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} setPage={setPage} investors={investors} contracts={activeContracts} setInvestors={setInvestors}/>}
