@@ -1261,7 +1261,7 @@ const assessRisk = (c, payments) => {
   return {level, months:monthsBehind, overdue:behindAmt, color, score};
 };
 
-function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate,payments,setPayments,toast,completionAlert,setCompletionAlert,onSaveNew,setInvTxList,startCollect,setPage,logAct}) {
+function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate,payments,setPayments,toast,completionAlert,setCompletionAlert,onSaveNew,setInvTxList,startCollect,setPage,logAct,dailyOpen}) {
   const [showNew,setShowNew]=useState(false);
   const [showMigrated,setShowMigrated]=useState(false);
   const [showCollect,setShowCollect]=useState(!!startCollect);
@@ -1492,6 +1492,12 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   const filtered = statusTab==="deleted" ? deletedList
     : statusTab==="defer" ? deferList
     : monthlyFiltered.filter(c=> statusTab==="active" ? !doneIds.includes(c.id) : doneIds.includes(c.id));
+  // ترتيب تنازلي بالتاريخ (الأحدث فوق)
+  const sortedFiltered = [...filtered].sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  // تاريخ بداية الدورة الحالية
+  const _doC = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
+  const _baseC = _doC.__base && typeof _doC.__base==="object" ? _doC.__base : null;
+  const baseDateC = _baseC ? _baseC.date : "0000-00-00";
   const activeCount = monthlyFiltered.filter(c=>!doneIds.includes(c.id)).length;
   const completedCount = monthlyFiltered.filter(c=>doneIds.includes(c.id)).length;
   const deferCount = deferList.length;
@@ -1506,7 +1512,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
 
   // تصدير العقود المعروضة إلى Excel (CSV)
   const exportExcel = () => {
-    const rowsX = filtered.map(c=>{
+    const rowsX = sortedFiltered.map(c=>{
       const inv = investors.find(i=>String(i.id)===String(c.investorId));
       const paid = (payments||[]).filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
       const tot = +c.totalInst||+c.amount||0;
@@ -1924,14 +1930,26 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               ))}</tr>
             </thead>
             <tbody>
-              {filtered.length===0 ? (
+              {sortedFiltered.length===0 ? (
                 <tr><td colSpan={15} style={{...styles.td,textAlign:"center",padding:40,color:"#1f2937"}}>لا توجد عقود — أضف عقداً جديداً</td></tr>
-              ) : filtered.map((c,i)=>{
+              ) : sortedFiltered.map((c,i,arr)=>{
                 const inv=investors.find(x=>String(x.id)===String(c.investorId));
                 const r=calcC(c,settings);
-                const stickyCell = {position:"sticky",right:0,background:i%2===0?C.white:C.gray,zIndex:5,borderLeft:"2px solid "+C.border};
+                const isOld = baseDateC!=="0000-00-00" && (c.date||"9999") < baseDateC;
+                const prev = i>0 ? arr[i-1] : null;
+                const showSep = baseDateC!=="0000-00-00" && isOld && (i===0 || !prev || (prev.date||"9999") >= baseDateC);
+                const bg = isOld ? "#f8fafc" : (i%2===0?C.white:C.gray);
+                const stickyCell = {position:"sticky",right:0,background:bg,zIndex:5,borderLeft:"2px solid "+C.border};
                 return (
-                  <tr key={c.id} style={{background:i%2===0?C.white:C.gray}}>
+                  <React.Fragment key={c.id}>
+                    {showSep && (
+                      <tr>
+                        <td colSpan={15} style={{background:"linear-gradient(90deg,#1e3a5f,#0f2544)",color:"#fff",textAlign:"center",fontWeight:900,fontSize:14,padding:"10px 12px",letterSpacing:0.5}}>
+                          🔵 نهاية الشهر السابق — العقود التالية من دورة سابقة
+                        </td>
+                      </tr>
+                    )}
+                    <tr style={{background:bg,opacity:isOld?0.65:1}}>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.num||i+1}</td>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.date}</td>
                     <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",...stickyCell}}><span onClick={()=>setCardModal(c)} style={{color:C.teal,cursor:"pointer",textDecoration:"underline"}}>{c.client}</span></td>
@@ -1954,7 +1972,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                         ? <button style={{...styles.btn(C.green),fontSize:14,padding:"5px 10px"}} onClick={()=>{onRestore(c.id);toast("✅ تم الاسترجاع");}}>↩️ استرجاع</button>
                         : <button style={{...styles.btn(C.red),fontSize:14,padding:"5px 10px"}} onClick={()=>{if(confirm("نقل هذا العقد للمحذوفة؟ (يبقى محفوظاً ويمكن استرجاعه)")){onDelete(c.id);toast("تم النقل للمحذوفة");}}}>🗑️ حذف</button>}
                     </td>
-                  </tr>
+                    </tr>
+                  </React.Fragment>
                 );
               })}
             </tbody>
@@ -7618,7 +7637,7 @@ function App() {
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={payments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="collect" && <CollectionPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} logAct={logAct}/>}
-        {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct}/>}
+        {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen}/>}
         {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast}/>}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast} gsWrite={gsWrite}/>}
