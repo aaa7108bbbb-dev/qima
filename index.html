@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-22-compass -->
+<!-- build: 2026-07-22-invcards -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -3123,67 +3123,137 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
 
       {/* حسابات خاصة */}
       {subTab==="special" && (()=>{
+        const K = {panel:"#16202e",panel2:"#1b2736",line:"rgba(255,255,255,.08)",
+          teal:"#2dd4bf",gold:"#fbbf24",green:"#4ade80",amber:"#fb923c",violet:"#c084fc",
+          blue:"#38bdf8",red:"#fb7185",txt:"#f1f5f9",dim:"#94a3b8",dim2:"#64748b"};
+        const NF = v => (v||0).toLocaleString("en-US",{maximumFractionDigits:0});
+        const _now = new Date();
         const specialNames = ["1","2","4","7","8","9","11"];
         const specialInvs = sortedInvestors(investors.filter(inv=>{
           const nm = (inv.name||"").trim();
-          return specialNames.some(n=>nm.includes("الفرصة "+n) || nm.includes("الفرصة"+n) || nm.endsWith(" "+n) || nm.endsWith(n));
+          return specialNames.some(n=>nm.includes("الفرصة "+n)||nm.includes("الفرصة"+n)||nm.endsWith(" "+n)||nm.endsWith(n));
         }));
-        let grandNet=0, grandLeft=0, grandTotal=0, grandAmt=0, grandProfit=0, grandCapital=0;
-        const rows = specialInvs.map(inv=>{
+        // تجميع كل السبعة
+        let bidaya=0,netCash=0,leftMonthly=0,leftDefer=0,monthlyInst=0,profit=0,commAdmin=0,commAcc=0,
+            working=0,paidAll=0,totalWP=0,overCount=0,overAmt=0,activeC=0,doneC=0,deferC=0,consAll=0,amtAll=0,lastPay=null;
+        specialInvs.forEach(inv=>{
           const myCon=contracts.filter(c=>c.investorId===inv.id);
-          const totalAmt=myCon.reduce((s,c)=>s+c.amount,0);
-          const totalProfit=myCon.reduce((s,c)=>s+calcC(c,settings).net,0);
-          const _autoContractSum = myCon.filter(c=>!c.isOldContract&&c.contractType!=="migrated").reduce((s,c)=>{const rr=calcC(c,settings);return s - (c.amount + rr.acc + rr.inst + rr.admin);},0);
-          const _paymentsSum = (payments||[]).filter(p=>myCon.some(c=>c.id===p.contractId)).reduce((s,p)=>s+(p.amount||0),0);
-          const _manualSum = ((txList&&txList[inv.id])||[]).reduce((s,t)=>s+(t.amount||0),0);
-          const netCash = (inv.capital||0) + _autoContractSum + _paymentsSum + _manualSum;
-          const leftAll = myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
-          const grand = netCash + leftAll;
-          grandNet+=netCash; grandLeft+=leftAll; grandTotal+=grand; grandAmt+=totalAmt; grandProfit+=totalProfit; grandCapital+=(inv.capital||0);
-          return {inv, myCon, totalAmt, totalProfit, netCash, leftAll, grand};
+          consAll+=myCon.length;
+          bidaya+=(+inv.bidaya||0);
+          const _auto=myCon.filter(c=>!c.isOldContract&&c.contractType!=="migrated")
+            .reduce((s,c)=>{const rr=calcC(c,settings);return s-(c.amount+rr.acc+rr.inst+rr.admin);},0);
+          const myPays=(payments||[]).filter(p=>myCon.some(c=>c.id===p.contractId));
+          const paidSum=myPays.reduce((s,p)=>s+(+p.amount||0),0);
+          const manualSum=((txList&&txList[inv.id])||[]).reduce((s,t)=>s+(+t.amount||0),0);
+          netCash+=(+inv.capital||0)+_auto+paidSum+manualSum;
+          paidAll+=paidSum;
+          const lp=myPays.map(p=>p.date).filter(Boolean).sort().pop();
+          if(lp&&(!lastPay||lp>lastPay)) lastPay=lp;
+          myCon.forEach(c=>{
+            const total=+c.totalInst||+c.amount||0, paid=_getPaid(payments,c.id), rem=Math.max(0,total-paid);
+            const isDefer=c.contractType==="defer";
+            totalWP+=total; amtAll+=(+c.amount||0);
+            if(isDefer) deferC++;
+            profit+=calcC(c,settings).net; commAdmin+=calcC(c,settings).admin; commAcc+=calcC(c,settings).acc;
+            working+= c.contractType==="migrated" ? Math.round((+c.totalInst||0)*0.5) : (+c.amount||0);
+            if(rem>0){ activeC++;
+              if(isDefer) leftDefer+=rem; else { leftMonthly+=rem;
+                const inst=+c.instAmt||0;
+                if(inst>0){ monthlyInst+=inst;
+                  const sDate=c.firstInst||c.date;
+                  if(sDate){ const mEl=Math.max(0,Math.floor((_now-new Date(sDate))/(30.44*86400000)));
+                    const od=Math.min(total,inst*mEl)-paid; if(od>0){overCount++;overAmt+=od;} } } }
+            } else doneC++;
+          });
         });
-        return (
-          <div>
-            <div style={{fontSize:19,fontWeight:800,marginBottom:16}}>🏢 حسابات خاصة</div>
-            <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
-              <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14,background:C.white,borderRadius:14,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,.08)"}}>
-                <thead>
-                  <tr>{["المستثمر","النقدي الصافي","العقود","المتبقي عند الزبائن","الإجمالي",""].map(h=>(
-                    <th key={h} style={{...styles.th,padding:"14px 10px",fontSize:13,whiteSpace:"nowrap"}}>{h}</th>
-                  ))}</tr>
-                </thead>
-                <tbody>
-                  {rows.map((r,idx)=>(
-                    <tr key={r.inv.id} style={{background:idx%2===0?C.white:"#f8fafc"}}>
-                      <td style={{...styles.td,fontWeight:800,fontSize:15,color:C.teal,whiteSpace:"nowrap"}}>{r.inv.name}</td>
-                      <td style={{...styles.td,fontWeight:800,color:r.netCash>=0?C.green:C.red,whiteSpace:"nowrap"}}>{SAR(r.netCash)}</td>
-                      <td style={{...styles.td,textAlign:"center"}}><span style={styles.badge(C.tealLt,C.teal)}>{r.myCon.length}</span></td>
-                      <td style={{...styles.td,fontWeight:700,color:C.red,whiteSpace:"nowrap"}}>{SAR(r.leftAll)}</td>
-                      <td style={{...styles.td,fontWeight:900,color:r.grand>=0?C.teal:C.red,whiteSpace:"nowrap"}}>{SAR(r.grand)}</td>
-                      <td style={{...styles.td,whiteSpace:"nowrap"}}>
-                        <div style={{display:"flex",gap:4}}>
-                          <button style={{...styles.btn(C.teal),fontSize:12,padding:"4px 8px"}} onClick={()=>{setStmtInv(r.inv);setStmtType("brief");}}>مختصر</button>
-                          <button style={{...styles.btn(C.ink),fontSize:12,padding:"4px 8px"}} onClick={()=>{setStmtInv(r.inv);setStmtType("detailed");}}>مفصل</button>
-                          <button style={{...styles.btn(C.gold),fontSize:12,padding:"4px 8px"}} onClick={()=>setYearInv(r.inv)}>سنوي</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr style={{background:"#f0fdfa"}}>
-                    <td style={{...styles.td,fontWeight:900,fontSize:15,color:C.teal}}>الإجمالي</td>
-                    <td style={{...styles.td,fontWeight:900,color:grandNet>=0?C.green:C.red}}>{SAR(grandNet)}</td>
-                    <td style={styles.td}></td>
-                    <td style={{...styles.td,fontWeight:900,color:C.red}}>{SAR(grandLeft)}</td>
-                    <td style={{...styles.td,fontWeight:900,fontSize:16,color:grandTotal>=0?C.teal:C.red}}>{SAR(grandTotal)}</td>
-                    <td style={styles.td}></td>
-                  </tr>
-                </tfoot>
-              </table>
+        const grand=netCash+leftMonthly+leftDefer;
+        const collectPct=totalWP>0?Math.round(paidAll/totalWP*100):0;
+        const roiReal=bidaya>0?(profit/bidaya*100):null;
+        const roiWork=working>0?(profit/working*100):null;
+        const avgC=consAll>0?Math.round(amtAll/consAll):0;
+        const shortDate=d=>d?d.slice(8,10)+"/"+d.slice(5,7):"—";
+        const pctColor=p=>p>=70?K.green:p>=40?K.amber:K.red;
+        const secLbl=t=>(<div style={{fontSize:10,color:K.dim2,fontWeight:700,letterSpacing:".7px",marginBottom:9,
+          display:"flex",alignItems:"center",gap:8}}>{t}<span style={{flex:1,height:1,background:K.line}}/></div>);
+        const kvRow=(k,v,col)=>(<div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",fontSize:12}}>
+          <span style={{color:K.dim,fontWeight:500}}>{k}</span><span style={{fontWeight:700,color:col||K.txt}}>{v}</span></div>);
+        const chip=(label,val,bc,vc)=>(<span style={{fontSize:10,fontWeight:700,padding:"5px 10px",borderRadius:9,
+          background:K.panel2,border:"1px solid "+(bc||K.line),color:K.dim}}>{label} <b style={{fontSize:12,color:vc||K.txt}}>{val}</b></span>);
+
+        return (<div style={{marginBottom:16}}>
+          <div style={{background:K.panel,border:"1px solid "+K.line,borderRadius:17,overflow:"hidden"}}>
+            <div style={{padding:"14px 15px",display:"flex",alignItems:"center",gap:11}}>
+              <div style={{width:40,height:40,borderRadius:12,flexShrink:0,display:"flex",alignItems:"center",
+                justifyContent:"center",fontSize:19,background:"rgba(45,212,191,.16)",border:"1px solid rgba(45,212,191,.3)"}}>🏢</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:14,fontWeight:700,color:K.txt}}>حسابات خاصة</div>
+                <div style={{fontSize:11,color:K.dim,marginTop:2}}>{specialInvs.length} حسابات · {consAll} عقد · آخر سداد {shortDate(lastPay)}</div>
+              </div>
+              <div style={{textAlign:"left",flexShrink:0}}>
+                <div style={{fontSize:17,fontWeight:700,color:K.teal}}>{NF(grand)}</div>
+                <div style={{fontSize:9,color:K.dim2}}>الإجمالي</div>
+              </div>
+            </div>
+            <div style={{padding:"0 15px 15px",borderTop:"1px solid "+K.line}}>
+              <div style={{paddingTop:14}}>{secLbl("الأساس")}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 15px"}}>
+                  {kvRow("البداية",bidaya>0?NF(bidaya):"—",bidaya>0?K.teal:K.dim2)}
+                </div></div>
+              <div style={{paddingTop:14}}>{secLbl("وضعه الحين")}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 15px"}}>
+                  {kvRow("النقدي حالياً",NF(netCash),netCash>=0?K.green:K.red)}
+                  {kvRow("عند الزبائن",NF(leftMonthly),K.amber)}
+                  {kvRow("المؤجلة",leftDefer>0?NF(leftDefer):"—",leftDefer>0?K.violet:K.dim2)}
+                  {kvRow("الإجمالي",NF(grand),K.gold)}
+                </div></div>
+              <div style={{paddingTop:14}}>{secLbl("العائد")}
+                <div style={{background:"rgba(56,189,248,.06)",border:"1px solid rgba(56,189,248,.18)",borderRadius:13,padding:"12px 13px"}}>
+                  <div style={{marginBottom:11}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5}}>
+                      <span style={{fontSize:11,color:K.dim,fontWeight:600}}>العائد الحقيقي <span style={{fontSize:9.5,color:K.dim2}}>÷ البداية</span></span>
+                      <span style={{fontSize:15,fontWeight:700,color:roiReal!=null?K.blue:K.dim2}}>{roiReal!=null?roiReal.toFixed(1)+"%":"—"}</span></div>
+                    <div style={{height:8,background:"rgba(255,255,255,.06)",borderRadius:5,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:Math.min(100,Math.max(0,(roiReal||0)/30*100))+"%",borderRadius:5,background:"linear-gradient(90deg,#0ea5e9,#38bdf8)"}}/></div>
+                  </div>
+                  <div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5}}>
+                      <span style={{fontSize:11,color:K.dim,fontWeight:600}}>العائد على المشغّل <span style={{fontSize:9.5,color:K.dim2}}>÷ {NF(working)}</span></span>
+                      <span style={{fontSize:15,fontWeight:700,color:roiWork!=null?K.green:K.dim2}}>{roiWork!=null?roiWork.toFixed(1)+"%":"—"}</span></div>
+                    <div style={{height:8,background:"rgba(255,255,255,.06)",borderRadius:5,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:Math.min(100,Math.max(0,(roiWork||0)/30*100))+"%",borderRadius:5,background:"linear-gradient(90deg,#2dd4bf,#4ade80)"}}/></div>
+                    <div style={{display:"flex",justifyContent:"space-between",fontSize:9,color:K.dim2,marginTop:4}}><span>30%</span><span>15%</span><span>0</span></div>
+                  </div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 15px",marginTop:11}}>
+                  {kvRow("صافي الربح",NF(profit),K.green)}
+                  {kvRow("القسط الشهري",NF(monthlyInst))}
+                  {kvRow("عمولة إدارة",NF(commAdmin))}
+                  {kvRow("عمولة محاسب",NF(commAcc))}
+                </div></div>
+              <div style={{paddingTop:14}}>{secLbl("التحصيل")}
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:5}}>
+                  <span style={{color:K.dim}}>محصّل من الإجمالي</span><span style={{color:pctColor(collectPct),fontWeight:700}}>{collectPct}%</span></div>
+                <div style={{height:8,background:"rgba(255,255,255,.06)",borderRadius:5,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:Math.min(100,collectPct)+"%",borderRadius:5,background:"linear-gradient(90deg,#2dd4bf,#4ade80)"}}/></div>
+                {overCount>0 && <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:10}}>
+                  <span style={{fontSize:10,fontWeight:700,padding:"5px 10px",borderRadius:9,background:K.panel2,
+                    border:"1px solid rgba(251,113,133,.4)",color:K.red}}>متعثر <b style={{fontSize:12}}>{overCount}</b> · {NF(overAmt)}</span></div>}
+              </div>
+              <div style={{paddingTop:14}}>{secLbl("العقود")}
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {chip("نشط",activeC,"rgba(74,222,128,.3)",K.green)}
+                  {chip("منتهي",doneC)}
+                  {deferC>0 && chip("مؤجل",deferC,"rgba(192,132,252,.3)",K.violet)}
+                  {chip("متوسط العقد",NF(avgC))}
+                </div></div>
+              <div style={{marginTop:15}}>
+                <button onClick={()=>{setStmtInv({__group:specialInvs,name:"حسابات خاصة (مجمّع)"});setStmtType("brief");}}
+                  style={{width:"100%",padding:"11px",borderRadius:10,border:"1px solid "+K.line,background:K.panel2,
+                  color:K.txt,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🖨️ كشف مجمّع للسبعة</button>
+              </div>
             </div>
           </div>
-        );
+        </div>);
       })()}
 
       {subTab==="comm" && <CommissionsPage contracts={contracts} investors={investors} settings={settings}/>}
@@ -5441,7 +5511,17 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
   const [stmtType,setStmtType]=useState("brief"); // brief | detailed
   const [editCapId,setEditCapId]=useState(null);
   const [editCapVal,setEditCapVal]=useState("");
-  const [form,setForm]=useState({name:"",code:"",fund:"",capital:"",date:""});
+  const [form,setForm]=useState({name:"",code:"",fund:"",capital:"",bidaya:"",date:""});
+  const [openId,setOpenId]=useState(null);
+  const [editBidId,setEditBidId]=useState(null);
+  const [editBidVal,setEditBidVal]=useState("");
+  const saveBidaya=(id)=>{
+    if(setInvestors){
+      setInvestors(prev=>prev.map(i=>i.id===id?{...i,bidaya:parseFloat(editBidVal)||0}:i));
+      toast("✅ تم تعديل البداية");
+    }
+    setEditBidId(null); setEditBidVal("");
+  };
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
   const saveCapital=(id)=>{
     if(setInvestors){
@@ -5452,9 +5532,9 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
   };
   const save=()=>{
     if(!form.name){toast("أدخل اسم المستثمر","warn");return;}
-    onAdd({id:Date.now(),...form,capital:parseFloat(form.capital)||0});
+    onAdd({id:Date.now(),...form,capital:parseFloat(form.capital)||0,bidaya:parseFloat(form.bidaya)||0});
     toast("✅ تمت إضافة "+form.name);
-    setForm({name:"",code:"",fund:"",capital:"",date:""});setShow(false);
+    setForm({name:"",code:"",fund:"",capital:"",bidaya:"",date:""});setShow(false);
   };
   return (
     <div>
@@ -5467,7 +5547,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
           <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>إضافة مستثمر جديد</h3></div>
           <div style={{padding:"16px 20px"}}>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12,marginBottom:14}}>
-              {[["اسم المستثمر *","name","text","الاسم الكامل"],["الرمز (اختياري)","code","text","مثال: ف3 أو ل.ن"],["الصندوق","fund","text","اسم الصندوق"],["رأس المال (ر.س)","capital","number","مثال: 100000"],["تاريخ الدخول","date","date",""]].map(([l,k,t,p])=>(
+              {[["اسم المستثمر *","name","text","الاسم الكامل"],["الرمز (اختياري)","code","text","مثال: ف3 أو ل.ن"],["الصندوق","fund","text","اسم الصندوق"],["رأس المال (ر.س)","capital","number","مثال: 100000"],["البداية (ر.س)","bidaya","number","رأس المال الحقيقي"],["تاريخ الدخول","date","date",""]].map(([l,k,t,p])=>(
                 <div key={k}>
                   <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
                   <input style={styles.input} type={t} placeholder={p} value={form[k]} onChange={e=>set(k,e.target.value)}/>
@@ -5481,52 +5561,278 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
           </div>
         </div>
       )}
-      <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch",marginBottom:16}}>
-        <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14,background:C.white,borderRadius:14,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,.08)"}}>
-          <thead>
-            <tr>{["المستثمر","النقدي الصافي","العقود","المتبقي عند الزبائن","الإجمالي",""].map(h=>(
-              <th key={h} style={{...styles.th,padding:"14px 10px",fontSize:13,whiteSpace:"nowrap",position:"sticky",top:0,zIndex:10,background:C.ink}}>{h}</th>
-            ))}</tr>
-          </thead>
-          <tbody>
-            {sortedInvestors(investors).map((inv,idx)=>{
-              const myCon=contracts.filter(c=>c.investorId===inv.id);
-              const totalNet=myCon.reduce((s,c)=>s+calcC(c,settings).net,0);
-              const totalAmt=myCon.reduce((s,c)=>s+c.amount,0);
-              const _autoContractSum = myCon.filter(c=>!c.isOldContract&&c.contractType!=="migrated").reduce((s,c)=>{const rr=calcC(c,settings);return s - (c.amount + rr.acc + rr.inst + rr.admin);},0);
-              const _paymentsSum = (payments||[]).filter(p=>myCon.some(c=>c.id===p.contractId)).reduce((s,p)=>s+(p.amount||0),0);
-              const _manualSum = ((txList&&txList[inv.id])||[]).reduce((s,t)=>s+(t.amount||0),0);
-              const netCash = (inv.capital||0) + _autoContractSum + _paymentsSum + _manualSum;
-              const leftAll = myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
-              const grand = netCash + leftAll;
-              return (
-                <tr key={inv.id} style={{background:idx%2===0?C.white:"#f8fafc",borderBottom:"1px solid "+C.border}}>
-                  <td style={{...styles.td,fontWeight:800,fontSize:15,color:C.teal,whiteSpace:"nowrap"}}>{inv.name}</td>
-                  <td style={{...styles.td,fontWeight:800,color:netCash>=0?C.green:C.red,whiteSpace:"nowrap"}}>{SAR(netCash)}</td>
-                  <td style={{...styles.td,textAlign:"center"}}><span style={styles.badge(C.tealLt,C.teal)}>{myCon.length}</span></td>
-                  <td style={{...styles.td,fontWeight:700,color:C.red,whiteSpace:"nowrap"}}>{SAR(leftAll)}</td>
-                  <td style={{...styles.td,fontWeight:900,color:grand>=0?C.teal:C.red,whiteSpace:"nowrap"}}>{SAR(grand)}</td>
-                  <td style={{...styles.td,whiteSpace:"nowrap"}}>
-                    <div style={{display:"flex",gap:4}}>
-                      <button style={{...styles.btn(C.teal),fontSize:12,padding:"4px 8px"}} onClick={()=>{setStmtInv(inv);setStmtType("brief");}}>مختصر</button>
-                      <button style={{...styles.btn(C.ink),fontSize:12,padding:"4px 8px"}} onClick={()=>{setStmtInv(inv);setStmtType("detailed");}}>مفصل</button>
-                      <button style={{...styles.btn(C.gold),fontSize:12,padding:"4px 8px"}} onClick={()=>setYearInv(inv)}>سنوي</button>
-                      {confirmId===inv.id ? (
-                        <span style={{display:"flex",gap:4}}>
-                          <button style={{...styles.btn(C.red),fontSize:12,padding:"4px 8px"}} onClick={()=>{onDelete(inv.id);setConfirmId(null);toast("تم الحذف");}}>تأكيد</button>
-                          <button style={{...styles.btn(C.border,"#333"),fontSize:12,padding:"4px 8px"}} onClick={()=>setConfirmId(null)}>إلغاء</button>
-                        </span>
-                      ) : (
-                        <button style={{...styles.btn(C.red),fontSize:12,padding:"4px 8px"}} onClick={()=>setConfirmId(inv.id)}>🗑️</button>
-                      )}
+      {(()=>{
+        // ═══ ألوان البطاقات ═══
+        const K = {bg:"#0e1621",panel:"#16202e",panel2:"#1b2736",line:"rgba(255,255,255,.08)",
+          teal:"#2dd4bf",gold:"#fbbf24",green:"#4ade80",amber:"#fb923c",violet:"#c084fc",
+          blue:"#38bdf8",red:"#fb7185",txt:"#f1f5f9",dim:"#94a3b8",dim2:"#64748b"};
+        const NF = v => (v||0).toLocaleString("en-US",{maximumFractionDigits:0});
+        const _now = new Date();
+
+        // ═══ حساب بيانات مستثمر واحد ═══
+        const calcInv = (inv) => {
+          const myCon = contracts.filter(c=>c.investorId===inv.id);
+          const bidaya = +inv.bidaya||0;
+          const capital = +inv.capital||0;
+          const _auto = myCon.filter(c=>!c.isOldContract&&c.contractType!=="migrated")
+            .reduce((s,c)=>{const rr=calcC(c,settings);return s-(c.amount+rr.acc+rr.inst+rr.admin);},0);
+          const myPays = (payments||[]).filter(p=>myCon.some(c=>c.id===p.contractId));
+          const paidSum = myPays.reduce((s,p)=>s+(+p.amount||0),0);
+          const manualSum = ((txList&&txList[inv.id])||[]).reduce((s,t)=>s+(+t.amount||0),0);
+          const netCash = capital + _auto + paidSum + manualSum;
+
+          let leftMonthly=0, leftDefer=0, monthlyInst=0, overCount=0, overAmt=0, activeC=0, deferC=0;
+          myCon.forEach(c=>{
+            const total = +c.totalInst||+c.amount||0;
+            const paid = _getPaid(payments,c.id);
+            const rem = Math.max(0,total-paid);
+            const isDefer = c.contractType==="defer";
+            if(isDefer) deferC++;
+            if(rem>0){
+              activeC++;
+              if(isDefer) leftDefer+=rem; else leftMonthly+=rem;
+              const inst = +c.instAmt||0;
+              if(!isDefer && inst>0){
+                monthlyInst += inst;
+                const sDate = c.firstInst||c.date;
+                if(sDate){
+                  const mEl = Math.max(0,Math.floor((_now-new Date(sDate))/(30.44*86400000)));
+                  const od = Math.min(total,inst*mEl)-paid;
+                  if(od>0){ overCount++; overAmt+=od; }
+                }
+              }
+            }
+          });
+          const grand = netCash + leftMonthly + leftDefer;
+          const profit = myCon.reduce((s,c)=>s+calcC(c,settings).net,0);
+          const commAdmin = myCon.reduce((s,c)=>s+calcC(c,settings).admin,0);
+          const commAcc = myCon.reduce((s,c)=>s+calcC(c,settings).acc,0);
+          const working = myCon.reduce((s,c)=>
+            c.contractType==="migrated" ? s+Math.round((+c.totalInst||0)*0.5) : s+(+c.amount||0), 0);
+          const totalWP = myCon.reduce((s,c)=>s+(+c.totalInst||+c.amount||0),0);
+          const collectPct = totalWP>0 ? Math.round(paidSum/totalWP*100) : 0;
+          const roiReal = bidaya>0 ? (profit/bidaya*100) : null;
+          const roiWork = working>0 ? (profit/working*100) : null;
+          const avgC = myCon.length>0 ? Math.round(myCon.reduce((s,c)=>s+(+c.amount||0),0)/myCon.length) : 0;
+          const lastPay = myPays.length>0 ? myPays.map(p=>p.date).filter(Boolean).sort().pop() : null;
+          return {inv,myCon,bidaya,netCash,leftMonthly,leftDefer,grand,monthlyInst,profit,
+            commAdmin,commAcc,working,collectPct,roiReal,roiWork,overCount,overAmt,
+            activeC,doneC:myCon.length-activeC,deferC,avgC,lastPay};
+        };
+
+        const list = sortedInvestors(investors).map(calcInv);
+        // ═══ المجاميع ═══
+        const T = list.reduce((a,r)=>({
+          bidaya:a.bidaya+r.bidaya, netCash:a.netCash+r.netCash,
+          left:a.left+r.leftMonthly+r.leftDefer, grand:a.grand+r.grand,
+          inst:a.inst+r.monthlyInst, cons:a.cons+r.myCon.length
+        }),{bidaya:0,netCash:0,left:0,grand:0,inst:0,cons:0});
+
+        const shortDate = d => d ? d.slice(8,10)+"/"+d.slice(5,7) : "—";
+        const pctColor = p => p>=70?K.green:p>=40?K.amber:K.red;
+
+        return (<div style={{marginBottom:16}}>
+
+          {/* ══════ المربع العلوي ══════ */}
+          <div style={{background:"linear-gradient(140deg,#153040,#101e2b)",border:"1px solid rgba(45,212,191,.25)",
+            borderRadius:18,padding:16,marginBottom:16,position:"relative",overflow:"hidden"}}>
+            <div style={{position:"absolute",left:-30,bottom:-30,width:110,height:110,borderRadius:"50%",
+              background:"radial-gradient(circle,rgba(45,212,191,.15),transparent 70%)",pointerEvents:"none"}}/>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:14}}>
+              <span style={{fontSize:15,fontWeight:800,color:K.txt}}>إجمالي المستثمرين</span>
+              <span style={{fontSize:11,color:K.dim,fontWeight:600}}>{list.length} مستثمرين · {T.cons} عقد</span>
+            </div>
+            <div style={{textAlign:"center",padding:"6px 0 14px"}}>
+              <div style={{fontSize:11,color:K.dim,fontWeight:600,marginBottom:3}}>الإجمالي</div>
+              <div style={{fontSize:34,fontWeight:700,color:K.gold,lineHeight:1.1,letterSpacing:"-.5px"}}>{NF(T.grand)}</div>
+              <div style={{fontSize:11,color:K.dim2,marginTop:5}}>﷼</div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:1,background:K.line,borderRadius:11,overflow:"hidden"}}>
+              <div style={{background:K.panel2,padding:"9px 5px",textAlign:"center"}}>
+                <div style={{fontSize:10,color:K.dim,fontWeight:600,marginBottom:4}}>البداية</div>
+                <div style={{fontSize:13.5,fontWeight:700,color:K.teal}}>{T.bidaya>0?NF(T.bidaya):"—"}</div>
+              </div>
+              <div style={{background:K.panel2,padding:"9px 5px",textAlign:"center"}}>
+                <div style={{fontSize:10,color:K.dim,fontWeight:600,marginBottom:4}}>النقدي حالياً</div>
+                <div style={{fontSize:13.5,fontWeight:700,color:K.green}}>{NF(T.netCash)}</div>
+              </div>
+              <div style={{background:K.panel2,padding:"9px 5px",textAlign:"center"}}>
+                <div style={{fontSize:10,color:K.dim,fontWeight:600,marginBottom:4}}>عند الزبائن</div>
+                <div style={{fontSize:13.5,fontWeight:700,color:K.amber}}>{NF(T.left)}</div>
+              </div>
+            </div>
+            <div style={{marginTop:11,padding:"10px 13px",background:"rgba(74,222,128,.08)",
+              border:"1px solid rgba(74,222,128,.18)",borderRadius:11,display:"flex",
+              alignItems:"center",justifyContent:"space-between"}}>
+              <span style={{fontSize:11.5,color:"#86efac",fontWeight:600}}>📥 المتوقع شهرياً</span>
+              <span style={{fontSize:16,fontWeight:700,color:K.green}}>{NF(T.inst)}</span>
+            </div>
+          </div>
+
+          {/* ══════ بطاقات المستثمرين ══════ */}
+          <div style={{display:"flex",flexDirection:"column",gap:11}}>
+          {list.map(r=>{
+            const inv=r.inv, isOpen=openId===inv.id;
+            const secLbl = t => (<div style={{fontSize:10,color:K.dim2,fontWeight:700,letterSpacing:".7px",
+              marginBottom:9,display:"flex",alignItems:"center",gap:8}}>
+              {t}<span style={{flex:1,height:1,background:K.line}}/></div>);
+            const kvRow = (k,v,col) => (<div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",fontSize:12}}>
+              <span style={{color:K.dim,fontWeight:500}}>{k}</span>
+              <span style={{fontWeight:700,color:col||K.txt}}>{v}</span></div>);
+            const chip = (label,val,bc,vc) => (<span style={{fontSize:10,fontWeight:700,padding:"5px 10px",
+              borderRadius:9,background:K.panel2,border:"1px solid "+(bc||K.line),color:K.dim}}>
+              {label} <b style={{fontSize:12,color:vc||K.txt}}>{val}</b></span>);
+            return (
+            <div key={inv.id} style={{background:K.panel,border:"1px solid "+K.line,borderRadius:17,overflow:"hidden"}}>
+              {/* رأس البطاقة */}
+              <div onClick={()=>setOpenId(isOpen?null:inv.id)}
+                style={{padding:"14px 15px",display:"flex",alignItems:"center",gap:11,cursor:"pointer"}}>
+                <div style={{width:40,height:40,borderRadius:12,flexShrink:0,display:"flex",alignItems:"center",
+                  justifyContent:"center",fontSize:15,fontWeight:800,background:"rgba(45,212,191,.16)",
+                  color:K.teal,border:"1px solid rgba(45,212,191,.3)"}}>{invLabel(inv)}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:14,fontWeight:700,color:K.txt,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{inv.name}</div>
+                  <div style={{fontSize:11,color:K.dim,marginTop:2}}>{r.myCon.length} عقد · آخر سداد {shortDate(r.lastPay)}</div>
+                </div>
+                <div style={{textAlign:"left",flexShrink:0}}>
+                  <div style={{fontSize:17,fontWeight:700,color:K.teal}}>{NF(r.grand)}</div>
+                  <div style={{fontSize:9,color:K.dim2}}>الإجمالي</div>
+                </div>
+                <span style={{color:K.dim2,fontSize:11,transform:isOpen?"rotate(180deg)":"none",transition:".25s"}}>▼</span>
+              </div>
+
+              {/* جسم البطاقة */}
+              {isOpen && (
+              <div style={{padding:"0 15px 15px",borderTop:"1px solid "+K.line}}>
+
+                <div style={{paddingTop:14}}>
+                  {secLbl("الأساس")}
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 15px"}}>
+                    {editBidId===inv.id ? (
+                      <div style={{display:"flex",gap:5,alignItems:"center",gridColumn:"1 / -1"}}>
+                        <span style={{fontSize:12,color:K.dim,fontWeight:500}}>البداية</span>
+                        <input type="number" value={editBidVal} onChange={e=>setEditBidVal(e.target.value)}
+                          style={{flex:1,background:K.panel2,border:"1px solid "+K.line,borderRadius:8,
+                            padding:"5px 9px",color:K.txt,fontSize:13,fontWeight:700,fontFamily:"inherit",outline:"none"}}/>
+                        <button onClick={()=>saveBidaya(inv.id)} style={{background:K.teal,border:"none",borderRadius:8,
+                          padding:"5px 11px",color:"#0e1621",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>حفظ</button>
+                        <button onClick={()=>setEditBidId(null)} style={{background:"transparent",border:"1px solid "+K.line,
+                          borderRadius:8,padding:"5px 9px",color:K.dim,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>✕</button>
+                      </div>
+                    ) : (
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",fontSize:12}}>
+                        <span style={{color:K.dim,fontWeight:500}}>البداية</span>
+                        <span onClick={()=>{setEditBidId(inv.id);setEditBidVal(String(r.bidaya||""));}}
+                          style={{fontWeight:700,color:r.bidaya>0?K.teal:K.dim2,cursor:"pointer",borderBottom:"1px dashed "+K.line}}>
+                          {r.bidaya>0?NF(r.bidaya):"—"} ✎</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{paddingTop:14}}>
+                  {secLbl("وضعه الحين")}
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 15px"}}>
+                    {kvRow("النقدي حالياً",NF(r.netCash),r.netCash>=0?K.green:K.red)}
+                    {kvRow("عند الزبائن",NF(r.leftMonthly),K.amber)}
+                    {kvRow("المؤجلة",r.leftDefer>0?NF(r.leftDefer):"—",r.leftDefer>0?K.violet:K.dim2)}
+                    {kvRow("الإجمالي",NF(r.grand),K.gold)}
+                  </div>
+                </div>
+
+                <div style={{paddingTop:14}}>
+                  {secLbl("العائد")}
+                  <div style={{background:"rgba(56,189,248,.06)",border:"1px solid rgba(56,189,248,.18)",
+                    borderRadius:13,padding:"12px 13px"}}>
+                    <div style={{marginBottom:11}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5}}>
+                        <span style={{fontSize:11,color:K.dim,fontWeight:600}}>العائد الحقيقي <span style={{fontSize:9.5,color:K.dim2}}>÷ البداية</span></span>
+                        <span style={{fontSize:15,fontWeight:700,color:r.roiReal!=null?K.blue:K.dim2}}>{r.roiReal!=null?r.roiReal.toFixed(1)+"%":"—"}</span>
+                      </div>
+                      <div style={{height:8,background:"rgba(255,255,255,.06)",borderRadius:5,overflow:"hidden"}}>
+                        <div style={{height:"100%",width:Math.min(100,Math.max(0,(r.roiReal||0)/30*100))+"%",
+                          borderRadius:5,background:"linear-gradient(90deg,#0ea5e9,#38bdf8)"}}/>
+                      </div>
                     </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                    <div>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5}}>
+                        <span style={{fontSize:11,color:K.dim,fontWeight:600}}>العائد على المشغّل <span style={{fontSize:9.5,color:K.dim2}}>÷ {NF(r.working)}</span></span>
+                        <span style={{fontSize:15,fontWeight:700,color:r.roiWork!=null?K.green:K.dim2}}>{r.roiWork!=null?r.roiWork.toFixed(1)+"%":"—"}</span>
+                      </div>
+                      <div style={{height:8,background:"rgba(255,255,255,.06)",borderRadius:5,overflow:"hidden"}}>
+                        <div style={{height:"100%",width:Math.min(100,Math.max(0,(r.roiWork||0)/30*100))+"%",
+                          borderRadius:5,background:"linear-gradient(90deg,#2dd4bf,#4ade80)"}}/>
+                      </div>
+                      <div style={{display:"flex",justifyContent:"space-between",fontSize:9,color:K.dim2,marginTop:4}}>
+                        <span>30%</span><span>15%</span><span>0</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 15px",marginTop:11}}>
+                    {kvRow("صافي الربح",NF(r.profit),K.green)}
+                    {kvRow("القسط الشهري",NF(r.monthlyInst))}
+                    {kvRow("عمولة إدارة",NF(r.commAdmin))}
+                    {kvRow("عمولة محاسب",NF(r.commAcc))}
+                  </div>
+                </div>
+
+                <div style={{paddingTop:14}}>
+                  {secLbl("التحصيل")}
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:5}}>
+                    <span style={{color:K.dim}}>محصّل من الإجمالي</span>
+                    <span style={{color:pctColor(r.collectPct),fontWeight:700}}>{r.collectPct}%</span>
+                  </div>
+                  <div style={{height:8,background:"rgba(255,255,255,.06)",borderRadius:5,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:Math.min(100,r.collectPct)+"%",borderRadius:5,
+                      background:"linear-gradient(90deg,#2dd4bf,#4ade80)"}}/>
+                  </div>
+                  {r.overCount>0 && <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:10}}>
+                    <span style={{fontSize:10,fontWeight:700,padding:"5px 10px",borderRadius:9,background:K.panel2,
+                      border:"1px solid rgba(251,113,133,.4)",color:K.red}}>متعثر <b style={{fontSize:12}}>{r.overCount}</b> · {NF(r.overAmt)}</span>
+                  </div>}
+                </div>
+
+                <div style={{paddingTop:14}}>
+                  {secLbl("العقود")}
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                    {chip("نشط",r.activeC,"rgba(74,222,128,.3)",K.green)}
+                    {chip("منتهي",r.doneC)}
+                    {r.deferC>0 && chip("مؤجل",r.deferC,"rgba(192,132,252,.3)",K.violet)}
+                    {chip("متوسط العقد",NF(r.avgC))}
+                  </div>
+                </div>
+
+                <div style={{display:"flex",gap:6,marginTop:15}}>
+                  <button onClick={()=>{setStmtInv(inv);setStmtType("brief");}} style={{flex:1,padding:"9px 4px",
+                    borderRadius:10,border:"1px solid "+K.line,background:K.panel2,color:K.txt,fontSize:11,
+                    fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>كشف مختصر</button>
+                  <button onClick={()=>{setStmtInv(inv);setStmtType("detailed");}} style={{flex:1,padding:"9px 4px",
+                    borderRadius:10,border:"1px solid "+K.line,background:K.panel2,color:K.txt,fontSize:11,
+                    fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>كشف مفصل</button>
+                  <button onClick={()=>setYearInv(inv)} style={{flex:1,padding:"9px 4px",borderRadius:10,
+                    border:"1px solid "+K.line,background:K.panel2,color:K.txt,fontSize:11,fontWeight:700,
+                    cursor:"pointer",fontFamily:"inherit"}}>كشف سنوي</button>
+                  {confirmId===inv.id ? (
+                    <>
+                      <button onClick={()=>{onDelete(inv.id);setConfirmId(null);toast("تم الحذف");}}
+                        style={{padding:"9px 11px",borderRadius:10,border:"none",background:K.red,color:"#0e1621",
+                          fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>تأكيد</button>
+                      <button onClick={()=>setConfirmId(null)} style={{padding:"9px 9px",borderRadius:10,
+                        border:"1px solid "+K.line,background:"transparent",color:K.dim,fontSize:11,
+                        cursor:"pointer",fontFamily:"inherit"}}>✕</button>
+                    </>
+                  ) : (
+                    <button onClick={()=>setConfirmId(inv.id)} style={{padding:"9px 11px",borderRadius:10,
+                      border:"1px solid rgba(251,113,133,.3)",background:K.panel2,color:K.red,fontSize:12,
+                      cursor:"pointer",fontFamily:"inherit"}}>🗑️</button>
+                  )}
+                </div>
+              </div>)}
+            </div>);
+          })}
+          </div>
+        </div>);
+      })()}
       {/* Statement Modal */}
       <Modal open={!!yearInv} onClose={()=>setYearInv(null)} title={"📅 كشف سنوي — "+(yearInv?.name||"")} titleBg={C.gold} wide>
         {yearInv && (()=>{
@@ -5606,14 +5912,18 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
       {/* Statement Modal */}
       <Modal open={!!stmtInv} onClose={()=>setStmtInv(null)} title={"📋 كشف حساب — "+(stmtInv?.name||"")} titleBg={C.ink} wide>
         {stmtInv && (()=>{
-          const myCon = contracts.filter(c=>c.investorId===stmtInv.id);
+          const _grp = stmtInv.__group;
+          const _grpIds = _grp ? _grp.map(i=>i.id) : [stmtInv.id];
+          const myCon = contracts.filter(c=>_grpIds.includes(c.investorId));
           const totalAmt   = myCon.reduce((s,c)=>s+c.amount,0);
           const totalPaid  = myCon.reduce((s,c)=>s+_getPaid(payments,c.id),0);
           const totalLeft  = myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
           const _autoC = myCon.reduce((s,c)=>{const rr=calcC(c,settings);return s-(c.amount+rr.acc+rr.inst+rr.admin);},0);
           const _paySum = (payments||[]).filter(p=>myCon.some(c=>c.id===p.contractId)).reduce((s,p)=>s+(p.amount||0),0);
-          const _manSum = ((txList&&txList[stmtInv.id])||[]).reduce((s,t)=>s+(t.amount||0),0);
-          const netCashStmt = (stmtInv.capital||0) + _autoC + _paySum + _manSum;
+          const _manSum = _grp ? _grp.reduce((s,i)=>s+((txList&&txList[i.id]||[]).reduce((ss,t)=>ss+(t.amount||0),0)),0)
+            : ((txList&&txList[stmtInv.id])||[]).reduce((s,t)=>s+(t.amount||0),0);
+          const _capSum = _grp ? _grp.reduce((s,i)=>s+(+i.capital||0),0) : (stmtInv.capital||0);
+          const netCashStmt = _capSum + _autoC + _paySum + _manSum;
           const totalProfit= myCon.reduce((s,c)=>s+calcC(c,settings).net,0);
           return (
             <div id="stmt-print-area" style={{padding:"16px 20px"}}>
