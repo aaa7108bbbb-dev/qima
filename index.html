@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-19-collect -->
+<!-- build: 2026-07-22-compass -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -6849,747 +6849,367 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
 }
 
 
-// ─── Cash Flow & Simulator (البوصلة المالية) ────────────────
+
+// ─── البوصلة المالية (4 أسئلة) ────────────────
 function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpen, txList, loans, zakatTx, pending, bankTx}) {
   const SAR = v => (v||0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
-  const [tab, setTab] = useState("actual");
   const allC = (contracts||[]).filter(c=>!c.deleted);
-  const today = new Date();
+  const allPayments = payments||[];
+  const _daily = _arr(daily);
+  const _do = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
   const profitRate = +settings.profit||50;
-  const adminRate = +settings.admin||2.5;
-  const accRate = +settings.acc||10;
-  const instRate = +settings.inst||10;
 
-  // ═══ تبويب ١: التدفق الفعلي (مطوّر) ═══
-  const ActualFlow = () => {
-    const [forecastMonths, setForecastMonths] = useState(24);
-    const allPayments = payments||[];
+  // ═══ حسابات مشتركة ═══
+  // كاش الصندوق
+  const base = _do.__base && typeof _do.__base==="object" ? _do.__base : null;
+  const baseAmount = base ? (+base.amount||0) : 0;
+  const baseDate = base ? base.date : "0000-00-00";
+  const cashBox = baseAmount + _daily.filter(d=>d.date>=baseDate).reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
+  // بنك
+  const bt = _arr(bankTx);
+  const cashBank = bt.length>0 ? (bt[bt.length-1].balance||0) : 0;
+  // بضاعة
+  const goodsData2 = (()=>{try{return JSON.parse(localStorage.getItem("qimma_goods3")||"[]");}catch{return[];}})();
+  const priceOv2 = (()=>{try{return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}");}catch{return{};}})();
+  const defPrice3 = (()=>{try{return parseFloat(localStorage.getItem("qimma_default_price"))||0;}catch{return 0;}})();
+  const goodsVal = (()=>{
+    const cRows=contracts.filter(c=>!c.deleted&&(!c.isOldContract||c.contractType==='migrated')).map(c=>{
+      const isCard=(c.goods||"").trim().startsWith("بطاقة");
+      if(isCard) return{id:"c_"+c.id,date:c.date,supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,supportAcc:0,withdrawnQty:parseInt(c.qty)||0,price:0,cashOnly:false};
+      return{id:"c_"+c.id,date:c.date,supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,supportAcc:-(parseFloat(c.amount)||0),withdrawnQty:0,price:0,cashOnly:true};
+    });
+    const allR=[...cRows,...goodsData2].sort((a,b)=>new Date(a.date)-new Date(b.date));
+    let runCards=0,lastP=0,runGC=0;
+    allR.forEach(r=>{if(r.cashOnly){runGC+=parseFloat(r.supportAcc)||0;return;}const rp=parseFloat(priceOv2[r.id]||r.price)||defPrice3||lastP||1;if(rp)lastP=rp;const sC=parseFloat(r.supportClient)||0;const sA=parseFloat(r.supportAcc)||0;const sup=sC||sA?Math.floor((sC+sA)/rp):0;runCards=runCards+sup-(parseInt(r.withdrawnQty)||0);});
+    return runCards*lastP+runGC;
+  })();
 
-    // ── حسابات أساسية ──
-    const totalCapitalOut = allC.reduce((s,c)=>s+(+c.amount||0),0);
-    const totalWithProfit = allC.reduce((s,c)=>s+Math.max(0,(+c.totalInst||+c.amount||0)-_getPaid(payments,c.id)),0);
-    const totalProfit = totalWithProfit - totalCapitalOut;
-    const totalPaid = allC.reduce((s,c)=>s+_getPaid(allPayments,c.id),0);
-    const totalRemaining = Math.max(0, totalWithProfit - totalPaid);
-    const completionPct = totalWithProfit>0 ? Math.round((totalPaid/totalWithProfit)*100) : 0;
+  // ذمم العملاء (متبقي = رأس مال + ربح)
+  const remaining = allC.reduce((s,c)=>{
+    const total=+c.totalInst||+c.amount||0;
+    const paid=allPayments.filter(p=>p.contractId===c.id).reduce((ss,p)=>ss+(+p.amount||0),0);
+    return s+Math.max(0,total-paid);
+  },0);
+  // تقسيم الذمم: رأس مال فعلي + ربح
+  const remainingCapital = allC.reduce((s,c)=>{
+    const total=+c.totalInst||+c.amount||0;
+    const paid=allPayments.filter(p=>p.contractId===c.id).reduce((ss,p)=>ss+(+p.amount||0),0);
+    const rem=Math.max(0,total-paid);
+    if(rem<=0) return s;
+    const cap=+c.amount||0;
+    const prof=total-cap;
+    const paidRatio=paid/Math.max(total,1);
+    // الأقساط تسدد رأس المال والربح بنفس النسبة
+    return s+(cap*(1-paidRatio));
+  },0);
+  const remainingProfit = remaining - remainingCapital;
+  // سلف
+  const loansVal = (loans||[]).reduce((s,l)=>{const paid=(l.payments||[]).reduce((ss,p)=>ss+p.amount,0);return s+Math.max(0,(l.amount||0)-paid);},0);
+  // إجمالي الأصول
+  const totalAssets = cashBox + cashBank + goodsVal + remaining + loansVal;
+  // الفلوس الشغّالة = ذمم + بضاعة
+  const workingMoney = remaining + goodsVal;
+  const workingPct = totalAssets>0 ? Math.round(workingMoney/totalAssets*100) : 0;
+  // النايم = كاش + بنك - التزامات تشغيلية (مبسّط)
+  const idleCash = Math.max(0, cashBox + cashBank);
 
-    // ── حساب حصص الأرباح الإجمالية ──
-    const totalCalc = allC.reduce((s,c)=>{const r=calcC(c,settings);return{admin:s.admin+r.admin,acc:s.acc+r.acc,inst:s.inst+r.inst,net:s.net+r.net};},{admin:0,acc:0,inst:0,net:0});
+  // ═══ بطاقة ١: وين فلوسي الحين؟ ═══
+  const Card1 = () => {
+    const items = [
+      {name:"ذمم عملاء (رأس مال)", val:remainingCapital, color:"#14b8a6"},
+      {name:"ذمم عملاء (ربح)", val:remainingProfit, color:"#0d9488"},
+      {name:"بضاعة", val:goodsVal, color:"#f59e0b"},
+      {name:"كاش + بنك", val:cashBox+cashBank, color:"#3b82f6"},
+      {name:"سلف", val:loansVal, color:"#8b5cf6"},
+    ].filter(i=>i.val>0);
+    const total = items.reduce((s,i)=>s+i.val,0);
+    // حساب الدونات SVG
+    const r=48, circ=2*Math.PI*r;
+    let offset=0;
+    const arcs = items.map(it=>{
+      const pct=it.val/Math.max(total,1);
+      const dash=pct*circ;
+      const o=offset;
+      offset+=dash;
+      return{...it, pct:Math.round(pct*100), dash, offset:o};
+    });
+    const insightColor = workingPct>=70?"#2dd4bf":workingPct>=50?"#fbbf24":"#f87171";
+    const insightText = workingPct>=70?"ممتاز، فلوسك شغّالة!":workingPct>=50?"مقبول، فيه مجال تشغّل أكثر":"ضعيف، كاش كثير نايم!";
+    return (<div>
+      <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
+        <svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="16"/>
+          {arcs.map((a,i)=><circle key={i} cx="60" cy="60" r={r} fill="none" stroke={a.color} strokeWidth="16"
+            strokeDasharray={a.dash+" "+(circ-a.dash)} strokeDashoffset={-a.offset}
+            transform="rotate(-90 60 60)" style={{transition:"all 0.5s"}}/>)}
+          <text x="60" y="56" textAnchor="middle" style={{fontSize:16,fontWeight:900,fill:"#fff"}}>{SAR(total/1000)}K</text>
+          <text x="60" y="72" textAnchor="middle" style={{fontSize:10,fill:"#64748b"}}>إجمالي</text>
+        </svg>
+        <div style={{flex:1,display:"flex",flexDirection:"column",gap:6}}>
+          {arcs.map((a,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:6,fontSize:12}}>
+            <div style={{width:10,height:10,borderRadius:3,background:a.color,flexShrink:0}}/>
+            <span style={{color:"#94a3b8",fontWeight:500}}>{a.name}</span>
+            <span style={{marginRight:"auto",fontWeight:800,color:"#e2e8f0",fontSize:13}}>{SAR(a.val)}</span>
+            <span style={{fontSize:11,color:"#64748b",fontWeight:700,minWidth:28,textAlign:"left"}}>{a.pct}%</span>
+          </div>)}
+        </div>
+      </div>
+      <div style={{background:"rgba(20,184,166,0.08)",border:"1px solid rgba(20,184,166,0.15)",borderRadius:12,padding:"10px 14px",fontSize:12,color:insightColor,fontWeight:600,display:"flex",alignItems:"center",gap:8}}>
+        <span>💡</span><span>نسبة الفلوس الشغّالة: <b style={{color:insightColor}}>{workingPct}%</b> — {insightText}</span>
+      </div>
+    </div>);
+  };
 
-    // ── معدّل الأداء الشهري (من البيانات الفعلية) ──
-    const contractsByMonth = {};
-    allC.forEach(c=>{if(c.date){const d=new Date(c.date);const ym=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");if(!contractsByMonth[ym])contractsByMonth[ym]={count:0,amount:0};contractsByMonth[ym].count++;contractsByMonth[ym].amount+=(+c.amount||0);}});
-    const activeMonths = Object.keys(contractsByMonth);
-    const avgContractsPerMonth = activeMonths.length>0 ? Math.round(allC.length / activeMonths.length) : 0;
-    const avgAmountPerContract = allC.length>0 ? Math.round(totalCapitalOut / allC.length) : 0;
-    const avgMonthlyCapital = avgContractsPerMonth * avgAmountPerContract;
-
-    // ── التحصيل الفعلي شهرياً ──
-    const collByMonth = {};
-    allPayments.forEach(p=>{if(p.date){const d=new Date(p.date);const ym=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");if(!collByMonth[ym])collByMonth[ym]=0;collByMonth[ym]+=(+p.amount||0);}});
-
-    // ── التدفق الشهري المفصّل (12 شهر) ──
+  // ═══ بطاقة ٢: كم بيدخل عليّ؟ ═══
+  const Card2 = () => {
+    const today = new Date();
+    const curY = today.getFullYear(), curM = today.getMonth();
+    // حساب الأقساط المتوقعة لكل شهر (6 شهور)
     const months = [];
-    for(let i=0;i<12;i++){
-      const d = new Date(today.getFullYear(), today.getMonth()+i, 1);
-      const ym = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
-      const label = "شهر "+parseInt(d.getMonth()+1)+" - "+d.getFullYear();
-      months.push({ym, label, capitalReturn:0, profitReturn:0, adminFee:0, accFee:0, instFee:0, invNet:0, count:0});
+    for(let i=0;i<6;i++){
+      const m = new Date(curY, curM+i, 1);
+      const label = "شهر "+(m.getMonth()+1);
+      // كل عقد نشط: قسطه الشهري يُتوقع كل شهر ما دام فيه متبقي
+      let expected = 0;
+      allC.forEach(c=>{
+        const inst = +c.installment||0;
+        if(inst<=0) return;
+        const total = +c.totalInst||+c.amount||0;
+        const paid = allPayments.filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
+        const rem = total - paid;
+        if(rem<=0) return;
+        // كم شهر يكفي المتبقي
+        const monthsLeft = Math.ceil(rem/inst);
+        if(i < monthsLeft) expected += Math.min(inst, rem - (inst*i));
+      });
+      months.push({label, expected:Math.max(0,expected), isCurrent:i===0});
     }
+    const maxVal = Math.max(...months.map(m=>m.expected),1);
+    const totalExpected = months.reduce((s,m)=>s+m.expected,0);
+    return (<div>
+      <div style={{display:"flex",gap:4,marginBottom:14,alignItems:"flex-end",height:130}}>
+        {months.map((m,i)=>{
+          const h = Math.max(8, (m.expected/maxVal)*110);
+          return (<div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,justifyContent:"flex-end",height:"100%"}}>
+            <div style={{fontSize:10,fontWeight:800,color:m.isCurrent?"#86efac":"#5eead4"}}>{SAR(m.expected/1000)}K</div>
+            <div style={{width:"100%",background:"rgba(255,255,255,0.03)",borderRadius:10,display:"flex",alignItems:"flex-end",padding:3,height:115}}>
+              <div style={{width:"100%",height:h,borderRadius:"8px 8px 4px 4px",background:m.isCurrent?"linear-gradient(180deg,#22c55e,#16a34a)":"linear-gradient(180deg,#14b8a6,#0d9488)",transition:"height 0.3s"}}/>
+            </div>
+            <div style={{fontSize:11,color:m.isCurrent?"#22c55e":"#64748b",fontWeight:700,position:"relative"}}>
+              {m.label}
+              {m.isCurrent && <div style={{position:"absolute",bottom:-5,left:"50%",transform:"translateX(-50%)",width:4,height:4,background:"#22c55e",borderRadius:"50%"}}/>}
+            </div>
+          </div>);
+        })}
+      </div>
+      <div style={{background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.15)",borderRadius:12,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <span style={{fontSize:12,color:"#86efac",fontWeight:600}}>📥 إجمالي المتوقع — 6 شهور</span>
+        <span style={{fontSize:17,fontWeight:900,color:"#22c55e"}}>{SAR(totalExpected)} ﷼</span>
+      </div>
+      <div style={{marginTop:8,fontSize:11,color:"#475569",textAlign:"center"}}>* تقديري بناءً على الأقساط الشهرية للعقود النشطة</div>
+    </div>);
+  };
+
+  // ═══ بطاقة ٣: مين ما دفع؟ ═══
+  const Card3 = () => {
+    const today = new Date();
+    // لكل عقد نشط: كم المفروض دفع حتى اليوم vs كم دفع فعلاً
+    const overdueList = [];
     allC.forEach(c=>{
-      const amt=+c.amount||0, inst=+c.instAmt||0, total=+c.totalInst||+c.amount||0;
-      if(inst<=0||!c.firstInst||total<=0) return;
-      const first=new Date(c.firstInst);
-      const totalCount=Math.max(1,Math.round(total/inst));
-      const profit=total-amt;
-      const profitPerInst=profit/totalCount;
-      const capitalPerInst=amt/totalCount;
-      const r=calcC(c,settings);
-      const adminPerInst=r.admin/totalCount;
-      const accPerInst=r.acc/totalCount;
-      const instFeePerInst=r.inst/totalCount;
-      const invNetPerInst=r.net/totalCount;
-      const paid=allPayments.filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
-      const paidCount=Math.min(totalCount,Math.floor(paid/inst));
-      for(let q=paidCount;q<totalCount;q++){
-        const dueDate=new Date(first.getFullYear(),first.getMonth()+q,first.getDate());
-        const dueYM=dueDate.getFullYear()+"-"+String(dueDate.getMonth()+1).padStart(2,"0");
-        const mo=months.find(m=>m.ym===dueYM);
-        if(mo){mo.capitalReturn+=capitalPerInst;mo.profitReturn+=profitPerInst;mo.adminFee+=adminPerInst;mo.accFee+=accPerInst;mo.instFee+=instFeePerInst;mo.invNet+=invNetPerInst;mo.count++;}
+      const inst = +c.installment||0;
+      const total = +c.totalInst||+c.amount||0;
+      const paid = allPayments.filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
+      const rem = total - paid;
+      if(rem<=0 || inst<=0) return;
+
+      let expectedPaid = 0;
+      if(c.contractType==='migrated'){
+        // مرحّل: نحسب من تاريخ الترحيل (أو بداية النظام)
+        const migDate = c.migratedDate || c.date || c.createdAt;
+        if(migDate){
+          const start = new Date(migDate);
+          const diffMs = today - start;
+          const monthsElapsed = Math.max(0, Math.floor(diffMs/(30.44*24*60*60*1000)));
+          expectedPaid = Math.min(total, inst * monthsElapsed);
+        }
+      } else {
+        // عقد عادي: من تاريخ أول قسط
+        const startDate = c.firstInstDate || c.date;
+        if(startDate){
+          const start = new Date(startDate);
+          const diffMs = today - start;
+          const monthsElapsed = Math.max(0, Math.floor(diffMs/(30.44*24*60*60*1000)));
+          expectedPaid = Math.min(total, inst * monthsElapsed);
+        }
+      }
+      const overdue = expectedPaid - paid;
+      if(overdue > 0){
+        const monthsLate = Math.max(1, Math.round(overdue/inst));
+        const inv = (investors||[]).find(x=>x.id===c.investorId);
+        overdueList.push({
+          name: c.name||"—",
+          overdue,
+          monthsLate,
+          investor: inv ? invLabel(inv) : "—",
+          contractId: c.id
+        });
       }
     });
-
-    // ── التوقع المستقبلي الذكي ──
-    const forecast = [];
-    let cumCapital=totalCapitalOut, cumProfit=totalProfit, cumCollected=totalPaid;
-    for(let i=0;i<forecastMonths;i++){
-      const d=new Date(today.getFullYear(),today.getMonth()+i,1);
-      const ym=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
-      const label="شهر "+parseInt(d.getMonth()+1)+" - "+d.getFullYear();
-      const mo=months.find(m=>m.ym===ym);
-      const expectedIncome=mo?(mo.capitalReturn+mo.profitReturn):0;
-      const newContracts=avgMonthlyCapital;
-      const newProfit=newContracts*(profitRate/100);
-      cumCapital+=newContracts;
-      cumProfit+=newProfit;
-      cumCollected+=expectedIncome;
-      forecast.push({label,ym,month:i+1,expectedIncome,newContracts,newProfit,cumCapital,cumProfit,cumCollected,existing:!!mo});
-    }
-
-    // ── مؤشرات الصحة المالية ──
-    const collectionRate = totalWithProfit>0?Math.round((totalPaid/totalWithProfit)*100):0;
-    const overdueC = allC.filter(c=>{
-      const inst=+c.instAmt||0,total=+c.totalInst||+c.amount||0;
-      if(inst<=0||!c.firstInst)return false;
-      const first=new Date(c.firstInst);
-      const totalCount=Math.max(1,Math.round(total/inst));
-      let elapsed=Math.floor((today-first)/(30.44*24*3600*1000));
-      const dueCount=Math.min(Math.max(0,elapsed+1),totalCount);
-      const paid=_getPaid(allPayments,c.id);
-      return (dueCount*inst)-paid>inst;
-    });
-    const defaultRate = allC.length>0?Math.round((overdueC.length/allC.length)*100):0;
-    // تركّز المخاطر: أعلى مستثمر
-    const invTotals = {};
-    allC.forEach(c=>{const id=c.investorId||"none";invTotals[id]=(invTotals[id]||0)+(+c.totalInst||+c.amount||0);});
-    const maxInvPct = totalWithProfit>0?Math.round((Math.max(...Object.values(invTotals),0)/totalWithProfit)*100):0;
-    // معدل النمو
-    const sortedMonths=Object.keys(contractsByMonth).sort();
-    let growthRate=0;
-    if(sortedMonths.length>=2){
-      const last=contractsByMonth[sortedMonths[sortedMonths.length-1]]?.amount||0;
-      const prev=contractsByMonth[sortedMonths[sortedMonths.length-2]]?.amount||0;
-      growthRate=prev>0?Math.round(((last-prev)/prev)*100):0;
-    }
-
-    const maxIncome=Math.max(...months.map(m=>m.capitalReturn+m.profitReturn),1);
-    const circleR=54,circleC=2*Math.PI*circleR,circleOff=circleC-(circleC*completionPct/100);
-
-    const healthColor=v=>v>=70?"#059669":v>=40?"#d97706":"#dc2626";
-    const riskColor=v=>v<=20?"#059669":v<=40?"#d97706":"#dc2626";
+    overdueList.sort((a,b)=>b.overdue-a.overdue);
+    const totalOverdue = overdueList.reduce((s,o)=>s+o.overdue,0);
+    const clientCount = overdueList.length;
+    const top3 = overdueList.slice(0,3);
+    const restCount = Math.max(0, clientCount-3);
+    const restAmount = overdueList.slice(3).reduce((s,o)=>s+o.overdue,0);
+    const initials = name => {
+      const parts = (name||"").split(/\s+/).filter(Boolean);
+      if(parts.length>=2) return parts[0][0]+"."+parts[1][0];
+      return (name||"—").substring(0,2);
+    };
 
     return (<div>
-      {/* ═══ ١. ملخص لحظي ═══ */}
-      <div style={{fontSize:16,fontWeight:900,color:C.ink,borderRight:"4px solid "+C.teal,paddingRight:12,marginBottom:16}}>📋 الملخص اللحظي</div>
-      <div style={{display:"flex",gap:12,marginBottom:20,flexWrap:"wrap",alignItems:"center"}}>
-        <div style={{display:"flex",flexDirection:"column",gap:10,flex:1,minWidth:200}}>
-          <div style={{display:"flex",gap:8}}>
-            <div style={{flex:1,background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:12,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>رأس المال المُشغّل</div><div style={{fontSize:18,fontWeight:900,color:"#2563eb"}}>{SAR(totalCapitalOut)}</div></div>
-            <div style={{flex:1,background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:12,padding:12,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>الإجمالي بالفائدة</div><div style={{fontSize:18,fontWeight:900,color:"#7c3aed"}}>{SAR(totalWithProfit)}</div></div>
-          </div>
-          <div style={{display:"flex",gap:8}}>
-            <div style={{flex:1,background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:12,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>المحصّل فعلياً</div><div style={{fontSize:18,fontWeight:900,color:C.green}}>{SAR(totalPaid)}</div></div>
-            <div style={{flex:1,background:"#fef2f2",border:"1px solid #fecaca",borderRadius:12,padding:12,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>المتبقي</div><div style={{fontSize:18,fontWeight:900,color:C.red}}>{SAR(totalRemaining)}</div></div>
-          </div>
-          <div style={{display:"flex",gap:8}}>
-            <div style={{flex:1,background:"#fefce8",border:"1px solid #fde68a",borderRadius:12,padding:12,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>إجمالي الأرباح</div><div style={{fontSize:18,fontWeight:900,color:"#b45309"}}>{SAR(totalProfit)}</div></div>
-            <div style={{flex:1,background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:12,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>صافي المستثمرين</div><div style={{fontSize:18,fontWeight:900,color:C.green}}>{SAR(totalCalc.net)}</div></div>
-          </div>
+      <div style={{display:"flex",gap:10,marginBottom:14}}>
+        <div style={{flex:1,borderRadius:14,padding:"14px 12px",textAlign:"center",background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.15)"}}>
+          <div style={{fontSize:24,fontWeight:900,color:"#ef4444"}}>{SAR(totalOverdue)}</div>
+          <div style={{fontSize:11,color:"#64748b",fontWeight:600,marginTop:2}}>﷼</div>
+          <div style={{fontSize:12,fontWeight:700,color:"#fca5a5",marginTop:6}}>إجمالي المتعثّر</div>
         </div>
-        {/* دائرة الإنجاز */}
-        <div style={{width:140,textAlign:"center"}}>
-          <svg width="130" height="130" viewBox="0 0 130 130">
-            <circle cx="65" cy="65" r={circleR} fill="none" stroke="#e5e7eb" strokeWidth="10"/>
-            <circle cx="65" cy="65" r={circleR} fill="none" stroke={completionPct>=70?"#059669":completionPct>=40?"#d97706":"#dc2626"} strokeWidth="10" strokeDasharray={circleC} strokeDashoffset={circleOff} strokeLinecap="round" transform="rotate(-90 65 65)" style={{transition:"stroke-dashoffset 1s ease"}}/>
-            <text x="65" y="60" textAnchor="middle" fontSize="22" fontWeight="900" fill={C.ink}>{completionPct}%</text>
-            <text x="65" y="80" textAnchor="middle" fontSize="10" fill="#6b7280">نسبة الإنجاز</text>
-          </svg>
+        <div style={{flex:1,borderRadius:14,padding:"14px 12px",textAlign:"center",background:"rgba(251,191,36,0.1)",border:"1px solid rgba(251,191,36,0.15)"}}>
+          <div style={{fontSize:24,fontWeight:900,color:"#fbbf24"}}>{clientCount}</div>
+          <div style={{fontSize:11,color:"#64748b",fontWeight:600,marginTop:2}}>عميل</div>
+          <div style={{fontSize:12,fontWeight:700,color:"#fde68a",marginTop:6}}>عملاء متأخرين</div>
         </div>
       </div>
-
-      {/* توزيع الأرباح */}
-      <div style={{display:"flex",gap:8,marginBottom:24,flexWrap:"wrap"}}>
-        <div style={{flex:1,minWidth:70,background:"#fdf2f8",border:"1px solid #fbcfe8",borderRadius:10,padding:10,textAlign:"center"}}><div style={{fontSize:9,color:"#555"}}>المدير</div><div style={{fontSize:15,fontWeight:900,color:"#be185d"}}>{SAR(totalCalc.admin)}</div></div>
-        <div style={{flex:1,minWidth:70,background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:10,padding:10,textAlign:"center"}}><div style={{fontSize:9,color:"#555"}}>المحاسب</div><div style={{fontSize:15,fontWeight:900,color:"#7c3aed"}}>{SAR(totalCalc.acc)}</div></div>
-        <div style={{flex:1,minWidth:70,background:"#ecfdf5",border:"1px solid #a7f3d0",borderRadius:10,padding:10,textAlign:"center"}}><div style={{fontSize:9,color:"#555"}}>التحصيل</div><div style={{fontSize:15,fontWeight:900,color:"#059669"}}>{SAR(totalCalc.inst)}</div></div>
-      </div>
-
-      {/* ═══ ١.٥ مؤشر الكاش — وين فلوسك؟ ═══ */}
-      {(()=>{
-        // ═══ نفس منطق الجرد حرفياً (مع القيم اليدوية) ═══
-        const jardOv = (()=>{try{return JSON.parse(localStorage.getItem("qimma_jard_ov")||"{}");}catch{return{};}})();
-        const curYM = fiscalYM(today);
-        const _daily2 = daily||[];
-        const jardVal = (key) => {
-          const alwaysAuto = ["cards","zakat","deductions","cash","accounts"];
-          if(!alwaysAuto.includes(key) && jardOv[curYM+"_"+key]!==undefined) return jardOv[curYM+"_"+key];
-          if(key==="accounts") {
-            const bt = _arr(bankTx);
-            if(bt.length > 0) return bt[bt.length-1].balance || 0;
-            return jardOv[curYM+"_accounts"] !== undefined ? jardOv[curYM+"_accounts"] : 0;
-          }
-          if(key==="cash") {
-            const _do = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
-            const base = _do.__base && typeof _do.__base==="object" ? _do.__base : null;
-            const baseAmount = base ? (+base.amount||0) : 0;
-            const baseDate = base ? base.date : "0000-00-00";
-            const net = _daily2.filter(d=>d.date >= baseDate)
-              .reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
-            return baseAmount + net;
-          }
-          if(key==="loans") {
-            return (loans||[]).reduce((s,l)=>{
-              const paid=(l.payments||[]).reduce((ss,p)=>ss+p.amount,0);
-              return s+Math.max(0,(l.amount||0)-paid);
-            },0);
-          }
-          if(key==="deductions") return (pending||[]).reduce((s,p)=>s+p.amount,0);
-          if(key==="cards") {
-            const goodsD = (()=>{try{return JSON.parse(localStorage.getItem("qimma_goods3")||"[]");}catch{return[];}})();
-            const priceOv = (()=>{try{return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}");}catch{return{};}})();
-            const defPr = (()=>{try{return parseFloat(localStorage.getItem("qimma_default_price"))||0;}catch{return 0;}})();
-            const cRows = contracts.filter(c=>!c.isOldContract && c.contractType!=='migrated').map(c=>{
-              const isCard = (c.goods||"").trim().startsWith("بطاقة");
-              if(isCard){
-                return {id:"c_"+c.id, date:c.date, supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0, supportAcc:0, withdrawnQty:parseInt(c.qty)||0, price:0, cashOnly:false};
-              }
-              return {id:"c_"+c.id, date:c.date, supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0, supportAcc:-(parseFloat(c.amount)||0), withdrawnQty:0, price:0, cashOnly:true};
-            });
-            const seqOf2 = r => { const n=parseInt(String(r.id).replace(/^c_/,""),10); return isNaN(n)?0:n; };
-            const allR = [...cRows,...goodsD].sort((a,b)=>{
-              const d=new Date(a.date)-new Date(b.date);
-              if(d!==0) return d;
-              return seqOf2(a)-seqOf2(b);
-            });
-            let runCards=0; let lastPrice2=0; let runGoodsCash=0;
-            allR.forEach(r=>{
-              if(r.cashOnly){ runGoodsCash += parseFloat(r.supportAcc)||0; return; }
-              const rowPrice=parseFloat(priceOv[r.id]||r.price)||defPr||lastPrice2||1;
-              if(rowPrice) lastPrice2=rowPrice;
-              const supC=parseFloat(r.supportClient)||0;
-              const supA=parseFloat(r.supportAcc)||0;
-              const supported=supC||supA?Math.floor((supC+supA)/rowPrice):0;
-              const withdrawn=parseInt(r.withdrawnQty)||0;
-              runCards=runCards+supported-withdrawn;
-            });
-            return runCards*lastPrice2 + runGoodsCash;
-          }
-          return 0;
-        };
-
-        const cBox = jardVal("cash");
-        const cBank = jardVal("accounts");
-        const cGoods = jardVal("cards");
-        const cLoans = jardVal("loans");
-        const cDeduct = jardVal("deductions");
-        // مستحق الرئيس + المدير
-        const mgrE = contracts.reduce((s,c)=>s+calcC(c,settings).inst,0);
-        const accE = contracts.reduce((s,c)=>s+calcC(c,settings).acc,0);
-        const mgrT = _daily2.filter(d=>d.type==="mgr").reduce((s,d)=>s+(d.amount||0),0);
-        const accT = _daily2.filter(d=>d.type==="acc").reduce((s,d)=>s+(d.amount||0),0);
-        const dueAdmin = Math.max(0,(mgrE-mgrT)+(accE-accT));
-        // المتاح
-        const sources = cBox + cBank + cGoods;
-        const deductions = dueAdmin + cDeduct + cLoans;
-        const available = Math.max(0, sources - deductions);
-        // الربح الضايع
-        const dailyLost = Math.round(available * 0.5 / 20 / 30);
-        const monthlyLost = Math.round(available * 0.5 / 20);
-        const potentialReturn = Math.round(available * 1.5);
-
-        const dRow=(clr,icon,name,hint,amount,sign)=>(
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",background:"#fff",borderRadius:12,marginBottom:8,boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
-              <div style={{width:10,height:10,borderRadius:"50%",background:clr,flexShrink:0}}/>
-              <div><div style={{fontSize:14,fontWeight:700,color:"#374151"}}>{name}</div><div style={{fontSize:11,color:"#9ca3af"}}>{hint}</div></div>
+      {clientCount===0 ? (
+        <div style={{textAlign:"center",padding:20,color:"#22c55e",fontWeight:700,fontSize:14}}>🎉 ما فيه متعثّرين — ممتاز!</div>
+      ) : (
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {top3.map((o,i)=><div key={i} style={{background:"rgba(239,68,68,0.06)",border:"1px solid rgba(239,68,68,0.1)",borderRadius:12,padding:"10px 14px",display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:36,height:36,borderRadius:10,background:"rgba(239,68,68,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:900,color:"#fca5a5",flexShrink:0}}>{initials(o.name)}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13,fontWeight:700,color:"#e2e8f0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{o.name}</div>
+              <div style={{fontSize:11,color:"#64748b",fontWeight:500,marginTop:2}}>{o.monthsLate} قسط متأخر · {o.investor}</div>
             </div>
-            <div style={{fontSize:16,fontWeight:900,color:sign==="+"?"#059669":"#dc2626"}}>{sign}{SAR(amount)}</div>
-          </div>
-        );
-
-        return (
-          <div style={{marginBottom:24}}>
-            <div style={{fontSize:16,fontWeight:900,color:C.ink,borderRight:"4px solid #f59e0b",paddingRight:12,marginBottom:14}}>💰 مؤشر الكاش — وين فلوسك؟</div>
-            {/* البطاقة الرئيسية */}
-            <div style={{background:"linear-gradient(135deg,#0f1923,#1a2744)",borderRadius:20,padding:20,marginBottom:16,color:"#fff"}}>
-              <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginBottom:4}}>المتاح للتقسيط الآن</div>
-              <div style={{fontSize:32,fontWeight:900,color:"#34d399"}}>{SAR(available)}</div>
-              <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginTop:4}}>هذا المبلغ تقدر تقسّطه اليوم لو جاك زبون</div>
+            <div style={{fontSize:15,fontWeight:900,color:"#ef4444",whiteSpace:"nowrap"}}>{SAR(o.overdue)}</div>
+          </div>)}
+          {restCount>0 && <div style={{background:"rgba(239,68,68,0.03)",border:"1px dashed rgba(239,68,68,0.1)",borderRadius:12,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,opacity:0.6}}>
+            <div style={{width:36,height:36,borderRadius:10,background:"rgba(239,68,68,0.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:"#fca5a5",flexShrink:0}}>+{restCount}</div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,fontWeight:700,color:"#64748b"}}>{restCount} عملاء آخرين</div>
             </div>
-            {/* المصادر */}
-            <div style={{fontSize:13,fontWeight:800,color:"#6b7280",marginBottom:8}}>📥 المصادر:</div>
-            {dRow("#0d9488","","الصندوق","كاش نقدي",cBox,"+")}
-            {dRow("#2563eb","","البنك","رصيد الحساب",cBank,"+")}
-            {dRow("#7c3aed","","البضاعة","مخزون قابل للتقسيط",cGoods,"+")}
-            {/* فاصل */}
-            <div style={{border:"none",borderTop:"2px dashed #e5e7eb",margin:"12px 0"}}/>
-            {/* الخصومات */}
-            <div style={{fontSize:13,fontWeight:800,color:"#6b7280",marginBottom:8}}>📤 الخصومات:</div>
-            {dRow("#dc2626","","مستحق الرئيس + المدير","عمولات لم تُسلّم",dueAdmin,"-")}
-            {dRow("#ea580c","","استقطاعات متبقية","مستحقة للمستثمرين",cDeduct,"-")}
-            {dRow("#d97706","","السلف","قروض حسنة — محبوسة",cLoans,"-")}
-            {/* فاصل */}
-            <div style={{border:"none",borderTop:"2px dashed #e5e7eb",margin:"12px 0"}}/>
-            {/* الإجمالي */}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",background:"#f0fdf4",border:"2px solid #22c55e",borderRadius:14,marginBottom:12}}>
-              <div style={{fontWeight:900,fontSize:15,color:"#065f46"}}>✅ المتاح للتقسيط</div>
-              <div style={{fontWeight:900,fontSize:22,color:"#059669"}}>{SAR(available)}</div>
-            </div>
-            {/* تنبيه الربح الضايع */}
-            {available>0 && (
-              <div style={{background:"linear-gradient(135deg,#fef2f2,#fff1f2)",border:"2px solid #fca5a5",borderRadius:16,padding:18,textAlign:"center",marginTop:16}}>
-                <div style={{fontSize:13,color:"#991b1b",fontWeight:700,marginBottom:8}}>💸 الربح الضايع يومياً</div>
-                <div style={{fontSize:28,fontWeight:900,color:"#dc2626"}}>{SAR(dailyLost)} ريال</div>
-                <div style={{fontSize:12,color:"#9ca3af",marginTop:4}}>≈ {SAR(monthlyLost)} ريال شهرياً · بناءً على 50% ربح / 20 شهر</div>
-              </div>
-            )}
-            {available>0 && (
-              <div style={{background:"#ecfdf5",border:"1px solid #a7f3d0",borderRadius:12,padding:14,fontSize:13,color:"#065f46",fontWeight:700,textAlign:"center",marginTop:12}}>
-                💡 لو قسّطت الـ {SAR(available)} اليوم بتجيبك {SAR(potentialReturn)} خلال 20 شهر
-              </div>
-            )}
-          </div>
-        );
-      })()}
-
-      {/* ═══ ٢. التدفق الشهري المفصّل ═══ */}
-      <div style={{fontSize:16,fontWeight:900,color:C.ink,borderRight:"4px solid #2563eb",paddingRight:12,marginBottom:12}}>📊 التدفق الشهري المفصّل — 12 شهر</div>
-      <div style={{display:"flex",alignItems:"flex-end",gap:3,height:200,marginBottom:8,padding:"0 4px",borderBottom:"2px solid #e5e7eb"}}>
-        {months.map((m,i)=>{const total=m.capitalReturn+m.profitReturn;const hCap=Math.max(1,(m.capitalReturn/maxIncome)*160);const hProf=Math.max(0,(m.profitReturn/maxIncome)*160);return(<div key={i} style={{flex:1,minWidth:14,display:"flex",flexDirection:"column",alignItems:"center",gap:0}}>
-          <div style={{fontSize:8,fontWeight:700,color:C.teal}}>{total>0?SAR(Math.round(total)):""}</div>
-          <div style={{width:"100%",display:"flex",flexDirection:"column"}}><div style={{height:hProf,background:"#fbbf24",borderRadius:"4px 4px 0 0"}}/><div style={{height:hCap,background:"#0d9488",borderRadius:hProf>0?"0":"4px 4px 0 0"}}/></div>
-          <div style={{fontSize:8,color:"#6b7280"}}>{parseInt(m.ym.split("-")[1])}</div>
-        </div>);})}
-      </div>
-      <div style={{display:"flex",justifyContent:"center",gap:14,fontSize:10,marginBottom:16}}>
-        <span><span style={{display:"inline-block",width:10,height:10,background:"#0d9488",borderRadius:2,marginLeft:4}}/>رأس مال</span>
-        <span><span style={{display:"inline-block",width:10,height:10,background:"#fbbf24",borderRadius:2,marginLeft:4}}/>ربح</span>
-      </div>
-      <div style={{overflowX:"auto",marginBottom:24}}>
-        <table style={{width:"100%",borderCollapse:"collapse",fontSize:10,minWidth:550,background:"#fff",borderRadius:12,overflow:"hidden",border:"1px solid #e5e7eb"}}>
-          <thead><tr style={{background:"#f1f5f9"}}><th style={{padding:"8px 4px",textAlign:"center",fontWeight:700}}>الشهر</th><th style={{padding:"8px 4px",textAlign:"center",fontWeight:700}}>أقساط</th><th style={{padding:"8px 4px",textAlign:"center",fontWeight:700}}>أصل</th><th style={{padding:"8px 4px",textAlign:"center",fontWeight:700}}>ربح</th><th style={{padding:"8px 4px",textAlign:"center",fontWeight:700}}>المدير</th><th style={{padding:"8px 4px",textAlign:"center",fontWeight:700}}>المحاسب</th><th style={{padding:"8px 4px",textAlign:"center",fontWeight:700}}>تحصيل</th><th style={{padding:"8px 4px",textAlign:"center",fontWeight:700,color:C.green}}>صافي مستثمر</th></tr></thead>
-          <tbody>{months.map((m,i)=>(<tr key={i} style={{borderBottom:"1px solid #f3f4f6",background:i%2===0?"#fff":"#fafbfc"}}><td style={{padding:"7px 4px",textAlign:"center",fontWeight:600,fontSize:11}}>{m.label}</td><td style={{padding:"7px 4px",textAlign:"center"}}>{m.count}</td><td style={{padding:"7px 4px",textAlign:"center"}}>{SAR(Math.round(m.capitalReturn))}</td><td style={{padding:"7px 4px",textAlign:"center",color:"#b45309"}}>{SAR(Math.round(m.profitReturn))}</td><td style={{padding:"7px 4px",textAlign:"center",color:"#be185d"}}>{SAR(Math.round(m.adminFee))}</td><td style={{padding:"7px 4px",textAlign:"center",color:"#7c3aed"}}>{SAR(Math.round(m.accFee))}</td><td style={{padding:"7px 4px",textAlign:"center"}}>{SAR(Math.round(m.instFee))}</td><td style={{padding:"7px 4px",textAlign:"center",color:C.green,fontWeight:700}}>{SAR(Math.round(m.invNet))}</td></tr>))}</tbody>
-          <tfoot><tr style={{background:"#f1f5f9",fontWeight:900}}><td style={{padding:"10px 4px",textAlign:"center"}}>المجموع</td><td style={{padding:"10px 4px",textAlign:"center"}}>{months.reduce((s,m)=>s+m.count,0)}</td><td style={{padding:"10px 4px",textAlign:"center"}}>{SAR(Math.round(months.reduce((s,m)=>s+m.capitalReturn,0)))}</td><td style={{padding:"10px 4px",textAlign:"center",color:"#b45309"}}>{SAR(Math.round(months.reduce((s,m)=>s+m.profitReturn,0)))}</td><td style={{padding:"10px 4px",textAlign:"center",color:"#be185d"}}>{SAR(Math.round(months.reduce((s,m)=>s+m.adminFee,0)))}</td><td style={{padding:"10px 4px",textAlign:"center",color:"#7c3aed"}}>{SAR(Math.round(months.reduce((s,m)=>s+m.accFee,0)))}</td><td style={{padding:"10px 4px",textAlign:"center"}}>{SAR(Math.round(months.reduce((s,m)=>s+m.instFee,0)))}</td><td style={{padding:"10px 4px",textAlign:"center",color:C.green}}>{SAR(Math.round(months.reduce((s,m)=>s+m.invNet,0)))}</td></tr></tfoot>
-        </table>
-      </div>
-
-      {/* ═══ ٣. التوقع المستقبلي الذكي ═══ */}
-      <div style={{fontSize:16,fontWeight:900,color:C.ink,borderRight:"4px solid #7c3aed",paddingRight:12,marginBottom:12}}>🔮 التوقع المستقبلي — لو استمريت بنفس الوتيرة</div>
-      <div style={{background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:12,padding:14,marginBottom:16,fontSize:12,lineHeight:1.8,color:"#5b21b6"}}>
-        📈 معدّلك: <strong>{avgContractsPerMonth} عقد/شهر</strong> بمتوسط <strong>{SAR(avgAmountPerContract)}</strong> للعقد = تمشية شهرية <strong>{SAR(avgMonthlyCapital)}</strong>
-      </div>
-      <div style={{display:"flex",gap:8,marginBottom:12}}>
-        <div style={{flex:1,minWidth:100}}><label style={{fontSize:10,fontWeight:700,color:"#555",display:"block",marginBottom:4}}>عدد أشهر التوقع</label><input type="number" value={forecastMonths} onChange={e=>setForecastMonths(Math.min(60,Math.max(6,+e.target.value||6)))} style={{width:"100%",padding:8,borderRadius:10,border:"1.5px solid #d1d5db",fontSize:14,fontWeight:700,textAlign:"center"}}/></div>
-      </div>
-      {forecast.length>0 && (
-        <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}}>
-          <div style={{flex:1,minWidth:100,background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:14,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>إجمالي رأس المال بعد {forecastMonths} شهر</div><div style={{fontSize:20,fontWeight:900,color:"#2563eb"}}>{SAR(Math.round(forecast[forecast.length-1].cumCapital))}</div></div>
-          <div style={{flex:1,minWidth:100,background:"#fefce8",border:"1px solid #fde68a",borderRadius:12,padding:14,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>إجمالي الأرباح المتوقعة</div><div style={{fontSize:20,fontWeight:900,color:"#b45309"}}>{SAR(Math.round(forecast[forecast.length-1].cumProfit))}</div></div>
+            <div style={{fontSize:14,fontWeight:900,color:"#94a3b8"}}>{SAR(restAmount)}</div>
+          </div>}
         </div>
       )}
-
-      {/* ═══ ٤. مؤشرات الصحة المالية ═══ */}
-      <div style={{fontSize:16,fontWeight:900,color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12,marginBottom:12,marginTop:8}}>🏥 مؤشرات الصحة المالية</div>
-      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:24}}>
-        <div style={{flex:1,minWidth:130,background:"#fff",border:"2px solid "+healthColor(collectionRate),borderRadius:14,padding:14,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>نسبة التحصيل</div><div style={{fontSize:28,fontWeight:900,color:healthColor(collectionRate)}}>{collectionRate}%</div><div style={{fontSize:10,color:healthColor(collectionRate),fontWeight:700}}>{collectionRate>=70?"ممتاز":collectionRate>=40?"متوسط":"ضعيف"}</div></div>
-        <div style={{flex:1,minWidth:130,background:"#fff",border:"2px solid "+riskColor(defaultRate),borderRadius:14,padding:14,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>نسبة التعثر</div><div style={{fontSize:28,fontWeight:900,color:riskColor(defaultRate)}}>{defaultRate}%</div><div style={{fontSize:10,color:"#555"}}>{overdueC.length} من {allC.length} عقد</div></div>
-        <div style={{flex:1,minWidth:130,background:"#fff",border:"2px solid "+(maxInvPct>60?"#dc2626":maxInvPct>40?"#d97706":"#059669"),borderRadius:14,padding:14,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>تركّز المخاطر</div><div style={{fontSize:28,fontWeight:900,color:maxInvPct>60?"#dc2626":maxInvPct>40?"#d97706":"#059669"}}>{maxInvPct}%</div><div style={{fontSize:10,color:"#555"}}>أعلى مستثمر</div></div>
-        <div style={{flex:1,minWidth:130,background:"#fff",border:"2px solid "+(growthRate>0?"#059669":growthRate===0?"#d97706":"#dc2626"),borderRadius:14,padding:14,textAlign:"center"}}><div style={{fontSize:10,color:"#555"}}>معدل النمو</div><div style={{fontSize:28,fontWeight:900,color:growthRate>0?"#059669":"#dc2626"}}>{growthRate>0?"+":""}{growthRate}%</div><div style={{fontSize:10,color:"#555"}}>مقارنة بالشهر السابق</div></div>
-      </div>
-
-      {/* ═══ ٥. رسم بياني: المتوقع vs المحصّل ═══ */}
-      <div style={{fontSize:16,fontWeight:900,color:C.ink,borderRight:"4px solid "+C.green,paddingRight:12,marginBottom:12}}>📈 المتوقع مقابل المحصّل — آخر 6 أشهر</div>
-      {(()=>{
-        const last6=[];
-        for(let i=5;i>=0;i--){
-          const d=new Date(today.getFullYear(),today.getMonth()-i,1);
-          const ym=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
-          const label="شهر "+parseInt(d.getMonth()+1);
-          const expected=allC.reduce((s,c)=>{
-            const inst=+c.instAmt||0,total=+c.totalInst||+c.amount||0;
-            if(inst<=0||!c.firstInst)return s;
-            const first=new Date(c.firstInst);
-            const totalCount=Math.max(1,Math.round(total/inst));
-            const dueDate=new Date(d.getFullYear(),d.getMonth(),first.getDate());
-            const mDiff=(d.getFullYear()-first.getFullYear())*12+(d.getMonth()-first.getMonth());
-            if(mDiff>=0&&mDiff<totalCount)return s+inst;
-            return s;
-          },0);
-          const collected=collByMonth[ym]||0;
-          last6.push({label,expected,collected});
-        }
-        const maxVal=Math.max(...last6.map(m=>Math.max(m.expected,m.collected)),1);
-        return(<div>
-          <div style={{display:"flex",alignItems:"flex-end",gap:8,height:160,marginBottom:8,padding:"0 4px",borderBottom:"2px solid #e5e7eb"}}>
-            {last6.map((m,i)=>(<div key={i} style={{flex:1,display:"flex",gap:3,alignItems:"flex-end",justifyContent:"center"}}>
-              <div style={{width:"40%",height:Math.max(4,(m.expected/maxVal)*140),background:"#bfdbfe",borderRadius:"4px 4px 0 0"}} title={"متوقع: "+SAR(m.expected)}/>
-              <div style={{width:"40%",height:Math.max(4,(m.collected/maxVal)*140),background:"#34d399",borderRadius:"4px 4px 0 0"}} title={"محصّل: "+SAR(m.collected)}/>
-            </div>))}
-          </div>
-          <div style={{display:"flex",justifyContent:"space-around",fontSize:9,color:"#6b7280",marginBottom:6}}>{last6.map((m,i)=><span key={i}>{m.label}</span>)}</div>
-          <div style={{display:"flex",justifyContent:"center",gap:16,fontSize:10,marginBottom:4}}>
-            <span><span style={{display:"inline-block",width:10,height:10,background:"#bfdbfe",borderRadius:2,marginLeft:4}}/>المتوقع</span>
-            <span><span style={{display:"inline-block",width:10,height:10,background:"#34d399",borderRadius:2,marginLeft:4}}/>المحصّل</span>
-          </div>
-        </div>);
-      })()}
+      {clientCount>0 && <div style={{marginTop:8,fontSize:11,color:"#475569",textAlign:"center"}}>* تقديري بمقارنة المدفوع بالمتوقع حسب عدد الأشهر</div>}
     </div>);
   };
 
-  // ═══ تبويب ٢: محاكي التدوير ═══
-  const Simulator = () => {
-    const [capital, setCapital] = useState(100000);
-    const [numMonths, setNumMonths] = useState(24);
-    const [instCount, setInstCount] = useState(16);
-    const simData = React.useMemo(()=>{
-      const batches = [];
-      const months = [];
-      const firstProfit = capital * (profitRate/100);
-      const firstTotal = capital + firstProfit;
-      const firstInst = Math.round(firstTotal / instCount);
-      batches.push({instAmt: firstInst, startMonth: 1, months: instCount});
-      let totalMashed = capital, totalAdminFees = 0, totalAccFees = 0, totalInstFees = 0, totalInvProfit = 0;
-      const firstAdmin = capital * (adminRate/100);
-      const firstAcc = firstProfit * (accRate/100);
-      const firstInstFee = firstProfit * (instRate/100);
-      const firstInvNet = firstProfit - firstAdmin - firstAcc - firstInstFee;
-      totalAdminFees += firstAdmin; totalAccFees += firstAcc; totalInstFees += firstInstFee; totalInvProfit += firstInvNet;
-      for(let m=1; m<=numMonths; m++){
-        let returning = 0;
-        batches.forEach(b=>{ if(m >= b.startMonth+1 && m <= b.startMonth + b.months) returning += b.instAmt; });
-        let newMashed=0,newProfit=0,monthAdmin=0,monthAcc=0,monthInstFee=0,monthInvNet=0;
-        if(returning > 0 && m > 1){
-          newMashed = returning;
-          newProfit = newMashed * (profitRate/100);
-          const newTotal = newMashed + newProfit;
-          const newInst = Math.round(newTotal / instCount);
-          monthAdmin = newMashed * (adminRate/100);
-          monthAcc = newProfit * (accRate/100);
-          monthInstFee = newProfit * (instRate/100);
-          monthInvNet = newProfit - monthAdmin - monthAcc - monthInstFee;
-          batches.push({instAmt: newInst, startMonth: m, months: instCount});
-          totalMashed += newMashed; totalAdminFees += monthAdmin; totalAccFees += monthAcc; totalInstFees += monthInstFee; totalInvProfit += monthInvNet;
-        }
-        const d = new Date(today.getFullYear(), today.getMonth()+m-1, 1);
-        months.push({month:m,label:"شهر "+parseInt(d.getMonth()+1)+" - "+d.getFullYear(),mashed:m===1?capital:newMashed,profit:m===1?firstProfit:newProfit,returning:m===1?0:returning,admin:m===1?firstAdmin:monthAdmin,acc:m===1?firstAcc:monthAcc,instFee:m===1?firstInstFee:monthInstFee,invNet:m===1?firstInvNet:monthInvNet,activeBatches:batches.filter(b=>m>=b.startMonth&&m<b.startMonth+b.months).length});
-      }
-      return {months,totalMashed,totalAdminFees,totalAccFees,totalInstFees,totalInvProfit,totalProfit:totalAdminFees+totalAccFees+totalInstFees+totalInvProfit,capital};
-    },[capital,numMonths,instCount,profitRate,adminRate,accRate,instRate]);
-    const maxBar = Math.max(...simData.months.map(m=>Math.max(m.mashed, m.returning)),1);
-    return (<div>
-      <div style={{background:"#fff",borderRadius:14,padding:16,marginBottom:20,border:"1px solid #e2e8f0"}}>
-        <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"flex-end"}}>
-          <div style={{flex:1,minWidth:100}}><label style={{fontSize:11,fontWeight:700,color:"#555",display:"block",marginBottom:4}}>رأس المال (مرة وحدة)</label><input type="number" value={capital} onChange={e=>setCapital(+e.target.value||0)} style={{width:"100%",padding:"10px",borderRadius:10,border:"1.5px solid #d1d5db",fontSize:15,fontWeight:700,textAlign:"center"}}/></div>
-          <div style={{flex:1,minWidth:80}}><label style={{fontSize:11,fontWeight:700,color:"#555",display:"block",marginBottom:4}}>عدد الأشهر</label><input type="number" value={numMonths} onChange={e=>setNumMonths(Math.min(60,Math.max(1,+e.target.value||1)))} style={{width:"100%",padding:"10px",borderRadius:10,border:"1.5px solid #d1d5db",fontSize:15,fontWeight:700,textAlign:"center"}}/></div>
-          <div style={{flex:1,minWidth:80}}><label style={{fontSize:11,fontWeight:700,color:"#555",display:"block",marginBottom:4}}>أقساط العقد</label><input type="number" value={instCount} onChange={e=>setInstCount(Math.max(1,+e.target.value||1))} style={{width:"100%",padding:"10px",borderRadius:10,border:"1.5px solid #d1d5db",fontSize:15,fontWeight:700,textAlign:"center"}}/></div>
-        </div>
-      </div>
-      <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:14,marginBottom:16,fontSize:13,lineHeight:1.8,color:"#1e40af"}}>💡 <strong>التدوير:</strong> تحط {SAR(capital)} مرة وحدة — كل ما ترجع أقساط تتمشّى تلقائي بعقود جديدة.</div>
-      <div style={{fontSize:13,fontWeight:700,textAlign:"center",marginBottom:10}}>🔄 التدوير — التمشية vs الأقساط الراجعة</div>
-      <div style={{display:"flex",alignItems:"flex-end",gap:3,height:200,marginBottom:8,padding:"0 4px",borderBottom:"2px solid #e5e7eb"}}>
-        {simData.months.map((m,i)=>{const hMash=Math.max(2,(m.mashed/maxBar)*170);const hRet=Math.max(0,(m.returning/maxBar)*170);return(<div key={i} style={{flex:1,minWidth:14,display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
-          <div style={{width:"100%",display:"flex",flexDirection:"column",gap:1}}><div style={{height:hMash,background:m.month===1?"#60a5fa":"#34d399",borderRadius:"4px 4px 0 0",transition:"height 0.4s"}}/>{hRet>0&&<div style={{height:hRet,background:"#fbbf24",borderRadius:"0 0 4px 4px",transition:"height 0.4s"}}/>}</div>
-          <div style={{fontSize:8,color:"#6b7280"}}>{m.month}</div>
-        </div>);})}
-      </div>
-      <div style={{display:"flex",justifyContent:"center",gap:16,fontSize:11,marginBottom:20}}>
-        <span><span style={{display:"inline-block",width:10,height:10,background:"#60a5fa",borderRadius:2,marginLeft:4}}/>رأس المال</span>
-        <span><span style={{display:"inline-block",width:10,height:10,background:"#34d399",borderRadius:2,marginLeft:4}}/>تدوير</span>
-        <span><span style={{display:"inline-block",width:10,height:10,background:"#fbbf24",borderRadius:2,marginLeft:4}}/>راجع</span>
-      </div>
-      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:10}}>
-        <div style={{flex:1,minWidth:100,background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:14,textAlign:"center"}}><div style={{fontSize:11,color:"#555"}}>رأس المال المدفوع</div><div style={{fontSize:18,fontWeight:900,color:"#2563eb"}}>{SAR(simData.capital)}</div></div>
-        <div style={{flex:1,minWidth:100,background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:14,textAlign:"center"}}><div style={{fontSize:11,color:"#555"}}>إجمالي التدوير</div><div style={{fontSize:18,fontWeight:900,color:C.green}}>{SAR(simData.totalMashed)}</div></div>
-      </div>
-      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:10}}>
-        <div style={{flex:1,minWidth:100,background:"#fefce8",border:"1px solid #fde68a",borderRadius:12,padding:14,textAlign:"center"}}><div style={{fontSize:11,color:"#555"}}>صافي المستثمر</div><div style={{fontSize:18,fontWeight:900,color:"#b45309"}}>{SAR(simData.totalInvProfit)}</div></div>
-        <div style={{flex:1,minWidth:100,background:"#fdf2f8",border:"1px solid #fbcfe8",borderRadius:12,padding:14,textAlign:"center"}}><div style={{fontSize:11,color:"#555"}}>المدير (إدارية)</div><div style={{fontSize:18,fontWeight:900,color:"#be185d"}}>{SAR(simData.totalAdminFees)}</div></div>
-      </div>
-      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}}>
-        <div style={{flex:1,minWidth:100,background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:12,padding:14,textAlign:"center"}}><div style={{fontSize:11,color:"#555"}}>المحاسب</div><div style={{fontSize:18,fontWeight:900,color:"#7c3aed"}}>{SAR(simData.totalAccFees)}</div></div>
-        <div style={{flex:1,minWidth:100,background:"#ecfdf5",border:"1px solid #a7f3d0",borderRadius:12,padding:14,textAlign:"center"}}><div style={{fontSize:11,color:"#555"}}>التحصيل</div><div style={{fontSize:18,fontWeight:900,color:"#059669"}}>{SAR(simData.totalInstFees)}</div></div>
-      </div>
-      <div style={{overflowX:"auto"}}>
-        <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:550,background:"#fff",borderRadius:12,overflow:"hidden",border:"1px solid #e5e7eb"}}>
-          <thead><tr style={{background:"#f1f5f9"}}><th style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>#</th><th style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>تمشية</th><th style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>الربح</th><th style={{padding:"8px 6px",textAlign:"center",fontWeight:700,color:"#c8922a"}}>راجع</th><th style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>عقود</th><th style={{padding:"8px 6px",textAlign:"center",fontWeight:700,color:C.green}}>صافي المستثمر</th><th style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>المدير</th><th style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>المحاسب</th></tr></thead>
-          <tbody>{simData.months.map((m,i)=>(<tr key={i} style={{borderBottom:"1px solid #f3f4f6",background:i%2===0?"#fff":"#fafbfc"}}><td style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>{m.month}</td><td style={{padding:"8px 6px",textAlign:"center"}}>{SAR(m.mashed)}</td><td style={{padding:"8px 6px",textAlign:"center",color:C.green}}>{SAR(m.profit)}</td><td style={{padding:"8px 6px",textAlign:"center",color:"#c8922a",fontWeight:700}}>{SAR(m.returning)}</td><td style={{padding:"8px 6px",textAlign:"center"}}>{m.activeBatches}</td><td style={{padding:"8px 6px",textAlign:"center",color:C.green,fontWeight:700}}>{SAR(m.invNet)}</td><td style={{padding:"8px 6px",textAlign:"center"}}>{SAR(m.admin)}</td><td style={{padding:"8px 6px",textAlign:"center"}}>{SAR(m.acc)}</td></tr>))}</tbody>
-          <tfoot><tr style={{background:"#f1f5f9",fontWeight:900}}><td style={{padding:"10px 6px",textAlign:"center"}}>المجموع</td><td style={{padding:"10px 6px",textAlign:"center"}}>{SAR(simData.totalMashed)}</td><td style={{padding:"10px 6px",textAlign:"center",color:C.green}}>{SAR(simData.totalProfit)}</td><td style={{padding:"10px 6px",textAlign:"center"}}>—</td><td style={{padding:"10px 6px",textAlign:"center"}}>—</td><td style={{padding:"10px 6px",textAlign:"center",color:C.green}}>{SAR(simData.totalInvProfit)}</td><td style={{padding:"10px 6px",textAlign:"center"}}>{SAR(simData.totalAdminFees)}</td><td style={{padding:"10px 6px",textAlign:"center"}}>{SAR(simData.totalAccFees)}</td></tr></tfoot>
-        </table>
-      </div>
-    </div>);
-  };
-
-  // ═══ تبويب ٣: القوائم المالية ═══
-  const FinancialStatements = () => {
-    const [stmtTab, setStmtTab] = useState("income");
-    const [stmtMonth, setStmtMonth] = useState(fiscalYM(today));
-    const stmtMonths = [...new Set(allC.map(c=>fiscalYM(c.date)))].sort().reverse();
-    if(!stmtMonths.includes(stmtMonth) && !stmtMonths.includes(fiscalYM(today))) stmtMonths.unshift(fiscalYM(today));
-    if(!stmtMonths.includes(stmtMonth)) stmtMonths.unshift(stmtMonth);
-    const mLabel2 = ym=>{const[y,m]=ym.split("-");return"شهر "+parseInt(m)+" - "+y;};
-    const _daily = Array.isArray(daily)?daily:[];
-    const allPayments = payments||[];
-
-    // ── عقود الشهر المحدد ──
-    const monthContracts = allC.filter(c=>fiscalYM(c.date)===stmtMonth && !c.isOldContract && c.contractType!=="migrated");
-
-    // ══════ ١. قائمة الدخل ══════
-    const incomeCalc = (() => {
-      // إيرادات: أرباح العقود المُبرمة بالشهر
-      const contractProfits = monthContracts.reduce((s,c)=>{const r=calcC(c,settings);return s+r.profit;},0);
-      // العمولة الإدارية (حصة المدير)
-      const adminFees = monthContracts.reduce((s,c)=>{const r=calcC(c,settings);return s+r.admin;},0);
-      const totalRevenue = contractProfits + adminFees;
-      // مصروفات
-      const accFees = monthContracts.reduce((s,c)=>{const r=calcC(c,settings);return s+r.acc;},0);
-      const instFees = monthContracts.reduce((s,c)=>{const r=calcC(c,settings);return s+r.inst;},0);
-      // مصروفات تشغيلية من دفتر اليومية
-      const monthStart = stmtMonth+"-21";
-      const [sy,sm] = stmtMonth.split("-").map(Number);
-      const nextM = sm===12?(sy+1)+"-01":(sy)+"-"+String(sm+1).padStart(2,"0");
-      const monthEnd = nextM+"-20";
-      const opex = _daily.filter(d=>d.type==="masroof"&&d.date>=monthStart&&d.date<=monthEnd).reduce((s,d)=>s+(+d.amount||0),0);
-      const totalExpenses = accFees + instFees + opex;
-      const netProfit = totalRevenue - totalExpenses;
-      // صافي ربح المستثمرين
-      const invNet = monthContracts.reduce((s,c)=>{const r=calcC(c,settings);return s+r.net;},0);
-      return {contractProfits, adminFees, totalRevenue, accFees, instFees, opex, totalExpenses, netProfit, invNet, contractCount:monthContracts.length, capitalOut:monthContracts.reduce((s,c)=>s+(+c.amount||0),0)};
-    })();
-
-    // ══════ ٢. قائمة المركز المالي ══════
-    const balanceCalc = (() => {
-      // كاش الصندوق
-      const _do = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
-      const base = _do.__base && typeof _do.__base==="object" ? _do.__base : null;
-      const baseAmount = base ? (+base.amount||0) : 0;
-      const baseDate = base ? base.date : "0000-00-00";
-      const cashBox = baseAmount + _daily.filter(d=>d.date>=baseDate).reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
-      // بنك
-      const bt = _arr(bankTx);
-      const cashBank = bt.length>0 ? (bt[bt.length-1].balance||0) : 0;
-      // بضاعة
-      const goodsData2 = (()=>{try{return JSON.parse(localStorage.getItem("qimma_goods3")||"[]");}catch{return[];}})();
-      const priceOv2 = (()=>{try{return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}");}catch{return{};}})();
-      const defPrice3 = (()=>{try{return parseFloat(localStorage.getItem("qimma_default_price"))||0;}catch{return 0;}})();
-      const goodsVal = (()=>{
-        const cRows=contracts.filter(c=>!c.deleted&&(!c.isOldContract||c.contractType==='migrated')).map(c=>{
-          const isCard=(c.goods||"").trim().startsWith("بطاقة");
-          if(isCard) return{id:"c_"+c.id,date:c.date,supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,supportAcc:0,withdrawnQty:parseInt(c.qty)||0,price:0,cashOnly:false};
-          return{id:"c_"+c.id,date:c.date,supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,supportAcc:-(parseFloat(c.amount)||0),withdrawnQty:0,price:0,cashOnly:true};
-        });
-        const allR=[...cRows,...goodsData2].sort((a,b)=>{const d2=new Date(a.date)-new Date(b.date);return d2!==0?d2:0;});
-        let runCards=0,lastP=0,runGC=0;
-        allR.forEach(r=>{if(r.cashOnly){runGC+=parseFloat(r.supportAcc)||0;return;}const rp=parseFloat(priceOv2[r.id]||r.price)||defPrice3||lastP||1;if(rp)lastP=rp;const sC=parseFloat(r.supportClient)||0;const sA=parseFloat(r.supportAcc)||0;const sup=sC||sA?Math.floor((sC+sA)/rp):0;runCards=runCards+sup-(parseInt(r.withdrawnQty)||0);});
-        return runCards*lastP+runGC;
-      })();
-      // المتبقي عند الزبائن
-      const remaining = allC.reduce((s,c)=>{
-        const total=+c.totalInst||+c.amount||0;
-        const paid=allPayments.filter(p=>p.contractId===c.id).reduce((ss,p)=>ss+(+p.amount||0),0);
-        return s+Math.max(0,total-paid);
-      },0);
-      // سلف
-      const loansVal = (loans||[]).reduce((s,l)=>{const paid=(l.payments||[]).reduce((ss,p)=>ss+p.amount,0);return s+Math.max(0,(l.amount||0)-paid);},0);
-      const totalAssets = cashBox + cashBank + goodsVal + remaining + loansVal;
-      // التزامات
-      const invBalances = sortedInvestors(investors).map(inv=>{
-        const capital=inv?.capital||0;
-        const myC=contracts.filter(c=>!c.deleted&&c.investorId===inv.id);
-        const autoDeduct=myC.filter(c=>!c.isOldContract&&c.contractType!=="migrated").reduce((s,c)=>{const r=calcC(c,settings);return s-(c.amount+r.acc+r.inst+r.admin);},0);
-        const autoPaid=allPayments.filter(p=>myC.find(c=>c.id===p.contractId)).reduce((s,p)=>s+p.amount,0);
-        const manualTotal=((txList&&txList[inv.id])||[]).reduce((s,t)=>s+t.amount,0);
-        return{name:inv.name,balance:capital+autoDeduct+autoPaid+manualTotal};
-      });
-      const invTotal = invBalances.filter(i=>i.balance>0).reduce((s,i)=>s+i.balance,0);
-      const deductionsVal = (pending||[]).reduce((s,p)=>s+p.amount,0);
-      const zakatVal = (zakatTx||[]).reduce((s,t)=>s+(t.type==="collect"?t.amount:-t.amount),0);
-      const totalLiabilities = invTotal + deductionsVal + Math.max(0,zakatVal);
-      const equity = totalAssets - totalLiabilities;
-      return {cashBox,cashBank,goodsVal,remaining,loansVal,totalAssets,invTotal,deductionsVal,zakatVal:Math.max(0,zakatVal),totalLiabilities,equity};
-    })();
-
-    // ══════ ٣. قائمة التدفقات النقدية ══════
-    const cashflowCalc = (() => {
-      const [sy,sm] = stmtMonth.split("-").map(Number);
-      const monthStart = stmtMonth+"-21";
-      const nextM = sm===12?(sy+1)+"-01":(sy)+"-"+String(sm+1).padStart(2,"0");
-      const monthEnd = nextM+"-20";
-      const mDaily = _daily.filter(d=>d.date>=monthStart&&d.date<=monthEnd);
-      // سدادات (sadad)
-      const sadadIn = mDaily.filter(d=>d.type==="sadad").reduce((s,d)=>s+(+d.amount||0),0);
-      // استلمت نقدي
-      const estilamIn = mDaily.filter(d=>d.type==="estilam").reduce((s,d)=>s+(+d.amount||0),0);
-      const totalIn = sadadIn + estilamIn;
-      // خارج
-      const masroofOut = mDaily.filter(d=>d.type==="masroof").reduce((s,d)=>s+(+d.amount||0),0);
-      const sahbOut = mDaily.filter(d=>d.type==="sahb").reduce((s,d)=>s+(+d.amount||0),0);
-      const mgrOut = mDaily.filter(d=>d.type==="mgr").reduce((s,d)=>s+(+d.amount||0),0);
-      const accOut = mDaily.filter(d=>d.type==="acc").reduce((s,d)=>s+(+d.amount||0),0);
-      const zakatOut = mDaily.filter(d=>d.type==="zakat").reduce((s,d)=>s+(+d.amount||0),0);
-      const salfOut = mDaily.filter(d=>d.type==="salf").reduce((s,d)=>s+(+d.amount||0),0);
-      const totalOut = masroofOut + sahbOut + mgrOut + accOut + zakatOut + salfOut;
-      // رصيد أول الشهر (تقريبي)
-      const _do = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
-      const base = _do.__base && typeof _do.__base==="object" ? _do.__base : null;
-      const baseAmount = base ? (+base.amount||0) : 0;
-      const baseDate = base ? base.date : "0000-00-00";
-      const beforeMonth = _daily.filter(d=>d.date>=baseDate&&d.date<monthStart).reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
-      const openBal = baseAmount + beforeMonth;
-      const closeBal = openBal + totalIn - totalOut;
-      return {openBal,sadadIn,estilamIn,totalIn,masroofOut,sahbOut,mgrOut,accOut,zakatOut,salfOut,totalOut,closeBal};
-    })();
-
-    // ══════ ٤. قائمة الدخل الشامل ══════
-    // ══════ ٥. قائمة التغيرات في حقوق الملكية ══════
-    // (مبسّطة لأنها أقرب لشركات مساهمة)
-
-    const secStyle = {marginBottom:16,background:"#fff",borderRadius:14,border:"1px solid "+C.border,overflow:"hidden"};
-    const secHdr = (color,title) => (<div style={{padding:"11px 16px",background:color+"12",borderBottom:"2px solid "+color,fontSize:14,fontWeight:800,color,display:"flex",justifyContent:"space-between"}}><span>{title}</span></div>);
-    const rowS = (i) => ({display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 16px",borderBottom:"1px solid #f3f4f6",background:i%2===0?"#fff":"#fafbfc"});
-    const totR = (color) => ({display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 16px",background:color+"12",borderTop:"2px solid "+color,fontWeight:900,fontSize:15});
-    const bigBox = (color,bg) => ({margin:"0 0 20px",padding:"14px",borderRadius:14,background:bg,border:"2px solid "+color,textAlign:"center"});
-    const RRow = ({name,amount,color,hint,i}) => (<div style={rowS(i)}><div><div style={{fontWeight:600,fontSize:13}}>{name}</div>{hint&&<div style={{fontSize:10,color:"#9ca3af"}}>{hint}</div>}</div><div style={{fontWeight:800,color:color||C.ink,fontSize:15}}>{SAR(Math.abs(amount))}</div></div>);
-
-    const stmtTabs = [
-      {id:"income",label:"قائمة الدخل",icon:"📊"},
-      {id:"balance",label:"المركز المالي",icon:"⚖️"},
-      {id:"cashflow",label:"التدفقات النقدية",icon:"💰"},
-      {id:"comprehensive",label:"الدخل الشامل",icon:"📈"},
-      {id:"equity",label:"حقوق الملكية",icon:"🏛️"},
-    ];
+  // ═══ بطاقة ٤: كم أنمّي فلوسي؟ ═══
+  const Card4 = () => {
+    const [simAmount, setSimAmount] = useState(idleCash>0?idleCash:50000);
+    const [simMonths, setSimMonths] = useState(20);
+    // محاكاة التدوير: رأس المال يُقسّط ثم يعاد تدويره
+    const profR = profitRate/100;
+    const cycleProfit = simAmount * profR;
+    const cycleTotal = simAmount + cycleProfit;
+    // الدورة الثانية: نفس رأس المال يُعاد تدويره بعد انتهاء المدة
+    // تقريب: خلال سنة (12 شهر) مع 20 شهر تقسيط = تدوير جزئي
+    const monthlyReturn = cycleTotal / simMonths;
+    // بعد 12 شهر: كم رجع من الدورة الأولى
+    const returned12 = Math.min(cycleTotal, monthlyReturn * 12);
+    const profit12 = returned12 - (simAmount * (12/simMonths));
+    // لو أعاد تدوير المرتجع
+    const cycle2Capital = returned12 * 0.6; // تقريب: 60% يقدر يعيد تدويره
+    const cycle2Profit = cycle2Capital * profR;
+    const totalGrowth = profit12 + cycle2Profit;
+    const growthPct = simAmount>0 ? Math.round(totalGrowth/simAmount*100) : 0;
 
     return (<div>
-      {/* اختيار الشهر */}
-      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,flexWrap:"wrap"}}>
-        <label style={{fontWeight:700,fontSize:14}}>📅 الفترة:</label>
-        <select value={stmtMonth} onChange={e=>setStmtMonth(e.target.value)} style={{padding:"8px 12px",borderRadius:10,border:"1.5px solid #d1d5db",fontSize:14,fontWeight:700,fontFamily:"inherit"}}>
-          {stmtMonths.map(m=><option key={m} value={m}>{mLabel2(m)}</option>)}
-        </select>
+      <div style={{display:"flex",gap:10,marginBottom:16}}>
+        <div style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"10px 14px",textAlign:"center"}}>
+          <div style={{fontSize:11,color:"#64748b",fontWeight:600,marginBottom:4}}>المبلغ</div>
+          <input type="number" value={simAmount} onChange={e=>setSimAmount(+e.target.value||0)}
+            style={{width:"100%",background:"transparent",border:"none",textAlign:"center",fontSize:18,fontWeight:900,color:"#c4b5fd",outline:"none",fontFamily:"inherit"}}/>
+        </div>
+        <div style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"10px 14px",textAlign:"center"}}>
+          <div style={{fontSize:11,color:"#64748b",fontWeight:600,marginBottom:4}}>مدة التقسيط</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <button onClick={()=>setSimMonths(m=>Math.max(6,m-2))} style={{background:"rgba(139,92,246,0.2)",border:"none",borderRadius:8,width:28,height:28,color:"#c4b5fd",fontWeight:900,fontSize:16,cursor:"pointer"}}>−</button>
+            <span style={{fontSize:18,fontWeight:900,color:"#c4b5fd"}}>{simMonths}</span>
+            <button onClick={()=>setSimMonths(m=>Math.min(36,m+2))} style={{background:"rgba(139,92,246,0.2)",border:"none",borderRadius:8,width:28,height:28,color:"#c4b5fd",fontWeight:900,fontSize:16,cursor:"pointer"}}>+</button>
+          </div>
+          <div style={{fontSize:10,color:"#64748b",marginTop:2}}>شهر</div>
+        </div>
       </div>
 
-      {/* تبويبات فرعية */}
-      <div style={{display:"flex",gap:6,marginBottom:20,overflowX:"auto",paddingBottom:4}}>
-        {stmtTabs.map(t=>(
-          <button key={t.id} onClick={()=>setStmtTab(t.id)} style={{padding:"8px 12px",fontSize:12,fontWeight:700,border:stmtTab===t.id?"2px solid "+C.teal:"1.5px solid #d1d5db",borderRadius:10,cursor:"pointer",background:stmtTab===t.id?C.teal:"#fff",color:stmtTab===t.id?"#fff":C.ink,whiteSpace:"nowrap",fontFamily:"inherit",transition:"all 0.2s"}}>{t.icon} {t.label}</button>
-        ))}
+      {/* مسار النمو */}
+      <div style={{position:"relative",padding:"8px 0 0",marginBottom:14}}>
+        <div style={{position:"absolute",right:18,top:0,bottom:0,width:2,background:"linear-gradient(180deg,#8b5cf6,#6d28d9,#22c55e)",borderRadius:2}}/>
+
+        <div style={{position:"relative",padding:"0 40px 18px 0"}}>
+          <div style={{position:"absolute",right:12,top:4,width:14,height:14,borderRadius:"50%",background:"#8b5cf6",border:"3px solid "+C.bg}}/>
+          <div style={{fontSize:11,color:"#64748b",fontWeight:600}}>الدورة الأولى ({simMonths} شهر)</div>
+          <div style={{fontSize:15,fontWeight:900,color:"#e2e8f0"}}>{SAR(simAmount)} → {SAR(cycleTotal)}</div>
+          <div style={{fontSize:11,fontWeight:700,color:"#a78bfa"}}>+ {SAR(cycleProfit)} ربح ({profitRate}%)</div>
+        </div>
+
+        <div style={{position:"relative",padding:"0 40px 18px 0"}}>
+          <div style={{position:"absolute",right:12,top:4,width:14,height:14,borderRadius:"50%",background:"#7c3aed",border:"3px solid "+C.bg}}/>
+          <div style={{fontSize:11,color:"#64748b",fontWeight:600}}>بعد 12 شهر (مرتجع جزئي)</div>
+          <div style={{fontSize:15,fontWeight:900,color:"#e2e8f0"}}>رجع لك: {SAR(returned12)}</div>
+          <div style={{fontSize:11,fontWeight:700,color:"#a78bfa"}}>+ إعادة تدوير {SAR(cycle2Capital)}</div>
+        </div>
+
+        <div style={{position:"relative",padding:"0 40px 4px 0"}}>
+          <div style={{position:"absolute",right:12,top:4,width:14,height:14,borderRadius:"50%",background:"#22c55e",border:"3px solid "+C.bg,boxShadow:"0 0 12px rgba(34,197,94,0.4)"}}/>
+          <div style={{fontSize:11,color:"#64748b",fontWeight:600}}>إجمالي المكسب بعد سنة</div>
+          <div style={{fontSize:16,fontWeight:900,color:"#22c55e"}}>+ {SAR(totalGrowth)} ﷼</div>
+          <div style={{fontSize:11,fontWeight:700,color:"#4ade80"}}>↑ {growthPct}% نمو على رأس المال</div>
+        </div>
       </div>
 
-      {/* ══════ قائمة الدخل ══════ */}
-      {stmtTab==="income" && (<div>
-        <div style={{fontSize:11,color:"#6b7280",textAlign:"center",marginBottom:12}}>عدد العقود: {incomeCalc.contractCount} — رأس مال مُشغّل: {SAR(incomeCalc.capitalOut)}</div>
-        <div style={secStyle}>
-          {secHdr(C.green,"الإيرادات")}
-          <RRow name="أرباح العقود المُبرمة" amount={incomeCalc.contractProfits} color={C.green} hint={"إجمالي الربح من "+incomeCalc.contractCount+" عقد"} i={0}/>
-          <RRow name="العمولة الإدارية (حصة المدير)" amount={incomeCalc.adminFees} color={C.green} hint={adminRate+"% من رأس المال"} i={1}/>
-          <div style={totR(C.green)}><span style={{color:C.green}}>إجمالي الإيرادات</span><span style={{color:C.green,fontSize:17}}>{SAR(incomeCalc.totalRevenue)}</span></div>
-        </div>
-        <div style={secStyle}>
-          {secHdr(C.red,"المصروفات")}
-          <RRow name="عمولة المحاسب" amount={incomeCalc.accFees} color={C.red} hint={accRate+"% من الأرباح"} i={0}/>
-          <RRow name="عمولة التحصيل" amount={incomeCalc.instFees} color={C.red} hint={instRate+"% من الأرباح"} i={1}/>
-          <RRow name="مصروفات تشغيلية" amount={incomeCalc.opex} color={C.red} hint="من دفتر اليومية" i={2}/>
-          <div style={totR(C.red)}><span style={{color:C.red}}>إجمالي المصروفات</span><span style={{color:C.red,fontSize:17}}>{SAR(incomeCalc.totalExpenses)}</span></div>
-        </div>
-        <div style={bigBox(incomeCalc.netProfit>=0?C.green:C.red,incomeCalc.netProfit>=0?"#f0fdf4":"#fef2f2")}>
-          <div style={{fontSize:12,color:"#555",marginBottom:4}}>صافي الربح</div>
-          <div style={{fontSize:26,fontWeight:900,color:incomeCalc.netProfit>=0?C.green:C.red}}>{SAR(incomeCalc.netProfit)}</div>
-          <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:10,fontSize:11,color:"#555"}}>
-            <span>صافي المستثمرين: <strong style={{color:C.teal}}>{SAR(incomeCalc.invNet)}</strong></span>
-            <span>حصة المدير: <strong style={{color:"#be185d"}}>{SAR(incomeCalc.adminFees)}</strong></span>
-          </div>
-        </div>
-      </div>)}
-
-      {/* ══════ المركز المالي ══════ */}
-      {stmtTab==="balance" && (<div>
-        <div style={secStyle}>
-          {secHdr("#2563eb","الأصول (لي)")}
-          <RRow name="رصيد الصندوق" amount={balanceCalc.cashBox} color="#2563eb" hint="كاش بالصندوق" i={0}/>
-          <RRow name="رصيد الحسابات البنكية" amount={balanceCalc.cashBank} color="#2563eb" hint="آخر رصيد بنكي" i={1}/>
-          <RRow name="البضاعة (بطاقات + سلع)" amount={balanceCalc.goodsVal} color="#2563eb" hint="قيمة المخزون" i={2}/>
-          <RRow name="المتبقي عند الزبائن" amount={balanceCalc.remaining} color="#2563eb" hint="أقساط لم تُسدد" i={3}/>
-          <RRow name="السلف" amount={balanceCalc.loansVal} color="#2563eb" hint="مبالغ مسلّفة" i={4}/>
-          <div style={totR("#2563eb")}><span style={{color:"#2563eb"}}>إجمالي الأصول</span><span style={{color:"#2563eb",fontSize:17}}>{SAR(balanceCalc.totalAssets)}</span></div>
-        </div>
-        <div style={secStyle}>
-          {secHdr("#b45309","الالتزامات (عليّ)")}
-          <RRow name="أرصدة المستثمرين" amount={balanceCalc.invTotal} color="#b45309" hint="إجمالي أموال المستثمرين" i={0}/>
-          <RRow name="الاستقطاعات المعلقة" amount={balanceCalc.deductionsVal} color="#b45309" hint="مبالغ معلقة" i={1}/>
-          <RRow name="صندوق الزكاة" amount={balanceCalc.zakatVal} color="#b45309" hint="زكاة مجموعة" i={2}/>
-          <div style={totR("#b45309")}><span style={{color:"#b45309"}}>إجمالي الالتزامات</span><span style={{color:"#b45309",fontSize:17}}>{SAR(balanceCalc.totalLiabilities)}</span></div>
-        </div>
-        <div style={bigBox(balanceCalc.equity>=0?C.teal:C.red,balanceCalc.equity>=0?"#f0fdfa":"#fef2f2")}>
-          <div style={{fontSize:12,color:"#555",marginBottom:4}}>حقوق الملكية (الأصول − الالتزامات)</div>
-          <div style={{fontSize:26,fontWeight:900,color:balanceCalc.equity>=0?C.teal:C.red}}>{SAR(balanceCalc.equity)}</div>
-          <div style={{fontSize:11,color:"#6b7280",marginTop:4}}>= ربحك الفعلي + رأس مالك الخاص</div>
-        </div>
-      </div>)}
-
-      {/* ══════ التدفقات النقدية ══════ */}
-      {stmtTab==="cashflow" && (<div>
-        <div style={bigBox("#2563eb","#eff6ff")}>
-          <div style={{fontSize:12,color:"#555",marginBottom:4}}>رصيد أول الشهر (الصندوق)</div>
-          <div style={{fontSize:22,fontWeight:900,color:"#2563eb"}}>{SAR(cashflowCalc.openBal)}</div>
-        </div>
-        <div style={secStyle}>
-          {secHdr(C.green,"⬇️ تدفقات داخلة")}
-          <RRow name="سدادات أقساط" amount={cashflowCalc.sadadIn} color={C.green} hint="حركات السداد" i={0}/>
-          <RRow name="استلامات نقدية" amount={cashflowCalc.estilamIn} color={C.green} hint="نقد مستلم" i={1}/>
-          <div style={totR(C.green)}><span style={{color:C.green}}>إجمالي الداخل</span><span style={{color:C.green,fontSize:17}}>+{SAR(cashflowCalc.totalIn)}</span></div>
-        </div>
-        <div style={secStyle}>
-          {secHdr(C.red,"⬆️ تدفقات خارجة")}
-          {cashflowCalc.sahbOut>0&&<RRow name="سحوبات مستثمرين" amount={cashflowCalc.sahbOut} color={C.red} hint="" i={0}/>}
-          {cashflowCalc.masroofOut>0&&<RRow name="مصروفات تشغيلية" amount={cashflowCalc.masroofOut} color={C.red} hint="" i={1}/>}
-          {cashflowCalc.mgrOut>0&&<RRow name="استلام مدير" amount={cashflowCalc.mgrOut} color={C.red} hint="" i={2}/>}
-          {cashflowCalc.accOut>0&&<RRow name="استلام محاسب" amount={cashflowCalc.accOut} color={C.red} hint="" i={3}/>}
-          {cashflowCalc.zakatOut>0&&<RRow name="زكاة" amount={cashflowCalc.zakatOut} color={C.red} hint="" i={4}/>}
-          {cashflowCalc.salfOut>0&&<RRow name="سلف" amount={cashflowCalc.salfOut} color={C.red} hint="" i={5}/>}
-          <div style={totR(C.red)}><span style={{color:C.red}}>إجمالي الخارج</span><span style={{color:C.red,fontSize:17}}>−{SAR(cashflowCalc.totalOut)}</span></div>
-        </div>
-        <div style={bigBox(cashflowCalc.closeBal>=cashflowCalc.openBal?C.green:C.red,cashflowCalc.closeBal>=cashflowCalc.openBal?"#f0fdf4":"#fef2f2")}>
-          <div style={{fontSize:12,color:"#555",marginBottom:4}}>رصيد آخر الشهر</div>
-          <div style={{fontSize:26,fontWeight:900,color:cashflowCalc.closeBal>=cashflowCalc.openBal?C.green:C.red}}>{SAR(cashflowCalc.closeBal)}</div>
-          <div style={{fontSize:11,color:"#6b7280",marginTop:4}}>
-            {cashflowCalc.closeBal>=cashflowCalc.openBal?"📈 +"+SAR(cashflowCalc.closeBal-cashflowCalc.openBal)+" عن أول الشهر":"📉 −"+SAR(cashflowCalc.openBal-cashflowCalc.closeBal)+" عن أول الشهر"}
-          </div>
-        </div>
-      </div>)}
-
-      {/* ══════ قائمة الدخل الشامل ══════ */}
-      {stmtTab==="comprehensive" && (<div>
-        <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:14,marginBottom:16,fontSize:13,lineHeight:1.9,color:"#1e40af"}}>
-          📈 قائمة الدخل الشامل تُظهر التغيرات في حقوق الملكية الناتجة عن المعاملات غير المدرجة في قائمة الدخل.
-        </div>
-        <div style={secStyle}>
-          {secHdr("#7c3aed","قائمة الدخل الشامل")}
-          <RRow name="صافي الربح (من قائمة الدخل)" amount={incomeCalc.netProfit} color={incomeCalc.netProfit>=0?C.green:C.red} hint="" i={0}/>
-          <RRow name="التغير في قيمة البضاعة" amount={0} color="#7c3aed" hint="فرق تقييم المخزون (إن وُجد)" i={1}/>
-          <RRow name="مكاسب / خسائر غير محققة" amount={0} color="#7c3aed" hint="تغيرات لم تتحقق بعد" i={2}/>
-          <div style={totR("#7c3aed")}><span style={{color:"#7c3aed"}}>الدخل الشامل</span><span style={{color:"#7c3aed",fontSize:17}}>{SAR(incomeCalc.netProfit)}</span></div>
-        </div>
-        <div style={{fontSize:11,color:"#9ca3af",textAlign:"center",marginTop:8}}>💡 حالياً الدخل الشامل يساوي صافي الربح — لعدم وجود بنود أخرى مسجّلة</div>
-      </div>)}
-
-      {/* ══════ قائمة التغيرات في حقوق الملكية ══════ */}
-      {stmtTab==="equity" && (<div>
-        <div style={{background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:12,padding:14,marginBottom:16,fontSize:13,lineHeight:1.9,color:"#5b21b6"}}>
-          🏛️ توضح التعديلات على رأس مال المؤسسة والأرباح المحتجزة خلال الفترة.
-        </div>
-        <div style={secStyle}>
-          {secHdr(C.teal,"التغيرات في حقوق الملكية")}
-          <RRow name="حقوق الملكية أول الفترة" amount={balanceCalc.equity - incomeCalc.netProfit} color={C.teal} hint="الرصيد السابق" i={0}/>
-          <RRow name="(+) صافي ربح الفترة" amount={incomeCalc.netProfit} color={C.green} hint="من قائمة الدخل" i={1}/>
-          <RRow name="(−) توزيعات / سحوبات" amount={cashflowCalc.sahbOut+cashflowCalc.mgrOut+cashflowCalc.accOut} color={C.red} hint="سحوبات + استلام مدير + محاسب" i={2}/>
-          <div style={totR(C.teal)}><span style={{color:C.teal}}>حقوق الملكية آخر الفترة</span><span style={{color:C.teal,fontSize:17}}>{SAR(balanceCalc.equity)}</span></div>
-        </div>
-      </div>)}
+      <div style={{background:"linear-gradient(135deg,rgba(139,92,246,0.12),rgba(34,197,94,0.08))",border:"1px solid rgba(139,92,246,0.2)",borderRadius:14,padding:14,textAlign:"center"}}>
+        <div style={{fontSize:12,color:"#a78bfa",fontWeight:600,marginBottom:4}}>🔥 لو شغّلت {SAR(simAmount)} ﷼ سنة كاملة</div>
+        <div style={{fontSize:26,fontWeight:900,color:"#22c55e"}}>+ {SAR(totalGrowth)} ﷼</div>
+        <div style={{fontSize:12,color:"#86efac",fontWeight:700,marginTop:2}}>نمو {growthPct}% — لا تخلّي فلوسك تنام!</div>
+      </div>
     </div>);
   };
+
+  // ═══ الأيقونات والألوان لكل بطاقة ═══
+  const cards = [
+    {id:"money",  icon:"💰", q:"وين فلوسي الحين؟",  color:"#14b8a6", component:<Card1/>},
+    {id:"income", icon:"📅", q:"كم بيدخل عليّ؟",    color:"#22c55e", component:<Card2/>},
+    {id:"overdue",icon:"🚨", q:"مين ما دفع؟",       color:"#ef4444", component:<Card3/>},
+    {id:"growth", icon:"🚀", q:"كم أنمّي فلوسي؟",   color:"#8b5cf6", component:<Card4/>},
+  ];
 
   return (
     <div style={{padding:16,maxWidth:900,margin:"0 auto"}}>
-      <div style={{fontSize:22,fontWeight:900,textAlign:"center",marginBottom:4,color:C.ink}}>🧭 البوصلة المالية</div>
-      <div style={{fontSize:13,color:"#6b7280",textAlign:"center",marginBottom:20}}>شوف مستقبلك المالي — بالأرقام</div>
-      <div style={{display:"flex",gap:0,marginBottom:24,borderRadius:12,overflow:"hidden",border:"2px solid "+C.teal}}>
-        {[["actual","📊 التدفق الفعلي"],["simulator","🔄 محاكي التدوير"],["statements","📋 القوائم المالية"]].map(([id,label])=>(
-          <button key={id} onClick={()=>setTab(id)} style={{flex:1,padding:"12px 8px",fontSize:13,fontWeight:700,border:"none",cursor:"pointer",background:tab===id?C.teal:"#fff",color:tab===id?"#fff":C.teal,transition:"all 0.2s",fontFamily:"inherit"}}>{label}</button>
+      <div style={{fontSize:22,fontWeight:900,textAlign:"center",marginBottom:2,color:C.ink}}>🧭 البوصلة المالية</div>
+      <div style={{fontSize:13,color:"#64748b",textAlign:"center",marginBottom:20}}>أربع أسئلة — أجوبة بأرقامك الفعلية</div>
+
+      <div style={{display:"flex",flexDirection:"column",gap:16}}>
+        {cards.map((card,idx)=>(
+          <div key={card.id} style={{background:"linear-gradient(145deg,#1a2744 0%,#162035 100%)",borderRadius:20,padding:20,border:"1px solid rgba(255,255,255,0.06)",boxShadow:"0 8px 32px rgba(0,0,0,0.3)",position:"relative",overflow:"hidden"}}>
+            {/* خلفية مائية */}
+            <div style={{position:"absolute",top:0,right:0,width:120,height:120,borderRadius:"0 0 0 100%",background:card.color,opacity:0.04}}/>
+            {/* الرأس */}
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+              <div style={{width:42,height:42,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,background:card.color+"22"}}>{card.icon}</div>
+              <div style={{fontSize:17,fontWeight:900,color:"#fff"}}>{card.q}</div>
+              <div style={{fontSize:13,color:"#475569",fontWeight:800,marginRight:"auto",background:"#1e293b",padding:"2px 10px",borderRadius:20}}>{idx+1}</div>
+            </div>
+            {/* المحتوى */}
+            {card.component}
+          </div>
         ))}
       </div>
-      {tab==="actual" ? <ActualFlow/> : tab==="simulator" ? <Simulator/> : <FinancialStatements/>}
     </div>
   );
 }
+
 
 // ─── Activity Log Page ───────────────────────────────────────
 function ActivityPage({activity, setActivity, toast, setPage}){
