@@ -3114,7 +3114,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
           const myCon=contracts.filter(c=>c.investorId===inv.id);
           const totalAmt=myCon.reduce((s,c)=>s+c.amount,0);
           const totalProfit=myCon.reduce((s,c)=>s+calcC(c,settings).net,0);
-          const _autoContractSum = myCon.filter(c=>c.contractType!=="migrated").reduce((s,c)=>{const rr=calcC(c,settings);return s - (c.amount + rr.acc + rr.inst + rr.admin);},0);
+          const _autoContractSum = myCon.filter(c=>!c.isOldContract&&c.contractType!=="migrated").reduce((s,c)=>{const rr=calcC(c,settings);return s - (c.amount + rr.acc + rr.inst + rr.admin);},0);
           const _paymentsSum = (payments||[]).filter(p=>myCon.some(c=>c.id===p.contractId)).reduce((s,p)=>s+(p.amount||0),0);
           const _manualSum = ((txList&&txList[inv.id])||[]).reduce((s,t)=>s+(t.amount||0),0);
           const netCash = (inv.capital||0) + _autoContractSum + _paymentsSum + _manualSum;
@@ -5474,7 +5474,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
               const myCon=contracts.filter(c=>c.investorId===inv.id);
               const totalNet=myCon.reduce((s,c)=>s+calcC(c,settings).net,0);
               const totalAmt=myCon.reduce((s,c)=>s+c.amount,0);
-              const _autoContractSum = myCon.filter(c=>c.contractType!=="migrated").reduce((s,c)=>{const rr=calcC(c,settings);return s - (c.amount + rr.acc + rr.inst + rr.admin);},0);
+              const _autoContractSum = myCon.filter(c=>!c.isOldContract&&c.contractType!=="migrated").reduce((s,c)=>{const rr=calcC(c,settings);return s - (c.amount + rr.acc + rr.inst + rr.admin);},0);
               const _paymentsSum = (payments||[]).filter(p=>myCon.some(c=>c.id===p.contractId)).reduce((s,p)=>s+(p.amount||0),0);
               const _manualSum = ((txList&&txList[inv.id])||[]).reduce((s,t)=>s+(t.amount||0),0);
               const netCash = (inv.capital||0) + _autoContractSum + _paymentsSum + _manualSum;
@@ -6865,9 +6865,18 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
   const baseAmount = base ? (+base.amount||0) : 0;
   const baseDate = base ? base.date : "0000-00-00";
   const cashBox = baseAmount + _daily.filter(d=>d.date>=baseDate).reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
-  // بنك
+  // بنك (نفس منطق الجرد: أولاً كشف الراجحي، ثانياً القيمة اليدوية)
   const bt = _arr(bankTx);
-  const cashBank = bt.length>0 ? (bt[bt.length-1].balance||0) : 0;
+  const cashBank = (()=>{
+    if(bt.length>0) return bt[bt.length-1].balance||0;
+    // fallback: القيمة اليدوية من الجرد
+    try{
+      const ov=JSON.parse(localStorage.getItem("qimma_jard_ov")||"{}");
+      const ym=fiscalYM(new Date());
+      if(ov[ym+"_accounts"]!==undefined) return +ov[ym+"_accounts"]||0;
+    }catch{}
+    return 0;
+  })();
   // بضاعة
   const goodsData2 = (()=>{try{return JSON.parse(localStorage.getItem("qimma_goods3")||"[]");}catch{return[];}})();
   const priceOv2 = (()=>{try{return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}");}catch{return{};}})();
