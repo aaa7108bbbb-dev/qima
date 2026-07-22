@@ -6919,7 +6919,8 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
       {name:"ذمم عملاء (رأس مال)", val:remainingCapital, color:"#14b8a6"},
       {name:"ذمم عملاء (ربح)", val:remainingProfit, color:"#0d9488"},
       {name:"بضاعة", val:goodsVal, color:"#f59e0b"},
-      {name:"كاش + بنك", val:cashBox+cashBank, color:"#3b82f6"},
+      {name:"رصيد البنك", val:cashBank, color:"#3b82f6"},
+      {name:"كاش الصندوق", val:cashBox, color:"#60a5fa"},
       {name:"سلف", val:loansVal, color:"#8b5cf6"},
     ].filter(i=>i.val>0);
     const total = items.reduce((s,i)=>s+i.val,0);
