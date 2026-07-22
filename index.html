@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-22-invcards -->
+<!-- build: 2026-07-22-invcards2 -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -3180,7 +3180,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
         const chip=(label,val,bc,vc)=>(<span style={{fontSize:10,fontWeight:700,padding:"5px 10px",borderRadius:9,
           background:K.panel2,border:"1px solid "+(bc||K.line),color:K.dim}}>{label} <b style={{fontSize:12,color:vc||K.txt}}>{val}</b></span>);
 
-        return (<div style={{marginBottom:16}}>
+        return (<div style={{marginBottom:16,maxWidth:640,marginLeft:"auto",marginRight:"auto"}}>
           <div style={{background:K.panel,border:"1px solid "+K.line,borderRadius:17,overflow:"hidden"}}>
             <div style={{padding:"14px 15px",display:"flex",alignItems:"center",gap:11}}>
               <div style={{width:40,height:40,borderRadius:12,flexShrink:0,display:"flex",alignItems:"center",
@@ -3227,8 +3227,6 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 15px",marginTop:11}}>
                   {kvRow("صافي الربح",NF(profit),K.green)}
                   {kvRow("القسط الشهري",NF(monthlyInst))}
-                  {kvRow("عمولة إدارة",NF(commAdmin))}
-                  {kvRow("عمولة محاسب",NF(commAcc))}
                 </div></div>
               <div style={{paddingTop:14}}>{secLbl("التحصيل")}
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:5}}>
@@ -5635,7 +5633,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
 
           {/* ══════ المربع العلوي ══════ */}
           <div style={{background:"linear-gradient(140deg,#153040,#101e2b)",border:"1px solid rgba(45,212,191,.25)",
-            borderRadius:18,padding:16,marginBottom:16,position:"relative",overflow:"hidden"}}>
+            borderRadius:18,padding:16,marginBottom:16,position:"relative",overflow:"hidden",maxWidth:640,marginLeft:"auto",marginRight:"auto"}}>
             <div style={{position:"absolute",left:-30,bottom:-30,width:110,height:110,borderRadius:"50%",
               background:"radial-gradient(circle,rgba(45,212,191,.15),transparent 70%)",pointerEvents:"none"}}/>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:14}}>
@@ -5670,7 +5668,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
           </div>
 
           {/* ══════ بطاقات المستثمرين ══════ */}
-          <div style={{display:"flex",flexDirection:"column",gap:11}}>
+          <div style={{display:"flex",flexDirection:"column",gap:11,maxWidth:640,margin:"0 auto",width:"100%"}}>
           {list.map(r=>{
             const inv=r.inv, isOpen=openId===inv.id;
             const secLbl = t => (<div style={{fontSize:10,color:K.dim2,fontWeight:700,letterSpacing:".7px",
@@ -5771,8 +5769,6 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 15px",marginTop:11}}>
                     {kvRow("صافي الربح",NF(r.profit),K.green)}
                     {kvRow("القسط الشهري",NF(r.monthlyInst))}
-                    {kvRow("عمولة إدارة",NF(r.commAdmin))}
-                    {kvRow("عمولة محاسب",NF(r.commAcc))}
                   </div>
                 </div>
 
