@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-22-invcards2 -->
+<!-- build: 2026-07-22-invcards3 -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -2702,166 +2702,6 @@ function ZakatPage({investors, contracts, settings, zakatTx, setZakatTx}) {
   );
 }
 
-// ─── Commissions Page ────────────────────────────────────────
-function CommissionsPage({contracts, investors, settings}) {
-  const months = [...new Set(contracts.map(c=>{
-    const d=new Date(c.date);
-    return fiscalYM(d);
-  }))].sort().reverse();
-  if(!months.length){const n=new Date();months.push(n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0"));}
-  const [selMonth,setSelMonth]=useState(months[0]);
-  const [tab,setTab]=useState("acc"); // acc = محاسبين, inst = مؤسسة
-
-  const mLabel=ym=>{const[y,m]=ym.split("-");return"شهر "+parseInt(m)+" - "+y;};
-
-  const mc = contracts.filter(c=>{
-    if(c.isOldContract) return false;
-    const d=new Date(c.date);
-    return fiscalYM(d)===selMonth;
-  });
-
-  const rows = mc.map(c=>{
-    const r = calcC(c, settings);
-    const inv = investors.find(i=>String(i.id)===String(c.investorId));
-    return {
-      num: c.num||"—",
-      client: c.client,
-      investor: inv?invLabel(inv):"—",
-      goods: c.goods||"—",
-      amount: c.amount,
-      profit: r.profit,
-      acc: r.acc,
-      inst: r.inst,
-      admin: r.admin,
-      instTotal: r.inst + r.admin,
-    };
-  });
-
-  const totalAcc   = rows.reduce((s,r)=>s+r.acc,0);
-  const totalInst  = rows.reduce((s,r)=>s+r.inst,0);
-  const totalAdmin = rows.reduce((s,r)=>s+r.admin,0);
-  const totalInstTotal = rows.reduce((s,r)=>s+r.instTotal,0);
-
-  const thS = {...styles.th, padding:"10px 12px"};
-  const tdS = {...styles.td, padding:"9px 12px"};
-
-  return (
-    <div>
-      {/* Header */}
-      <div style={{...styles.card,display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}}>
-        <label style={{fontWeight:700,fontSize:15,whiteSpace:"nowrap"}}>الشهر:</label>
-        <select style={{...styles.select,width:"auto",minWidth:160,borderColor:C.teal,color:C.teal,fontWeight:700,background:C.tealLt}}
-          value={selMonth} onChange={e=>setSelMonth(e.target.value)}>
-          {months.map(m=><option key={m} value={m}>{mLabel(m)}</option>)}
-        </select>
-        <button style={{...styles.btn(C.gold),marginRight:"auto"}} onClick={()=>window.print()}>🖨️ طباعة</button>
-      </div>
-
-      {/* Tab switcher */}
-      <div style={{display:"flex",gap:0,marginBottom:16,background:C.white,borderRadius:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",width:"fit-content"}}>
-        {[
-          {key:"acc",  label:"📋 نسب المحاسبين",  color:C.teal},
-          {key:"inst", label:"🏛️ نسب المؤسسة",    color:C.purple},
-        ].map(t=>(
-          <button key={t.key} onClick={()=>setTab(t.key)}
-            style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:700,padding:"10px 22px",border:"none",
-              cursor:"pointer",background:tab===t.key?t.color:C.white,color:tab===t.key?"white":C.ink2,
-              transition:"all 0.2s"}}>
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Summary cards */}
-      {tab==="acc" && (
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:20}}>
-          <KpiCard label="عدد العقود" value={NUM(rows.length)} color={C.teal}/>
-          <KpiCard label="إجمالي قيم العقود" value={SAR(rows.reduce((s,r)=>s+r.amount,0))} color={C.ink}/>
-          <KpiCard label="إجمالي الأرباح" value={SAR(rows.reduce((s,r)=>s+r.profit,0))} color={C.green}/>
-          <KpiCard label="✅ إجمالي نسب المحاسبين" value={SAR(totalAcc)} color={C.teal}/>
-        </div>
-      )}
-      {tab==="inst" && (
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:20}}>
-          <KpiCard label="عدد العقود" value={NUM(rows.length)} color={C.purple}/>
-          <KpiCard label="نصيب المؤسسة (10%)" value={SAR(totalInst)} color={C.purple}/>
-          <KpiCard label="الرسوم الإدارية (2.5%)" value={SAR(totalAdmin)} color={C.gold}/>
-          <KpiCard label="✅ إجمالي المؤسسة" value={SAR(totalInstTotal)} color={C.ink}/>
-        </div>
-      )}
-
-      {/* Table */}
-      <div style={styles.panel}>
-        <div style={{background:tab==="acc"?C.teal:C.purple,padding:"12px 20px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{color:"white",fontWeight:800,fontSize:16}}>
-            {tab==="acc" ? "📋 تفصيل نسب المحاسبين" : "🏛️ تفصيل نسب المؤسسة"} — {mLabel(selMonth)}
-          </div>
-          <div style={{color:"rgba(255,255,255,0.8)",fontSize:15,fontWeight:700}}>
-            الإجمالي: {SAR(tab==="acc"?totalAcc:totalInstTotal)}
-          </div>
-        </div>
-        <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
-            <thead>
-              <tr>
-                <th style={thS}>#</th>
-                <th style={thS}>اسم العميل</th>
-                <th style={thS}>المستثمر</th>
-                <th style={thS}>قيمة العقد</th>
-                <th style={thS}>الربح</th>
-                {tab==="acc" ? (
-                  <th style={{...thS,background:C.teal,color:"#a8f0e6"}}>نسبة المحاسبين (10%)</th>
-                ) : (<>
-                  <th style={{...thS,background:C.purple,color:"#e8c8ff"}}>نصيب المؤسسة (10%)</th>
-                  <th style={{...thS,background:C.purple,color:"#e8c8ff"}}>الرسوم الإدارية (2.5%)</th>
-                  <th style={{...thS,background:C.purple,color:"#f5d28a"}}>الإجمالي</th>
-                </>)}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length===0 ? (
-                <tr><td colSpan={tab==="acc"?7:9} style={{...tdS,textAlign:"center",padding:40,color:"#1f2937"}}>
-                  لا توجد عقود هذا الشهر
-                </td></tr>
-              ) : rows.map((row,i)=>(
-                <tr key={i} style={{background:i%2===0?C.white:C.gray}}>
-                  <td style={{...tdS,color:"#1f2937"}}>{row.num}</td>
-                  <td style={{...tdS,fontWeight:700}}>{row.client}</td>
-                  <td style={tdS}>{row.investor}</td>
-                  <td style={tdS}>{SAR(row.amount)}</td>
-                  <td style={{...tdS,color:C.green}}>{SAR(row.profit)}</td>
-                  {tab==="acc" ? (
-                    <td style={{...tdS,color:C.teal,fontWeight:800,fontSize:15,textAlign:"center"}}>{SAR(row.acc)}</td>
-                  ) : (<>
-                    <td style={{...tdS,color:C.purple,fontWeight:700,textAlign:"center"}}>{SAR(row.inst)}</td>
-                    <td style={{...tdS,color:C.gold,fontWeight:700,textAlign:"center"}}>{SAR(row.admin)}</td>
-                    <td style={{...tdS,color:C.ink,fontWeight:800,fontSize:15,textAlign:"center"}}>{SAR(row.instTotal)}</td>
-                  </>)}
-                </tr>
-              ))}
-            </tbody>
-            {rows.length>0 && (
-              <tfoot>
-                <tr style={{background:C.goldLt}}>
-                  <td colSpan={4} style={{...tdS,fontWeight:800}}>الإجمالي</td>
-                  <td style={{...tdS,color:C.green,fontWeight:800}}>{SAR(rows.reduce((s,r)=>s+r.profit,0))}</td>
-                  {tab==="acc" ? (
-                    <td style={{...tdS,color:C.teal,fontWeight:900,fontSize:16,textAlign:"center"}}>{SAR(totalAcc)}</td>
-                  ) : (<>
-                    <td style={{...tdS,color:C.purple,fontWeight:800,textAlign:"center"}}>{SAR(totalInst)}</td>
-                    <td style={{...tdS,color:C.gold,fontWeight:800,textAlign:"center"}}>{SAR(totalAdmin)}</td>
-                    <td style={{...tdS,color:C.ink,fontWeight:900,fontSize:16,textAlign:"center"}}>{SAR(totalInstTotal)}</td>
-                  </>)}
-                </tr>
-              </tfoot>
-            )}
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Accounts Page ───────────────────────────────────────────
 const TX_TYPES = [
   {key:"deposit",   label:"دعم مستثمر",        color:"#1a7a4a", sign:1},
@@ -3099,7 +2939,6 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
     {key:"list",  label:"👥 المستثمرون"},
     {key:"inv",   label:"💰 حسابات المستثمرين"},
     {key:"special", label:"🏢 حسابات خاصة"},
-    {key:"comm",  label:"📑 العمولات"},
   ];
 
   return (
@@ -3254,7 +3093,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
         </div>);
       })()}
 
-      {subTab==="comm" && <CommissionsPage contracts={contracts} investors={investors} settings={settings}/>}
+      {subTab==="comm" && null}
 
       {/* Investor accounts sub-page */}
       {subTab==="inv" && <>
