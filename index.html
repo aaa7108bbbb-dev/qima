@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-23-doneids-firebase -->
+<!-- build: 2026-07-23-realtime-sync -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -7767,6 +7767,7 @@ function App() {
 
   // On first load, try syncing from Google Sheets (overwrite local if remote has newer data)
   useEffect(()=>{
+    let _unsubSnap = null;
     (async ()=>{
       setSyncStatus("loading");
       const [inv, con, set, tx, ln, zk, pd, pay, gd, jov, dly, dlyo, act, mcl, pov, btx, dids] = await Promise.all([
@@ -7794,7 +7795,44 @@ function App() {
       if (btx) { setBankTxRaw(_arr(btx)); saveLS("qimma_banktx", JSON.stringify(_arr(btx))); }
       if (dids) { setDoneIdsRaw(_arr(dids)); localStorage.setItem("qimma_done", JSON.stringify(_arr(dids))); }
       setSyncStatus("idle");
+
+      // ═══ مزامنة لحظية: Firestore onSnapshot ═══
+      if (window._fbReady && window._fbDB) {
+        let isFirstSnap = true;
+        _unsubSnap = window._fbDB.collection("qima").onSnapshot(snapshot => {
+          if (isFirstSnap) { isFirstSnap = false; return; }
+          snapshot.docChanges().forEach(change => {
+            if (change.doc.metadata.hasPendingWrites) return;
+            const sheet = change.doc.id;
+            const raw = change.doc.data();
+            if (!raw || raw.payload === undefined) return;
+            let data;
+            try { data = typeof raw.payload === "string" ? JSON.parse(raw.payload) : raw.payload; } catch(e) { return; }
+            if (data == null) return;
+            switch(sheet) {
+              case "investors": setInvestorsRaw(data); saveLS("qimma_investors", data); break;
+              case "contracts": setContractsRaw(data); saveLS("qimma_contracts", data); break;
+              case "settings": setSettingsRaw(data); saveLS("qimma_settings", data); break;
+              case "txlist": setInvTxListRaw(data); saveLS("qimma_txlist", data); break;
+              case "loans": setLoansRaw(_arr(data)); saveLS("qimma_loans", _arr(data)); break;
+              case "zakat": setZakatTxRaw(_arr(data)); saveLS("qimma_zakat", _arr(data)); break;
+              case "pending": setPendingRaw(_arr(data)); saveLS("qimma_pending", _arr(data)); break;
+              case "payments": setPaymentsRaw(_arr(data)); saveLS("qimma_payments", _arr(data)); break;
+              case "daily": setDailyRaw(_arr(data)); saveLS("qimma_daily", _arr(data)); break;
+              case "daily_open": if(data && !Array.isArray(data)) { setDailyOpenRaw(data); saveLS("qimma_daily_open", data); } break;
+              case "activity": setActivityRaw(_arr(data)); saveLS("qimma_activity", _arr(data)); break;
+              case "monthclose": if(typeof data==="object" && !Array.isArray(data)) { setMonthCloseRaw(data); saveLS("qimma_monthclose", JSON.stringify(data)); } break;
+              case "banktx": setBankTxRaw(_arr(data)); saveLS("qimma_banktx", JSON.stringify(_arr(data))); break;
+              case "doneIds": setDoneIdsRaw(_arr(data)); localStorage.setItem("qimma_done", JSON.stringify(_arr(data))); break;
+              case "goods3": localStorage.setItem("qimma_goods3", JSON.stringify(data)); break;
+              case "price_ov": localStorage.setItem("qimma_price_ov", JSON.stringify(data)); break;
+              case "jard_ov": localStorage.setItem("qimma_jard_ov", JSON.stringify(data)); break;
+            }
+          });
+        });
+      }
     })();
+    return () => { if (_unsubSnap) _unsubSnap(); };
   }, []);
 
   const TABS=[
