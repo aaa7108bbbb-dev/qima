@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-23-monthbox -->
+<!-- build: 2026-07-23-doneids-firebase -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -1261,7 +1261,7 @@ const assessRisk = (c, payments) => {
   return {level, months:monthsBehind, overdue:behindAmt, color, score};
 };
 
-function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate,payments,setPayments,toast,completionAlert,setCompletionAlert,onSaveNew,setInvTxList,startCollect,setPage,logAct,dailyOpen}) {
+function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate,payments,setPayments,toast,completionAlert,setCompletionAlert,onSaveNew,setInvTxList,startCollect,setPage,logAct,dailyOpen,doneIds,markDone}) {
   const [showNew,setShowNew]=useState(false);
   const [showMigrated,setShowMigrated]=useState(false);
   const [showCollect,setShowCollect]=useState(!!startCollect);
@@ -1279,8 +1279,6 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   const [payDate,setPayDate]=useState(todayLocal());
   const [payNote,setPayNote]=useState("");
   const [statusTab,setStatusTab]=useState("active");
-  const [doneIds,setDoneIds]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_done")||"[]");}catch{return[];}});
-  const markDone = (id) => { const d=[...doneIds,id]; setDoneIds(d); localStorage.setItem("qimma_done",JSON.stringify(d)); };
   // فتح بطاقة تفاصيل العقد في نافذة متصفح جديدة عند الضغط على اسم العميل
   const openContractCard = (c) => {
     const inv = investors.find(i=>String(i.id)===String(c.investorId));
@@ -4748,14 +4746,6 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
         </div>
       </div>
 
-      {/* مربع المتابعة العاجلة */}
-      <div style={{marginBottom:14}}>
-        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.red,cursor:"pointer"}} onClick={()=>{const el=document.getElementById("troubledList");if(el)el.scrollIntoView({behavior:"smooth"});}}>
-          <div style={{fontSize:13,color:"#1f2937",fontWeight:700,marginBottom:6}}>🚨 يحتاجون متابعة</div>
-          <div style={{fontSize:22,fontWeight:900,color:C.red}}>{troubled.length}</div>
-        </div>
-      </div>
-
       {/* بطاقة أقساط الشهر / المنجز الفخمة */}
       {detail && (detail.mode==="target" || detail.mode==="done") && (()=>{
         const isDone = detail.mode==="done";
@@ -4816,27 +4806,6 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
       })()}
       {/* دفتر اليومية مدمج في الرئيسية */}
       <DailyPage daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} contracts={contracts} settings={settings} toast={toast} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} investors={investors} payments={payments}/>
-
-      {/* قائمة المتابعة العاجلة */}
-      {troubled.length>0 && (
-        <div id="troubledList" style={{...styles.panel,marginBottom:16,borderRight:"4px solid "+C.red}}>
-          <div style={{padding:"12px 16px",borderBottom:"1px solid "+C.border,fontWeight:900,color:C.red,fontSize:15}}>🚨 متابعة عاجلة ({troubled.length})</div>
-          <div style={{padding:12,display:"flex",flexDirection:"column",gap:8,maxHeight:"40vh",overflowY:"auto"}}>
-            {troubled.slice(0,15).map(({c,r})=>(
-              <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:"#fef2f2",borderRadius:8}}>
-                <div>
-                  <div style={{fontWeight:700,fontSize:14,color:C.ink}}>{c.client} <span style={{fontSize:12,color:"#6b7280"}}>#{c.num}</span></div>
-                  <div style={{fontSize:12,color:"#1f2937",marginTop:2}}>{invNm(c.investorId)}{c.cPhone?(" • "+c.cPhone):""}</div>
-                </div>
-                <div style={{textAlign:"left",whiteSpace:"nowrap"}}>
-                  <span style={{background:r.color,color:"#fff",borderRadius:12,padding:"2px 10px",fontSize:11,fontWeight:800}}>{r.level} {r.months} شهر</span>
-                  <div style={{fontSize:13,fontWeight:900,color:C.red,marginTop:4}}>{SAR(r.overdue)}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
     </div>
   );
@@ -6715,15 +6684,12 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
 // ══════════════════════════════════════════════════════════════
 // ⚡ صفحة التحصيل — تصميم أبيض + بطاقات مستثمرين + مؤشر دائري
 // ══════════════════════════════════════════════════════════════
-function CollectionPage({contracts, investors, settings, payments, setPayments, toast, logAct}) {
+function CollectionPage({contracts, investors, settings, payments, setPayments, toast, logAct, doneIds, markDone}) {
   const [colDate, setColDate] = useState(todayLocal());
   const [selInv, setSelInv] = useState(null); // المستثمر المختار (null = شاشة الاختيار)
   const [colSearch, setColSearch] = useState("");
   const [colAmts, setColAmts] = useState({});
   const [expanded, setExpanded] = useState({});
-  const [doneIds, setDoneIds] = useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_done")||"[]");}catch{return[];}});
-  const markDone = (id) => { const d=[...doneIds,id]; setDoneIds(d); localStorage.setItem("qimma_done",JSON.stringify(d)); };
-
   const gP = (cid) => (payments||[]).filter(p=>p.contractId===cid).reduce((s,p)=>s+(+p.amount||0),0);
 
   // ألوان المستثمرين
@@ -7793,6 +7759,9 @@ function App() {
   const [dailyOpen,setDailyOpenRaw]=useState(()=>{const v=loadLS("qimma_daily_open",{});return (v&&typeof v==="object"&&!Array.isArray(v))?v:{};});
   const setDailyOpen = v => { const d=typeof v==="function"?v(dailyOpen):v; setDailyOpenRaw(d); saveLS("qimma_daily_open",d); gsWrite("daily_open",d); };
   const [completionAlert,setCompletionAlert]=useState(null);
+  const [doneIds,setDoneIdsRaw]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_done")||"[]");}catch{return[];}});
+  const setDoneIds = v => { const d=_arr(typeof v==="function"?v(doneIds):v); setDoneIdsRaw(d); localStorage.setItem("qimma_done",JSON.stringify(d)); gsWrite("doneIds",d); };
+  const markDone = (id) => { setDoneIds(prev=>[...prev,id]); };
 
   const toast=(msg,type="success")=>{setToastMsg(msg);setToastType(type);setTimeout(()=>setToastMsg(null),3000);};
 
@@ -7800,11 +7769,12 @@ function App() {
   useEffect(()=>{
     (async ()=>{
       setSyncStatus("loading");
-      const [inv, con, set, tx, ln, zk, pd, pay, gd, jov, dly, dlyo, act, mcl, pov, btx] = await Promise.all([
+      const [inv, con, set, tx, ln, zk, pd, pay, gd, jov, dly, dlyo, act, mcl, pov, btx, dids] = await Promise.all([
         gsRead("investors"), gsRead("contracts"), gsRead("settings"),
         gsRead("txlist"), gsRead("loans"), gsRead("zakat"),
         gsRead("pending"), gsRead("payments"), gsRead("goods3"), gsRead("jard_ov"),
-        gsRead("daily"), gsRead("daily_open"), gsRead("activity"), gsRead("monthclose"), gsRead("price_ov"), gsRead("banktx")
+        gsRead("daily"), gsRead("daily_open"), gsRead("activity"), gsRead("monthclose"), gsRead("price_ov"), gsRead("banktx"),
+        gsRead("doneIds")
       ]);
       if (inv) { setInvestorsRaw(inv); saveLS("qimma_investors", inv); }
       if (con) { setContractsRaw(con); saveLS("qimma_contracts", con); }
@@ -7822,6 +7792,7 @@ function App() {
       if (act) { setActivityRaw(_arr(act)); saveLS("qimma_activity", _arr(act)); }
       if (mcl && typeof mcl==="object" && !Array.isArray(mcl)) { setMonthCloseRaw(mcl); saveLS("qimma_monthclose", JSON.stringify(mcl)); }
       if (btx) { setBankTxRaw(_arr(btx)); saveLS("qimma_banktx", JSON.stringify(_arr(btx))); }
+      if (dids) { setDoneIdsRaw(_arr(dids)); localStorage.setItem("qimma_done", JSON.stringify(_arr(dids))); }
       setSyncStatus("idle");
     })();
   }, []);
@@ -7900,8 +7871,8 @@ function App() {
         {page==="overdue" && <OverduePage contracts={activeContracts} investors={investors} payments={payments} goCollect={()=>setPage("collect")} onFlag={(id,val)=>{setContracts(p=>p.map(c=>c.id===id?{...c,defaulter:val}:c));}} />}
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={payments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
-        {page==="collect" && <CollectionPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} logAct={logAct}/>}
-        {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen}/>}
+        {page==="collect" && <CollectionPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone}/>}
+        {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone}/>}
         {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast}/>}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast} gsWrite={gsWrite}/>}
