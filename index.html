@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-22-invcards3 -->
+<!-- build: 2026-07-23-monthbox -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -4662,24 +4662,164 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
     return (diffDays>=0 && diffDays<=7) ? {c, days:diffDays, inst} : null;
   }).filter(Boolean).sort((a,b)=>a.days-b.days);
 
+  // ═══ أقساط الشهر / المنجز — مربوطة بالإقفال الشهري ═══
+  const _do = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
+  const _base = _do.__base && typeof _do.__base==="object" ? _do.__base : null;
+  const cycleStart = _base && _base.date ? _base.date : null; // تاريخ آخر إقفال (بداية الدورة)
+  // تواريخ الدورة للعرض: من بداية الدورة إلى نفس اليوم الشهر القادم
+  const cycleFrom = cycleStart ? new Date(cycleStart) : new Date(today.getFullYear(), today.getMonth(), 21);
+  const cycleTo = new Date(cycleFrom.getFullYear(), cycleFrom.getMonth()+1, cycleFrom.getDate());
+  const arMonths=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+  const fmtCycle = d => d.getDate()+" "+arMonths[d.getMonth()];
+  const cycleLabel = fmtCycle(cycleFrom)+" ← "+fmtCycle(cycleTo);
+
+  // الهدف: قسط شهر واحد لكل عقد نشط (له متبقي)
+  const targetRows = allC.map(c=>{
+    const inst=+c.instAmt||0, total=+c.totalInst||+c.amount||0;
+    if(inst<=0) return null;
+    const paid=_getPaid(payments,c.id);
+    const rem=Math.max(0,total-paid);
+    if(rem<=0) return null;
+    if(c.contractType==="defer") return null; // المؤجل ما له قسط شهري
+    const due=Math.min(inst,rem);
+    // هل سُدّد ضمن الدورة الحالية؟
+    const paidInCycle=(payments||[]).filter(p=>p.contractId===c.id && p.date && (!cycleStart || p.date>=cycleStart))
+      .reduce((s,p)=>s+(+p.amount||0),0);
+    return {c, due, paidInCycle, isPaid:paidInCycle>0};
+  }).filter(Boolean).sort((a,b)=>b.due-a.due);
+
+  const targetAmount = targetRows.reduce((s,r)=>s+r.due,0);
+  const targetCount = targetRows.length;
+  // المنجز: السدادات المسجّلة في الدورة الحالية لعقود الهدف
+  const doneRows = targetRows.filter(r=>r.isPaid);
+  const doneAmount = doneRows.reduce((s,r)=>s+Math.min(r.due,r.paidInCycle),0);
+  const doneCount = doneRows.length;
+  const remCount = targetCount - doneCount;
+  const remAmount = targetAmount - doneAmount;
+  const donePct = targetAmount>0 ? Math.round(doneAmount/targetAmount*100) : 0;
+
+  const SARf = v => (v||0).toLocaleString("en-US",{maximumFractionDigits:0});
+  const shortD = d => d ? d.slice(8,10)+"/"+d.slice(5,7) : "";
+
   return (
     <div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
-        <div style={{...styles.card,textAlign:"center",borderTop:"4px solid #f97316",cursor:"pointer"}} onClick={()=>{const el=document.getElementById("dueSoonList");if(el)el.scrollIntoView({behavior:"smooth"});}}>
-          <div style={{fontSize:13,color:"#1f2937",fontWeight:700,marginBottom:6}}>⏰ أقساط خلال أسبوع</div>
-          <div style={{fontSize:22,fontWeight:900,color:"#f97316"}}>{dueSoon.length}</div>
+      {/* شريط دورة الشهر */}
+      <div style={{background:C.white,borderRadius:12,padding:"9px 14px",marginBottom:11,display:"flex",
+        alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 2px 8px rgba(0,0,0,.04)"}}>
+        <span style={{fontSize:14}}>🗓️</span>
+        <span style={{fontSize:12.5,fontWeight:700,color:C.ink2}}>دورة الشهر:</span>
+        <span style={{fontSize:13,fontWeight:800,color:C.teal}}>{cycleLabel}</span>
+      </div>
+
+      {/* المربعين: أقساط الشهر / المنجز */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+        <div onClick={()=>setDetail({mode:"target"})}
+          style={{borderRadius:18,padding:"16px 14px",cursor:"pointer",position:"relative",overflow:"hidden",
+          color:"#fff",background:"linear-gradient(140deg,#14b8a6,#0d9488)",boxShadow:"0 6px 20px rgba(13,148,136,.28)"}}>
+          <div style={{position:"absolute",top:0,right:0,left:0,height:4,background:"rgba(255,255,255,.25)"}}><div style={{height:"100%",width:"100%",background:"#fff"}}/></div>
+          <span style={{position:"absolute",top:14,left:14,fontSize:11,opacity:.7}}>اضغط ‹</span>
+          <div style={{fontSize:22,marginBottom:8}}>🎯</div>
+          <div style={{fontSize:14,fontWeight:800,opacity:.97,marginBottom:12}}>أقساط الشهر</div>
+          <div style={{fontSize:32,fontWeight:800,lineHeight:1,letterSpacing:"-.5px"}}>{SARf(targetAmount)}</div>
+          <div style={{fontSize:14,opacity:.95,marginTop:8,fontWeight:700}}>{targetCount} قسط</div>
+          <div style={{position:"absolute",left:-24,bottom:-24,width:90,height:90,borderRadius:"50%",background:"rgba(255,255,255,.13)"}}/>
         </div>
+        <div onClick={()=>setDetail({mode:"done"})}
+          style={{borderRadius:18,padding:"16px 14px",cursor:"pointer",position:"relative",overflow:"hidden",
+          color:"#fff",background:"linear-gradient(140deg,#22c55e,#15803d)",boxShadow:"0 6px 20px rgba(21,128,61,.28)"}}>
+          <div style={{position:"absolute",top:0,right:0,left:0,height:4,background:"rgba(255,255,255,.25)"}}><div style={{height:"100%",width:donePct+"%",background:"#fff"}}/></div>
+          <span style={{position:"absolute",top:14,left:14,fontSize:11,opacity:.7}}>اضغط ‹</span>
+          <div style={{fontSize:22,marginBottom:8}}>🏆</div>
+          <div style={{fontSize:14,fontWeight:800,opacity:.97,marginBottom:12}}>المنجز منها</div>
+          <div style={{fontSize:32,fontWeight:800,lineHeight:1,letterSpacing:"-.5px"}}>{SARf(doneAmount)}</div>
+          <div style={{fontSize:14,opacity:.95,marginTop:8,fontWeight:700}}>{doneCount} قسط</div>
+          <div style={{position:"absolute",left:-24,bottom:-24,width:90,height:90,borderRadius:"50%",background:"rgba(255,255,255,.13)"}}/>
+        </div>
+      </div>
+
+      {/* شريط التقدّم */}
+      <div style={{background:C.white,borderRadius:14,padding:"11px 14px",marginBottom:14,boxShadow:"0 2px 10px rgba(0,0,0,.05)"}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:11.5,marginBottom:6,fontWeight:700}}>
+          <span style={{color:C.green}}>أنجزت {donePct}%</span>
+          <span style={{color:C.ink2}}>باقي {remCount} قسط · {SARf(remAmount)}</span>
+        </div>
+        <div style={{height:9,background:"#f1f5f9",borderRadius:5,overflow:"hidden"}}>
+          <div style={{height:"100%",width:donePct+"%",background:"linear-gradient(90deg,#22c55e,#16a34a)",borderRadius:5,transition:"width .4s"}}/>
+        </div>
+      </div>
+
+      {/* مربع المتابعة العاجلة */}
+      <div style={{marginBottom:14}}>
         <div style={{...styles.card,textAlign:"center",borderTop:"4px solid "+C.red,cursor:"pointer"}} onClick={()=>{const el=document.getElementById("troubledList");if(el)el.scrollIntoView({behavior:"smooth"});}}>
           <div style={{fontSize:13,color:"#1f2937",fontWeight:700,marginBottom:6}}>🚨 يحتاجون متابعة</div>
           <div style={{fontSize:22,fontWeight:900,color:C.red}}>{troubled.length}</div>
         </div>
       </div>
+
+      {/* بطاقة أقساط الشهر / المنجز الفخمة */}
+      {detail && (detail.mode==="target" || detail.mode==="done") && (()=>{
+        const isDone = detail.mode==="done";
+        const rows = isDone ? doneRows : targetRows;
+        const headBg = isDone ? "linear-gradient(140deg,#22c55e,#15803d)" : "linear-gradient(140deg,#14b8a6,#0d9488)";
+        const amt = isDone ? doneAmount : targetAmount;
+        const cnt = isDone ? doneCount : targetCount;
+        return (
+        <div onClick={()=>setDetail(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:1000,
+          display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:C.white,borderRadius:22,overflow:"hidden",
+            width:"100%",maxWidth:440,maxHeight:"85vh",display:"flex",flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,.35)"}}>
+            <div style={{padding:"20px 18px 18px",color:"#fff",position:"relative",overflow:"hidden",background:headBg}}>
+              <div style={{position:"absolute",left:-30,top:-30,width:130,height:130,borderRadius:"50%",background:"rgba(255,255,255,.12)"}}/>
+              <div onClick={()=>setDetail(null)} style={{position:"absolute",top:16,left:16,width:30,height:30,
+                background:"rgba(255,255,255,.2)",borderRadius:"50%",display:"flex",alignItems:"center",
+                justifyContent:"center",fontSize:14,cursor:"pointer"}}>✕</div>
+              <div style={{fontSize:16,fontWeight:800,marginBottom:14}}>{isDone?"🏆 المنجز منها":"🎯 أقساط الشهر"}</div>
+              <div style={{display:"flex",alignItems:"baseline",gap:8}}>
+                <span style={{fontSize:38,fontWeight:800,lineHeight:1,letterSpacing:"-.5px"}}>{SARf(amt)}</span>
+                <span style={{fontSize:14,opacity:.92,fontWeight:700}}>﷼ · {cnt} قسط</span>
+              </div>
+              <div style={{fontSize:12,opacity:.9,marginTop:8,fontWeight:600}}>دورة {cycleLabel} · مرتّبين بالمبلغ</div>
+            </div>
+            <div style={{overflowY:"auto",flex:1}}>
+              {rows.length===0 ? (
+                <div style={{textAlign:"center",padding:40,color:C.ink2,fontSize:14}}>
+                  {isDone?"ما فيه سدادات بعد في هذي الدورة":"ما فيه أقساط مستحقة"}
+                </div>
+              ) : rows.map((r,i)=>{
+                const c=r.c, inv=investors.find(x=>String(x.id)===String(c.investorId));
+                const paid=r.isPaid;
+                return (
+                <div key={c.id} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 16px",
+                  borderBottom:"1px solid #f1f5f9",background:paid?"#f0fdf4":"transparent"}}>
+                  <div style={{width:26,height:26,borderRadius:8,flexShrink:0,background:paid?"#dcfce7":"#f1f5f9",
+                    color:paid?C.green:C.ink2,fontSize:12,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    {paid?"✓":(i+1)}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:14,fontWeight:700,color:C.ink,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{c.client}</div>
+                    <div style={{fontSize:11,color:"#64748b",marginTop:2}}>{inv?invLabel(inv):"—"} · #{c.num}</div>
+                  </div>
+                  <div style={{textAlign:"left",flexShrink:0}}>
+                    <div style={{fontSize:15,fontWeight:800,color:paid?C.green:C.ink}}>{SARf(r.due)}</div>
+                    <span style={{fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:8,marginTop:3,display:"inline-block",
+                      background:paid?"#dcfce7":"#f0fdfa",color:paid?C.green:C.teal}}>{paid?"تم السداد":"مستحق"}</span>
+                  </div>
+                  {!isDone && !paid && (
+                    <button onClick={()=>{setDetail(null);setPage&&setPage("contracts");}}
+                      style={{background:C.green,color:"#fff",border:"none",borderRadius:9,padding:"7px 13px",
+                      fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>سدّد</button>
+                  )}
+                </div>);
+              })}
+            </div>
+          </div>
+        </div>);
+      })()}
       {/* دفتر اليومية مدمج في الرئيسية */}
       <DailyPage daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} contracts={contracts} settings={settings} toast={toast} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} investors={investors} payments={payments}/>
 
       {/* قائمة المتابعة العاجلة */}
       {troubled.length>0 && (
-        <div style={{...styles.panel,marginBottom:16,borderRight:"4px solid "+C.red}}>
+        <div id="troubledList" style={{...styles.panel,marginBottom:16,borderRight:"4px solid "+C.red}}>
           <div style={{padding:"12px 16px",borderBottom:"1px solid "+C.border,fontWeight:900,color:C.red,fontSize:15}}>🚨 متابعة عاجلة ({troubled.length})</div>
           <div style={{padding:12,display:"flex",flexDirection:"column",gap:8,maxHeight:"40vh",overflowY:"auto"}}>
             {troubled.slice(0,15).map(({c,r})=>(
@@ -4691,27 +4831,6 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
                 <div style={{textAlign:"left",whiteSpace:"nowrap"}}>
                   <span style={{background:r.color,color:"#fff",borderRadius:12,padding:"2px 10px",fontSize:11,fontWeight:800}}>{r.level} {r.months} شهر</span>
                   <div style={{fontSize:13,fontWeight:900,color:C.red,marginTop:4}}>{SAR(r.overdue)}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* أقساط قادمة خلال أسبوع */}
-      {dueSoon.length>0 && (
-        <div style={{...styles.panel,marginBottom:16,borderRight:"4px solid #f97316"}}>
-          <div style={{padding:"12px 16px",borderBottom:"1px solid "+C.border,fontWeight:900,color:"#f97316",fontSize:15}}>⏰ أقساط تستحق خلال أسبوع ({dueSoon.length})</div>
-          <div style={{padding:12,display:"flex",flexDirection:"column",gap:8,maxHeight:"40vh",overflowY:"auto"}}>
-            {dueSoon.slice(0,15).map(({c,days,inst})=>(
-              <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:"#fff7ed",borderRadius:8}}>
-                <div>
-                  <div style={{fontWeight:700,fontSize:14,color:C.ink}}>{c.client} <span style={{fontSize:12,color:"#6b7280"}}>#{c.num}</span></div>
-                  <div style={{fontSize:12,color:"#1f2937",marginTop:2}}>{invNm(c.investorId)}</div>
-                </div>
-                <div style={{textAlign:"left",whiteSpace:"nowrap"}}>
-                  <span style={{fontSize:12,color:"#f97316",fontWeight:800}}>{days===0?"اليوم":days===1?"غداً":("بعد "+days+" يوم")}</span>
-                  <div style={{fontSize:13,fontWeight:900,color:C.ink,marginTop:4}}>{SAR(inst)}</div>
                 </div>
               </div>
             ))}
