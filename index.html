@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-23-premium-contract -->
+<!-- build: 2026-07-23-premium-v2 -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -1786,28 +1786,41 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
 
   return (
     <div>
-      <div style={{display:"flex",gap:8,marginBottom:8}}>
-        <button style={{...styles.btn("#0d9488","#fff"),fontSize:16,padding:"12px 20px",flex:1,justifyContent:"center",fontWeight:800}} onClick={()=>setPage("search")}>🔍 بحث شامل</button>
-        <button style={{...styles.btn("#0891b2","#fff"),fontSize:16,padding:"12px 20px",flex:1,justifyContent:"center",fontWeight:800}} onClick={()=>setShowDeduct(true)}>🏦 الاستقطاعات</button>
+      {/* ═══ Action Buttons — Premium Grid ═══ */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+        <button onClick={()=>setShowNew(true)} style={{background:"linear-gradient(135deg,#0d6b5e,#0f9488)",color:"#fff",border:"none",borderRadius:14,padding:"16px 12px",fontSize:16,fontWeight:900,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 16px rgba(13,107,94,0.25)",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+          <span style={{fontSize:20}}>+</span> عقد جديد
+        </button>
+        <button onClick={()=>setPage("search")} style={{background:"linear-gradient(135deg,#1a1a2e,#16213e)",color:"#fff",border:"none",borderRadius:14,padding:"16px 12px",fontSize:16,fontWeight:900,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 16px rgba(26,26,46,0.25)",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+          🔍 بحث شامل
+        </button>
+        <button onClick={()=>setShowMigrated(true)} style={{background:"linear-gradient(135deg,#92600a,#b45309)",color:"#fff",border:"none",borderRadius:14,padding:"14px 12px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 16px rgba(180,83,9,0.2)",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+          📦 عقد مرحّل
+        </button>
+        <button onClick={()=>setShowDeduct(true)} style={{background:"linear-gradient(135deg,#075985,#0891b2)",color:"#fff",border:"none",borderRadius:14,padding:"14px 12px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 16px rgba(8,145,178,0.2)",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+          🏦 الاستقطاعات
+        </button>
       </div>
-      <div style={{display:"flex",gap:8,marginBottom:16}}>
-        <button style={{...styles.btn(C.green),fontSize:16,padding:"10px 20px",flex:1,justifyContent:"center"}} onClick={()=>setShowNew(true)}>➕ عقد جديد</button>
-        <button style={{...styles.btn("#b45309","#fff"),fontSize:16,padding:"10px 20px",flex:1,justifyContent:"center"}} onClick={()=>setShowMigrated(true)}>📦 عقد مرحّل</button>
-      </div>
-      {/* Investor Report */}
-      <div style={{...styles.panel,marginBottom:16,padding:"14px 18px"}}>
-        <div style={{fontWeight:800,fontSize:16,marginBottom:10}}>🔍 كشف المستثمر</div>
-        <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
-          <select style={{...styles.input,flex:1,minWidth:180}} value={invSearch} onChange={e=>setInvSearch(e.target.value)}>
+
+      {/* ═══ Investor Report — Premium Card ═══ */}
+      <div style={{background:"rgba(255,255,255,0.9)",backdropFilter:"blur(12px)",borderRadius:18,marginBottom:16,padding:"18px 20px",border:"1px solid rgba(200,146,42,0.15)",boxShadow:"0 4px 24px rgba(0,0,0,0.04)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,paddingBottom:10,borderBottom:"2px solid rgba(200,146,42,0.15)"}}>
+          <span style={{fontSize:20}}>🔍</span>
+          <span style={{fontSize:17,fontWeight:900,color:C.gold}}>كشف المستثمر</span>
+        </div>
+        <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
+          <select style={{flex:1,minWidth:180,padding:"12px 14px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:15,fontWeight:600,background:"#fff",fontFamily:"IBM Plex Sans Arabic,Arial",cursor:"pointer"}} value={invSearch} onChange={e=>setInvSearch(e.target.value)}>
             <option value="">-- اختار المستثمر --</option>
             {sortedInvestors(investors).map(i=>(
               <option key={i.id} value={i.name}>{invLabel(i)}</option>
             ))}
           </select>
-          <button style={styles.btn(reportMode==="detailed"?C.teal:"#e5e7eb",reportMode==="detailed"?"#fff":C.ink)} onClick={()=>setReportMode("detailed")}>📊 مفصل</button>
-          <button style={styles.btn(reportMode==="brief"?C.teal:"#e5e7eb",reportMode==="brief"?"#fff":C.ink)} onClick={()=>setReportMode("brief")}>📋 مختصر</button>
+          <div style={{display:"flex",gap:4,background:"#f1f5f9",borderRadius:10,padding:3}}>
+            <button onClick={()=>setReportMode("detailed")} style={{padding:"8px 14px",borderRadius:8,border:"none",background:reportMode==="detailed"?"linear-gradient(135deg,#0d9488,#0f766e)":"transparent",color:reportMode==="detailed"?"#fff":"#64748b",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>📊 مفصل</button>
+            <button onClick={()=>setReportMode("brief")} style={{padding:"8px 14px",borderRadius:8,border:"none",background:reportMode==="brief"?"linear-gradient(135deg,#0d9488,#0f766e)":"transparent",color:reportMode==="brief"?"#fff":"#64748b",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>📋 مختصر</button>
+          </div>
           {invSearch && invReportContracts.length>0 && (
-            <button style={styles.btn(C.gold,"#fff")} onClick={()=>printInvReport()}>🖨️ طباعة</button>
+            <button style={{padding:"8px 16px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#c8922a,#a87520)",color:"#fff",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>printInvReport()}>🖨️</button>
           )}
         </div>
         {invSearch && invReportContracts.length===0 && (
@@ -1903,32 +1916,41 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         )}
       </div>
 
-      <div style={{fontSize:19,fontWeight:800,marginBottom:10}}>📋 العقود</div>
-      <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap"}}>
-        <input style={{...styles.input,flex:1,minWidth:140,fontSize:15}} placeholder="🔍 بحث..." value={search} onChange={e=>setSearch(e.target.value)}/>
-        <select style={{...styles.input,flex:1,minWidth:140,fontSize:15,cursor:"pointer"}} value={filterInv} onChange={e=>setFilterInv(e.target.value)}>
-          <option value="">🏢 كل المستثمرين</option>
+      {/* ═══ Contracts Section ═══ */}
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+        <div style={{width:4,height:24,borderRadius:2,background:"linear-gradient(180deg,#c8922a,#a87520)"}}/>
+        <span style={{fontSize:19,fontWeight:900,color:"#1a1a2e"}}>العقود</span>
+        <span style={{fontSize:13,color:"#94a3b8",fontWeight:600}}>{sortedFiltered.length} عقد</span>
+        <button onClick={exportExcel} style={{marginRight:"auto",padding:"6px 14px",borderRadius:8,border:"1.5px solid #e2e8f0",background:"#fff",color:"#64748b",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>📥 Excel</button>
+      </div>
+      <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+        <div style={{flex:1,minWidth:140,position:"relative"}}>
+          <input style={{width:"100%",padding:"12px 14px 12px 36px",borderRadius:12,border:"1.5px solid #e2e8f0",fontSize:15,fontFamily:"IBM Plex Sans Arabic,Arial",background:"#fff",boxSizing:"border-box"}} placeholder="بحث بالاسم..." value={search} onChange={e=>setSearch(e.target.value)}/>
+          <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:16,opacity:0.4,pointerEvents:"none"}}>🔍</span>
+        </div>
+        <select style={{flex:1,minWidth:140,padding:"12px 14px",borderRadius:12,border:"1.5px solid #e2e8f0",fontSize:14,fontWeight:600,background:"#fff",fontFamily:"IBM Plex Sans Arabic,Arial",cursor:"pointer"}} value={filterInv} onChange={e=>setFilterInv(e.target.value)}>
+          <option value="">كل المستثمرين</option>
           {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
         </select>
-        {filterInv && <button style={{...styles.btn(C.red,"#fff"),fontSize:13,padding:"6px 10px"}} onClick={()=>setFilterInv("")}>✕</button>}
+        {filterInv && <button style={{padding:"8px 12px",borderRadius:10,border:"none",background:"#fee2e2",color:"#dc2626",fontWeight:800,fontSize:14,cursor:"pointer"}} onClick={()=>setFilterInv("")}>✕</button>}
       </div>
-      <div style={{display:"flex",gap:8,marginBottom:16}}>
-        <button onClick={()=>setStatusTab("active")} style={{...styles.btn(statusTab==="active"?C.teal:"#e5e7eb",statusTab==="active"?"#fff":C.ink),fontSize:15,padding:"6px 14px"}}>
-          📋 مستمرة ({activeCount})
-        </button>
-        <button onClick={()=>setStatusTab("done")} style={{...styles.btn(statusTab==="done"?C.green:"#e5e7eb",statusTab==="done"?"#fff":C.ink),fontSize:15,padding:"6px 14px"}}>
-          ✅ منتهية ({completedCount})
-        </button>
-        <button onClick={()=>setStatusTab("defer")} style={{...styles.btn(statusTab==="defer"?"#a87520":"#e5e7eb",statusTab==="defer"?"#fff":C.ink),fontSize:15,padding:"6px 14px"}}>
-          🕒 المؤجل ({deferCount})
-        </button>
-        <button onClick={()=>setStatusTab("deleted")} style={{...styles.btn(statusTab==="deleted"?C.red:"#e5e7eb",statusTab==="deleted"?"#fff":C.ink),fontSize:15,padding:"6px 14px"}}>
-          🗑️ محذوفة ({deletedCount})
-        </button>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginBottom:16}}>
+        {[
+          {id:"active",label:"مستمرة",count:activeCount,icon:"📋",gradient:"linear-gradient(135deg,#0d9488,#0f766e)"},
+          {id:"done",label:"منتهية",count:completedCount,icon:"✅",gradient:"linear-gradient(135deg,#16a34a,#15803d)"},
+          {id:"defer",label:"المؤجل",count:deferCount,icon:"🕒",gradient:"linear-gradient(135deg,#b45309,#92400e)"},
+          {id:"deleted",label:"محذوفة",count:deletedCount,icon:"🗑️",gradient:"linear-gradient(135deg,#dc2626,#b91c1c)"}
+        ].map(t=>(
+          <button key={t.id} onClick={()=>setStatusTab(t.id)} style={{padding:"12px 6px",borderRadius:12,border:statusTab===t.id?"2.5px solid rgba(255,255,255,0.4)":"2px solid #e2e8f0",background:statusTab===t.id?t.gradient:"#fff",color:statusTab===t.id?"#fff":"#64748b",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",textAlign:"center",boxShadow:statusTab===t.id?"0 4px 12px rgba(0,0,0,0.15)":"none",transition:"all 0.2s"}}>
+            <div style={{fontSize:16,marginBottom:2}}>{t.icon}</div>
+            <div>{t.label}</div>
+            <div style={{fontSize:16,fontWeight:900,marginTop:2}}>({t.count})</div>
+          </button>
+        ))}
       </div>
-      <div style={styles.panel}>
+      <div style={{background:"rgba(255,255,255,0.92)",backdropFilter:"blur(12px)",borderRadius:18,border:"1px solid rgba(200,146,42,0.1)",boxShadow:"0 4px 24px rgba(0,0,0,0.04)",overflow:"hidden"}}>
         <div style={{overflowX:"auto",maxHeight:"75vh",overflowY:"auto",position:"relative"}}>
-          <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:15}}>
+          <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14}}>
             <thead>
               <tr>{["#","التاريخ","العميل","الهوية","العمل","الكفيل","البضاعة","العدد","المستثمر","القيمة","الإجمالي","القسط","أول قسط","الربح",""].map((h,hi)=>(
                 <th key={h} style={{...styles.th,position:"sticky",top:0,zIndex:hi===2?12:10,
@@ -7919,7 +7941,7 @@ function App() {
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={payments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="collect" && <CollectionPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone}/>}
-        {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone}/>}
+        {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
         {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast}/>}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast} gsWrite={gsWrite}/>}
