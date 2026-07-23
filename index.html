@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-23-realtime-sync -->
+<!-- build: 2026-07-23-premium-contract -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -840,16 +840,17 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
 function NewContractPage({investors, settings, contracts, onSave, toast, setInvTxList}) {
   const today = todayLocal();
   const nextNum = contracts.length ? Math.max(...contracts.map(c=>parseInt(c.num)||0).filter(n=>n>0), 0) + 1 : (settings.startNum||1);
-  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}],contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",bankAccount:"",stockName:"",stockQty:"",isOldContract:false});
+  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}],contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",bankAccount:"",stockName:"",stockQty:"",isOldContract:false});
+  const _autoFill = (f,prev) => ({...f, client:prev.client||f.client, idNum:prev.idNum||f.idNum, job:prev.job||f.job, cPhone:prev.cPhone||f.cPhone, nationality:prev.nationality||f.nationality, address:prev.address||f.address, idType:prev.idType||f.idType, gName:prev.gName||f.gName, gId:prev.gId||f.gId, gJob:prev.gJob||f.gJob, gPhone:prev.gPhone||f.gPhone});
   const set = (k,v) => {
     setForm(f=>({...f,[k]:v}));
-    // Auto-fill if idNum entered and matches existing contract
     if(k==="idNum" && v.length>=9){
       const prev = contracts.find(c=>c.idNum===v);
-      if(prev){
-        setForm(f=>({...f, idNum:v, client:prev.client||f.client, job:prev.job||f.job, cPhone:prev.cPhone||f.cPhone}));
-        toast("✅ تم تعبئة بيانات العميل تلقائياً");
-      }
+      if(prev){ setForm(f=>_autoFill({...f,idNum:v},prev)); toast("✅ تم تعبئة بيانات العميل تلقائياً"); }
+    }
+    if(k==="client" && v.length>=3){
+      const prev = contracts.find(c=>c.client===v && c.idNum);
+      if(prev && !form.idNum){ setForm(f=>_autoFill({...f,client:v},prev)); toast("✅ تم تعبئة بيانات العميل تلقائياً"); }
     }
   };
   const amount = parseFloat(form.amount)||0;
@@ -924,7 +925,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
     }
     toast("✅ تم حفظ العقد بنجاح");
     const nn = parseInt(form.num)+1;
-    setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nn),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}],isOldContract:false});
+    setForm({client:"",idNum:"",idType:"هوية وطنية",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nn),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}],isOldContract:false});
   };
 
   const fields1 = [
@@ -933,8 +934,6 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
     {label:"العمل",key:"job",type:"text",ph:"جهة العمل"},
     {label:"جوال العميل",key:"cPhone",type:"tel",ph:"05xxxxxxxx"},
     {label:"الجنسية",key:"nationality",type:"text",ph:"سعودي"},
-    {label:"صادرة من",key:"idIssuer",type:"text",ph:"جهة الإصدار"},
-    {label:"بتاريخ",key:"idIssueDate",type:"date",ph:""},
     {label:"عنواني",key:"address",type:"text",ph:"العنوان"},
   ];
   const fields2 = [
@@ -945,287 +944,297 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
     {label:"تاريخ أول قسط *",key:"firstInst",type:"date",ph:""},
   ];
 
-  return (
-    <div>
-      <div style={{fontSize:19,fontWeight:800,marginBottom:16,display:"flex",alignItems:"center",gap:8}}>
-        ➕ إضافة عقد جديد
-        <span style={{flex:1,height:1,background:C.border,display:"block"}}></span>
-      </div>
-      <div style={styles.panel}>
-        <div style={{padding:"16px 20px"}}>
-          {/* رقم العقد */}
-          <div style={{background:"linear-gradient(135deg,#c8922a,#a87520)",borderRadius:12,padding:"12px 20px",marginBottom:16,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <span style={{color:"rgba(255,255,255,0.8)",fontSize:15,fontWeight:600}}>📄 رقم العقد التلقائي</span>
-            <span style={{color:"white",fontSize:28,fontWeight:900,letterSpacing:2}}>{form.num}</span>
-          </div>
+  // ═══ Premium Section Styles ═══
+  const secStyle = {background:"rgba(255,255,255,0.85)",backdropFilter:"blur(12px)",borderRadius:16,padding:"20px",marginBottom:16,border:"1px solid rgba(200,146,42,0.15)",boxShadow:"0 4px 24px rgba(0,0,0,0.04)"};
+  const secHead = (icon,title,color) => ({display:"flex",alignItems:"center",gap:10,marginBottom:16,paddingBottom:10,borderBottom:"2px solid "+(color||"rgba(200,146,42,0.2)")});
+  const secTitle = (color) => ({fontSize:17,fontWeight:900,color:color||C.gold,margin:0});
+  const fLabel = {fontSize:14,fontWeight:700,color:"#4a5568",display:"block",marginBottom:6};
+  const fInput = {...styles.input,borderRadius:10,border:"1.5px solid #e2e8f0",transition:"all 0.2s",fontSize:15};
+  const fInputFocus = "border-color:#c8922a;box-shadow:0 0 0 3px rgba(200,146,42,0.1)";
 
-          {/* المستثمر */}
-          <div style={{marginBottom:14}}>
-            <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>المستثمر (الصندوق) *</label>
-            <select style={styles.select} value={form.investorId} onChange={e=>set("investorId",e.target.value)}>
-              <option value="">— اختر المستثمر —</option>
-              {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)} ({i.fund})</option>)}
+  return (
+    <div style={{maxWidth:720,margin:"0 auto"}}>
+      {/* ═══ Header ═══ */}
+      <div style={{background:"linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)",borderRadius:20,padding:"24px 20px",marginBottom:20,position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,background:"radial-gradient(circle at 20% 50%,rgba(200,146,42,0.15),transparent 60%)",pointerEvents:"none"}}/>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative"}}>
+          <div>
+            <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",fontWeight:600,letterSpacing:1,marginBottom:4}}>عقد جديد</div>
+            <div style={{fontSize:22,fontWeight:900,color:"#fff"}}>إنشاء عقد تقسيط</div>
+          </div>
+          <div style={{background:"linear-gradient(135deg,#c8922a,#e0b85c)",borderRadius:14,padding:"12px 22px",boxShadow:"0 4px 16px rgba(200,146,42,0.3)"}}>
+            <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",fontWeight:600,textAlign:"center"}}>رقم العقد</div>
+            <div style={{fontSize:32,fontWeight:900,color:"#fff",textAlign:"center",letterSpacing:3,lineHeight:1.1}}>{form.num}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ المستثمر ═══ */}
+      <div style={secStyle}>
+        <div style={secHead("💼","المستثمر")}>
+          <span style={{fontSize:20}}>💼</span>
+          <h3 style={secTitle()}>المستثمر (الصندوق)</h3>
+        </div>
+        <select style={{...styles.select,borderRadius:10,padding:"14px 16px",fontSize:16,fontWeight:700,border:"2px solid "+(form.investorId?C.gold:"#e2e8f0"),background:form.investorId?"#fefbf3":"#fff"}} value={form.investorId} onChange={e=>set("investorId",e.target.value)}>
+          <option value="">— اختر المستثمر —</option>
+          {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)} ({i.fund})</option>)}
+        </select>
+      </div>
+
+      {/* ═══ بيانات العميل ═══ */}
+      <div style={secStyle}>
+        <div style={secHead("👤","بيانات العميل","#0d9488")}>
+          <span style={{fontSize:20}}>👤</span>
+          <h3 style={secTitle("#0d9488")}>بيانات العميل</h3>
+          <span style={{fontSize:12,color:"#94a3b8",marginRight:"auto",fontWeight:500}}>أدخل رقم الهوية للتعبئة التلقائية</span>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+          {fields1.map(f=>(
+            <div key={f.key} style={f.key==="client"?{gridColumn:"1/-1"}:{}}>
+              <label style={fLabel}>{f.label}</label>
+              <input style={{...fInput,borderColor:f.key==="idNum"&&form.idNum?"#0d9488":undefined,fontWeight:f.key==="client"?700:400,fontSize:f.key==="client"?17:15}} type={f.type} placeholder={f.ph} value={form[f.key]} onChange={e=>set(f.key,e.target.value)}/>
+            </div>
+          ))}
+          <div>
+            <label style={fLabel}>نوع الهوية</label>
+            <select style={{...styles.select,borderRadius:10,padding:"12px 14px"}} value={form.idType} onChange={e=>set("idType",e.target.value)}>
+              <option value="هوية وطنية">هوية وطنية</option>
+              <option value="إقامة">إقامة</option>
             </select>
           </div>
+        </div>
+      </div>
 
-          {/* بيانات العميل */}
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:12,marginBottom:14}}>
-            {fields1.map(f=>(
-              <div key={f.key}>
-                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{f.label}</label>
-                <input style={styles.input} type={f.type} placeholder={f.ph} value={form[f.key]} onChange={e=>set(f.key,e.target.value)}/>
-              </div>
-            ))}
+      {/* ═══ البضاعة ═══ */}
+      <div style={secStyle}>
+        <div style={secHead("📦","البضاعة","#7c3aed")}>
+          <span style={{fontSize:20}}>📦</span>
+          <h3 style={secTitle("#7c3aed")}>نوع البضاعة</h3>
+        </div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}}>
+          {GOODS_LIST.map(g=>(
+            <button key={g} onClick={()=>set("goods",g)} style={{padding:"10px 18px",borderRadius:25,border:"2px solid "+(form.goods===g?"#7c3aed":"#e2e8f0"),background:form.goods===g?"#7c3aed":"#fff",color:form.goods===g?"#fff":"#4a5568",fontWeight:700,fontSize:14,cursor:"pointer",transition:"all 0.2s",fontFamily:"IBM Plex Sans Arabic,Arial"}}>{g}</button>
+          ))}
+          <button onClick={()=>set("goods","")} style={{padding:"10px 18px",borderRadius:25,border:"2px solid "+(form.goods&&!GOODS_LIST.includes(form.goods)?"#7c3aed":"#e2e8f0"),background:form.goods&&!GOODS_LIST.includes(form.goods)?"#7c3aed":"#fff",color:form.goods&&!GOODS_LIST.includes(form.goods)?"#fff":"#4a5568",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>✏️ أخرى</button>
+        </div>
+        <input style={{...fInput,borderColor:"#7c3aed",fontWeight:700}} type="text" placeholder="اكتب نوع البضاعة..." value={form.goods} onChange={e=>set("goods",e.target.value)}/>
+
+        {form.goods && form.goods.includes("أسهم") && (
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:14,background:"#f0f9ff",border:"2px solid #0891b2",borderRadius:12,padding:"14px"}}>
             <div>
-              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>نوع الهوية</label>
-              <select style={styles.select} value={form.idType} onChange={e=>set("idType",e.target.value)}>
-                <option value="هوية وطنية">هوية وطنية</option>
-                <option value="إقامة">إقامة</option>
+              <label style={{...fLabel,color:"#0891b2"}}>📈 اسم الشركة</label>
+              <input style={fInput} type="text" placeholder="مثال: الراجحي / الإنماء" value={form.stockName||""} onChange={e=>set("stockName",e.target.value)}/>
+            </div>
+            <div>
+              <label style={{...fLabel,color:"#0891b2"}}>📊 عدد الأسهم</label>
+              <input style={fInput} type="number" placeholder="مثال: 1000" value={form.stockQty||""} onChange={e=>set("stockQty",e.target.value)} min="1"/>
+            </div>
+          </div>
+        )}
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:14}}>
+          <div>
+            <label style={fLabel}>العدد</label>
+            <input style={fInput} type="number" placeholder="مثال: 10" value={form.qty||""} onChange={e=>set("qty",e.target.value)} min="1"/>
+          </div>
+          <div>
+            <label style={fLabel}>الفئة / المواصفة</label>
+            <input style={fInput} type="text" placeholder="مثال: 50 ريال / سامسونج A15" value={form.category||""} onChange={e=>set("category",e.target.value)}/>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ نوع العقد ═══ */}
+      <div style={secStyle}>
+        <div style={secHead("📑","نوع العقد","#1e3a5f")}>
+          <span style={{fontSize:20}}>📑</span>
+          <h3 style={secTitle("#1e3a5f")}>نوع العقد</h3>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:form.contractType==="defer"?16:0}}>
+          <button type="button" onClick={()=>set("contractType","monthly")}
+            style={{padding:"16px",borderRadius:14,border:"2.5px solid "+(form.contractType==="monthly"?"#0d9488":"#e2e8f0"),background:form.contractType==="monthly"?"linear-gradient(135deg,#f0fdfa,#ccfbf1)":"#fff",color:form.contractType==="monthly"?"#0d9488":"#94a3b8",fontWeight:900,fontSize:16,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",transition:"all 0.2s"}}>
+            📅 شهري
+          </button>
+          <button type="button" onClick={()=>set("contractType","defer")}
+            style={{padding:"16px",borderRadius:14,border:"2.5px solid "+(form.contractType==="defer"?"#c8922a":"#e2e8f0"),background:form.contractType==="defer"?"linear-gradient(135deg,#fefbf3,#fef3c7)":"#fff",color:form.contractType==="defer"?"#a87520":"#94a3b8",fontWeight:900,fontSize:16,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",transition:"all 0.2s"}}>
+            🕒 مؤجل
+          </button>
+        </div>
+        {form.contractType==="defer" && (
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div>
+              <label style={fLabel}>مدة التأجيل</label>
+              <select style={{...styles.select,borderRadius:10}} value={form.deferMonths} onChange={e=>set("deferMonths",e.target.value)}>
+                {[3,4,5,6,7,8,9].map(n=><option key={n} value={n}>{n} شهور</option>)}
+                <option value="12">سنة</option>
+              </select>
+            </div>
+            <div>
+              <label style={fLabel}>عدد الدفعات</label>
+              <select style={{...styles.select,borderRadius:10}} value={form.deferPayments} onChange={e=>set("deferPayments",e.target.value)}>
+                <option value="1">دفعة واحدة (نهاية المدة)</option>
+                <option value="2">دفعتين (نصف ونهاية المدة)</option>
               </select>
             </div>
           </div>
+        )}
+      </div>
 
-          {/* نوع البضاعة */}
-          <div style={{marginBottom:14}}>
-            <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:6}}>نوع البضاعة *</label>
-            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
-              {GOODS_LIST.map(g=>(
-                <button key={g} style={styles.goodsBtn(form.goods===g)} onClick={()=>set("goods",g)}>{g}</button>
-              ))}
-              <button style={styles.goodsBtn(!!form.goods&&!GOODS_LIST.includes(form.goods))} onClick={()=>set("goods","")}>✏️ أخرى</button>
-            </div>
-            <input style={{...styles.input,borderColor:C.teal,fontWeight:700}} type="text" placeholder="اكتب نوع البضاعة..." value={form.goods} onChange={e=>set("goods",e.target.value)}/>
+      {/* ═══ نوع السداد ═══ */}
+      <div style={secStyle}>
+        <div style={secHead("💳","نوع السداد","#3b82f6")}>
+          <span style={{fontSize:20}}>💳</span>
+          <h3 style={secTitle("#3b82f6")}>نوع السداد</h3>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:form.payType==="deduction"?16:0}}>
+          <button type="button" onClick={()=>set("payType","normal")}
+            style={{padding:"16px",borderRadius:14,border:"2.5px solid "+(form.payType==="normal"?"#16a34a":"#e2e8f0"),background:form.payType==="normal"?"linear-gradient(135deg,#f0fdf4,#dcfce7)":"#fff",color:form.payType==="normal"?"#16a34a":"#94a3b8",fontWeight:900,fontSize:16,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>
+            💵 نقدي
+          </button>
+          <button type="button" onClick={()=>set("payType","deduction")}
+            style={{padding:"16px",borderRadius:14,border:"2.5px solid "+(form.payType==="deduction"?"#3b82f6":"#e2e8f0"),background:form.payType==="deduction"?"linear-gradient(135deg,#eff6ff,#dbeafe)":"#fff",color:form.payType==="deduction"?"#3b82f6":"#94a3b8",fontWeight:900,fontSize:16,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>
+            🏦 استقطاع
+          </button>
+        </div>
+        {form.payType==="deduction" && (
+          <div>
+            <label style={fLabel}>رقم حساب الزبون (للمطابقة مع البنك)</label>
+            <input style={fInput} type="text" placeholder="رقم الحساب / الآيبان" value={form.bankAccount} onChange={e=>set("bankAccount",e.target.value)}/>
           </div>
+        )}
+      </div>
 
-          {/* حقول الأسهم — تظهر فقط عند اختيار أسهم */}
-          {form.goods && form.goods.includes("أسهم") && (
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14,background:"#f0f9ff",border:"2px solid #0891b2",borderRadius:12,padding:"12px 14px"}}>
-              <div>
-                <label style={{fontSize:15,fontWeight:700,color:"#0891b2",display:"block",marginBottom:5}}>📈 اسم الشركة</label>
-                <input style={styles.input} type="text" placeholder="مثال: الراجحي / الإنماء" value={form.stockName||""} onChange={e=>set("stockName",e.target.value)}/>
-              </div>
-              <div>
-                <label style={{fontSize:15,fontWeight:700,color:"#0891b2",display:"block",marginBottom:5}}>📊 عدد الأسهم</label>
-                <input style={styles.input} type="number" placeholder="مثال: 1000" value={form.stockQty||""} onChange={e=>set("stockQty",e.target.value)} min="1"/>
-              </div>
+      {/* ═══ المبالغ ═══ */}
+      <div style={secStyle}>
+        <div style={secHead("💰","المبالغ والتواريخ","#c8922a")}>
+          <span style={{fontSize:20}}>💰</span>
+          <h3 style={secTitle()}>المبالغ والتواريخ</h3>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:14}}>
+          {fields2.filter(f=>{
+            if(form.contractType==="defer" && (f.key==="instAmt"||f.key==="firstInst")) return false;
+            return true;
+          }).map(f=>(
+            <div key={f.key}>
+              <label style={fLabel}>{
+                form.contractType==="defer" ? (f.key==="amount"?"المبلغ نقداً *":f.key==="totalInst"?"المبلغ الإجمالي (مع فائدتك) *":f.label) : f.label
+              }</label>
+              <input style={{...fInput,borderColor:["amount","instAmt","totalInst"].includes(f.key)?"#c8922a":"#e2e8f0",fontWeight:["amount","instAmt","totalInst"].includes(f.key)?800:400}} type={f.type} placeholder={f.key==="totalInst"&&form.contractType==="defer"?"اكتب الإجمالي مع الفائدة":f.ph} value={form[f.key]} onChange={e=>set(f.key,e.target.value)}/>
             </div>
-          )}
+          ))}
+        </div>
+      </div>
 
-          {/* العدد والفئة */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
-            <div>
-              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>العدد</label>
-              <input style={styles.input} type="number" placeholder="مثال: 10" value={form.qty||""} onChange={e=>set("qty",e.target.value)} min="1"/>
-            </div>
-            <div>
-              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>الفئة / المواصفة</label>
-              <input style={styles.input} type="text" placeholder="مثال: 50 ريال / سامسونج A15" value={form.category||""} onChange={e=>set("category",e.target.value)}/>
-            </div>
+      {/* معاينة المؤجل */}
+      {form.contractType==="defer" && amount>0 && parseFloat(form.totalInst)>0 && (()=>{
+        const months=parseInt(form.deferMonths)||12, nPays=parseInt(form.deferPayments)||1;
+        const total=parseFloat(form.totalInst)||amount;
+        const profit=total-amount;
+        const profitPct=amount>0?Math.round((profit/amount)*100):0;
+        const perPay=Math.round(total/nPays);
+        const firstD=addMonths(form.date||today, nPays===1?months:Math.round(months/2));
+        const lastD=addMonths(form.date||today, months);
+        return (
+          <div style={{...secStyle,background:"linear-gradient(135deg,#fefbf3,#fef3c7)",border:"2px solid #e0b85c"}}>
+            <div style={{fontSize:15,fontWeight:900,color:"#a87520",marginBottom:12}}>🕒 ملخص العقد المؤجل</div>
+            {[[" المبلغ نقداً",SAR(amount)],[" المبلغ الإجمالي",SAR(total)],[" الفائدة",SAR(profit)+" ("+profitPct+"%)",C.green],[" عدد الدفعات",nPays+(nPays===1?" دفعة":" دفعتين")],[" قيمة كل دفعة",SAR(perPay),"#a87520"],[nPays===1?" موعد الدفع":" أول / آخر دفعة",nPays===1?firstD:firstD+" / "+lastD]].map(([l,v,c],i)=>(
+              <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span>{l}</span><span style={{fontWeight:800,color:c||"inherit"}}>{v}</span></div>
+            ))}
           </div>
+        );
+      })()}
 
-          {/* نوع العقد */}
-          <div style={{marginBottom:14,background:"#f8fafc",border:"2px solid "+C.border,borderRadius:12,padding:"14px 16px"}}>
-            <label style={{fontSize:15,fontWeight:800,color:C.ink2,display:"block",marginBottom:8}}>📑 نوع العقد *</label>
-            <div style={{display:"flex",gap:8,marginBottom:form.contractType==="defer"?14:0}}>
-              <button type="button" onClick={()=>set("contractType","monthly")}
-                style={{flex:1,padding:"12px",borderRadius:10,border:"2px solid "+(form.contractType==="monthly"?C.teal:C.border),background:form.contractType==="monthly"?C.tealLt:"#fff",color:form.contractType==="monthly"?C.teal:C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>
-                📅 شهري
-              </button>
-              <button type="button" onClick={()=>set("contractType","defer")}
-                style={{flex:1,padding:"12px",borderRadius:10,border:"2px solid "+(form.contractType==="defer"?C.gold:C.border),background:form.contractType==="defer"?"#fef9ec":"#fff",color:form.contractType==="defer"?"#a87520":C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>
-                🕒 مؤجل
-              </button>
-            </div>
-            {form.contractType==="defer" && (
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-                <div>
-                  <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>مدة التأجيل</label>
-                  <select style={styles.select} value={form.deferMonths} onChange={e=>set("deferMonths",e.target.value)}>
-                    <option value="3">3 شهور</option>
-                    <option value="4">4 شهور</option>
-                    <option value="5">5 شهور</option>
-                    <option value="6">6 شهور</option>
-                    <option value="7">7 شهور</option>
-                    <option value="8">8 شهور</option>
-                    <option value="9">9 شهور</option>
-                    <option value="12">سنة</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>عدد الدفعات</label>
-                  <select style={styles.select} value={form.deferPayments} onChange={e=>set("deferPayments",e.target.value)}>
-                    <option value="1">دفعة واحدة (نهاية المدة)</option>
-                    <option value="2">دفعتين (نصف ونهاية المدة)</option>
-                  </select>
-                </div>
-              </div>
-            )}
+      {/* تاريخ آخر قسط */}
+      {lastInst && (
+        <div style={{...secStyle,background:"linear-gradient(135deg,#f0fdf4,#dcfce7)",border:"2px solid "+C.green,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div>
+            <div style={{fontSize:14,fontWeight:800,color:C.green}}>🏁 تاريخ آخر قسط</div>
+            <div style={{fontSize:13,color:"#64748b"}}>{numMonths} قسط شهري</div>
           </div>
+          <div style={{fontSize:22,fontWeight:900,color:C.green}}>{fmtDate(lastInst)}</div>
+        </div>
+      )}
 
-          {/* نوع السداد */}
-          <div style={{marginBottom:14,background:"#f8fafc",border:"2px solid "+C.border,borderRadius:12,padding:"14px 16px"}}>
-            <label style={{fontSize:15,fontWeight:800,color:C.ink2,display:"block",marginBottom:8}}>💳 نوع السداد *</label>
-            <div style={{display:"flex",gap:8,marginBottom:form.payType==="deduction"?14:0}}>
-              <button type="button" onClick={()=>set("payType","normal")}
-                style={{flex:1,padding:"12px",borderRadius:10,border:"2px solid "+(form.payType==="normal"?C.teal:C.border),background:form.payType==="normal"?C.tealLt:"#fff",color:form.payType==="normal"?C.teal:C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>
-                💵 نقدي
-              </button>
-              <button type="button" onClick={()=>set("payType","deduction")}
-                style={{flex:1,padding:"12px",borderRadius:10,border:"2px solid "+(form.payType==="deduction"?"#3b82f6":C.border),background:form.payType==="deduction"?"#eff6ff":"#fff",color:form.payType==="deduction"?"#3b82f6":C.ink2,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>
-                🏦 استقطاع
-              </button>
-            </div>
-            {form.payType==="deduction" && (
-              <div>
-                <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>رقم حساب الزبون (للمطابقة مع البنك)</label>
-                <input style={styles.input} type="text" placeholder="رقم الحساب / الآيبان" value={form.bankAccount} onChange={e=>set("bankAccount",e.target.value)}/>
-              </div>
-            )}
-          </div>
-
-          {/* بيانات المبلغ */}
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12,marginBottom:14}}>
-            {fields2.filter(f=>{
-              // للمؤجل نخفي القسط الشهري وتاريخ أول قسط (يحسبوا تلقائياً)، ونبقي الإجمالي ليكتبه المستخدم
-              if(form.contractType==="defer" && (f.key==="instAmt"||f.key==="firstInst")) return false;
-              return true;
-            }).map(f=>(
-              <div key={f.key}>
-                <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{
-                  form.contractType==="defer" ? (f.key==="amount"?"المبلغ نقداً *":f.key==="totalInst"?"المبلغ الإجمالي (مع فائدتك) *":f.label) : f.label
-                }</label>
-                <input style={{...styles.input,borderColor:["amount","instAmt","totalInst"].includes(f.key)?C.teal:C.border,fontWeight:["amount","instAmt","totalInst"].includes(f.key)?700:400}} type={f.type} placeholder={f.key==="totalInst"&&form.contractType==="defer"?"اكتب الإجمالي مع الفائدة":f.ph} value={form[f.key]} onChange={e=>set(f.key,e.target.value)}/>
+      {/* الحساب التلقائي */}
+      {r && (
+        <div style={secStyle}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
+            {[["💵 النقدية",SAR(parseFloat(form.amount)||0),"linear-gradient(135deg,#c8922a,#a87520)","#fff"],
+              ["📋 الأقساط",SAR(parseFloat(form.totalInst)||0),"linear-gradient(135deg,#1a1a2e,#16213e)",C.goldLt],
+              ["💳 القسط",SAR(parseFloat(form.instAmt)||0),"linear-gradient(135deg,#0d6b5e,#0f5233)","#a8f0c6"]
+            ].map(([l,v,bg,vc],i)=>(
+              <div key={i} style={{background:bg,borderRadius:14,padding:"14px",color:"#fff",textAlign:"center"}}>
+                <div style={{fontSize:12,opacity:0.7,marginBottom:4,fontWeight:600}}>{l}</div>
+                <div style={{fontSize:17,fontWeight:900,color:vc}}>{v}</div>
               </div>
             ))}
           </div>
-
-          {/* معاينة المؤجل */}
-          {form.contractType==="defer" && amount>0 && parseFloat(form.totalInst)>0 && (()=>{
-            const months=parseInt(form.deferMonths)||12, nPays=parseInt(form.deferPayments)||1;
-            const total=parseFloat(form.totalInst)||amount;
-            const profit=total-amount;
-            const profitPct=amount>0?Math.round((profit/amount)*100):0;
-            const perPay=Math.round(total/nPays);
-            const firstD=addMonths(form.date||today, nPays===1?months:Math.round(months/2));
-            const lastD=addMonths(form.date||today, months);
-            return (
-              <div style={{background:"#fef9ec",border:"2px solid #e0b85c",borderRadius:10,padding:"14px 18px",marginBottom:14}}>
-                <div style={{fontSize:14,fontWeight:800,color:"#a87520",marginBottom:8}}>🕒 ملخص العقد المؤجل</div>
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span>المبلغ نقداً</span><span style={{fontWeight:800}}>{SAR(amount)}</span></div>
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span>المبلغ الإجمالي</span><span style={{fontWeight:800}}>{SAR(total)}</span></div>
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span>الفائدة</span><span style={{fontWeight:800,color:C.green}}>{SAR(profit)} ({profitPct}%)</span></div>
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span>عدد الدفعات</span><span style={{fontWeight:800}}>{nPays} {nPays===1?"دفعة":"دفعتين"}</span></div>
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span>قيمة كل دفعة</span><span style={{fontWeight:800,color:"#a87520"}}>{SAR(perPay)}</span></div>
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:14}}><span>{nPays===1?"موعد الدفع":"موعد أول دفعة / آخر دفعة"}</span><span style={{fontWeight:800}}>{nPays===1?firstD:firstD+" / "+lastD}</span></div>
-              </div>
-            );
-          })()}
-
-          {/* تاريخ آخر قسط — تلقائي */}
-          {lastInst && (
-            <div style={{background:"#f0fdf4",border:"2px solid "+C.green,borderRadius:10,padding:"12px 18px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <div>
-                <div style={{fontSize:14,fontWeight:700,color:C.green,marginBottom:2}}>🏁 تاريخ آخر قسط (محسوب تلقائياً)</div>
-                <div style={{fontSize:14,color:"#1f2937"}}>{numMonths} قسط شهري</div>
-              </div>
-              <div style={{fontSize:20,fontWeight:900,color:C.green}}>{fmtDate(lastInst)}</div>
-            </div>
-          )}
-
-          {/* بيانات الكفيل */}
-          <div style={{marginBottom:14}}>
-            <div style={{background:"#fff8e1",border:"2px solid "+C.gold,borderRadius:10,padding:"10px 16px",marginBottom:10,display:"flex",alignItems:"center",gap:8}}>
-              <span style={{fontSize:16}}>🤝</span>
-              <span style={{fontSize:15,fontWeight:800,color:C.gold}}>بيانات الكفيل</span>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:12}}>
-              {[["اسم الكفيل","gName","text","الاسم الكامل"],["هوية الكفيل","gId","text","رقم الهوية"],["عمل الكفيل","gJob","text","جهة العمل"],["جوال الكفيل","gPhone","tel","05xxxxxxxx"]].map(([l,k,t,p])=>(
-                <div key={k}>
-                  <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>{l}</label>
-                  <input style={{...styles.input,borderColor:k==="gName"?C.gold:C.border}} type={t} placeholder={p} value={form[k]} onChange={e=>set(k,e.target.value)}/>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* تاريخ آخر قسط */}
-          {lastInst && (
-            <div style={{background:C.greenLt,border:"2px solid "+C.green,borderRadius:10,padding:"10px 16px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <span style={{fontSize:15,fontWeight:700,color:C.green}}>🏁 تاريخ آخر قسط (تلقائي)</span>
-              <span style={{fontSize:17,fontWeight:800,color:C.green}}>{fmtDate(lastInst)}</span>
-            </div>
-          )}
-
-          {/* الحساب التلقائي */}
-          {r && (
-            <>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:10}}>
-                <div style={{background:"linear-gradient(135deg,#c8922a,#a87520)",borderRadius:12,padding:"14px 16px",color:"white",textAlign:"center"}}>
-                  <div style={{fontSize:13,opacity:0.8,marginBottom:4,fontWeight:600}}>💵 القيمة النقدية</div>
-                  <div style={{fontSize:18,fontWeight:800}}>{SAR(parseFloat(form.amount)||0)}</div>
-                </div>
-                <div style={{background:"linear-gradient(135deg,#1F3864,#2c4a7a)",borderRadius:12,padding:"14px 16px",color:"white",textAlign:"center"}}>
-                  <div style={{fontSize:13,opacity:0.8,marginBottom:4,fontWeight:600}}>📋 إجمالي الأقساط</div>
-                  <div style={{fontSize:18,fontWeight:800,color:C.goldLt}}>{SAR(parseFloat(form.totalInst)||0)}</div>
-                </div>
-                <div style={{background:"linear-gradient(135deg,#1a7a4a,#0f5233)",borderRadius:12,padding:"14px 16px",color:"white",textAlign:"center"}}>
-                  <div style={{fontSize:13,opacity:0.8,marginBottom:4,fontWeight:600}}>💳 القسط الشهري</div>
-                  <div style={{fontSize:18,fontWeight:800,color:"#a8f0c6"}}>{SAR(parseFloat(form.instAmt)||0)}</div>
-                </div>
-              </div>
-              <div style={styles.calcBox}>
-                <div style={{fontSize:15,fontWeight:700,color:C.gold,marginBottom:10}}>⚡ تفاصيل توزيع الربح</div>
-                <CalcRow label="قيمة العقد" value={SAR(amount)}/>
-                <CalcRow label="الربح (50%)" value={SAR(r.profit)} color="#5cd98a"/>
-                <CalcRow label="الرسوم الإدارية (2.5%)" value={SAR(r.admin)} color="#ff8080"/>
-                <CalcRow label="عمولة المحاسبين (10%)" value={SAR(r.acc)} color="#ff8080"/>
-                <CalcRow label="نصيب المؤسسة (10%)" value={SAR(r.inst)} color="#ff8080"/>
-                <CalcRow label="✅ صافي ربح المستثمر" value={SAR(r.net)} color={C.gold} total bold/>
-              </div>
-            </>
-          )}
-
-          {/* ملاحظة + خصم مستثمر */}
-          <div style={{marginTop:16,padding:"14px 16px",background:"#f8f8f8",borderRadius:10,border:"1px solid "+C.border}}>
-            <div style={{marginBottom:12}}>
-              <label style={{fontSize:15,fontWeight:700,color:C.ink2,display:"block",marginBottom:5}}>ملاحظة (اختياري)</label>
-              <textarea style={{...styles.input,height:60,resize:"vertical"}} placeholder="أكتب ملاحظة..." value={form.note||""} onChange={e=>set("note",e.target.value)}/>
-            </div>
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:form.deductEnabled?12:0}}>
-              <button
-                style={{...styles.btn(form.deductEnabled?C.gold:"#e5e7eb",form.deductEnabled?"#fff":C.ink),fontSize:15,padding:"8px 14px"}}
-                onClick={()=>set("deductEnabled",!form.deductEnabled)}>
-                {form.deductEnabled?"✅":"💰"} خصم سداد مستثمر
-              </button>
-              {form.deductEnabled && <span style={{fontSize:14,color:"#333"}}>سيطلع في العقد المطبوع</span>}
-            </div>
-            {form.deductEnabled && (
-              <div style={{display:"flex",flexDirection:"column",gap:10,marginTop:8}}>
-                {(form.deducts||[]).map((d,idx)=>(
-                  <div key={idx} style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,alignItems:"end",background:idx%2===0?"#fefce8":"#fff",padding:"8px 10px",borderRadius:10,border:"1px solid #e5e7eb"}}>
-                    <div>
-                      <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:3}}>المبلغ (ريال) {idx+1}</label>
-                      <input style={styles.input} type="number" placeholder="مثال: 3000" value={d.amount||""} onChange={e=>{const dd=[...(form.deducts||[])];dd[idx]={...dd[idx],amount:e.target.value};setForm(f=>({...f,deducts:dd}));}}/>
-                    </div>
-                    <div>
-                      <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:3}}>المستثمر {idx+1}</label>
-                      <select style={styles.select} value={d.investorId||""} onChange={e=>{const dd=[...(form.deducts||[])];dd[idx]={...dd[idx],investorId:e.target.value};setForm(f=>({...f,deducts:dd}));}}>
-                        <option value="">اختر مستثمر</option>
-                        {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-          </div>
-
-          <div style={{display:"flex",gap:10,marginTop:16}}>
-            <button style={styles.btn(C.teal)} onClick={save}>💾 حفظ العقد</button>
-            <button style={styles.btn("transparent",C.ink2)} onClick={()=>setForm({client:"",idNum:"",idType:"هوية وطنية",idIssuer:"",idIssueDate:"",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}],isOldContract:false})}>مسح</button>
+          <div style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",borderRadius:14,padding:"18px 20px"}}>
+            <div style={{fontSize:15,fontWeight:800,color:C.goldLt,marginBottom:12}}>⚡ تفاصيل توزيع الربح</div>
+            <CalcRow label="قيمة العقد" value={SAR(amount)}/>
+            <CalcRow label="الربح (50%)" value={SAR(r.profit)} color="#5cd98a"/>
+            <CalcRow label="الرسوم الإدارية (2.5%)" value={SAR(r.admin)} color="#ff8080"/>
+            <CalcRow label="عمولة المحاسبين (10%)" value={SAR(r.acc)} color="#ff8080"/>
+            <CalcRow label="نصيب المؤسسة (10%)" value={SAR(r.inst)} color="#ff8080"/>
+            <CalcRow label="✅ صافي ربح المستثمر" value={SAR(r.net)} color={C.goldLt} total bold/>
           </div>
         </div>
+      )}
+
+      {/* ═══ الكفيل ═══ */}
+      <div style={secStyle}>
+        <div style={secHead("🤝","بيانات الكفيل","#b45309")}>
+          <span style={{fontSize:20}}>🤝</span>
+          <h3 style={secTitle("#b45309")}>بيانات الكفيل</h3>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+          {[["اسم الكفيل","gName","text","الاسم الكامل"],["هوية الكفيل","gId","text","رقم الهوية"],["عمل الكفيل","gJob","text","جهة العمل"],["جوال الكفيل","gPhone","tel","05xxxxxxxx"]].map(([l,k,t,p])=>(
+            <div key={k}>
+              <label style={fLabel}>{l}</label>
+              <input style={{...fInput,borderColor:k==="gName"?"#b45309":"#e2e8f0"}} type={t} placeholder={p} value={form[k]} onChange={e=>set(k,e.target.value)}/>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ═══ ملاحظات + خصم ═══ */}
+      <div style={secStyle}>
+        <div style={{marginBottom:14}}>
+          <label style={fLabel}>ملاحظة (اختياري)</label>
+          <textarea style={{...fInput,height:60,resize:"vertical"}} placeholder="أكتب ملاحظة..." value={form.note||""} onChange={e=>set("note",e.target.value)}/>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:form.deductEnabled?14:0}}>
+          <button style={{padding:"10px 18px",borderRadius:10,border:"2px solid "+(form.deductEnabled?C.gold:"#e2e8f0"),background:form.deductEnabled?"linear-gradient(135deg,#fefbf3,#fef3c7)":"#fff",color:form.deductEnabled?C.gold:"#94a3b8",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}
+            onClick={()=>set("deductEnabled",!form.deductEnabled)}>
+            {form.deductEnabled?"✅":"💰"} خصم سداد مستثمر
+          </button>
+          {form.deductEnabled && <span style={{fontSize:13,color:"#64748b"}}>سيطلع في العقد المطبوع</span>}
+        </div>
+        {form.deductEnabled && (
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {(form.deducts||[]).map((d,idx)=>(
+              <div key={idx} style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,background:idx%2===0?"#fefce8":"#fff",padding:"12px 14px",borderRadius:12,border:"1px solid #e5e7eb"}}>
+                <div>
+                  <label style={{...fLabel,fontSize:13}}>المبلغ (ريال) {idx+1}</label>
+                  <input style={fInput} type="number" placeholder="مثال: 3000" value={d.amount||""} onChange={e=>{const dd=[...(form.deducts||[])];dd[idx]={...dd[idx],amount:e.target.value};setForm(f=>({...f,deducts:dd}));}}/>
+                </div>
+                <div>
+                  <label style={{...fLabel,fontSize:13}}>المستثمر {idx+1}</label>
+                  <select style={{...styles.select,borderRadius:10}} value={d.investorId||""} onChange={e=>{const dd=[...(form.deducts||[])];dd[idx]={...dd[idx],investorId:e.target.value};setForm(f=>({...f,deducts:dd}));}}>
+                    <option value="">اختر مستثمر</option>
+                    {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
+                  </select>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ═══ أزرار الحفظ ═══ */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:12,marginBottom:30}}>
+        <button onClick={save} style={{background:"linear-gradient(135deg,#c8922a,#a87520)",color:"#fff",border:"none",borderRadius:14,padding:"18px",fontSize:18,fontWeight:900,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 16px rgba(200,146,42,0.3)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>💾 حفظ العقد</button>
+        <button onClick={()=>setForm({client:"",idNum:"",idType:"هوية وطنية",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}],isOldContract:false})} style={{background:"#fff",color:"#94a3b8",border:"2px solid #e2e8f0",borderRadius:14,padding:"18px 24px",fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>مسح</button>
       </div>
     </div>
   );
