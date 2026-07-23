@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-23-premium-v2 -->
+<!-- build: 2026-07-23-qima-ai -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -6538,6 +6538,220 @@ function GoodsPage({investors, contracts, toast, gsWrite}) {
 }
 
 
+// ─── قمة AI — المساعد الذكي ─────────────────────────────────
+function QimaAI({contracts, investors, payments, settings, doneIds}) {
+  const [msgs, setMsgs] = useState([{role:"ai",text:"أهلاً بك في **قمة AI** 🤖\n\nأنا مساعدك الذكي للمحاسبة. أقدر أجاوبك عن أي شيء في النظام.\n\nجرّب تسألني:\n• كم عدد العقود النشطة؟\n• من هم المتأخرين شهرين؟\n• كم المتبقي على [اسم العميل]؟\n• ملخص المستثمر فرصة 3\n• إحصائيات اليوم"}]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const chatEnd = React.useRef(null);
+  const scrollDown = () => setTimeout(()=>chatEnd.current?.scrollIntoView({behavior:"smooth"}),100);
+
+  // ═══ محرك الاستعلام الذكي ═══
+  const activeC = contracts.filter(c=>!c.deleted && !doneIds.includes(c.id));
+  const allC = contracts.filter(c=>!c.deleted);
+  const doneC = contracts.filter(c=>!c.deleted && doneIds.includes(c.id));
+
+  const _paid = (cid) => (payments||[]).filter(p=>p.contractId===cid).reduce((s,p)=>s+(+p.amount||0),0);
+  const _left = (c) => Math.max(0,(+c.totalInst||+c.amount||0)-_paid(c.id));
+  const _overdue = (c) => {
+    const inst=+c.instAmt||0, tot=+c.totalInst||+c.amount||0, paid=_paid(c.id);
+    if(tot>0&&paid>=tot) return 0;
+    if(inst<=0||!c.firstInst) return 0;
+    const f=new Date(c.firstInst), n=new Date();
+    let due=(n.getFullYear()-f.getFullYear())*12+(n.getMonth()-f.getMonth());
+    if(n.getDate()>=f.getDate()) due+=1;
+    due=Math.min(Math.max(0,due),Math.max(1,Math.round(tot/inst)));
+    return Math.max(0,Math.floor((due*inst-paid)/inst));
+  };
+
+  const processQuery = (q) => {
+    const ql = q.trim();
+    if(!ql) return null;
+
+    // عدد العقود
+    if(/كم عدد|عدد العقود|اجمالي العقود/.test(ql)){
+      return `📊 **إحصائيات العقود:**\n\n• عقود نشطة: **${activeC.length}**\n• عقود منتهية: **${doneC.length}**\n• إجمالي: **${allC.length}**\n• إجمالي النقدي: **${SAR(activeC.reduce((s,c)=>s+(+c.amount||0),0))}**\n• إجمالي الأقساط: **${SAR(activeC.reduce((s,c)=>s+(+c.totalInst||0),0))}**`;
+    }
+
+    // المتأخرين
+    if(/متأخر|متعثر|تأخر|تعثر/.test(ql)){
+      const monthMatch = ql.match(/(\d+)\s*(شهر|أشهر|شهور)/);
+      const minMonths = monthMatch ? parseInt(monthMatch[1]) : 1;
+      const overdue = activeC.filter(c=>_overdue(c)>=minMonths).sort((a,b)=>_overdue(b)-_overdue(a));
+      if(overdue.length===0) return `✅ لا يوجد زبائن متأخرين ${minMonths>1?"بـ "+minMonths+" شهور أو أكثر":""}`;
+      let txt = `🚨 **الزبائن المتأخرين${minMonths>1?" "+minMonths+" شهور+":""}:** (${overdue.length})\n\n`;
+      overdue.slice(0,20).forEach((c,i)=>{
+        const inv = investors.find(x=>String(x.id)===String(c.investorId));
+        txt += `${i+1}. **${c.client}** — متأخر **${_overdue(c)} شهر** | المتبقي: ${SAR(_left(c))} | القسط: ${SAR(+c.instAmt||0)}${inv?" | "+inv.name:""}\n`;
+      });
+      if(overdue.length>20) txt += `\n... و${overdue.length-20} زبون آخر`;
+      return txt;
+    }
+
+    // بحث عن زبون
+    if(/متبقي|مديونية|كم عليه|كم على|بحث عن/.test(ql) || ql.length>3){
+      // استخراج الاسم من السؤال
+      let name = ql.replace(/كم المتبقي على|كم متبقي على|كم على|بحث عن|المتبقي على|مديونية/g,"").trim();
+      if(name.length>=2){
+        const found = allC.filter(c=>c.client.includes(name));
+        if(found.length>0){
+          let txt = `👤 **نتائج البحث عن "${name}":** (${found.length} عقد)\n\n`;
+          found.forEach((c,i)=>{
+            const paid = _paid(c.id), left = _left(c), od = _overdue(c);
+            const inv = investors.find(x=>String(x.id)===String(c.investorId));
+            const status = doneIds.includes(c.id)?"✅ منتهي":od>0?"🚨 متأخر "+od+" شهر":"✅ منتظم";
+            txt += `${i+1}. **${c.client}** — عقد #${c.num||""}\n   النقدي: ${SAR(+c.amount||0)} | الأقساط: ${SAR(+c.totalInst||0)} | القسط: ${SAR(+c.instAmt||0)}\n   الواصل: ${SAR(paid)} | المتبقي: **${SAR(left)}** | ${status}\n   ${inv?"المستثمر: "+inv.name:""} ${c.cPhone?"| جوال: "+c.cPhone:""}\n\n`;
+          });
+          return txt;
+        }
+      }
+    }
+
+    // ملخص مستثمر
+    if(/مستثمر|صندوق|فرصة/.test(ql)){
+      let invName = ql.replace(/ملخص|تقرير|كشف|المستثمر|مستثمر|صندوق/g,"").trim();
+      const inv = investors.find(i=>i.name.includes(invName)||(invName&&i.fund&&i.fund.includes(invName)));
+      if(inv){
+        const ic = activeC.filter(c=>String(c.investorId)===String(inv.id));
+        const totalCash = ic.reduce((s,c)=>s+(+c.amount||0),0);
+        const totalInst = ic.reduce((s,c)=>s+(+c.totalInst||0),0);
+        const totalPaid = ic.reduce((s,c)=>s+_paid(c.id),0);
+        const totalLeft = ic.reduce((s,c)=>s+_left(c),0);
+        const overdueCount = ic.filter(c=>_overdue(c)>0).length;
+        return `💼 **ملخص المستثمر: ${inv.name}**\n\n• عدد العقود النشطة: **${ic.length}**\n• إجمالي النقدي: **${SAR(totalCash)}**\n• إجمالي الأقساط: **${SAR(totalInst)}**\n• إجمالي الواصل: **${SAR(totalPaid)}**\n• إجمالي المتبقي: **${SAR(totalLeft)}**\n• عقود متأخرة: **${overdueCount}**\n• رأس المال: **${SAR(+inv.fund||0)}**`;
+      }
+    }
+
+    // إحصائيات
+    if(/احصائ|إحصائ|ملخص|تقرير عام|الوضع/.test(ql)){
+      const totalCash = activeC.reduce((s,c)=>s+(+c.amount||0),0);
+      const totalInst = activeC.reduce((s,c)=>s+(+c.totalInst||0),0);
+      const totalPaid = activeC.reduce((s,c)=>s+_paid(c.id),0);
+      const totalLeft = activeC.reduce((s,c)=>s+_left(c),0);
+      const overdueCount = activeC.filter(c=>_overdue(c)>0).length;
+      const todayPay = (payments||[]).filter(p=>p.date===todayLocal()).reduce((s,p)=>s+(+p.amount||0),0);
+      return `📊 **الملخص العام:**\n\n• عقود نشطة: **${activeC.length}** | منتهية: **${doneC.length}**\n• إجمالي النقدي: **${SAR(totalCash)}**\n• إجمالي الأقساط: **${SAR(totalInst)}**\n• الربح المتوقع: **${SAR(totalInst-totalCash)}**\n• الواصل: **${SAR(totalPaid)}**\n• المتبقي عند الزبائن: **${SAR(totalLeft)}**\n• نسبة التحصيل: **${totalInst>0?Math.round(totalPaid/totalInst*100):0}%**\n• زبائن متأخرين: **${overdueCount}**\n• تحصيل اليوم: **${SAR(todayPay)}**\n• عدد المستثمرين: **${investors.length}**`;
+    }
+
+    // تحصيل اليوم
+    if(/اليوم|تحصيل اليوم|سدادات اليوم/.test(ql)){
+      const todayPayments = (payments||[]).filter(p=>p.date===todayLocal());
+      if(todayPayments.length===0) return "📭 لا توجد سدادات مسجلة اليوم.";
+      let txt = `💰 **سدادات اليوم:** (${todayPayments.length})\n\n`;
+      let total=0;
+      todayPayments.forEach((p,i)=>{
+        const c = contracts.find(x=>x.id===p.contractId);
+        txt += `${i+1}. **${c?c.client:"—"}** — ${SAR(+p.amount||0)}${p.note?" ("+p.note+")":""}\n`;
+        total += (+p.amount||0);
+      });
+      txt += `\n**الإجمالي: ${SAR(total)}**`;
+      return txt;
+    }
+
+    // أعلى المبالغ
+    if(/أعلى|أكبر|أكثر مبلغ|أكبر عقد/.test(ql)){
+      const sorted = [...activeC].sort((a,b)=>(+b.totalInst||0)-(+a.totalInst||0)).slice(0,10);
+      let txt = "📈 **أعلى 10 عقود بالقيمة:**\n\n";
+      sorted.forEach((c,i)=>{
+        txt += `${i+1}. **${c.client}** — ${SAR(+c.totalInst||0)} | متبقي: ${SAR(_left(c))}\n`;
+      });
+      return txt;
+    }
+
+    // fallback — بحث عام بالاسم
+    const found = allC.filter(c=>c.client.includes(ql)||c.idNum===ql||(c.cPhone&&c.cPhone.includes(ql)));
+    if(found.length>0){
+      let txt = `🔍 **نتائج البحث:** (${found.length})\n\n`;
+      found.slice(0,15).forEach((c,i)=>{
+        const left = _left(c), od = _overdue(c);
+        txt += `${i+1}. **${c.client}** #${c.num||""} | متبقي: ${SAR(left)}${od>0?" | ⚠️ متأخر "+od+" شهر":""}\n`;
+      });
+      return txt;
+    }
+
+    return "🤔 لم أفهم السؤال. جرّب:\n• \"كم عدد العقود؟\"\n• \"المتأخرين شهرين\"\n• \"كم المتبقي على [اسم]\"\n• \"ملخص المستثمر فرصة 3\"\n• \"إحصائيات\"\n• \"سدادات اليوم\"\n• أو اكتب اسم أي زبون مباشرة";
+  };
+
+  const send = () => {
+    if(!input.trim()) return;
+    const userMsg = input.trim();
+    setMsgs(p=>[...p, {role:"user",text:userMsg}]);
+    setInput("");
+    setLoading(true);
+    scrollDown();
+
+    setTimeout(()=>{
+      const answer = processQuery(userMsg);
+      setMsgs(p=>[...p, {role:"ai", text:answer}]);
+      setLoading(false);
+      scrollDown();
+    }, 400);
+  };
+
+  // تنسيق النص (bold + line breaks)
+  const fmt = (t) => {
+    if(!t) return "";
+    return t.split("\n").map((line,i)=>{
+      const parts = line.split(/\*\*(.*?)\*\*/g);
+      return React.createElement("div",{key:i,style:{minHeight:line.trim()?undefined:8}},
+        parts.map((p,j)=> j%2===1
+          ? React.createElement("strong",{key:j,style:{fontWeight:800}},p)
+          : p
+        )
+      );
+    });
+  };
+
+  return (
+    React.createElement("div",{style:{maxWidth:720,margin:"0 auto",display:"flex",flexDirection:"column",height:"calc(100vh - 140px)"}},
+      /* Header */
+      React.createElement("div",{style:{background:"linear-gradient(135deg,#1a1a2e 0%,#16213e 40%,#0f3460 100%)",borderRadius:20,padding:"20px",marginBottom:16,position:"relative",overflow:"hidden"}},
+        React.createElement("div",{style:{position:"absolute",top:0,left:0,right:0,bottom:0,background:"radial-gradient(circle at 80% 30%,rgba(109,40,217,0.2),transparent 60%)",pointerEvents:"none"}}),
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:14,position:"relative"}},
+          React.createElement("div",{style:{width:52,height:52,borderRadius:16,background:"linear-gradient(135deg,#6d28d9,#7c3aed)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,boxShadow:"0 4px 16px rgba(109,40,217,0.4)"}},"🤖"),
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:20,fontWeight:900,color:"#fff"}},"قمة AI"),
+            React.createElement("div",{style:{fontSize:13,color:"rgba(255,255,255,0.6)",fontWeight:500}},"مساعدك الذكي للمحاسبة")
+          ),
+          React.createElement("div",{style:{marginRight:"auto",display:"flex",alignItems:"center",gap:6}},
+            React.createElement("div",{style:{width:8,height:8,borderRadius:"50%",background:"#22c55e",boxShadow:"0 0 8px #22c55e"}}),
+            React.createElement("span",{style:{fontSize:12,color:"#22c55e",fontWeight:700}},"متصل")
+          )
+        )
+      ),
+      /* Chat Messages */
+      React.createElement("div",{style:{flex:1,overflowY:"auto",paddingBottom:16,display:"flex",flexDirection:"column",gap:12}},
+        msgs.map((m,i)=>
+          React.createElement("div",{key:i,style:{display:"flex",justifyContent:m.role==="user"?"flex-start":"flex-end",gap:8}},
+            m.role==="ai" && React.createElement("div",{style:{width:32,height:32,borderRadius:10,background:"linear-gradient(135deg,#6d28d9,#7c3aed)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}},"🤖"),
+            React.createElement("div",{style:{maxWidth:"85%",padding:"14px 18px",borderRadius:m.role==="user"?"16px 16px 4px 16px":"16px 16px 16px 4px",background:m.role==="user"?"linear-gradient(135deg,#0d9488,#0f766e)":"rgba(255,255,255,0.92)",color:m.role==="user"?"#fff":"#1a1a2e",fontSize:14,lineHeight:1.8,fontWeight:m.role==="user"?600:400,boxShadow:"0 2px 12px rgba(0,0,0,0.06)",border:m.role==="user"?"none":"1px solid rgba(200,146,42,0.1)",backdropFilter:m.role==="ai"?"blur(8px)":"none"}},
+              fmt(m.text)
+            )
+          )
+        ),
+        loading && React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+          React.createElement("div",{style:{width:32,height:32,borderRadius:10,background:"linear-gradient(135deg,#6d28d9,#7c3aed)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}},"🤖"),
+          React.createElement("div",{style:{padding:"14px 24px",borderRadius:"16px 16px 16px 4px",background:"rgba(255,255,255,0.9)",border:"1px solid rgba(200,146,42,0.1)",fontSize:14,color:"#94a3b8"}},
+            "يفكّر..."
+          )
+        ),
+        React.createElement("div",{ref:chatEnd})
+      ),
+      /* Quick Actions */
+      React.createElement("div",{style:{display:"flex",gap:6,marginBottom:10,overflowX:"auto",paddingBottom:4}},
+        ["المتأخرين","إحصائيات","سدادات اليوم","أعلى 10 عقود"].map(q=>
+          React.createElement("button",{key:q,onClick:()=>{setInput(q);setTimeout(()=>{const e={target:{value:q}};setInput(q);},50);},style:{padding:"8px 14px",borderRadius:20,border:"1.5px solid #e2e8f0",background:"#fff",color:"#6d28d9",fontWeight:700,fontSize:12,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"IBM Plex Sans Arabic,Arial"}},q)
+        )
+      ),
+      /* Input */
+      React.createElement("div",{style:{display:"flex",gap:8,padding:"4px 0"}},
+        React.createElement("input",{style:{flex:1,padding:"14px 18px",borderRadius:14,border:"2px solid #e2e8f0",fontSize:15,fontFamily:"IBM Plex Sans Arabic,Arial",background:"#fff",outline:"none"},placeholder:"اسأل قمة AI...",value:input,onChange:e=>setInput(e.target.value),onKeyDown:e=>{if(e.key==="Enter")send();}}),
+        React.createElement("button",{onClick:send,style:{padding:"14px 20px",borderRadius:14,border:"none",background:"linear-gradient(135deg,#6d28d9,#7c3aed)",color:"#fff",fontSize:18,fontWeight:900,cursor:"pointer",boxShadow:"0 4px 12px rgba(109,40,217,0.3)"}},"↑")
+      )
+    )
+  );
+}
+
 // ─── Search Page ─────────────────────────────────────────────
 function SearchPage({contracts, investors, settings, payments, setPayments, toast, setPage}) {
   const [q, setQ] = useState("");
@@ -7875,6 +8089,7 @@ function App() {
     {id:"overdue",label:"🚨",name:"المتعثرون",color:"#dc2626"},
     {id:"portfolio",label:"📊",name:"المحفظة الشهرية",color:"#0d9488"},
     {id:"cashflow",label:"🧭",name:"البوصلة المالية",color:"#0369a1"},
+    {id:"qimaai",label:"🤖",name:"قمة AI",color:"#6d28d9"},
     {id:"settings",label:"⚙️",name:"الإعدادات",color:"#4b5563"},
   ];
   // ترتيب التبويبات حسب المحفوظ
@@ -7940,6 +8155,7 @@ function App() {
         {page==="overdue" && <OverduePage contracts={activeContracts} investors={investors} payments={payments} goCollect={()=>setPage("collect")} onFlag={(id,val)=>{setContracts(p=>p.map(c=>c.id===id?{...c,defaulter:val}:c));}} />}
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={payments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
+        {page==="qimaai" && <QimaAI contracts={contracts} investors={investors} payments={payments} settings={settings} doneIds={doneIds}/>}
         {page==="collect" && <CollectionPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
         {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast}/>}/>}
