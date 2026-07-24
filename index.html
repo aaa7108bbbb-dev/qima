@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-24-bank-reconcile -->
+<!-- build: 2026-07-24-nav-icons -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -460,7 +460,7 @@ const styles = {
   body:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",direction:"rtl",background:C.slate,minHeight:"100vh",margin:0,fontWeight:500},
   header:{background:"linear-gradient(135deg,#0f1923,#1a2e45)",color:"white",padding:"0 16px",display:"flex",alignItems:"center",justifyContent:"space-between",height:60,position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 20px rgba(0,0,0,0.25)"},
   logo:{width:44,height:44,borderRadius:8,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"},
-  nav:{background:C.white,borderBottom:"1px solid "+C.border,display:"flex",overflowX:"auto",padding:"0 8px",justifyContent:"center",flexWrap:"wrap"},
+  nav:{background:"linear-gradient(160deg,#141428,#1a1a2e 55%,#16213e)",borderBottom:"1px solid rgba(200,146,42,0.18)",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(clamp(66px,17vw,104px),1fr))",gap:"clamp(2px,1vw,10px)",padding:"clamp(10px,2.4vw,18px) clamp(6px,2vw,16px)",justifyItems:"center"},
   navBtn:{padding:"12px 14px",fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,fontWeight:700,color:"#1f2937",background:"none",border:"none",borderBottom:"3px solid transparent",cursor:"pointer",whiteSpace:"nowrap"},
   navBtnActive:{color:C.teal,borderBottomColor:C.teal},
   main:{maxWidth:1600,margin:"0 auto",padding:"20px 12px"},
@@ -8813,6 +8813,32 @@ function ActivityPage({activity, setActivity, toast, setPage}){
 }
 
 // ─── Main App ────────────────────────────────────────────────
+// ═══ نظام الأيقونات — رموز خطية موحّدة، سُمك 1.75، نقطة قيد ذهبية ═══
+const NAV_ICONS = {
+  dashboard:'<path d="M3.2 10.6 12 4l8.8 6.6"/><path d="M5.6 9.6V20h12.8V9.6"/><path d="M10 20v-5.4h4V20"/>|<circle cx="12" cy="17.1" r="1.15"/>',
+  contracts:'<path d="M6.2 3.2h7.4l4.2 4.2V20.8H6.2Z"/><path d="M13.6 3.2v4.2h4.2"/><path d="M9.2 12.4h5.6M9.2 15.8h3.8"/>|<circle cx="15.6" cy="17.6" r="1.3"/>',
+  accounts:'<path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/>|<circle cx="16.9" cy="15.1" r="1.5"/>',
+  collect:'<path d="M13.6 3.2 6.6 13.4h4.6L10.4 20.8l7-10.2h-4.6Z"/>|<circle cx="11.9" cy="12" r="1.15"/>',
+  goods:'<path d="M3.6 7.6h16.8v12H3.6Z"/><path d="M3.6 11.6h16.8"/><path d="M12 7.6v12"/>|<circle cx="12" cy="11.6" r="1.3"/>',
+  overdue:'<path d="M12 4.2 21.4 20.4H2.6Z"/><path d="M12 10.2v4.4"/>|<circle cx="12" cy="17.4" r="1.25"/>',
+  portfolio:'<path d="M3.6 20.4h16.8"/><path d="M7.2 20.4v-4.6M12 20.4v-8.2M16.8 20.4v-6.4"/>|<circle cx="12" cy="9.2" r="1.35"/>',
+  cashflow:'<circle cx="12" cy="12" r="8.4"/><path d="M15.7 8.3 13.1 13.1 8.3 15.7l2.6-4.8Z"/>|<circle cx="12" cy="12" r="1.25"/>',
+  qimaai:'<rect x="3.6" y="3.6" width="16.8" height="16.8" rx="4.6"/><path d="M12 7.4v2.4M12 14.2v2.4M7.4 12h2.4M14.2 12h2.4"/>|<circle cx="12" cy="12" r="1.6"/>',
+  settings:'<circle cx="12" cy="12" r="3.3"/><path d="M17.4 12h2.2M15.8 8.2l1.6-1.6M12 6.6V4.4M8.2 8.2 6.6 6.6M6.6 12H4.4M8.2 15.8 6.6 17.4M12 17.4v2.2M15.8 15.8l1.6 1.6"/>|<circle cx="12" cy="12" r="1.3"/>',
+};
+function NavIcon({id, on}){
+  const raw = NAV_ICONS[id];
+  if(!raw) return null;
+  const [strokes, dot] = raw.split("|");
+  return (
+    <svg viewBox="0 0 24 24" style={{width:"100%",height:"100%",display:"block"}} aria-hidden="true">
+      <g fill="none" stroke={on?"#e0b85c":"#8b93a7"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+         dangerouslySetInnerHTML={{__html:strokes}}/>
+      <g fill={on?"#c8922a":"#6b7488"} dangerouslySetInnerHTML={{__html:dot}}/>
+    </svg>
+  );
+}
+
 function App() {
   const [page,setPage]=useState("dashboard");
   const [tabOrder,setTabOrder]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_tab_order")||"null");}catch{return null;}});
@@ -9179,19 +9205,34 @@ function App() {
       )}
 
       <nav className="noprint" style={styles.nav}>
-        {orderedTabs.map((t,idx)=>(
+        {orderedTabs.map((t,idx)=>{
+          const on = page===t.id;
+          return (
           <button key={t.id} draggable
             onDragStart={()=>setDragTab(idx)}
             onDragOver={e=>e.preventDefault()}
             onDrop={()=>onTabDrop(idx)}
             onClick={()=>setPage(t.id)}
-            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:"10px 14px",border:"none",cursor:"grab",background:"none",fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",opacity:dragTab===idx?0.4:1}}>
-            <div style={{width:72,height:72,borderRadius:14,background:page===t.id?"#0f1e33":"#1e293b",display:"flex",alignItems:"center",justifyContent:"center",fontSize:40,transition:"all 0.2s",
-              border:page===t.id?"3px solid #c8922a":"3px solid transparent",
-              boxShadow:page===t.id?"0 0 18px rgba(200,146,42,0.6)":"0 2px 6px rgba(0,0,0,0.15)"}}>{t.label}</div>
-            <span style={{fontSize:16,fontWeight:page===t.id?900:700,color:page===t.id?"#c8922a":"#111",whiteSpace:"nowrap"}}>{t.name}</span>
+            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"clamp(5px,1.2vw,8px)",
+              padding:"clamp(3px,1vw,7px) 2px",border:"none",cursor:"grab",background:"none",width:"100%",
+              fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",opacity:dragTab===idx?0.4:1,
+              WebkitTapHighlightColor:"transparent"}}>
+            <div style={{width:"clamp(42px,11vw,64px)",aspectRatio:"1",borderRadius:"clamp(11px,2.6vw,17px)",
+              background:on?"linear-gradient(150deg,#0d1830,#122747)":"rgba(255,255,255,0.055)",
+              display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s",
+              padding:"clamp(9px,2.4vw,15px)",
+              border:on?"1.5px solid #c8922a":"1.5px solid rgba(255,255,255,0.09)",
+              boxShadow:on?"0 5px 20px rgba(200,146,42,0.32), inset 0 0 0 1px rgba(224,184,92,0.16)":"none"}}>
+              <NavIcon id={t.id} on={on}/>
+            </div>
+            <span style={{fontSize:"clamp(10px,2.5vw,14px)",fontWeight:on?800:600,
+              color:on?"#e0b85c":"#ffffff",whiteSpace:"nowrap",lineHeight:1.25,
+              letterSpacing:"-0.2px",textShadow:on?"none":"0 1px 2px rgba(0,0,0,0.35)"}}>{t.name}</span>
+            <div style={{width:on?"clamp(14px,3.5vw,20px)":0,height:2,borderRadius:2,
+              background:"#c8922a",transition:"width 0.2s"}}/>
           </button>
-        ))}
+          );
+        })}
       </nav>
 
       <div style={styles.main}>
