@@ -6646,10 +6646,10 @@ function QimaAI({contracts, investors, payments, settings, doneIds}) {
     try {
       const context = buildContext();
       const resp = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + aiKey,
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
         {
           method: "POST",
-          headers: {"Content-Type": "application/json"},
+          headers: {"Content-Type": "application/json", "x-goog-api-key": aiKey},
           body: JSON.stringify({
             system_instruction: {parts:[{text: systemPrompt + "\n\n" + context}]},
             contents: [{role:"user", parts:[{text: question}]}],
