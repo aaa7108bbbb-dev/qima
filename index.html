@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-23-ai-fix-sw -->
+<!-- build: 2026-07-24-gemini-direct -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -6543,7 +6543,7 @@ function QimaAI({contracts, investors, payments, settings, doneIds}) {
   const [msgs, setMsgs] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [proxyUrl, setProxyUrl] = useState(()=>localStorage.getItem("qimma_ai_url")||"");
+  const [aiKey, setAiKey] = useState(()=>localStorage.getItem("qimma_ai_key")||"");
   const [showSetup, setShowSetup] = useState(false);
   const chatEnd = React.useRef(null);
   const scrollDown = () => setTimeout(()=>chatEnd.current?.scrollIntoView({behavior:"smooth"}),120);
@@ -6637,34 +6637,34 @@ function QimaAI({contracts, investors, payments, settings, doneIds}) {
 - "الواصل" = المبلغ المدفوع، "المتبقي" = الأقساط - الواصل
 - أجب بشكل مباشر بدون مقدمات طويلة`;
 
-  // ═══ إرسال عبر Claude API ═══
+  // ═══ إرسال مباشر لـ Gemini API ═══
   const sendToAI = async (question) => {
-    if(!proxyUrl){
+    if(!aiKey){
       setShowSetup(true);
-      return "⚙️ يحتاج تفعيل. اضغط زر الإعدادات وأدخل رابط الوسيط.";
+      return "⚙️ أدخل مفتاح Gemini API. اضغط ⚙️ فوق.";
     }
     try {
       const context = buildContext();
-      const resp = await fetch(proxyUrl, {
-        method: "POST",
-        headers: {"Content-Type":"text/plain"},
-        body: JSON.stringify({
-          system: systemPrompt + "\n\n" + context,
-          messages: [{role:"user", content:question}]
-        })
-      });
-      // Google Apps Script redirects — handle both cases
-      let data;
-      const text = await resp.text();
-      try { data = JSON.parse(text); } catch(e) {
-        // If redirect returned HTML, try fetching the redirect URL
-        return "⚠️ خطأ في الاتصال. تأكد من رابط الوسيط.";
+      const resp = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + aiKey,
+        {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            system_instruction: {parts:[{text: systemPrompt + "\n\n" + context}]},
+            contents: [{role:"user", parts:[{text: question}]}],
+            generationConfig: {maxOutputTokens:2048, temperature:0.3}
+          })
+        }
+      );
+      const data = await resp.json();
+      if(data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts){
+        return data.candidates[0].content.parts[0].text;
       }
-      if(data.ok && data.reply) return data.reply;
-      if(data.error) return "⚠️ " + data.error;
+      if(data.error) return "⚠️ " + (data.error.message||"خطأ من Gemini");
       return "⚠️ لم أستطع الإجابة.";
     } catch(err) {
-      return "⚠️ خطأ في الاتصال: " + err.message;
+      return "⚠️ خطأ: " + err.message;
     }
   };
 
@@ -6712,10 +6712,10 @@ function QimaAI({contracts, investors, payments, settings, doneIds}) {
     setLoading(true);
     scrollDown();
 
-    // جرّب محلياً أولاً إذا ما فيه proxy
-    if(!proxyUrl){
+    // جرّب محلياً أولاً إذا ما فيه مفتاح
+    if(!aiKey){
       const local = localQuery(q);
-      setMsgs(p=>[...p, {role:"ai", text: local || "⚙️ **فعّل Claude AI** للإجابة على أي سؤال.\n\nاضغط ⚙️ فوق وأدخل رابط الوسيط.\n\nبدون التفعيل أقدر أجاوب على: العدد، المتأخرين، الإحصائيات، البحث بالاسم."}]);
+      setMsgs(p=>[...p, {role:"ai", text: local || "⚙️ **فعّل Gemini AI** للإجابة على أي سؤال.\n\nاضغط ⚙️ فوق وأدخل مفتاح Gemini."}]);
       setLoading(false);
       scrollDown();
       return;
@@ -6728,11 +6728,11 @@ function QimaAI({contracts, investors, payments, settings, doneIds}) {
     scrollDown();
   };
 
-  const saveUrl = (url) => {
-    setProxyUrl(url);
-    localStorage.setItem("qimma_ai_url", url);
+  const saveKey = (key) => {
+    setAiKey(key);
+    localStorage.setItem("qimma_ai_key", key);
     setShowSetup(false);
-    if(url) setMsgs(p=>[...p, {role:"ai", text:"✅ **تم التفعيل!** الآن أقدر أجاوبك على أي سؤال.\n\nجرّب اسألني أي شيء..."}]);
+    if(key) setMsgs(p=>[...p, {role:"ai", text:"✅ **تم التفعيل!** Gemini AI جاهز.\n\nاسألني أي شيء..."}]);
   };
 
   // تنسيق النص
@@ -6762,8 +6762,8 @@ function QimaAI({contracts, investors, payments, settings, doneIds}) {
           ),
           React.createElement("div",{style:{marginRight:"auto",display:"flex",alignItems:"center",gap:8}},
             React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5}},
-              React.createElement("div",{style:{width:8,height:8,borderRadius:"50%",background:proxyUrl?"#22c55e":"#f59e0b",boxShadow:"0 0 8px "+(proxyUrl?"#22c55e":"#f59e0b")}}),
-              React.createElement("span",{style:{fontSize:11,color:proxyUrl?"#22c55e":"#f59e0b",fontWeight:700}},proxyUrl?"Claude AI":"أساسي")
+              React.createElement("div",{style:{width:8,height:8,borderRadius:"50%",background:aiKey?"#22c55e":"#f59e0b",boxShadow:"0 0 8px "+(aiKey?"#22c55e":"#f59e0b")}}),
+              React.createElement("span",{style:{fontSize:11,color:aiKey?"#22c55e":"#f59e0b",fontWeight:700}},aiKey?"Gemini AI":"أساسي")
             ),
             React.createElement("button",{onClick:()=>setShowSetup(!showSetup),style:{background:"rgba(255,255,255,0.1)",border:"none",borderRadius:8,padding:"6px 8px",color:"#fff",fontSize:16,cursor:"pointer"}},"⚙️")
           )
@@ -6772,18 +6772,18 @@ function QimaAI({contracts, investors, payments, settings, doneIds}) {
 
       /* Setup Panel */
       showSetup && React.createElement("div",{style:{background:"rgba(255,255,255,0.95)",backdropFilter:"blur(12px)",borderRadius:16,padding:"18px",marginBottom:12,border:"2px solid #7c3aed",boxShadow:"0 4px 24px rgba(109,40,217,0.1)"}},
-        React.createElement("div",{style:{fontSize:15,fontWeight:800,color:"#6d28d9",marginBottom:12}},"⚙️ إعداد Claude AI"),
+        React.createElement("div",{style:{fontSize:15,fontWeight:800,color:"#6d28d9",marginBottom:12}},"⚙️ إعداد Gemini AI"),
         React.createElement("div",{style:{fontSize:13,color:"#64748b",marginBottom:12,lineHeight:1.8}},
-          "1. أنشئ مفتاح API من console.anthropic.com",
+          "1. افتح aistudio.google.com/apikey",
           React.createElement("br"),
-          "2. أنشئ Google Apps Script بالكود المرفق",
+          "2. اضغط Create API Key",
           React.createElement("br"),
-          "3. انشره كـ Web App والصق الرابط هنا:"
+          "3. الصق المفتاح هنا:"
         ),
-        React.createElement("input",{style:{width:"100%",padding:"12px 14px",borderRadius:10,border:"2px solid #e2e8f0",fontSize:14,fontFamily:"monospace",direction:"ltr",marginBottom:10,boxSizing:"border-box"},placeholder:"https://script.google.com/macros/s/xxxxx/exec",defaultValue:proxyUrl,id:"_aiUrl"}),
+        React.createElement("input",{style:{width:"100%",padding:"12px 14px",borderRadius:10,border:"2px solid #e2e8f0",fontSize:14,fontFamily:"monospace",direction:"ltr",marginBottom:10,boxSizing:"border-box"},placeholder:"AIzaSy... أو AQ.Ab8...",defaultValue:aiKey,id:"_aiKey"}),
         React.createElement("div",{style:{display:"flex",gap:8}},
-          React.createElement("button",{onClick:()=>{const u=document.getElementById("_aiUrl").value.trim();saveUrl(u);},style:{flex:1,padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#6d28d9,#7c3aed)",color:"#fff",fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"حفظ وتفعيل"),
-          proxyUrl && React.createElement("button",{onClick:()=>saveUrl(""),style:{padding:"12px 16px",borderRadius:10,border:"2px solid #e2e8f0",background:"#fff",color:"#dc2626",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"إلغاء")
+          React.createElement("button",{onClick:()=>{const k=document.getElementById("_aiKey").value.trim();saveKey(k);},style:{flex:1,padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#6d28d9,#7c3aed)",color:"#fff",fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"حفظ وتفعيل"),
+          aiKey && React.createElement("button",{onClick:()=>saveKey(""),style:{padding:"12px 16px",borderRadius:10,border:"2px solid #e2e8f0",background:"#fff",color:"#dc2626",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"إلغاء")
         )
       ),
 
