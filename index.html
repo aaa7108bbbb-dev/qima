@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-24-qimaai-pro -->
+<!-- build: 2026-07-24-qimaai-complete -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -6541,7 +6541,9 @@ function GoodsPage({investors, contracts, toast, gsWrite}) {
 
 
 // ─── قمة AI — المساعد الذكي (Claude API) ────────────────────
-function QimaAI({contracts, investors, payments, setPayments, settings, doneIds, markDone, daily, loans, zakatTx, pending, bankTx, invTxList, monthClose, dailyOpen, toast, logAct}) {
+const AI_MODELS = ["gemini-3.5-flash-lite","gemini-3.1-flash-lite","gemini-3.6-flash","gemini-3.5-flash","gemini-2.5-flash","gemini-2.5-flash-lite"];
+
+function QimaAI({contracts, investors, payments, setPayments, settings, doneIds, markDone, daily, setDaily, loans, zakatTx, pending, bankTx, invTxList, monthClose, dailyOpen, toast, logAct}) {
   const [msgs, setMsgs] = useState(()=>{ try{ return JSON.parse(localStorage.getItem("qimma_ai_chat")||"[]"); }catch(e){ return []; } });
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -6559,6 +6561,19 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
   useEffect(()=>{
     try{ localStorage.setItem("qimma_ai_chat", JSON.stringify(msgs.slice(-60))); }catch(e){}
   },[msgs]);
+
+  // التقرير الصباحي تلقائياً مرة واحدة كل يوم
+  useEffect(()=>{
+    try{
+      const t = todayLocal();
+      if(localStorage.getItem("qimma_ai_brief_day") === t) return;
+      localStorage.setItem("qimma_ai_brief_day", t);
+      setTimeout(()=>{
+        setMsgs(p=>[...p, {role:"ai", text: buildBrief()}]);
+        scrollDown();
+      }, 400);
+    }catch(e){}
+  },[]);
 
   const _n = x => +x || 0;
   const activeC = contracts.filter(c=>!c.deleted && !doneIds.includes(c.id));
@@ -6583,10 +6598,76 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
   };
   const _invName = (c) => { const i=investors.find(x=>String(x.id)===String(c.investorId)); return i?i.name:""; };
 
+  // ═══════════ محرك تقييم المخاطر (تنبؤي) ═══════════
+  // يجمع 5 مؤشرات سلوكية ويعطي درجة 0-100 (كلما زادت = خطر أكبر)
+  const riskScore = (c) => {
+    const inst=_n(c.instAmt), tot=_n(c.totalInst)||_n(c.amount), paid=_paid(c.id);
+    const ps=(payments||[]).filter(p=>p.contractId===c.id).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    const reasons=[];
+    let score=0;
+
+    // 1) التأخر الحالي (وزن 40)
+    const od=_overdue(c);
+    if(od>0){ const v=Math.min(40, od*13); score+=v; reasons.push(`متأخر ${od} شهر`); }
+
+    // 2) الانقطاع عن السداد (وزن 25)
+    const lp=ps.length?ps[ps.length-1]:null;
+    let gapDays=null;
+    if(lp && lp.date){
+      gapDays=Math.floor((new Date()-new Date(lp.date))/86400000);
+      if(gapDays>120){ score+=25; reasons.push(`انقطع ${gapDays} يوم`); }
+      else if(gapDays>75){ score+=16; reasons.push(`انقطع ${gapDays} يوم`); }
+      else if(gapDays>45){ score+=8; reasons.push(`انقطع ${gapDays} يوم`); }
+    } else if(c.firstInst && new Date(c.firstInst)<new Date()){
+      score+=25; reasons.push("لم يسدد ولا قسط");
+    }
+
+    // 3) انتظام السداد تاريخياً (وزن 15)
+    if(ps.length>=2){
+      const gaps=[];
+      for(let i=1;i<ps.length;i++){
+        const g=Math.floor((new Date(ps[i].date)-new Date(ps[i-1].date))/86400000);
+        if(g>0) gaps.push(g);
+      }
+      if(gaps.length){
+        const avg=gaps.reduce((a,b)=>a+b,0)/gaps.length;
+        if(avg>55){ score+=15; reasons.push("سداده غير منتظم"); }
+        else if(avg>40){ score+=7; reasons.push("تباعد في السداد"); }
+      }
+    }
+
+    // 4) نسبة الإنجاز مقابل الزمن المنقضي (وزن 12)
+    if(tot>0 && c.firstInst && inst>0){
+      const months=Math.max(1, Math.round(tot/inst));
+      const elapsed=Math.max(0,(new Date().getFullYear()-new Date(c.firstInst).getFullYear())*12+(new Date().getMonth()-new Date(c.firstInst).getMonth())+1);
+      const expectedPct=Math.min(100, elapsed/months*100);
+      const actualPct=paid/tot*100;
+      const lag=expectedPct-actualPct;
+      if(lag>35){ score+=12; reasons.push(`متخلف ${Math.round(lag)}% عن الجدول`); }
+      else if(lag>18){ score+=6; reasons.push(`متخلف ${Math.round(lag)}% عن الجدول`); }
+    }
+
+    // 5) حجم المبلغ المكشوف (وزن 8)
+    const left=_left(c);
+    if(left>30000){ score+=8; reasons.push("مبلغ مكشوف كبير"); }
+    else if(left>15000){ score+=4; }
+
+    // 6) خصم: سجل نظيف
+    if(od===0 && ps.length>=3 && gapDays!==null && gapDays<40){ score=Math.max(0,score-10); reasons.push("سجل نظيف"); }
+
+    score=Math.max(0,Math.min(100,Math.round(score)));
+    let level,color,advice;
+    if(score>=70){ level="خطر مرتفع"; color="#dc2626"; advice="تواصل عاجل + إشعار الكفيل"; }
+    else if(score>=45){ level="خطر متوسط"; color="#f97316"; advice="اتصال ومتابعة أسبوعية"; }
+    else if(score>=22){ level="مراقبة"; color="#eab308"; advice="تذكير ودّي قبل الاستحقاق"; }
+    else { level="آمن"; color="#16a34a"; advice="لا إجراء"; }
+    return {score, level, color, advice, reasons, gapDays, od};
+  };
+
   // ═══════════ 1) السياق الذكي — يرسل فقط الجزء المطلوب ═══════════
   const pickSections = (q) => {
     const s = {core:true, contracts:false, done:false, overdue:false, good:false,
-               payments:false, monthly:false, daily:false, loans:false, bank:false,
+               payments:false, monthly:false, daily:false, loans:false, bank:false, risk:false,
                goods:false, invtx:false, close:false, client:null};
     const t = String(q||"");
 
@@ -6605,7 +6686,8 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
     }
     if(matched){ s.client = matched; s.payments = true; return s; }
 
-    if(/متأخر|متعثر|تعثر|تأخر|مدين|ما سدد|ماسدد/.test(t)) s.overdue = true;
+    if(/خطر|مخاطر|تنبؤ|توقع تعثر|من راح|احتمال|تصنيف|مخاطرة|أخطر/.test(t)) s.risk = true;
+    if(/متأخر|متعثر|تعثر|تأخر|مدين|ما سدد|ماسدد/.test(t)){ s.overdue = true; s.risk = true; }
     if(/منتظم|ملتزم|أفضل|احسن|أحسن|ممتاز|جيد/.test(t)) s.good = true;
     if(/منتهي|مسدد بالكامل|خالص|أقفل/.test(t)) s.done = true;
     if(/سداد|دفع|تحصيل|إيصال|ايصال|قبض/.test(t)){ s.payments = true; s.monthly = true; }
@@ -6618,10 +6700,10 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
     if(/إقفال|اقفال|جرد|ميزانية/.test(t)) s.close = true;
     if(/عقد|عقود|زبون|زبائن|عميل|عملاء|قائمة|كل ال|جميع/.test(t)) s.contracts = true;
     if(/ملخص|وضع|تقرير|إحصائ|احصائ|شامل|عام|كامل/.test(t)){
-      s.contracts=true; s.overdue=true; s.monthly=true; s.daily=true; s.goods=true;
+      s.contracts=true; s.overdue=true; s.monthly=true; s.daily=true; s.goods=true; s.risk=true;
     }
     // لو ما انطبق شي، أعطه الأساسيات + العقود
-    if(!s.contracts && !s.overdue && !s.good && !s.done && !s.payments &&
+    if(!s.contracts && !s.overdue && !s.good && !s.done && !s.payments && !s.risk &&
        !s.monthly && !s.daily && !s.loans && !s.bank && !s.goods && !s.invtx && !s.close){
       s.contracts = true; s.overdue = true;
     }
@@ -6690,6 +6772,18 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
       overdueList.slice().sort((a,b)=>_overdue(b)-_overdue(a)).forEach(c=>{
         const lp=_lastPay(c.id);
         ctx += `• ${c.client} | متأخر ${_overdue(c)} شهر | مبلغ التأخر: ${_overdue(c)*_n(c.instAmt)} | متبقي: ${_left(c)} | قسط: ${_n(c.instAmt)} | جوال: ${c.cPhone||"—"} | كفيل: ${c.gName||"—"} ${c.gPhone||""} | ${_invName(c)} | آخر سداد: ${lp?lp.date:"لا يوجد"}\n`;
+      });
+    }
+
+    if(sec.risk){
+      const scored = activeC.map(c=>({c, r:riskScore(c)})).sort((a,b)=>b.r.score-a.r.score);
+      const hi = scored.filter(x=>x.r.score>=45);
+      ctx += `\n═══ تقييم المخاطر التنبؤي (درجة 0-100) ═══\n`;
+      ctx += `توزيع: خطر مرتفع ${scored.filter(x=>x.r.score>=70).length} | متوسط ${scored.filter(x=>x.r.score>=45&&x.r.score<70).length} | مراقبة ${scored.filter(x=>x.r.score>=22&&x.r.score<45).length} | آمن ${scored.filter(x=>x.r.score<22).length}\n`;
+      ctx += `المبلغ المعرض للخطر (درجة 45+): ${hi.reduce((s,x)=>s+_left(x.c),0)}\n\n`;
+      ctx += `العميل|الدرجة|المستوى|المتبقي|القسط|أسباب الخطر|التوصية\n`;
+      scored.slice(0,60).forEach(x=>{
+        ctx += `${x.c.client}|${x.r.score}|${x.r.level}|${_left(x.c)}|${_n(x.c.instAmt)}|${x.r.reasons.join("، ")||"—"}|${x.r.advice}\n`;
       });
     }
 
@@ -6839,6 +6933,16 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
       dly.slice(0,10).forEach(x=>{ t += `• ${x.type||""} — ${SAR(_n(x.amount))} ${x.note||x.desc||""}\n`; });
     }
 
+    // تنبؤ المخاطر
+    const scored = activeC.map(c=>({c,r:riskScore(c)})).filter(x=>x.r.score>=45).sort((a,b)=>b.r.score-a.r.score);
+    if(scored.length){
+      t += `\n⚠️ **إنذار مبكر — ${scored.length} عميل معرّض للتعثر:**\n`;
+      t += `المبلغ المعرّض للخطر: **${SAR(scored.reduce((s,x)=>s+_left(x.c),0))}**\n`;
+      scored.slice(0,8).forEach((x,i)=>{
+        t += `${i+1}. **${x.c.client}** — درجة ${x.r.score} (${x.r.level}) | ${x.r.reasons.slice(0,2).join("، ")} → ${x.r.advice}\n`;
+      });
+    }
+
     t += `\n📊 **الوضع العام:** ${activeC.length} عقد نشط | متبقي عند الزبائن: ${SAR(activeC.reduce((s,c)=>s+_left(c),0))}`;
     return t;
   };
@@ -6888,6 +6992,19 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
         toast && toast("✅ تم نقل عقد "+c.client+" للمنتهية");
         return true;
       }
+      if(act.action==="add_expense"){
+        const amt=_n(act.amount);
+        if(amt<=0){ toast&&toast("⚠️ مبلغ غير صحيح","warn"); return false; }
+        const valid=["sadad","sahb","masroof","estilam","mgr","acc","zakat","salf"];
+        const tp = valid.indexOf(act.type)>=0 ? act.type : "masroof";
+        const all=_arr(daily);
+        const rNum=all.reduce((mx,d)=>Math.max(mx,d.receiptNum||0),0)+1;
+        const row={id:Date.now(),date:act.date||todayLocal(),type:tp,amount:amt,desc:act.desc||"عبر قمة AI",receiptNum:rNum};
+        setDaily && setDaily(p=>[...p,row]);
+        logAct && logAct("قيد يومية","قمة AI",(act.desc||"")+" — "+SAR(amt));
+        toast && toast("✅ تم تسجيل القيد: "+SAR(amt));
+        return true;
+      }
       if(act.action==="whatsapp"){
         const list = _arr(act.targets);
         if(!list.length){ toast&&toast("⚠️ ما فيه أرقام","warn"); return false; }
@@ -6907,6 +7024,7 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
   const actionLabel = (a) => {
     if(a.action==="add_payment") return `تسجيل سداد **${SAR(_n(a.amount))}** على **${a.client}**${a.date?(" بتاريخ "+a.date):""}`;
     if(a.action==="mark_done") return `نقل عقد **${a.client}** إلى المنتهية`;
+    if(a.action==="add_expense"){ const L={sadad:"سداد",sahb:"سحب",masroof:"مصروف",estilam:"استلمت نقدي",mgr:"استلام مدير",acc:"استلام محاسب",zakat:"زكاة",salf:"سلف"}; return `قيد يومية: **${L[a.type]||"مصروف"}** بمبلغ **${SAR(_n(a.amount))}** — ${a.desc||""}`; }
     if(a.action==="whatsapp") return `إرسال واتساب لـ **${_arr(a.targets).length}** زبون`;
     return "تنفيذ أمر";
   };
@@ -6940,6 +7058,56 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
     );
   };
 
+  // ═══════════ طباعة أي إجابة كتقرير رسمي ═══════════
+  const printAnswer = (question, answer) => {
+    const clean = stripFollow(stripChart(stripAction(answer)));
+    const html = clean.split("\n").map(l=>{
+      const bold = l.replace(/\*\*(.*?)\*\*/g,"<b>$1</b>");
+      if(!l.trim()) return "<div style='height:8px'></div>";
+      if(/^[═─—]{3,}/.test(l.trim())) return "<hr>";
+      if(/^\s*[•\-]/.test(l)) return "<div class='li'>"+bold+"</div>";
+      if(/^\s*\d+\./.test(l)) return "<div class='li'>"+bold+"</div>";
+      return "<div class='ln'>"+bold+"</div>";
+    }).join("");
+    const w=window.open("","_blank"); if(!w) return;
+    w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8">
+<style>*{box-sizing:border-box;font-family:Arial,sans-serif;margin:0;padding:0}
+body{padding:24px;font-size:14px;line-height:1.9;color:#1a1a2e;max-width:800px;margin:0 auto}
+.hd{text-align:center;border-bottom:3px solid #c8922a;padding-bottom:14px;margin-bottom:18px}
+.hd h1{font-size:21px;color:#1a1a2e}.hd .sub{font-size:12px;color:#666;margin-top:4px}
+.q{background:#f8fafc;border-right:4px solid #6d28d9;padding:10px 14px;margin-bottom:18px;font-weight:700;border-radius:6px}
+.ln{margin:2px 0}.li{margin:2px 0;padding-right:14px}
+hr{border:none;border-top:1px solid #ddd;margin:10px 0}
+b{font-weight:800;color:#0d6b5e}
+.ft{margin-top:26px;border-top:1px solid #ddd;padding-top:10px;font-size:11px;color:#777;text-align:center}
+@media print{.np{display:none!important}}</style></head><body>
+<div class="np" style="display:flex;gap:10px;margin-bottom:18px">
+<button onclick="window.print()" style="flex:1;background:#0d7a6f;color:#fff;border:none;border-radius:10px;padding:14px;font-size:17px;font-weight:800;cursor:pointer">🖨️ طباعة / حفظ PDF</button>
+<button onclick="window.close()" style="background:#dc2626;color:#fff;border:none;border-radius:10px;padding:14px 22px;font-size:17px;font-weight:800;cursor:pointer">✕</button></div>
+<div class="hd"><h1>مؤسسة قمة الفرصة التجارية</h1><div class="sub">تقرير قمة AI — ${todayLocal()}</div></div>
+<div class="q">${String(question||"").replace(/</g,"&lt;")}</div>${html}
+<div class="ft">${new Date().toLocaleString("ar-SA")} — مؤسسة قمة الفرصة التجارية — بريدة</div>
+</body></html>`);
+    w.document.close();
+  };
+
+  const copyText = (t) => {
+    const clean = stripFollow(stripChart(stripAction(t))).replace(/\*\*/g,"");
+    try {
+      if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(clean); }
+      else { const ta=document.createElement("textarea"); ta.value=clean; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }
+      toast && toast("✅ تم النسخ");
+    } catch(e){ toast && toast("⚠️ تعذر النسخ","warn"); }
+  };
+
+  // ═══════════ اقتراحات المتابعة ═══════════
+  const parseFollow = (txt) => {
+    const m = String(txt||"").match(/```follow\s*([\s\S]*?)```/);
+    if(!m) return [];
+    return m[1].split("\n").map(x=>x.replace(/^[-•\d.\s]+/,"").trim()).filter(x=>x.length>3).slice(0,3);
+  };
+  const stripFollow = (txt) => String(txt||"").replace(/```follow[\s\S]*?```/g,"").trim();
+
   // ═══════════ 5) الإدخال الصوتي ═══════════
   const toggleVoice = () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -6958,7 +7126,11 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
   // ═══════════ التعليمات ═══════════
   const systemPrompt = `أنت "قمة AI" — المساعد الذكي لمؤسسة قمة الفرصة التجارية، مؤسسة تقسيط وتمويل في بريدة، القصيم. صاحبها عبدالله.
 
-عندك وصول لقاعدة بيانات المؤسسة (تُرسل لك حسب السؤال): المستثمرون، العقود النشطة والمنتهية، المتعثرون، سجل السدادات، التحصيل الشهري، دفتر اليومية، السلف والزكاة، الحركات البنكية، تحليل البضائع، إقفالات الشهور.
+عندك وصول لقاعدة بيانات المؤسسة (تُرسل لك حسب السؤال): المستثمرون، العقود النشطة والمنتهية، المتعثرون، **تقييم المخاطر التنبؤي**، سجل السدادات، التحصيل الشهري، دفتر اليومية، السلف والزكاة، الحركات البنكية، تحليل البضائع، إقفالات الشهور.
+
+═══ تقييم المخاطر ═══
+لو وصلك جدول "تقييم المخاطر التنبؤي"، فهو محسوب من 5 مؤشرات سلوكية: التأخر الحالي، مدة الانقطاع عن السداد، انتظام السداد تاريخياً، التخلف عن الجدول الزمني، وحجم المبلغ المكشوف. الدرجة 0-100 والمستويات: آمن (<22)، مراقبة (22-44)، خطر متوسط (45-69)، خطر مرتفع (70+).
+استخدمه لما يُسأل عن التنبؤ بالتعثر أو ترتيب الأولويات في المتابعة.
 
 مهمتك:
 - جاوب على أي سؤال تحليلي من البيانات المُرسلة
@@ -6978,6 +7150,12 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
 \`\`\`action
 {"action":"mark_done","client":"الاسم الكامل"}
 \`\`\`
+
+قيد في دفتر اليومية (مصروف/سحب/استلام...):
+\`\`\`action
+{"action":"add_expense","type":"masroof","amount":250,"desc":"بنزين","date":"2026-07-24"}
+\`\`\`
+أنواع القيد: sadad=سداد، sahb=سحب، masroof=مصروف، estilam=استلمت نقدي، mgr=استلام مدير، acc=استلام محاسب، zakat=زكاة، salf=سلف
 
 رسائل واتساب:
 \`\`\`action
@@ -7003,42 +7181,76 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
 - "متأخر X شهر" = عدد الأقساط المستحقة وغير المدفوعة
 - contractType: monthly=شهري، defer=مؤجل، migrated=مرحّل من النظام القديم
 
+═══ اقتراحات المتابعة ═══
+في نهاية كل رد، أضف 3 أسئلة متابعة قصيرة (أقل من 6 كلمات لكل سؤال) ذات صلة بما أجبت عنه:
+\`\`\`follow
+السؤال الأول
+السؤال الثاني
+السؤال الثالث
+\`\`\`
+
 الأسلوب: عربي مباشر، ابدأ بالجواب فوراً بدون مقدمات، استخدم **النص العريض** للأرقام المهمة، ونقاط مرقّمة للقوائم.`;
 
   // ═══════════ الإرسال ═══════════
+  // يحاول الموديل المختار، وإذا كان معطّلاً يجرّب البقية تلقائياً
+  const callModel = async (model, body) => {
+    const resp = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent",
+      { method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":aiKey}, body: JSON.stringify(body) }
+    );
+    const data = await resp.json();
+    if(data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts){
+      return {ok:true, text: data.candidates[0].content.parts.map(p=>p.text||"").join("")};
+    }
+    const msg = (data.error && data.error.message) ? data.error.message : "لم أستطع الإجابة";
+    const retryable = /no longer available|not found|not supported|is not available|deprecated|shut down/i.test(msg);
+    return {ok:false, msg, retryable};
+  };
+
   const sendToAI = async (question) => {
     if(!aiKey){ setShowSetup(true); return "⚙️ أدخل مفتاح Gemini API. اضغط ⚙️ فوق."; }
     try {
       const context = buildContext(question);
-      setLastCost(Math.round(context.length/4));
-      const hist = msgs.filter(m=>!String(m.text||"").startsWith("⚠️") && !String(m.text||"").startsWith("⚙️")).slice(-6);
+      setLastCost(Math.round((context.length + systemPrompt.length)/4));
+      const hist = msgs.filter(m=>!String(m.text||"").startsWith("⚠️") && !String(m.text||"").startsWith("⚙️") && !String(m.text||"").startsWith("☀️")).slice(-6);
       const contents = hist.map(m=>({role: m.role==="user"?"user":"model", parts:[{text: stripChart(stripAction(m.text))}]}));
       contents.push({role:"user", parts:[{text: question}]});
+      const body = {
+        system_instruction: {parts:[{text: systemPrompt + "\n\n" + context}]},
+        contents: contents,
+        generationConfig: {maxOutputTokens:8192, temperature:0.2}
+      };
 
-      const resp = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/" + aiModel + ":generateContent",
-        {
-          method: "POST",
-          headers: {"Content-Type": "application/json", "x-goog-api-key": aiKey},
-          body: JSON.stringify({
-            system_instruction: {parts:[{text: systemPrompt + "\n\n" + context}]},
-            contents: contents,
-            generationConfig: {maxOutputTokens:8192, temperature:0.2}
-          })
+      // 1) الموديل المختار
+      let r = await callModel(aiModel, body);
+      if(r.ok) return r.text;
+      if(!r.retryable) return "⚠️ " + r.msg;
+
+      // 2) تبديل تلقائي — يجرب باقي الموديلات
+      for(const m of AI_MODELS){
+        if(m===aiModel) continue;
+        const alt = await callModel(m, body);
+        if(alt.ok){
+          setAiModel(m);
+          try{ localStorage.setItem("qimma_ai_model", m); }catch(e){}
+          return "🔄 *تم التبديل تلقائياً إلى " + m + "*\n\n" + alt.text;
         }
-      );
-      const data = await resp.json();
-      if(data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts){
-        return data.candidates[0].content.parts.map(p=>p.text||"").join("");
+        if(!alt.retryable) return "⚠️ " + alt.msg;
       }
-      if(data.error) return "⚠️ " + (data.error.message||"خطأ من Gemini");
-      return "⚠️ لم أستطع الإجابة.";
+      return "⚠️ كل الموديلات غير متاحة حالياً. جرّب لاحقاً أو غيّر الموديل من ⚙️.";
     } catch(err) { return "⚠️ خطأ: " + err.message; }
   };
 
   const localQuery = (q) => {
     const ql = String(q||"").trim();
     if(/تقرير|صباح|ملخص|بريف/.test(ql)) return buildBrief();
+    if(/خطر|مخاطر|تنبؤ|يتعثر|احتمال/.test(ql)){
+      const sc=activeC.map(c=>({c,r:riskScore(c)})).filter(x=>x.r.score>=22).sort((a,b)=>b.r.score-a.r.score);
+      if(!sc.length) return "✅ لا يوجد عملاء معرضين للخطر";
+      let t=`⚠️ **تقييم المخاطر** (${sc.length} عميل)\nالمبلغ المعرّض: **${SAR(sc.filter(x=>x.r.score>=45).reduce((s,x)=>s+_left(x.c),0))}**\n\n`;
+      sc.slice(0,20).forEach((x,i)=>{ t+=`${i+1}. **${x.c.client}** — ${x.r.score}/100 (${x.r.level})\n   ${x.r.reasons.join("، ")||"—"} → ${x.r.advice}\n`; });
+      return t;
+    }
     if(/متأخر|متعثر/.test(ql)){
       const mm=ql.match(/(\d+)/); const mn=mm?parseInt(mm[1]):1;
       const ov=activeC.filter(c=>_overdue(c)>=mn).sort((a,b)=>_overdue(b)-_overdue(a));
@@ -7095,7 +7307,7 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
   const clearChat = () => { setMsgs([]); try{ localStorage.removeItem("qimma_ai_chat"); }catch(e){} };
 
   const fmt = (t) => {
-    const clean = stripChart(stripAction(t));
+    const clean = stripFollow(stripChart(stripAction(t)));
     if(!clean) return null;
     return clean.split("\n").map((line,i)=>{
       const parts = line.split(/\*\*(.*?)\*\*/g);
@@ -7105,7 +7317,7 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
     });
   };
 
-  const QUICK = ["☀️ التقرير الصباحي","أسوأ 10 متعثرين","قارن كل المستثمرين","التحصيل آخر 6 شهور","أفضل الزبائن التزاماً","تحليل ربح البضائع","مصروفات هذا الشهر","توقع دخل الشهر الجاي"];
+  const QUICK = ["☀️ التقرير الصباحي","⚠️ من راح يتعثر قريباً؟","أسوأ 10 متعثرين","قارن كل المستثمرين","التحصيل آخر 6 شهور","أفضل الزبائن التزاماً","تحليل ربح البضائع","مصروفات هذا الشهر","توقع دخل الشهر الجاي"];
 
   return (
     React.createElement("div",{style:{maxWidth:720,margin:"0 auto",display:"flex",flexDirection:"column",height:"calc(100vh - 140px)"}},
@@ -7170,9 +7382,20 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
               )
             ),
             chart && React.createElement("div",{style:{marginRight:38}}, React.createElement(Chart,{spec:chart})),
-            isBrief && React.createElement("div",{style:{marginRight:38,marginTop:8}},
-              React.createElement("button",{onClick:sendBriefWA,style:{padding:"10px 18px",borderRadius:12,border:"none",background:"#25D366",color:"#fff",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"📤 إرسال واتساب")
-            )
+            m.role==="ai" && !String(m.text||"").startsWith("⚠️") && !String(m.text||"").startsWith("⚙️") &&
+              React.createElement("div",{style:{marginRight:38,marginTop:6,display:"flex",gap:6,flexWrap:"wrap"}},
+                isBrief && React.createElement("button",{onClick:sendBriefWA,style:{padding:"8px 14px",borderRadius:10,border:"none",background:"#25D366",color:"#fff",fontWeight:800,fontSize:12,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"📤 واتساب"),
+                React.createElement("button",{onClick:()=>copyText(m.text),style:{padding:"8px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",background:"#fff",color:"#64748b",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"📋 نسخ"),
+                React.createElement("button",{onClick:()=>printAnswer(i>0&&msgs[i-1].role==="user"?msgs[i-1].text:"تقرير قمة AI", m.text),style:{padding:"8px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",background:"#fff",color:"#64748b",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"🖨️ طباعة"),
+                m.role==="ai" && i===msgs.length-1 && i>0 && msgs[i-1].role==="user" &&
+                  React.createElement("button",{onClick:()=>{ const q=msgs[i-1].text; setMsgs(p=>p.slice(0,i)); setTimeout(()=>send(q),50); },style:{padding:"8px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",background:"#fff",color:"#64748b",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"🔄 إعادة")
+              ),
+            m.role==="ai" && parseFollow(m.text).length>0 && i===msgs.length-1 &&
+              React.createElement("div",{style:{marginRight:38,marginTop:8,display:"flex",gap:6,flexWrap:"wrap"}},
+                parseFollow(m.text).map((f,k)=>
+                  React.createElement("button",{key:k,onClick:()=>send(f),style:{padding:"8px 14px",borderRadius:18,border:"1.5px dashed #c4b5fd",background:"#faf5ff",color:"#6d28d9",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"↩ "+f)
+                )
+              )
           );
         }),
         loading && React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
@@ -8613,7 +8836,7 @@ function App() {
         {page==="overdue" && <OverduePage contracts={activeContracts} investors={investors} payments={payments} goCollect={()=>setPage("collect")} onFlag={(id,val)=>{setContracts(p=>p.map(c=>c.id===id?{...c,defaulter:val}:c));}} />}
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={payments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
-        {page==="qimaai" && <QimaAI contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct}/>}
+        {page==="qimaai" && <QimaAI contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct}/>}
         {page==="collect" && <CollectionPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
         {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast}/>}/>}
