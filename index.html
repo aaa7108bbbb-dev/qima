@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-24-qimaai-complete -->
+<!-- build: 2026-07-24-qimaai-listfix -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -6668,23 +6668,28 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
   const pickSections = (q) => {
     const s = {core:true, contracts:false, done:false, overdue:false, good:false,
                payments:false, monthly:false, daily:false, loans:false, bank:false, risk:false,
-               goods:false, invtx:false, close:false, client:null};
+               goods:false, invtx:false, close:false, namesOnly:false, client:null};
     const t = String(q||"");
 
-    // هل السؤال عن زبون محدد؟
+    // ── مطابقة عميل محدد: تتطلب الاسم الكامل أو كلمتين مختلفتين منه ──
+    // (كلمة واحدة لا تكفي — "أسماء العقود" كان يُطابق عميلة اسمها أسماء)
     let matched = null;
     allC.forEach(c=>{
       const name = String(c.client||"").trim();
       if(!name) return;
       const parts = name.split(/\s+/).filter(w=>w.length>=3);
-      const hit = t.includes(name) || parts.some(w=>t.includes(w));
-      if(hit && (!matched || name.length>matched.length)) matched = name;
+      const full = name.length>=5 && t.includes(name);
+      const twoTokens = parts.filter(w=>t.includes(w)).length >= 2;
+      if((full || twoTokens) && (!matched || name.length>matched.length)) matched = name;
     });
     if(!matched){
       const num = t.match(/\b\d{9,10}\b/);
       if(num){ const c=allC.find(x=>String(x.idNum)===num[0]||String(x.cPhone)===num[0]); if(c) matched=c.client; }
     }
     if(matched){ s.client = matched; s.payments = true; return s; }
+
+    // ── طلب قائمة أسماء صريح → وضع مضغوط يشمل كل العقود ──
+    if(/أسماء|اسماء|قائمة|اعرض|اطبع/.test(t) && /عقد|عقود|عميل|عملاء|زبون|زبائن/.test(t)) s.namesOnly = true;
 
     if(/خطر|مخاطر|تنبؤ|توقع تعثر|من راح|احتمال|تصنيف|مخاطرة|أخطر/.test(t)) s.risk = true;
     if(/متأخر|متعثر|تعثر|تأخر|مدين|ما سدد|ماسدد/.test(t)){ s.overdue = true; s.risk = true; }
@@ -6759,6 +6764,20 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
     });
 
     // ── الأقسام حسب الطلب ──
+    if(sec.namesOnly){
+      ctx += `\n═══ قائمة كل العقود النشطة (${activeC.length}) ═══\n`;
+      ctx += `الرقم. الاسم | المتبقي | متأخر\n`;
+      activeC.slice().sort((a,b)=>String(a.client).localeCompare(String(b.client),"ar")).forEach((c,i)=>{
+        ctx += `${i+1}. ${c.client} | ${_left(c)} | ${_overdue(c)}\n`;
+      });
+      if(doneC.length){
+        ctx += `\n═══ قائمة العقود المنتهية (${doneC.length}) ═══\n`;
+        doneC.forEach((c,i)=>{ ctx += `${i+1}. ${c.client}\n`; });
+      }
+      ctx += `\nملاحظة: هذي القائمة كاملة وغير مقتطعة. اعرضها كلها لو طُلب منك.\n`;
+      return ctx;
+    }
+
     if(sec.contracts){
       ctx += `\n═══ العقود النشطة (${activeC.length}) ═══\n`;
       ctx += `رقم|العميل|الجوال|المستثمر|النقدي|الأقساط|القسط|الواصل|المتبقي|متأخر|البضاعة|تاريخ|أول_قسط|النوع\n`;
@@ -7136,7 +7155,9 @@ b{font-weight:800;color:#0d6b5e}
 - جاوب على أي سؤال تحليلي من البيانات المُرسلة
 - قارن، رتّب، صنّف، احسب نسب، اكتشف أنماط، أعطِ توصيات عملية
 - لا تخترع أي رقم — كل رقم لازم يكون من البيانات المُرسلة
-- لو المعلومة مو موجودة، قول "ما وصلتني هذي البيانات، اسألني بصيغة أوضح"
+- القوائم المُرسلة لك **كاملة وغير مقتطعة**. لا تقل أبداً "زوّدني بالبيانات" أو "البيانات المتاحة محدودة" — لو وصلتك قائمة فاعرضها كلها
+- لو طُلبت قائمة طويلة، اعرضها بالكامل ولا تختصرها إلا لو طُلب منك
+- لو فعلاً ما وصلك القسم المطلوب، قول: "أعد صياغة السؤال بكلمة أوضح مثل: قائمة/متأخرين/سدادات/يومية"
 
 ═══ تنفيذ الأوامر ═══
 لو طلب منك عبدالله تنفيذ إجراء، أرفق في نهاية ردك كتلة JSON بهذي الصيغة بالضبط:
