@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-24-qimaai-duedates -->
+<!-- build: 2026-07-24-bank-reconcile -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -3778,8 +3778,233 @@ function printBankStatement(rows, lastBalance, totalDain, totalMadin, filterLabe
   setTimeout(()=>win.print(), 400);
 }
 
-function BankPage({bankTx, setBankTx, toast}) {
+// ═══════════════════════════════════════════════════════════
+//  🔗 المطابقة البنكية الذكية
+//  يربط حركات البنك بالعقود بأدلة صريحة — لا تخمين
+// ═══════════════════════════════════════════════════════════
+const _RC_NORM = (s) => String(s||"")
+  .replace(/[\u064B-\u0652\u0640]/g,"")
+  .replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه")
+  .replace(/[^\u0600-\u06FF0-9a-zA-Z\s]/g," ")
+  .replace(/\s+/g," ").trim();
+const _RC_STOP = ["عبد","بن","بنت","ابو","ابن","محول","تحويل","من","الى","حساب","سداد","مدفوعات","شبكه","نقاط","بيع","صراف","الي","علي"];
+const _RC_TOK = (s) => _RC_NORM(s).split(" ").filter(w=>w.length>=3 && _RC_STOP.indexOf(w)<0);
+const _RC_DIG = (s) => String(s||"").replace(/\D/g,"");
+
+function reconcileOne(tx, list){
+  const narr = _RC_NORM((tx.type||"")+" "+(tx.name||""));
+  const nd = _RC_DIG((tx.type||"")+" "+(tx.name||""));
+  const amt = Math.abs(+tx.dain||0) || Math.abs(+tx.madin||0);
+  const isIn = (+tx.dain||0) > 0;
+  const nTok = _RC_TOK(narr);
+  const res = [];
+  for(const c of list){
+    let score=0; const reasons=[];
+    if(c.bankAccount){
+      const acc=_RC_DIG(c.bankAccount);
+      if(acc.length>=6 && nd.indexOf(acc.slice(-6))>=0){ score+=50; reasons.push("رقم الحساب ("+acc.slice(-6)+")"); }
+      else if(acc.length>=4 && nd.indexOf(acc.slice(-4))>=0){ score+=32; reasons.push("آخر 4 من الحساب"); }
+    }
+    if(c.cPhone){ const p=_RC_DIG(c.cPhone); if(p.length>=7 && nd.indexOf(p.slice(-7))>=0){ score+=45; reasons.push("رقم الجوال"); } }
+    if(c.idNum){ const d=_RC_DIG(c.idNum); if(d.length>=9 && nd.indexOf(d)>=0){ score+=45; reasons.push("رقم الهوية"); } }
+    const cTok=_RC_TOK(c.client);
+    if(cTok.length){
+      const hit=cTok.filter(w=>nTok.indexOf(w)>=0);
+      if(hit.length>=3){ score+=42; reasons.push("الاسم ("+hit.slice(0,3).join(" ")+")"); }
+      else if(hit.length===2){ score+=34; reasons.push("الاسم ("+hit.join(" ")+")"); }
+      else if(hit.length===1 && hit[0].length>=5){ score+=12; reasons.push("جزء من الاسم"); }
+    }
+    const inst=+c.instAmt||0, left=+c.__left||0;
+    if(amt>0){
+      if(inst>0 && Math.abs(amt-inst)<0.5){ score+=26; reasons.push("يساوي القسط ("+inst.toLocaleString()+")"); }
+      else if(inst>0 && amt>inst && Math.abs(amt%inst)<0.5){ score+=16; reasons.push("مضاعف القسط ("+Math.round(amt/inst)+"×)"); }
+      else if(left>0 && Math.abs(amt-left)<0.5){ score+=22; reasons.push("يساوي كامل المتبقي"); }
+    }
+    if(c.firstInst && tx.date){
+      const dd=new Date(c.firstInst).getDate();
+      const td=parseInt(String(tx.date).slice(-2).replace(/\D/g,""),10);
+      if(!isNaN(td)&&!isNaN(dd)){ const df=Math.min(Math.abs(td-dd),31-Math.abs(td-dd));
+        if(df<=2){ score+=10; reasons.push("قريب من يوم الاستحقاق"); } else if(df<=5) score+=5; }
+    }
+    if(isIn && c.payType==="deduction" && score>0){ score+=8; reasons.push("عقد استقطاع"); }
+    if(score>0) res.push({c,score,reasons});
+  }
+  res.sort((a,b)=>b.score-a.score);
+  const best=res[0]||null, second=res[1]||null;
+  let conf="none";
+  if(best){
+    const idn=best.reasons.some(r=>/الحساب|الجوال|الهوية|الاسم/.test(r));
+    const gap=best.score-(second?second.score:0);
+    if(idn && best.score>=60 && gap>=12) conf="high";
+    else if(idn && best.score>=38) conf="medium";
+    else if(best.score>=22) conf="low";
+  }
+  return {best, alts:res.slice(0,3), conf, amt, isIn};
+}
+
+function classifyTx(tx){
+  const n=_RC_NORM((tx.type||"")+" "+(tx.name||""));
+  const isIn=(+tx.dain||0)>0;
+  const R=[
+    [/نقاط بيع|شبكه|مدى|mada|pos|شراء/i,"مشتريات نقاط بيع","masroof",true],
+    [/صراف|سحب نقدي|atm|نقدا/i,"سحب نقدي","sahb",true],
+    [/رسوم|عموله|عمولة|ضريبه|ضريبة|vat|fee/i,"رسوم بنكية","masroof",true],
+    [/راتب|salary/i,"راتب","estilam",true],
+    [/زكاه|زكاة|صدقه|صدقة/i,"زكاة","zakat",true],
+    [/كهرب|ماء|اتصالات|stc|موبايلي|زين|فاتوره|فاتورة/i,"فواتير","masroof",true],
+    [/ايجار|إيجار/i,"إيجار","masroof",true],
+    [/تحويل|حواله|حوالة|transfer/i,isIn?"تحويل وارد":"تحويل صادر",isIn?"estilam":"sahb",false],
+  ];
+  for(const x of R){ if(x[0].test(n)) return {label:x[1],type:x[2],sure:x[3]}; }
+  return {label:isIn?"إيداع غير مصنّف":"مصروف غير مصنّف", type:isIn?"estilam":"masroof", sure:false};
+}
+
+function BankReconcile({bankTx, contracts, investors, payments, setPayments, doneIds, setDaily, daily, toast, logAct}){
+  const [tab, setTab] = useState("alert");
+  const [ignored, setIgnored] = useState(()=>{ try{ return JSON.parse(localStorage.getItem("qimma_rc_ignored")||"[]"); }catch(e){ return []; } });
+  const ign = (id) => { const n=[...ignored,id]; setIgnored(n); try{localStorage.setItem("qimma_rc_ignored",JSON.stringify(n));}catch(e){} };
+  const unIgn = () => { setIgnored([]); try{localStorage.removeItem("qimma_rc_ignored");}catch(e){} };
+
+  const _paid = (cid) => _arr(payments).filter(p=>p.contractId===cid).reduce((s,p)=>s+(+p.amount||0),0);
+  const active = _arr(contracts).filter(c=>!c.deleted && (doneIds||[]).indexOf(c.id)<0)
+    .map(c=>({...c, __left: Math.max(0,(+c.totalInst||+c.amount||0)-_paid(c.id))}));
+
+  const analysis = React.useMemo(()=>{
+    const rows=_arr(bankTx);
+    const out={matched:[], review:[], unknown:[], expense:[], unrecorded:[]};
+    rows.forEach((tx,idx)=>{
+      const key = tx.id || (tx.date+"_"+(tx.dain||0)+"_"+(tx.madin||0)+"_"+idx);
+      if(ignored.indexOf(key)>=0) return;
+      const isIn=(+tx.dain||0)>0;
+      const r = isIn ? reconcileOne(tx, active) : {best:null,conf:"none",amt:Math.abs(+tx.madin||0),isIn:false};
+      const item={tx, key, ...r};
+      if(!isIn){ item.cls=classifyTx(tx); out.expense.push(item); return; }
+      if(r.conf==="high" || r.conf==="medium"){
+        // هل هذا الإيداع مسجّل كسداد في النظام؟
+        const exists = _arr(payments).some(p=>
+          p.contractId===r.best.c.id &&
+          Math.abs((+p.amount||0)-r.amt)<0.5 &&
+          Math.abs((new Date(p.date)-new Date(tx.date))/86400000)<=7
+        );
+        item.recorded=exists;
+        if(exists) out.matched.push(item); else out.unrecorded.push(item);
+      }
+      else if(r.conf==="low"){ out.review.push(item); }
+      else { item.cls=classifyTx(tx); out.unknown.push(item); }
+    });
+    return out;
+  },[bankTx, contracts, payments, doneIds, ignored]);
+
+  const recordPay = (item) => {
+    const c=item.best.c;
+    const rn=_arr(payments).length+1;
+    setPayments(p=>[...p,{id:Date.now(),contractId:c.id,amount:item.amt,date:item.tx.date,note:"مطابقة بنكية",receipt:rn}]);
+    logAct && logAct("سداد","مطابقة بنكية",c.client+" — "+SAR(item.amt));
+    toast && toast("✅ سُجّل "+SAR(item.amt)+" على "+c.client);
+    ign(item.key);
+  };
+  const recordExpense = (item) => {
+    const all=_arr(daily);
+    const rn=all.reduce((m,d)=>Math.max(m,d.receiptNum||0),0)+1;
+    setDaily && setDaily(p=>[...p,{id:Date.now(),date:item.tx.date,type:item.cls.type,amount:item.amt,desc:(item.cls.label+" — "+(item.tx.type||"")).slice(0,80),receiptNum:rn}]);
+    toast && toast("✅ سُجّل قيد: "+item.cls.label);
+    ign(item.key);
+  };
+
+  const nUn=analysis.unrecorded.length, nRev=analysis.review.length, nUnk=analysis.unknown.length;
+  const sumUn=analysis.unrecorded.reduce((s,i)=>s+i.amt,0);
+
+  const TABS=[
+    {id:"alert", label:"⚠️ لم تُسجّل", n:nUn, col:"#dc2626"},
+    {id:"review",label:"🔍 مراجعة",   n:nRev, col:"#f97316"},
+    {id:"unknown",label:"❓ مجهولة",  n:nUnk, col:"#6d28d9"},
+    {id:"ok",    label:"✅ مطابقة",   n:analysis.matched.length, col:"#16a34a"},
+    {id:"exp",   label:"💳 مصروفات",  n:analysis.expense.length, col:"#64748b"},
+  ];
+
+  const Card = ({item, kind}) => (
+    <div style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"12px 14px",marginBottom:8}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10,flexWrap:"wrap"}}>
+        <div style={{flex:1,minWidth:180}}>
+          <div style={{fontSize:12,color:"#94a3b8",fontWeight:600}}>{item.tx.date}</div>
+          <div style={{fontSize:13.5,fontWeight:700,color:"#1a1a2e",marginTop:2}}>{(item.tx.type||"")+" "+(item.tx.name||"")}</div>
+        </div>
+        <div style={{fontSize:17,fontWeight:900,color:item.isIn?"#16a34a":"#dc2626",whiteSpace:"nowrap"}}>
+          {item.isIn?"+":"−"}{SAR(item.amt)}
+        </div>
+      </div>
+      {item.best && (
+        <div style={{marginTop:10,background:kind==="alert"?"#fef2f2":"#f0fdf4",borderRadius:10,padding:"9px 12px",border:"1px solid "+(kind==="alert"?"#fecaca":"#bbf7d0")}}>
+          <div style={{fontSize:13,fontWeight:800,color:kind==="alert"?"#b91c1c":"#15803d"}}>
+            {kind==="alert"?"⚠️ ":"✅ "}{item.best.c.client}
+            <span style={{fontSize:11,fontWeight:600,opacity:0.7,marginRight:6}}>
+              (ثقة {item.conf==="high"?"عالية":item.conf==="medium"?"متوسطة":"منخفضة"} · {item.best.score})
+            </span>
+          </div>
+          <div style={{fontSize:11.5,color:"#64748b",marginTop:4,lineHeight:1.7}}>
+            الأدلة: {item.best.reasons.join(" • ")}
+          </div>
+        </div>
+      )}
+      {item.cls && !item.best && (
+        <div style={{marginTop:10,background:"#f8fafc",borderRadius:10,padding:"9px 12px",border:"1px solid #e2e8f0"}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#475569"}}>
+            التصنيف المقترح: {item.cls.label}
+            <span style={{fontSize:11,marginRight:6,color:item.cls.sure?"#16a34a":"#f97316"}}>
+              {item.cls.sure?"(مؤكد من البيان)":"(يحتاج تأكيدك)"}
+            </span>
+          </div>
+        </div>
+      )}
+      <div style={{display:"flex",gap:6,marginTop:10,flexWrap:"wrap"}}>
+        {kind==="alert" && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"none",background:"linear-gradient(135deg,#16a34a,#15803d)",color:"#fff",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>recordPay(item)}>✅ سجّل السداد</button>}
+        {(kind==="unknown"||kind==="exp") && item.cls && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"none",background:"linear-gradient(135deg,#0d9488,#0f766e)",color:"#fff",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>recordExpense(item)}>📒 أضف لليومية</button>}
+        {kind==="review" && item.best && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"none",background:"linear-gradient(135deg,#f97316,#ea580c)",color:"#fff",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>{ if(window.confirm("تأكيد ربط "+SAR(item.amt)+" بـ "+item.best.c.client+"؟\n\nالأدلة ضعيفة — تأكد بنفسك.")) recordPay(item); }}>🔗 اربط يدوياً</button>}
+        <button style={{padding:"10px 14px",borderRadius:9,border:"1.5px solid #e2e8f0",background:"#fff",color:"#94a3b8",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>ign(item.key)}>تجاهل</button>
+      </div>
+    </div>
+  );
+
+  const cur = tab==="alert"?analysis.unrecorded : tab==="review"?analysis.review
+            : tab==="unknown"?analysis.unknown : tab==="ok"?analysis.matched : analysis.expense;
+
+  return (
+    <div>
+      {nUn>0 && (
+        <div style={{background:"linear-gradient(135deg,#7f1d1d,#991b1b)",borderRadius:16,padding:"16px 18px",marginBottom:14,color:"#fff"}}>
+          <div style={{fontSize:16,fontWeight:900}}>⚠️ {nUn} إيداع دخل البنك ولم يُسجّل في النظام</div>
+          <div style={{fontSize:22,fontWeight:900,marginTop:6}}>{SAR(sumUn)}</div>
+          <div style={{fontSize:12,opacity:0.85,marginTop:4}}>مطابَقة بأدلة قاطعة (اسم/حساب/جوال) — راجعها وسجّلها</div>
+        </div>
+      )}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:5,marginBottom:14}}>
+        {TABS.map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id)}
+            style={{padding:"10px 4px",borderRadius:11,border:tab===t.id?"none":"1.5px solid #e2e8f0",
+              background:tab===t.id?t.col:"#fff",color:tab===t.id?"#fff":"#64748b",
+              fontWeight:800,fontSize:11,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",textAlign:"center"}}>
+            <div>{t.label}</div>
+            <div style={{fontSize:15,fontWeight:900,marginTop:2}}>{t.n}</div>
+          </button>
+        ))}
+      </div>
+      {ignored.length>0 && (
+        <div style={{fontSize:12,color:"#94a3b8",marginBottom:10,display:"flex",alignItems:"center",gap:8}}>
+          <span>{ignored.length} حركة متجاهَلة</span>
+          <button style={{padding:"5px 10px",borderRadius:8,border:"1.5px solid #e2e8f0",background:"#fff",color:"#6d28d9",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={unIgn}>استرجاع الكل</button>
+        </div>
+      )}
+      {cur.length===0
+        ? <div style={{textAlign:"center",padding:"40px 20px",color:"#94a3b8",fontSize:14}}>لا يوجد شيء هنا 👌</div>
+        : cur.slice(0,120).map(it=><Card key={it.key} item={it} kind={tab}/>)}
+      {cur.length>120 && <div style={{textAlign:"center",color:"#94a3b8",fontSize:12,padding:10}}>... و{cur.length-120} حركة أخرى</div>}
+    </div>
+  );
+}
+
+function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, setPayments, doneIds, daily, setDaily, logAct}) {
   const rows = _arr(bankTx);
+  const [bankView, setBankView] = useState("tx");
   const fileRef = React.useRef(null);
   const [dragOver, setDragOver] = React.useState(false);
   const [bankQuery, setBankQuery] = React.useState(""); // 🔍 بحث بالاسم/الوصف
@@ -4063,6 +4288,26 @@ function BankPage({bankTx, setBankTx, toast}) {
 
   return (
     <div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+        <button onClick={()=>setBankView("tx")}
+          style={{padding:"13px",borderRadius:13,border:bankView==="tx"?"none":"2px solid #e2e8f0",
+            background:bankView==="tx"?"linear-gradient(135deg,#1a1a2e,#16213e)":"#fff",
+            color:bankView==="tx"?"#e0b85c":"#64748b",fontWeight:900,fontSize:14,cursor:"pointer",
+            fontFamily:"IBM Plex Sans Arabic,Arial"}}>🏦 الحركات</button>
+        <button onClick={()=>setBankView("rc")}
+          style={{padding:"13px",borderRadius:13,border:bankView==="rc"?"none":"2px solid #e2e8f0",
+            background:bankView==="rc"?"linear-gradient(135deg,#6d28d9,#7c3aed)":"#fff",
+            color:bankView==="rc"?"#fff":"#64748b",fontWeight:900,fontSize:14,cursor:"pointer",
+            fontFamily:"IBM Plex Sans Arabic,Arial"}}>🔗 المطابقة الذكية</button>
+      </div>
+      {bankView==="rc" && (
+        rows.length===0
+          ? <div style={{textAlign:"center",padding:"50px 20px",color:"#94a3b8",fontSize:14}}>ارفع كشف البنك أولاً من تبويب «الحركات»</div>
+          : <BankReconcile bankTx={bankTx} contracts={contracts} investors={investors} payments={payments}
+              setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} toast={toast} logAct={logAct}/>
+      )}
+      {bankView==="tx" && (
+      <div>
       <div style={{...styles.card,marginBottom:16}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12,marginBottom:14}}>
           <div style={{fontSize:18,fontWeight:800,color:C.ink}}>🏦 رصيد الحساب البنكي (الراجحي)</div>
@@ -4193,6 +4438,8 @@ function BankPage({bankTx, setBankTx, toast}) {
           </div>
           <div style={{fontSize:13,color:"#6b7280",marginTop:10,textAlign:"center"}}>💡 الرصيد الحالي ({SAR(lastBalance)}) يُربط تلقائياً بـ"رصيد الحسابات البنكية" في الجرد</div>
         </>
+      )}
+      </div>
       )}
     </div>
   );
@@ -8954,7 +9201,7 @@ function App() {
         {page==="qimaai" && <QimaAI contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct}/>}
         {page==="collect" && <CollectionPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
-        {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast}/>}/>}
+        {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast} gsWrite={gsWrite}/>}
         {page==="cashflow" && <CashFlowPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>}
