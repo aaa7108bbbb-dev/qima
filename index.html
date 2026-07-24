@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-24-gemini-direct -->
+<!-- build: 2026-07-24-gemini-15flash -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -6646,7 +6646,7 @@ function QimaAI({contracts, investors, payments, settings, doneIds}) {
     try {
       const context = buildContext();
       const resp = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + aiKey,
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + aiKey,
         {
           method: "POST",
           headers: {"Content-Type": "application/json"},
