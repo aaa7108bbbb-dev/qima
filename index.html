@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-24-gemini-flash-lite-v2 -->
+<!-- build: 2026-07-24-gemini-model-selector -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -6546,6 +6546,7 @@ function QimaAI({contracts, investors, payments, settings, doneIds}) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [aiKey, setAiKey] = useState(()=>localStorage.getItem("qimma_ai_key")||"");
+  const [aiModel, setAiModel] = useState(()=>localStorage.getItem("qimma_ai_model")||"gemini-3.5-flash-lite");
   const [showSetup, setShowSetup] = useState(false);
   const chatEnd = React.useRef(null);
   const scrollDown = () => setTimeout(()=>chatEnd.current?.scrollIntoView({behavior:"smooth"}),120);
@@ -6648,7 +6649,7 @@ function QimaAI({contracts, investors, payments, settings, doneIds}) {
     try {
       const context = buildContext();
       const resp = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent",
+        "https://generativelanguage.googleapis.com/v1beta/models/" + aiModel + ":generateContent",
         {
           method: "POST",
           headers: {"Content-Type": "application/json", "x-goog-api-key": aiKey},
@@ -6730,9 +6731,10 @@ function QimaAI({contracts, investors, payments, settings, doneIds}) {
     scrollDown();
   };
 
-  const saveKey = (key) => {
+  const saveKey = (key, model) => {
     setAiKey(key);
     localStorage.setItem("qimma_ai_key", key);
+    if(model){ setAiModel(model); localStorage.setItem("qimma_ai_model", model); }
     setShowSetup(false);
     if(key) setMsgs(p=>[...p, {role:"ai", text:"✅ **تم التفعيل!** Gemini AI جاهز.\n\nاسألني أي شيء..."}]);
   };
@@ -6775,17 +6777,23 @@ function QimaAI({contracts, investors, payments, settings, doneIds}) {
       /* Setup Panel */
       showSetup && React.createElement("div",{style:{background:"rgba(255,255,255,0.95)",backdropFilter:"blur(12px)",borderRadius:16,padding:"18px",marginBottom:12,border:"2px solid #7c3aed",boxShadow:"0 4px 24px rgba(109,40,217,0.1)"}},
         React.createElement("div",{style:{fontSize:15,fontWeight:800,color:"#6d28d9",marginBottom:12}},"⚙️ إعداد Gemini AI"),
-        React.createElement("div",{style:{fontSize:13,color:"#64748b",marginBottom:12,lineHeight:1.8}},
-          "1. افتح aistudio.google.com/apikey",
-          React.createElement("br"),
-          "2. اضغط Create API Key",
-          React.createElement("br"),
-          "3. الصق المفتاح هنا:"
+        React.createElement("div",{style:{fontSize:13,color:"#64748b",marginBottom:8,lineHeight:1.8}},
+          "المفتاح من aistudio.google.com/apikey"
         ),
-        React.createElement("input",{style:{width:"100%",padding:"12px 14px",borderRadius:10,border:"2px solid #e2e8f0",fontSize:14,fontFamily:"monospace",direction:"ltr",marginBottom:10,boxSizing:"border-box"},placeholder:"AIzaSy... أو AQ.Ab8...",defaultValue:aiKey,id:"_aiKey"}),
+        React.createElement("label",{style:{fontSize:13,fontWeight:700,color:"#4a5568",display:"block",marginBottom:4}},"المفتاح"),
+        React.createElement("input",{style:{width:"100%",padding:"12px 14px",borderRadius:10,border:"2px solid #e2e8f0",fontSize:14,fontFamily:"monospace",direction:"ltr",marginBottom:10,boxSizing:"border-box"},placeholder:"AQ.Ab8... أو AIzaSy...",defaultValue:aiKey,id:"_aiKey"}),
+        React.createElement("label",{style:{fontSize:13,fontWeight:700,color:"#4a5568",display:"block",marginBottom:4}},"الموديل"),
+        React.createElement("select",{style:{width:"100%",padding:"12px 14px",borderRadius:10,border:"2px solid #e2e8f0",fontSize:14,fontFamily:"monospace",direction:"ltr",marginBottom:10,boxSizing:"border-box",background:"#fff"},defaultValue:aiModel,id:"_aiModel"},
+          React.createElement("option",{value:"gemini-3.5-flash-lite"},"gemini-3.5-flash-lite (سريع ورخيص)"),
+          React.createElement("option",{value:"gemini-3.1-flash-lite"},"gemini-3.1-flash-lite"),
+          React.createElement("option",{value:"gemini-3.6-flash"},"gemini-3.6-flash (الأحدث)"),
+          React.createElement("option",{value:"gemini-3.5-flash"},"gemini-3.5-flash (الأذكى)"),
+          React.createElement("option",{value:"gemini-2.5-flash"},"gemini-2.5-flash"),
+          React.createElement("option",{value:"gemini-2.5-flash-lite"},"gemini-2.5-flash-lite")
+        ),
         React.createElement("div",{style:{display:"flex",gap:8}},
-          React.createElement("button",{onClick:()=>{const k=document.getElementById("_aiKey").value.trim();saveKey(k);},style:{flex:1,padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#6d28d9,#7c3aed)",color:"#fff",fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"حفظ وتفعيل"),
-          aiKey && React.createElement("button",{onClick:()=>saveKey(""),style:{padding:"12px 16px",borderRadius:10,border:"2px solid #e2e8f0",background:"#fff",color:"#dc2626",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"إلغاء")
+          React.createElement("button",{onClick:()=>{const k=document.getElementById("_aiKey").value.trim();const m=document.getElementById("_aiModel").value;saveKey(k,m);},style:{flex:1,padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#6d28d9,#7c3aed)",color:"#fff",fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"حفظ وتفعيل"),
+          aiKey && React.createElement("button",{onClick:()=>saveKey("",""),style:{padding:"12px 16px",borderRadius:10,border:"2px solid #e2e8f0",background:"#fff",color:"#dc2626",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"إلغاء")
         )
       ),
 
