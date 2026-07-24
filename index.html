@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-24-qimaai-listfix -->
+<!-- build: 2026-07-24-qimaai-duedates -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -6668,7 +6668,7 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
   const pickSections = (q) => {
     const s = {core:true, contracts:false, done:false, overdue:false, good:false,
                payments:false, monthly:false, daily:false, loans:false, bank:false, risk:false,
-               goods:false, invtx:false, close:false, namesOnly:false, client:null};
+               goods:false, invtx:false, close:false, namesOnly:false, dueDay:false, client:null};
     const t = String(q||"");
 
     // ── مطابقة عميل محدد: تتطلب الاسم الكامل أو كلمتين مختلفتين منه ──
@@ -6689,7 +6689,8 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
     if(matched){ s.client = matched; s.payments = true; return s; }
 
     // ── طلب قائمة أسماء صريح → وضع مضغوط يشمل كل العقود ──
-    if(/أسماء|اسماء|قائمة|اعرض|اطبع/.test(t) && /عقد|عقود|عميل|عملاء|زبون|زبائن/.test(t)) s.namesOnly = true;
+    if(/يوم|أيام|ايام|تاريخ|تواريخ|موعد|مواعيد|استحقاق|متى|أول قسط|اول قسط/.test(t)) s.dueDay = true;
+    if(/أسماء|اسماء|قائمة|اعرض|اطبع/.test(t) && new RegExp("عقد|عقود|زبون|زبائن|زباين|الزباين|عميل|عملاء|عميلة|شخص|أشخاص|اشخاص|ناس|مين|اللي").test(t) && !s.dueDay) s.namesOnly = true;
 
     if(/خطر|مخاطر|تنبؤ|توقع تعثر|من راح|احتمال|تصنيف|مخاطرة|أخطر/.test(t)) s.risk = true;
     if(/متأخر|متعثر|تعثر|تأخر|مدين|ما سدد|ماسدد/.test(t)){ s.overdue = true; s.risk = true; }
@@ -6703,7 +6704,8 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
     if(/بضاعة|بضائع|جوال|سيارة|أسهم|بطاقة|منتج|سلعة/.test(t)) s.goods = true;
     if(/مستثمر|صندوق|فرصة|شريك|رأس مال|حركة حساب/.test(t)) s.invtx = true;
     if(/إقفال|اقفال|جرد|ميزانية/.test(t)) s.close = true;
-    if(/عقد|عقود|زبون|زبائن|عميل|عملاء|قائمة|كل ال|جميع/.test(t)) s.contracts = true;
+    if(new RegExp("عقد|عقود|زبون|زبائن|زباين|الزباين|عميل|عملاء|عميلة|شخص|أشخاص|اشخاص|ناس|مين|اللي|قائمة|كل ال|جميع").test(t)) s.contracts = true;
+    if(s.dueDay) s.contracts = true;
     if(/ملخص|وضع|تقرير|إحصائ|احصائ|شامل|عام|كامل/.test(t)){
       s.contracts=true; s.overdue=true; s.monthly=true; s.daily=true; s.goods=true; s.risk=true;
     }
@@ -6766,9 +6768,10 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
     // ── الأقسام حسب الطلب ──
     if(sec.namesOnly){
       ctx += `\n═══ قائمة كل العقود النشطة (${activeC.length}) ═══\n`;
-      ctx += `الرقم. الاسم | المتبقي | متأخر\n`;
+      ctx += `الرقم. الاسم | القسط | المتبقي | متأخر | يوم الاستحقاق\n`;
       activeC.slice().sort((a,b)=>String(a.client).localeCompare(String(b.client),"ar")).forEach((c,i)=>{
-        ctx += `${i+1}. ${c.client} | ${_left(c)} | ${_overdue(c)}\n`;
+        const dd = c.firstInst ? new Date(c.firstInst).getDate() : "—";
+        ctx += `${i+1}. ${c.client} | ${_n(c.instAmt)} | ${_left(c)} | ${_overdue(c)} | ${dd}\n`;
       });
       if(doneC.length){
         ctx += `\n═══ قائمة العقود المنتهية (${doneC.length}) ═══\n`;
@@ -6780,10 +6783,32 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
 
     if(sec.contracts){
       ctx += `\n═══ العقود النشطة (${activeC.length}) ═══\n`;
-      ctx += `رقم|العميل|الجوال|المستثمر|النقدي|الأقساط|القسط|الواصل|المتبقي|متأخر|البضاعة|تاريخ|أول_قسط|النوع\n`;
+      ctx += `رقم|العميل|الجوال|المستثمر|النقدي|الأقساط|القسط|الواصل|المتبقي|متأخر|يوم_الاستحقاق|البضاعة|تاريخ|أول_قسط|النوع\n`;
       activeC.forEach(c=>{
-        ctx += `${c.num||""}|${c.client}|${c.cPhone||""}|${_invName(c)}|${_n(c.amount)}|${_n(c.totalInst)}|${_n(c.instAmt)}|${_paid(c.id)}|${_left(c)}|${_overdue(c)}|${c.goods||""}|${c.date||""}|${c.firstInst||""}|${c.contractType||"monthly"}\n`;
+        const dd = c.firstInst ? new Date(c.firstInst).getDate() : "";
+        ctx += `${c.num||""}|${c.client}|${c.cPhone||""}|${_invName(c)}|${_n(c.amount)}|${_n(c.totalInst)}|${_n(c.instAmt)}|${_paid(c.id)}|${_left(c)}|${_overdue(c)}|${dd}|${c.goods||""}|${c.date||""}|${c.firstInst||""}|${c.contractType||"monthly"}\n`;
       });
+      ctx += `\nملاحظة: "يوم_الاستحقاق" = رقم اليوم من الشهر الذي يستحق فيه القسط (مستخرج من تاريخ أول قسط).\n`;
+    }
+
+    if(sec.dueDay){
+      const byDay = {};
+      activeC.forEach(c=>{
+        if(!c.firstInst) return;
+        const d = new Date(c.firstInst).getDate();
+        if(!byDay[d]) byDay[d] = [];
+        byDay[d].push(c);
+      });
+      const days = Object.keys(byDay).map(Number).sort((a,b)=>a-b);
+      ctx += `\n═══ توزيع العملاء حسب يوم الاستحقاق الشهري ═══\n`;
+      const noDate = activeC.filter(c=>!c.firstInst).length;
+      days.forEach(d=>{
+        const list = byDay[d];
+        ctx += `\n— يوم ${d} من كل شهر (${list.length} عميل | إجمالي الأقساط: ${list.reduce((s,c)=>s+_n(c.instAmt),0)}):\n`;
+        list.forEach((c,i)=>{ ctx += `  ${i+1}. ${c.client} | قسط ${_n(c.instAmt)} | متبقي ${_left(c)} | ${c.cPhone||"—"}${_overdue(c)>0?(" | متأخر "+_overdue(c)+" شهر"):""}\n`; });
+      });
+      if(noDate) ctx += `\n(${noDate} عقد بدون تاريخ أول قسط محدد)\n`;
+      ctx += `\nهذي القائمة كاملة ومصنّفة — استخدمها مباشرة للإجابة عن أي سؤال يخص يوم/تاريخ الاستحقاق.\n`;
     }
 
     if(sec.overdue && overdueList.length){
@@ -7080,31 +7105,47 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
   // ═══════════ طباعة أي إجابة كتقرير رسمي ═══════════
   const printAnswer = (question, answer) => {
     const clean = stripFollow(stripChart(stripAction(answer)));
-    const html = clean.split("\n").map(l=>{
-      const bold = l.replace(/\*\*(.*?)\*\*/g,"<b>$1</b>");
-      if(!l.trim()) return "<div style='height:8px'></div>";
-      if(/^[═─—]{3,}/.test(l.trim())) return "<hr>";
-      if(/^\s*[•\-]/.test(l)) return "<div class='li'>"+bold+"</div>";
-      if(/^\s*\d+\./.test(l)) return "<div class='li'>"+bold+"</div>";
-      return "<div class='ln'>"+bold+"</div>";
-    }).join("");
+    const L = clean.split("\n");
+    const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+    const bold = s => esc(s).replace(/\*\*(.*?)\*\*/g,"<b>$1</b>");
+    let html=""; let i=0;
+    while(i<L.length){
+      if(isRow(L[i]) && i+1<L.length && isSep(L[i+1])){
+        const head=cells(L[i]); const rows=[]; let j=i+2;
+        while(j<L.length && isRow(L[j]) && !isSep(L[j])){ rows.push(cells(L[j])); j++; }
+        html += "<table><thead><tr>"+head.map(h=>"<th>"+bold(h)+"</th>").join("")+"</tr></thead><tbody>"
+             + rows.map(r=>"<tr>"+head.map((_,k)=>"<td>"+bold(r[k]||"")+"</td>").join("")+"</tr>").join("")
+             + "</tbody></table>";
+        i=j; continue;
+      }
+      const l=L[i];
+      if(!l.trim()) html += "<div style='height:8px'></div>";
+      else if(/^[═─—]{3,}/.test(l.trim())) html += "<hr>";
+      else if(/^\s*([•\-]|\d+\.)/.test(l)) html += "<div class='li'>"+bold(l)+"</div>";
+      else html += "<div class='ln'>"+bold(l)+"</div>";
+      i++;
+    }
     const w=window.open("","_blank"); if(!w) return;
     w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8">
 <style>*{box-sizing:border-box;font-family:Arial,sans-serif;margin:0;padding:0}
-body{padding:24px;font-size:14px;line-height:1.9;color:#1a1a2e;max-width:800px;margin:0 auto}
+body{padding:24px;font-size:13px;line-height:1.85;color:#1a1a2e;max-width:900px;margin:0 auto}
 .hd{text-align:center;border-bottom:3px solid #c8922a;padding-bottom:14px;margin-bottom:18px}
 .hd h1{font-size:21px;color:#1a1a2e}.hd .sub{font-size:12px;color:#666;margin-top:4px}
 .q{background:#f8fafc;border-right:4px solid #6d28d9;padding:10px 14px;margin-bottom:18px;font-weight:700;border-radius:6px}
 .ln{margin:2px 0}.li{margin:2px 0;padding-right:14px}
 hr{border:none;border-top:1px solid #ddd;margin:10px 0}
 b{font-weight:800;color:#0d6b5e}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px}
+th{background:#1a1a2e;color:#e0b85c;padding:8px 6px;text-align:right;font-weight:800;border:1px solid #333}
+td{padding:7px 6px;border:1px solid #ddd;text-align:right}
+tbody tr:nth-child(even){background:#f7f9fb}
 .ft{margin-top:26px;border-top:1px solid #ddd;padding-top:10px;font-size:11px;color:#777;text-align:center}
-@media print{.np{display:none!important}}</style></head><body>
+@media print{.np{display:none!important} table{page-break-inside:auto} tr{page-break-inside:avoid} thead{display:table-header-group}}</style></head><body>
 <div class="np" style="display:flex;gap:10px;margin-bottom:18px">
 <button onclick="window.print()" style="flex:1;background:#0d7a6f;color:#fff;border:none;border-radius:10px;padding:14px;font-size:17px;font-weight:800;cursor:pointer">🖨️ طباعة / حفظ PDF</button>
 <button onclick="window.close()" style="background:#dc2626;color:#fff;border:none;border-radius:10px;padding:14px 22px;font-size:17px;font-weight:800;cursor:pointer">✕</button></div>
 <div class="hd"><h1>مؤسسة قمة الفرصة التجارية</h1><div class="sub">تقرير قمة AI — ${todayLocal()}</div></div>
-<div class="q">${String(question||"").replace(/</g,"&lt;")}</div>${html}
+<div class="q">${esc(question||"")}</div>${html}
 <div class="ft">${new Date().toLocaleString("ar-SA")} — مؤسسة قمة الفرصة التجارية — بريدة</div>
 </body></html>`);
     w.document.close();
@@ -7210,7 +7251,15 @@ b{font-weight:800;color:#0d6b5e}
 السؤال الثالث
 \`\`\`
 
-الأسلوب: عربي مباشر، ابدأ بالجواب فوراً بدون مقدمات، استخدم **النص العريض** للأرقام المهمة، ونقاط مرقّمة للقوائم.`;
+═══ التنسيق ═══
+لما تعرض بيانات فيها أكثر من عمود (قوائم عملاء، مقارنات، أرقام)، استخدم **جدول Markdown** بهذي الصيغة:
+| م | الاسم | القسط | المتبقي |
+|---|---|---|---|
+| 1 | محمد أحمد | 800 | 9,800 |
+
+قواعد الجدول: ابدأ كل صف بـ | وانتهِ بـ | ، وضع سطر الفاصل |---|---| بعد العناوين مباشرة، ولا تزيد عن 5 أعمدة عشان يتسع في الجوال.
+
+الأسلوب: عربي مباشر، ابدأ بالجواب فوراً بدون مقدمات، استخدم **النص العريض** للأرقام المهمة.`;
 
   // ═══════════ الإرسال ═══════════
   // يحاول الموديل المختار، وإذا كان معطّلاً يجرّب البقية تلقائياً
@@ -7327,15 +7376,60 @@ b{font-weight:800;color:#0d6b5e}
 
   const clearChat = () => { setMsgs([]); try{ localStorage.removeItem("qimma_ai_chat"); }catch(e){} };
 
+  // يحوّل **نص** إلى عريض
+  const inline = (line, key) => {
+    const parts = String(line).split(/\*\*(.*?)\*\*/g);
+    return parts.map((p,j)=> j%2===1
+      ? React.createElement("strong",{key:key+"-b"+j,style:{fontWeight:800}},p)
+      : p);
+  };
+  const isRow = (l) => /\|/.test(l) && String(l).trim().length>1;
+  const isSep = (l) => /^[\s|:\-—–_]+$/.test(String(l)) && /-/.test(String(l)) && /\|/.test(String(l));
+  const cells = (l) => String(l).trim().replace(/^\|/,"").replace(/\|$/,"").split("|").map(x=>x.trim());
+
   const fmt = (t) => {
     const clean = stripFollow(stripChart(stripAction(t)));
     if(!clean) return null;
-    return clean.split("\n").map((line,i)=>{
-      const parts = line.split(/\*\*(.*?)\*\*/g);
-      return React.createElement("div",{key:i,style:{minHeight:line.trim()?undefined:8}},
-        parts.map((p,j)=> j%2===1 ? React.createElement("strong",{key:j,style:{fontWeight:800}},p) : p)
-      );
-    });
+    const lines = clean.split("\n");
+    const out = [];
+    let i = 0;
+    while(i < lines.length){
+      // ── جدول Markdown ──
+      if(isRow(lines[i]) && i+1<lines.length && isSep(lines[i+1])){
+        const head = cells(lines[i]);
+        const rows = [];
+        let j = i+2;
+        while(j<lines.length && isRow(lines[j]) && !isSep(lines[j])){ rows.push(cells(lines[j])); j++; }
+        out.push(
+          React.createElement("div",{key:"t"+i,style:{overflowX:"auto",margin:"10px -4px",WebkitOverflowScrolling:"touch"}},
+            React.createElement("table",{style:{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:12.5,minWidth:Math.max(280,head.length*95)}},
+              React.createElement("thead",null,
+                React.createElement("tr",null,
+                  head.map((h,k)=>React.createElement("th",{key:k,style:{background:"linear-gradient(135deg,#1a1a2e,#16213e)",color:"#e0b85c",padding:"9px 8px",fontWeight:800,textAlign:"right",whiteSpace:"nowrap",position:"sticky",top:0,borderLeft:k<head.length-1?"1px solid rgba(255,255,255,0.08)":"none"}},h))
+                )
+              ),
+              React.createElement("tbody",null,
+                rows.map((r,ri)=>
+                  React.createElement("tr",{key:ri,style:{background:ri%2?"#f8fafc":"#fff"}},
+                    head.map((_,ci)=>
+                      React.createElement("td",{key:ci,style:{padding:"8px",borderTop:"1px solid #eef2f7",textAlign:ci===0?"center":"right",whiteSpace:"nowrap",fontWeight:/^[\d,،.\s]+$/.test(r[ci]||"")?700:400,color:ci===0?"#94a3b8":"#1a1a2e"}},
+                        inline(r[ci]||"", "c"+ri+ci)
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        );
+        i = j; continue;
+      }
+      // ── سطر عادي ──
+      const l = lines[i];
+      out.push(React.createElement("div",{key:"l"+i,style:{minHeight:l.trim()?undefined:8}}, inline(l,"l"+i)));
+      i++;
+    }
+    return out;
   };
 
   const QUICK = ["☀️ التقرير الصباحي","⚠️ من راح يتعثر قريباً؟","أسوأ 10 متعثرين","قارن كل المستثمرين","التحصيل آخر 6 شهور","أفضل الزبائن التزاماً","تحليل ربح البضائع","مصروفات هذا الشهر","توقع دخل الشهر الجاي"];
