@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-25-newcontract-brand -->
+<!-- build: 2026-07-25-contracts-navy-unified -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -1583,12 +1583,12 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     };
     return (
       <div>
-        <button style={{...styles.btn("#e5e7eb",C.ink),marginBottom:16}} onClick={()=>setShowMigrated(false)}>← رجوع للعقود</button>
+        <button style={{background:"#fff",border:"1.5px solid #e6eaf0",borderRadius:10,padding:"9px 16px",fontSize:14,fontWeight:700,color:"#1a1a2e",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",marginBottom:16,display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>setShowMigrated(false)}>← رجوع للعقود</button>
         <div style={{...styles.panel,padding:20}}>
-          <h3 style={{margin:"0 0 16px",fontSize:18,fontWeight:800,color:"#1a1a2e",display:"flex",alignItems:"center",gap:8}}>
+          <h3 style={{margin:"0 0 16px",fontSize:18,fontWeight:800,color:"#c8922a",display:"flex",alignItems:"center",gap:8}}>
             <svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.6 7.6h16.8v12H3.6Z"/><path d="M3.6 11.6h16.8M12 7.6v12"/></g></svg>
             عقد مرحّل</h3>
-          <div style={{fontSize:13,color:"#64748b",marginBottom:16,background:"#fef9ec",padding:"10px 14px",borderRadius:8,border:"1px solid #f59e0b"}}>
+          <div style={{fontSize:13,color:"#92600a",marginBottom:16,background:"#fefbf3",padding:"10px 14px",borderRadius:8,border:"1px solid #c8922a"}}>
             العقد المرحّل يُضاف فقط في "المتبقي عند الزبائن" بدون خصم من النقدي — لأنه مخصوم أصلاً في البرنامج القديم.
           </div>
           <div style={{display:"grid",gap:14}}>
@@ -1621,7 +1621,9 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               <label style={{fontSize:14,fontWeight:700,display:"block",marginBottom:4}}>ملاحظة</label>
               <input style={{...styles.input,width:"100%"}} placeholder="اختياري" value={mf.note} onChange={e=>setMF(p=>({...p,note:e.target.value}))}/>
             </div>
-            <button style={{...styles.btn("#b45309","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px",fontWeight:800}} onClick={saveMigrated}>💾 حفظ العقد المرحّل</button>
+            <button style={{background:"linear-gradient(135deg,#c8922a,#a87520)",color:"#fff",border:"none",borderRadius:12,width:"100%",justifyContent:"center",fontSize:17,padding:"14px",fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:9,boxShadow:"0 4px 14px rgba(200,146,42,0.28)"}} onClick={saveMigrated}>
+              <svg width="19" height="19" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h11l3 3v13H5Z"/><path d="M8 4v5h7M8 20v-6h8v6"/></g></svg>
+              حفظ العقد المرحّل</button>
           </div>
         </div>
       </div>
@@ -1816,12 +1818,12 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         </button>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-        <button onClick={()=>setShowMigrated(true)} style={{background:"#fff",color:"#1a1a2e",border:"1.5px solid #e6eaf0",borderRadius:14,padding:"14px 12px",fontSize:14.5,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-          <svg width="17" height="17" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.6 7.6h16.8v12H3.6Z"/><path d="M3.6 11.6h16.8M12 7.6v12"/></g></svg>
+        <button onClick={()=>setShowMigrated(true)} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 12px",fontSize:15.5,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          <svg width="18" height="18" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.6 7.6h16.8v12H3.6Z"/><path d="M3.6 11.6h16.8M12 7.6v12"/></g></svg>
           عقد مرحّل
         </button>
-        <button onClick={()=>setShowDeduct(true)} style={{background:"#fff",color:"#1a1a2e",border:"1.5px solid #e6eaf0",borderRadius:14,padding:"14px 12px",fontSize:14.5,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-          <svg width="17" height="17" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg>
+        <button onClick={()=>setShowDeduct(true)} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 12px",fontSize:15.5,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          <svg width="18" height="18" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg>
           الاستقطاعات
         </button>
       </div>
@@ -2051,7 +2053,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       </div>
 
       {/* Deductions Modal */}
-      <Modal open={showDeduct} onClose={()=>setShowDeduct(false)} title="🏦 الاستقطاعات" titleBg="#0891b2" wide>
+      <Modal open={showDeduct} onClose={()=>setShowDeduct(false)} title="الاستقطاعات" titleBg="#1a1a2e" wide>
         {showDeduct && <DeductionsSheet contracts={contracts} investors={investors} payments={payments}/>}
       </Modal>
 
@@ -2814,8 +2816,12 @@ function DeductionsSheet({contracts, investors, payments}){
   return (
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:10}}>
-        <div style={{fontSize:18,fontWeight:800}}>🏦 كشف الاستقطاعات ({rows.length})</div>
-        <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px"}} onClick={printSheet}>🖨️ طباعة الكشف</button>
+        <div style={{fontSize:18,fontWeight:800,display:"flex",alignItems:"center",gap:8}}>
+          <svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg>
+          كشف الاستقطاعات ({rows.length})</div>
+        <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px",display:"inline-flex",alignItems:"center",gap:6}} onClick={printSheet}>
+          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9V4h10v5M6 18H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1M7 15h10v5H7Z"/></g></svg>
+          طباعة الكشف</button>
       </div>
       <div style={{fontSize:14,color:"#1f2937",marginBottom:12}}>أشّر على الزبون اللي نزل استقطاعه بعد مطابقته مع كشف البنك. (كل الزبائن من جميع المستثمرين)</div>
       {rows.length===0 ? (
