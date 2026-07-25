@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-25-header-brand -->
+<!-- build: 2026-07-25-pdf-detach-fix -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -4200,12 +4200,16 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
     const reader = new FileReader();
     reader.onload = async (e) => {
       const buf = e.target.result;
+      // نسخة بايت مستقلة — pdf.js يفصل الـ ArrayBuffer عند القراءة،
+      // فنعطي كل محاولة نسخة خاصة بها حتى لا يحدث "Buffer is already detached"
+      const bytesFor = () => new Uint8Array(buf.slice(0));
+
       // أولاً: جرّب المكتبة الخارجية لو موجودة
       const lib = window.pdfjsLib || window["pdfjs-dist/build/pdf"];
       if(lib){
         try{
           try{ if(lib.GlobalWorkerOptions && !lib.GlobalWorkerOptions.workerSrc) lib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.worker.min.js"; }catch(x){}
-          const pdf = await lib.getDocument({data:new Uint8Array(buf)}).promise;
+          const pdf = await lib.getDocument({data:bytesFor()}).promise;
           let items = [];
           for(let p=1;p<=pdf.numPages;p++){
             const page=await pdf.getPage(p);
@@ -4217,13 +4221,12 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
           if(parsed.length>0){ saveParsed(parsed); return; }
         }catch(ex){ console.warn("pdfjsLib failed, trying builtin:", ex); }
       }
-      // ثانياً: القارئ المدمج (بدون مكتبة)
+      // ثانياً: القارئ المدمج (بنسخة بايت مستقلة)
       try{
-        const textLines = await extractPdfTextBuiltin(buf);
+        const textLines = await extractPdfTextBuiltin(buf.slice(0));
         if(textLines.length===0){ toast&&toast("لم أستطع استخراج نص من الـ PDF — جرّب Excel","error"); return; }
         const parsed = parseRajhiText(textLines);
         if(parsed.length>0){ saveParsed(parsed); return; }
-        // لو ما لقى حركات من الأسطر، جرّب كنص كامل
         const fullText = textLines.join("\n");
         const allNums = fullText.match(/[\d,]+\.\d{2}/g);
         toast&&toast("تم استخراج "+textLines.length+" سطر و "+(allNums?allNums.length:0)+" رقم، لكن ما تعرّفت على تنسيق الراجحي — جرّب Excel","error");
