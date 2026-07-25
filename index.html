@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-25-pdf-detach-fix -->
+<!-- build: 2026-07-25-journal-buttons -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -5397,15 +5397,21 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
           </div>
         </div>
         <div style={{padding:"14px 18px"}}>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:12}}>
             {DAILY_TYPES.map(t=>{
               const active=form.type===t.key;
+              const dotColor = t.sign>0 ? "#16a34a" : "#dc2626";
               return (
               <button key={t.key} onClick={()=>set("type",t.key)}
-                style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:17,fontWeight:800,padding:"14px 10px",borderRadius:14,cursor:"pointer",
-                  border:"2.5px solid "+t.color,background:active?t.color:"#fff",color:active?"#fff":t.color,
-                  boxShadow:active?("0 4px 14px "+t.color+"55"):"0 2px 6px rgba(0,0,0,0.08)",
-                  transform:active?"translateY(-1px)":"none",transition:"all .15s"}}>
+                style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:14,fontWeight:700,padding:"13px 10px",borderRadius:12,cursor:"pointer",
+                  display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+                  border:active?"1.5px solid #c8922a":"1.5px solid #e6eaf0",
+                  background:active?"linear-gradient(150deg,#fefbf3,#fef3c7)":"#fff",
+                  color:active?"#92600a":"#334155",
+                  boxShadow:active?"0 3px 12px rgba(200,146,42,0.18)":"none",
+                  transition:"all .15s"}}>
+                <span style={{width:8,height:8,borderRadius:"50%",background:dotColor,flexShrink:0,
+                  boxShadow:active?("0 0 0 3px "+dotColor+"22"):"none"}}/>
                 {t.label}
               </button>
             );})}
@@ -5420,7 +5426,11 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
               <input style={styles.input} type="text" placeholder="اسم الشخص أو نوع المصروف" value={form.desc} onChange={e=>set("desc",e.target.value)}/>
             </div>
           </div>
-          <button style={styles.btn(C.teal)} onClick={addRow}>💾 إضافة الحركة</button>
+          <button onClick={addRow}
+            style={{width:"100%",padding:"14px",borderRadius:12,border:"none",cursor:"pointer",
+              background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",
+              fontSize:15,fontWeight:800,fontFamily:"IBM Plex Sans Arabic,Arial",
+              boxShadow:"0 4px 14px rgba(26,26,46,0.25)"}}>إضافة الحركة</button>
         </div>
       </div>
 
