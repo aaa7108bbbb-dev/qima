@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-25-contracts-complete -->
+<!-- build: 2026-07-25-newcontract-icons -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -974,8 +974,8 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
 
       {/* ═══ المستثمر ═══ */}
       <div style={secStyle}>
-        <div style={secHead("💼","المستثمر")}>
-          <span style={{fontSize:20}}>💼</span>
+        <div style={secHead("","المستثمر")}>
+          <svg width="19" height="19" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5M3.5 12.5h17"/></g><circle cx="12" cy="12.5" r="1.3" fill="#a87520"/></svg>
           <h3 style={secTitle()}>المستثمر (الصندوق)</h3>
         </div>
         <select style={{...styles.select,borderRadius:10,padding:"14px 16px",fontSize:16,fontWeight:700,border:"2px solid "+(form.investorId?C.gold:"#e2e8f0"),background:form.investorId?"#fefbf3":"#fff"}} value={form.investorId} onChange={e=>set("investorId",e.target.value)}>
@@ -986,8 +986,8 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
 
       {/* ═══ بيانات العميل ═══ */}
       <div style={secStyle}>
-        <div style={secHead("👤","بيانات العميل","#0d9488")}>
-          <span style={{fontSize:20}}>👤</span>
+        <div style={secHead("","بيانات العميل","#0d9488")}>
+          <svg width="19" height="19" viewBox="0 0 24 24"><g fill="none" stroke="#0d9488" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></g><circle cx="12" cy="8" r="1.1" fill="#0d9488"/></svg>
           <h3 style={secTitle("#0d9488")}>بيانات العميل</h3>
           <span style={{fontSize:12,color:"#94a3b8",marginRight:"auto",fontWeight:500}}>أدخل رقم الهوية للتعبئة التلقائية</span>
         </div>
@@ -1010,15 +1010,17 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
 
       {/* ═══ البضاعة ═══ */}
       <div style={secStyle}>
-        <div style={secHead("📦","البضاعة","#7c3aed")}>
-          <span style={{fontSize:20}}>📦</span>
+        <div style={secHead("","البضاعة","#7c3aed")}>
+          <svg width="19" height="19" viewBox="0 0 24 24"><g fill="none" stroke="#7c3aed" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.6 7.6h16.8v12H3.6Z"/><path d="M3.6 11.6h16.8M12 7.6v12"/></g><circle cx="12" cy="11.6" r="1.3" fill="#6d28d9"/></svg>
           <h3 style={secTitle("#7c3aed")}>نوع البضاعة</h3>
         </div>
         <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}}>
           {GOODS_LIST.map(g=>(
             <button key={g} onClick={()=>set("goods",g)} style={{padding:"10px 18px",borderRadius:25,border:"2px solid "+(form.goods===g?"#7c3aed":"#e2e8f0"),background:form.goods===g?"#7c3aed":"#fff",color:form.goods===g?"#fff":"#4a5568",fontWeight:700,fontSize:14,cursor:"pointer",transition:"all 0.2s",fontFamily:"IBM Plex Sans Arabic,Arial"}}>{g}</button>
           ))}
-          <button onClick={()=>set("goods","")} style={{padding:"10px 18px",borderRadius:25,border:"2px solid "+(form.goods&&!GOODS_LIST.includes(form.goods)?"#7c3aed":"#e2e8f0"),background:form.goods&&!GOODS_LIST.includes(form.goods)?"#7c3aed":"#fff",color:form.goods&&!GOODS_LIST.includes(form.goods)?"#fff":"#4a5568",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>✏️ أخرى</button>
+          <button onClick={()=>set("goods","")} style={{padding:"10px 18px",borderRadius:25,border:"2px solid "+(form.goods&&!GOODS_LIST.includes(form.goods)?"#7c3aed":"#e2e8f0"),background:form.goods&&!GOODS_LIST.includes(form.goods)?"#7c3aed":"#fff",color:form.goods&&!GOODS_LIST.includes(form.goods)?"#fff":"#4a5568",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" style={{stroke:"currentColor"}}><g fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M16.5 4.5l3 3L8 19l-4 1 1-4Z"/></g></svg>
+            أخرى</button>
         </div>
         <input style={{...fInput,borderColor:"#7c3aed",fontWeight:700}} type="text" placeholder="اكتب نوع البضاعة..." value={form.goods} onChange={e=>set("goods",e.target.value)}/>
 
@@ -1049,18 +1051,20 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
 
       {/* ═══ نوع العقد ═══ */}
       <div style={secStyle}>
-        <div style={secHead("📑","نوع العقد","#1e3a5f")}>
-          <span style={{fontSize:20}}>📑</span>
+        <div style={secHead("","نوع العقد","#1e3a5f")}>
+          <svg width="19" height="19" viewBox="0 0 24 24"><g fill="none" stroke="#1e3a5f" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6.2 3.2h7.4l4.2 4.2V20.8H6.2Z"/><path d="M13.6 3.2v4.2h4.2M9.2 12.4h5.6M9.2 15.8h3.8"/></g><circle cx="15.6" cy="17.6" r="1.3" fill="#1e3a5f"/></svg>
           <h3 style={secTitle("#1e3a5f")}>نوع العقد</h3>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:form.contractType==="defer"?16:0}}>
           <button type="button" onClick={()=>set("contractType","monthly")}
-            style={{padding:"16px",borderRadius:14,border:"2.5px solid "+(form.contractType==="monthly"?"#0d9488":"#e2e8f0"),background:form.contractType==="monthly"?"linear-gradient(135deg,#f0fdfa,#ccfbf1)":"#fff",color:form.contractType==="monthly"?"#0d9488":"#94a3b8",fontWeight:900,fontSize:16,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",transition:"all 0.2s"}}>
-            📅 شهري
+            style={{padding:"16px",borderRadius:14,border:"2.5px solid "+(form.contractType==="monthly"?"#0d9488":"#e2e8f0"),background:form.contractType==="monthly"?"linear-gradient(135deg,#f0fdfa,#ccfbf1)":"#fff",color:form.contractType==="monthly"?"#0d9488":"#94a3b8",fontWeight:900,fontSize:16,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" style={{stroke:"currentColor"}}><g fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M8 3v4M16 3v4"/></g></svg>
+            شهري
           </button>
           <button type="button" onClick={()=>set("contractType","defer")}
-            style={{padding:"16px",borderRadius:14,border:"2.5px solid "+(form.contractType==="defer"?"#c8922a":"#e2e8f0"),background:form.contractType==="defer"?"linear-gradient(135deg,#fefbf3,#fef3c7)":"#fff",color:form.contractType==="defer"?"#a87520":"#94a3b8",fontWeight:900,fontSize:16,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",transition:"all 0.2s"}}>
-            🕒 مؤجل
+            style={{padding:"16px",borderRadius:14,border:"2.5px solid "+(form.contractType==="defer"?"#c8922a":"#e2e8f0"),background:form.contractType==="defer"?"linear-gradient(135deg,#fefbf3,#fef3c7)":"#fff",color:form.contractType==="defer"?"#a87520":"#94a3b8",fontWeight:900,fontSize:16,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" style={{stroke:"currentColor"}}><g fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.5V12l3 2"/></g></svg>
+            مؤجل
           </button>
         </div>
         {form.contractType==="defer" && (
@@ -1085,18 +1089,20 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
 
       {/* ═══ نوع السداد ═══ */}
       <div style={secStyle}>
-        <div style={secHead("💳","نوع السداد","#3b82f6")}>
-          <span style={{fontSize:20}}>💳</span>
+        <div style={secHead("","نوع السداد","#3b82f6")}>
+          <svg width="19" height="19" viewBox="0 0 24 24"><g fill="none" stroke="#3b82f6" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></g><circle cx="7" cy="14" r="1.2" fill="#2563eb"/></svg>
           <h3 style={secTitle("#3b82f6")}>نوع السداد</h3>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:form.payType==="deduction"?16:0}}>
           <button type="button" onClick={()=>set("payType","normal")}
-            style={{padding:"16px",borderRadius:14,border:"2.5px solid "+(form.payType==="normal"?"#16a34a":"#e2e8f0"),background:form.payType==="normal"?"linear-gradient(135deg,#f0fdf4,#dcfce7)":"#fff",color:form.payType==="normal"?"#16a34a":"#94a3b8",fontWeight:900,fontSize:16,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>
-            💵 نقدي
+            style={{padding:"16px",borderRadius:14,border:"2.5px solid "+(form.payType==="normal"?"#16a34a":"#e2e8f0"),background:form.payType==="normal"?"linear-gradient(135deg,#f0fdf4,#dcfce7)":"#fff",color:form.payType==="normal"?"#16a34a":"#94a3b8",fontWeight:900,fontSize:16,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" style={{stroke:"currentColor"}}><g fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></g></svg>
+            نقدي
           </button>
           <button type="button" onClick={()=>set("payType","deduction")}
-            style={{padding:"16px",borderRadius:14,border:"2.5px solid "+(form.payType==="deduction"?"#3b82f6":"#e2e8f0"),background:form.payType==="deduction"?"linear-gradient(135deg,#eff6ff,#dbeafe)":"#fff",color:form.payType==="deduction"?"#3b82f6":"#94a3b8",fontWeight:900,fontSize:16,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>
-            🏦 استقطاع
+            style={{padding:"16px",borderRadius:14,border:"2.5px solid "+(form.payType==="deduction"?"#3b82f6":"#e2e8f0"),background:form.payType==="deduction"?"linear-gradient(135deg,#eff6ff,#dbeafe)":"#fff",color:form.payType==="deduction"?"#3b82f6":"#94a3b8",fontWeight:900,fontSize:16,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" style={{stroke:"currentColor"}}><g fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg>
+            استقطاع
           </button>
         </div>
         {form.payType==="deduction" && (
@@ -1109,8 +1115,8 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
 
       {/* ═══ المبالغ ═══ */}
       <div style={secStyle}>
-        <div style={secHead("💰","المبالغ والتواريخ","#c8922a")}>
-          <span style={{fontSize:20}}>💰</span>
+        <div style={secHead("","المبالغ والتواريخ","#c8922a")}>
+          <svg width="19" height="19" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.5v9M9.5 9.5h3.5a1.7 1.7 0 0 1 0 3.4h-2a1.7 1.7 0 0 0 0 3.4h4"/></g></svg>
           <h3 style={secTitle()}>المبالغ والتواريخ</h3>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:14}}>
@@ -1139,7 +1145,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
         const lastD=addMonths(form.date||today, months);
         return (
           <div style={{...secStyle,background:"linear-gradient(135deg,#fefbf3,#fef3c7)",border:"2px solid #e0b85c"}}>
-            <div style={{fontSize:15,fontWeight:900,color:"#a87520",marginBottom:12}}>🕒 ملخص العقد المؤجل</div>
+            <div style={{fontSize:15,fontWeight:900,color:"#a87520",marginBottom:12}}>ملخص العقد المؤجل</div>
             {[[" المبلغ نقداً",SAR(amount)],[" المبلغ الإجمالي",SAR(total)],[" الفائدة",SAR(profit)+" ("+profitPct+"%)",C.green],[" عدد الدفعات",nPays+(nPays===1?" دفعة":" دفعتين")],[" قيمة كل دفعة",SAR(perPay),"#a87520"],[nPays===1?" موعد الدفع":" أول / آخر دفعة",nPays===1?firstD:firstD+" / "+lastD]].map(([l,v,c],i)=>(
               <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span>{l}</span><span style={{fontWeight:800,color:c||"inherit"}}>{v}</span></div>
             ))}
@@ -1162,9 +1168,9 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
       {r && (
         <div style={secStyle}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
-            {[["💵 النقدية",SAR(parseFloat(form.amount)||0),"linear-gradient(135deg,#c8922a,#a87520)","#fff"],
+            {[["النقدية",SAR(parseFloat(form.amount)||0),"linear-gradient(135deg,#c8922a,#a87520)","#fff"],
               ["📋 الأقساط",SAR(parseFloat(form.totalInst)||0),"linear-gradient(135deg,#1a1a2e,#16213e)",C.goldLt],
-              ["💳 القسط",SAR(parseFloat(form.instAmt)||0),"linear-gradient(135deg,#0d6b5e,#0f5233)","#a8f0c6"]
+              ["القسط",SAR(parseFloat(form.instAmt)||0),"linear-gradient(135deg,#0d6b5e,#0f5233)","#a8f0c6"]
             ].map(([l,v,bg,vc],i)=>(
               <div key={i} style={{background:bg,borderRadius:14,padding:"14px",color:"#fff",textAlign:"center"}}>
                 <div style={{fontSize:12,opacity:0.7,marginBottom:4,fontWeight:600}}>{l}</div>
@@ -1179,15 +1185,15 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
             <CalcRow label="الرسوم الإدارية (2.5%)" value={SAR(r.admin)} color="#ff8080"/>
             <CalcRow label="عمولة المحاسبين (10%)" value={SAR(r.acc)} color="#ff8080"/>
             <CalcRow label="نصيب المؤسسة (10%)" value={SAR(r.inst)} color="#ff8080"/>
-            <CalcRow label="✅ صافي ربح المستثمر" value={SAR(r.net)} color={C.goldLt} total bold/>
+            <CalcRow label="صافي ربح المستثمر" value={SAR(r.net)} color={C.goldLt} total bold/>
           </div>
         </div>
       )}
 
       {/* ═══ الكفيل ═══ */}
       <div style={secStyle}>
-        <div style={secHead("🤝","بيانات الكفيل","#b45309")}>
-          <span style={{fontSize:20}}>🤝</span>
+        <div style={secHead("","بيانات الكفيل","#b45309")}>
+          <svg width="19" height="19" viewBox="0 0 24 24"><g fill="none" stroke="#b45309" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3.5 5 6v5c0 4 3 7 7 9.5 4-2.5 7-5.5 7-9.5V6Z"/><path d="M9.3 12l1.8 1.8 3.6-3.8"/></g></svg>
           <h3 style={secTitle("#b45309")}>بيانات الكفيل</h3>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
@@ -1207,9 +1213,10 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
           <textarea style={{...fInput,height:60,resize:"vertical"}} placeholder="أكتب ملاحظة..." value={form.note||""} onChange={e=>set("note",e.target.value)}/>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:form.deductEnabled?14:0}}>
-          <button style={{padding:"10px 18px",borderRadius:10,border:"2px solid "+(form.deductEnabled?C.gold:"#e2e8f0"),background:form.deductEnabled?"linear-gradient(135deg,#fefbf3,#fef3c7)":"#fff",color:form.deductEnabled?C.gold:"#94a3b8",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}
+          <button style={{padding:"10px 18px",borderRadius:10,border:"2px solid "+(form.deductEnabled?C.gold:"#e2e8f0"),background:form.deductEnabled?"linear-gradient(135deg,#fefbf3,#fef3c7)":"#fff",color:form.deductEnabled?C.gold:"#94a3b8",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:7}}
             onClick={()=>set("deductEnabled",!form.deductEnabled)}>
-            {form.deductEnabled?"✅":"💰"} خصم سداد مستثمر
+            <svg width="16" height="16" viewBox="0 0 24 24" style={{stroke:"currentColor"}}><g fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">{form.deductEnabled?<path d="M20 7 10 17l-5-5"/>:<><circle cx="12" cy="12" r="8.4"/><path d="M12 8v8M9.5 10h3.5a1.5 1.5 0 0 1 0 3h-2a1.5 1.5 0 0 0 0 3h4"/></>}</g></svg>
+            خصم سداد مستثمر
           </button>
           {form.deductEnabled && <span style={{fontSize:13,color:"#64748b"}}>سيطلع في العقد المطبوع</span>}
         </div>
@@ -1236,7 +1243,9 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
 
       {/* ═══ أزرار الحفظ ═══ */}
       <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:12,marginBottom:30}}>
-        <button onClick={save} style={{background:"linear-gradient(135deg,#c8922a,#a87520)",color:"#fff",border:"none",borderRadius:14,padding:"18px",fontSize:18,fontWeight:900,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 16px rgba(200,146,42,0.3)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>💾 حفظ العقد</button>
+        <button onClick={save} style={{background:"linear-gradient(135deg,#c8922a,#a87520)",color:"#fff",border:"none",borderRadius:14,padding:"18px",fontSize:18,fontWeight:900,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 16px rgba(200,146,42,0.3)",display:"flex",alignItems:"center",justifyContent:"center",gap:9}}>
+          <svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h11l3 3v13H5Z"/><path d="M8 4v5h7M8 20v-6h8v6"/></g></svg>
+          حفظ العقد</button>
         <button onClick={()=>setForm({client:"",idNum:"",idType:"هوية وطنية",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}],isOldContract:false})} style={{background:"#fff",color:"#94a3b8",border:"2px solid #e2e8f0",borderRadius:14,padding:"18px 24px",fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>مسح</button>
       </div>
     </div>
