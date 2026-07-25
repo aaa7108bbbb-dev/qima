@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-25-kpi-cards -->
+<!-- build: 2026-07-25-summary-cards -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -5490,39 +5490,51 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
       </div>
 
       {/* ملخص اليوم */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
-        <div style={{...styles.card,borderTop:"4px solid #64748b"}}>
-          <div style={{fontSize:14,color:"#1f2937",marginBottom:6}}>الرصيد الافتتاحي</div>
-          <div style={{fontSize:20,fontWeight:900,color:"#334155"}}>{SAR(openingBalance)}</div>
-          <div style={{fontSize:13,color:"#1f2937",marginTop:4}}>متبقي أمس</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginBottom:16}}>
+        <div style={{...styles.card,borderRight:"3px solid #64748b"}}>
+          <div style={{fontSize:12,color:"#64748b",marginBottom:6,fontWeight:600,display:"flex",alignItems:"center",gap:6}}>
+            <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#64748b" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16v12H4Z"/><path d="M4 11h16"/></g><circle cx="8" cy="15" r="1.3" fill="#475569"/></svg>
+            الرصيد الافتتاحي</div>
+          <div style={{fontSize:20,fontWeight:800,color:"#1a1a2e"}}>{SAR(openingBalance)}</div>
+          <div style={{fontSize:11.5,color:"#94a3b8",marginTop:4}}>متبقي أمس</div>
         </div>
-        <div style={{...styles.card,borderTop:"4px solid #16a34a"}}>
-          <div style={{fontSize:14,color:"#1f2937",marginBottom:6}}>سدادات اليوم</div>
-          <div style={{fontSize:20,fontWeight:900,color:"#16a34a"}}>{SAR(sumByType("sadad"))}</div>
+        <div style={{...styles.card,borderRight:"3px solid #16a34a"}}>
+          <div style={{fontSize:12,color:"#64748b",marginBottom:6,fontWeight:600,display:"flex",alignItems:"center",gap:6}}>
+            <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#16a34a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.5V12l3 2"/></g></svg>
+            سدادات اليوم</div>
+          <div style={{fontSize:20,fontWeight:800,color:"#16a34a"}}>{SAR(sumByType("sadad"))}</div>
         </div>
-        <div style={{...styles.card,borderTop:"4px solid #dc2626"}}>
-          <div style={{fontSize:14,color:"#1f2937",marginBottom:6}}>المصروفات + السحوبات</div>
-          <div style={{fontSize:20,fontWeight:900,color:"#dc2626"}}>{SAR(sumByType("masroof")+sumByType("sahb")+sumByType("estilam"))}</div>
+        <div style={{...styles.card,borderRight:"3px solid #dc2626"}}>
+          <div style={{fontSize:12,color:"#64748b",marginBottom:6,fontWeight:600,display:"flex",alignItems:"center",gap:6}}>
+            <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#dc2626" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19.5V6M6.5 11.5 12 6l5.5 5.5"/></g><circle cx="12" cy="20.5" r="1.1" fill="#b91c1c"/></svg>
+            المصروفات + السحوبات</div>
+          <div style={{fontSize:20,fontWeight:800,color:"#dc2626"}}>{SAR(sumByType("masroof")+sumByType("sahb")+sumByType("estilam"))}</div>
         </div>
-        <div style={{...styles.card,borderTop:"4px solid #0d9488",background:"#f0fdfa"}}>
-          <div style={{fontSize:14,color:"#0d9488",marginBottom:6,fontWeight:700}}>💰 المتبقي في الصندوق</div>
-          <div style={{fontSize:22,fontWeight:900,color:closingBalance>=0?"#0d9488":"#dc2626"}}>{SAR(closingBalance)}</div>
+        <div style={{...styles.card,borderRight:"3px solid #c8922a",background:"linear-gradient(150deg,#fefbf3,#fef7e8)"}}>
+          <div style={{fontSize:12,color:"#92600a",marginBottom:6,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>
+            <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g><circle cx="16.9" cy="15.1" r="1.4" fill="#a87520"/></svg>
+            المتبقي في الصندوق</div>
+          <div style={{fontSize:22,fontWeight:800,color:closingBalance>=0?"#a87520":"#dc2626"}}>{SAR(closingBalance)}</div>
         </div>
       </div>
 
       {/* حساب المدير والمحاسب */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
-        <div style={{...styles.card,borderTop:"4px solid #b45309"}}>
-          <div style={{fontSize:15,fontWeight:800,color:"#b45309",marginBottom:8}}>👔 الرئيس التنفيذي</div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستحق (الدورة)</span><span style={{fontWeight:700}}>{SAR(mgrEarnedAll)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(mgrTakenAll)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginTop:6,paddingTop:6,borderTop:"1px solid "+C.border}}><span style={{fontWeight:800}}>الباقي له</span><span style={{fontWeight:900,color:mgrLeft>=0?"#b45309":C.red}}>{SAR(mgrLeft)}</span></div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginBottom:16}}>
+        <div style={{...styles.card,borderTop:"3px solid #1a1a2e"}}>
+          <div style={{fontSize:14,fontWeight:800,color:"#1a1a2e",marginBottom:10,display:"flex",alignItems:"center",gap:7}}>
+            <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#1a1a2e" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></g><circle cx="12" cy="8" r="1.1" fill="#c8922a"/></svg>
+            الرئيس التنفيذي</div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:5}}><span style={{color:"#64748b",fontWeight:600}}>المستحق (الدورة)</span><span style={{fontWeight:800}}>{SAR(mgrEarnedAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:5}}><span style={{color:"#64748b",fontWeight:600}}>المستلم</span><span style={{fontWeight:800,color:C.red}}>{SAR(mgrTakenAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginTop:8,paddingTop:8,borderTop:"1px dashed "+C.border}}><span style={{fontWeight:800,color:"#1a1a2e"}}>الباقي له</span><span style={{fontWeight:800,color:mgrLeft>=0?"#c8922a":C.red}}>{SAR(mgrLeft)}</span></div>
         </div>
-        <div style={{...styles.card,borderTop:"4px solid #0891b2"}}>
-          <div style={{fontSize:15,fontWeight:800,color:"#0891b2",marginBottom:8}}>🧮 المدير المباشر</div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستحق (الدورة)</span><span style={{fontWeight:700}}>{SAR(accEarnedAll)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginBottom:4}}><span style={{color:"#1f2937"}}>المستلم</span><span style={{fontWeight:700,color:C.red}}>{SAR(accTakenAll)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginTop:6,paddingTop:6,borderTop:"1px solid "+C.border}}><span style={{fontWeight:800}}>الباقي له</span><span style={{fontWeight:900,color:accLeft>=0?"#0891b2":C.red}}>{SAR(accLeft)}</span></div>
+        <div style={{...styles.card,borderTop:"3px solid #1a1a2e"}}>
+          <div style={{fontSize:14,fontWeight:800,color:"#1a1a2e",marginBottom:10,display:"flex",alignItems:"center",gap:7}}>
+            <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#1a1a2e" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></g></svg>
+            المدير المباشر</div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:5}}><span style={{color:"#64748b",fontWeight:600}}>المستحق (الدورة)</span><span style={{fontWeight:800}}>{SAR(accEarnedAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:5}}><span style={{color:"#64748b",fontWeight:600}}>المستلم</span><span style={{fontWeight:800,color:C.red}}>{SAR(accTakenAll)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginTop:8,paddingTop:8,borderTop:"1px dashed "+C.border}}><span style={{fontWeight:800,color:"#1a1a2e"}}>الباقي له</span><span style={{fontWeight:800,color:accLeft>=0?"#c8922a":C.red}}>{SAR(accLeft)}</span></div>
         </div>
       </div>
 
