@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-25-stage4-icons -->
+<!-- build: 2026-07-25-dashboard-complete -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -5473,8 +5473,12 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                     <td style={{...styles.td,fontWeight:700,position:"sticky",right:0,background:i%2===0?C.white:C.gray,zIndex:5,borderLeft:"2px solid #e2e8f0"}}>{d.desc||"—"}</td>
                     <td style={{...styles.td,fontWeight:800,color:t&&t.sign<0?"#dc2626":"#16a34a"}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
                     <td style={{...styles.td,whiteSpace:"nowrap"}}>
-                      <button style={{...styles.btn("#0d7a6f"),fontSize:13,padding:"4px 8px",marginLeft:4}} onClick={()=>printDailyReceipt(d, d.receiptNum||0)}>🧾</button>
-                      <button style={{...styles.btn(C.red),fontSize:13,padding:"4px 8px"}} onClick={()=>delRow(d.id)}>🗑️</button>
+                      <button style={{...styles.btn("#0d7a6f"),fontSize:13,padding:"5px 9px",marginLeft:4,display:"inline-flex",alignItems:"center"}} onClick={()=>printDailyReceipt(d, d.receiptNum||0)} title="طباعة إيصال">
+                        <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6M9 12h6"/></g></svg>
+                      </button>
+                      <button style={{...styles.btn(C.red),fontSize:13,padding:"5px 9px",display:"inline-flex",alignItems:"center"}} onClick={()=>delRow(d.id)} title="حذف">
+                        <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6"/></g></svg>
+                      </button>
                     </td>
                   </tr>
                 );
@@ -5542,7 +5546,9 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
 
       {/* 📲 إرسال ملخص واتساب للمدير */}
       <div style={{marginBottom:16}}>
-        <button style={{...styles.btn("#25D366","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px",borderRadius:14,fontWeight:800}}
+        <button style={{width:"100%",justifyContent:"center",fontSize:15.5,padding:"14px",borderRadius:13,fontWeight:800,
+          border:"none",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:9,
+          background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",boxShadow:"0 4px 14px rgba(26,26,46,0.22)"}}
           onClick={()=>{
             let mgrP = "";
             try{ mgrP = localStorage.getItem("qimma_mgr_phone")||""; }catch(e){}
@@ -5595,7 +5601,8 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
             const mgrNum = mgrP.replace(/^0/,"966");
             window.open("https://wa.me/"+mgrNum+"?text="+encodeURIComponent(msg),"_blank");
           }}>
-          📲 إرسال ملخص اليوم للمدير — {selDay===today?"اليوم":selDay}
+          <svg width="18" height="18" viewBox="0 0 24 24" style={{flexShrink:0}}><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 4 3 11l6 2 2 6 4-8Z"/></g></svg>
+          إرسال ملخص اليوم للمدير — {selDay===today?"اليوم":selDay}
         </button>
       </div>
 
@@ -5619,7 +5626,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
           </div>
 
           {/* بطاقات الإجماليات لكل نوع (انقر لعرض تفاصيل النوع) */}
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:14}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginBottom:14}}>
             {stmtTotals.map(t=>{
               const dir = t.sign<0 ? "#dc2626" : "#16a34a";
               const sel = stmtTypeFilter===t.key;
