@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-25-journal-buttons -->
+<!-- build: 2026-07-25-journal-unified -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -5461,9 +5461,9 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                 const t=DAILY_TYPES.find(x=>x.key===d.type);
                 return (
                   <tr key={d.id} style={{background:i%2===0?C.white:C.gray}}>
-                    <td style={styles.td}><span style={styles.badge((t?.color||"#999")+"22",t?.color||"#999")}>{t?.label||d.type}</span></td>
+                    <td style={styles.td}><span style={styles.badge("#eef2f7","#334155")}>{t?.label||d.type}</span></td>
                     <td style={{...styles.td,fontWeight:700,position:"sticky",right:0,background:i%2===0?C.white:C.gray,zIndex:5,borderLeft:"2px solid #e2e8f0"}}>{d.desc||"—"}</td>
-                    <td style={{...styles.td,fontWeight:700,color:t&&t.color}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
+                    <td style={{...styles.td,fontWeight:800,color:t&&t.sign<0?"#dc2626":"#16a34a"}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
                     <td style={{...styles.td,whiteSpace:"nowrap"}}>
                       <button style={{...styles.btn("#0d7a6f"),fontSize:13,padding:"4px 8px",marginLeft:4}} onClick={()=>printDailyReceipt(d, d.receiptNum||0)}>🧾</button>
                       <button style={{...styles.btn(C.red),fontSize:13,padding:"4px 8px"}} onClick={()=>delRow(d.id)}>🗑️</button>
@@ -5598,17 +5598,22 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
 
           {/* بطاقات الإجماليات لكل نوع (انقر لعرض تفاصيل النوع) */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:14}}>
-            {stmtTotals.map(t=>(
+            {stmtTotals.map(t=>{
+              const dir = t.sign<0 ? "#dc2626" : "#16a34a";
+              const sel = stmtTypeFilter===t.key;
+              return (
               <div key={t.key} onClick={()=>setStmtTypeFilter(f=>f===t.key?"all":t.key)}
                 title="انقر لعرض تفاصيل هذا النوع"
-                style={{...styles.card,borderTop:"4px solid "+t.color,cursor:"pointer",
-                  outline: stmtTypeFilter===t.key ? ("2px solid "+t.color) : "none",
-                  transform: stmtTypeFilter===t.key ? "translateY(-1px)" : "none",transition:"all .12s"}}>
-                <div style={{fontSize:14,color:"#1f2937",marginBottom:6,fontWeight:700}}>{t.label}</div>
-                <div style={{fontSize:20,fontWeight:900,color:t.color}}>{t.sign<0?"−":"+"}{SAR(t.total)}</div>
+                style={{...styles.card,borderRight:"3px solid "+dir,cursor:"pointer",
+                  border: sel ? "1.5px solid #c8922a" : "1px solid #e6eaf0",
+                  borderRight:"3px solid "+dir,
+                  background: sel ? "linear-gradient(150deg,#fefbf3,#fef7e8)" : "#fff",
+                  transition:"all .12s"}}>
+                <div style={{fontSize:14,color:"#334155",marginBottom:6,fontWeight:700}}>{t.label}</div>
+                <div style={{fontSize:20,fontWeight:900,color:dir}}>{t.sign<0?"−":"+"}{SAR(t.total)}</div>
                 <div style={{fontSize:12,color:"#64748b",marginTop:4}}>{t.count} حركة · اضغط للتفصيل</div>
               </div>
-            ))}
+            );})}
           </div>
 
           {/* 📋 جدول الحركات التفصيلية — مَن وراء كل حركة */}
@@ -5657,9 +5662,9 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                         )}
                         <tr style={{background:d.date>=baseDate?(i%2===0?C.white:C.gray):"#f8fafc",opacity:d.date>=baseDate?1:0.65}}>
                           <td style={{...styles.td,whiteSpace:"nowrap",color:"#475569",fontWeight:600}}>{dLabel(d.date)}</td>
-                          <td style={styles.td}><span style={styles.badge((t?.color||"#999")+"22",t?.color||"#999")}>{t?.label||d.type}</span></td>
+                          <td style={styles.td}><span style={styles.badge("#eef2f7","#334155")}>{t?.label||d.type}</span></td>
                           <td style={{...styles.td,fontWeight:700,position:"sticky",right:0,background:d.date>=baseDate?(i%2===0?C.white:C.gray):"#f8fafc",zIndex:5,borderLeft:"2px solid #e2e8f0"}}>{d.desc||"—"}</td>
-                          <td style={{...styles.td,fontWeight:800,color:t&&t.color,whiteSpace:"nowrap"}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
+                          <td style={{...styles.td,fontWeight:800,color:t&&t.sign<0?"#dc2626":"#16a34a",whiteSpace:"nowrap"}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
                         </tr>
                       </React.Fragment>
                     );
@@ -5692,9 +5697,9 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                 )}
                 {(stmtShowAll ? stmtTotals : stmtTotals.slice(0,10)).map((t,i)=>(
                   <tr key={t.key} style={{background:(baseAmount?i+1:i)%2===0?C.white:C.gray}}>
-                    <td style={styles.td}><span style={styles.badge(t.color+"22",t.color)}>{t.label}</span></td>
+                    <td style={styles.td}><span style={styles.badge("#eef2f7","#334155")}>{t.label}</span></td>
                     <td style={{...styles.td,textAlign:"center",fontWeight:700}}>{t.count}</td>
-                    <td style={{...styles.td,fontWeight:800,color:t.color}}>{t.sign<0?"−":"+"}{SAR(t.total)}</td>
+                    <td style={{...styles.td,fontWeight:800,color:t.sign<0?"#dc2626":"#16a34a"}}>{t.sign<0?"−":"+"}{SAR(t.total)}</td>
                   </tr>
                 ))}
                 {!stmtShowAll && stmtTotals.length>10 && (
