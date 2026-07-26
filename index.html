@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-25-contracts-navy-unified -->
+<!-- build: 2026-07-25-collect-overdue-brand -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -8177,16 +8177,16 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
         React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
           invCards.map(g=>(
             React.createElement("div",{key:g.inv.id,onClick:()=>{setSelInv(g.inv);setColSearch("");setExpanded({});},
-              style:{background:"#fff",borderRadius:16,padding:"18px 16px",cursor:"pointer",boxShadow:"0 2px 12px rgba(0,0,0,0.06)",borderRight:"5px solid "+g.color,position:"relative",transition:"transform 0.15s",overflow:"hidden"}},
+              style:{background:"#fff",borderRadius:16,padding:"18px 16px",cursor:"pointer",boxShadow:"0 2px 12px rgba(0,0,0,0.06)",borderRight:"5px solid #1a1a2e",position:"relative",transition:"transform 0.15s",overflow:"hidden"}},
               g.lateCount>0 && React.createElement("span",{style:{position:"absolute",top:10,left:10,background:"#fef2f2",color:"#dc2626",borderRadius:8,padding:"2px 8px",fontSize:11,fontWeight:800}},g.lateCount+" متأخر"),
-              React.createElement("div",{style:{fontSize:18,fontWeight:900,color:"#1f2937",marginBottom:12}},invLabel(g.inv)),
+              React.createElement("div",{style:{fontSize:18,fontWeight:900,color:"#1a1a2e",marginBottom:12}},invLabel(g.inv)),
               React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:4}},
-                React.createElement("span",{style:{fontSize:12,color:"#9ca3af"}},"العقود"),
-                React.createElement("span",{style:{fontSize:16,fontWeight:900,color:g.color}},g.items.length)
+                React.createElement("span",{style:{fontSize:12,color:"#1a1a2e",fontWeight:700}},"العقود"),
+                React.createElement("span",{style:{fontSize:16,fontWeight:900,color:"#c8922a"}},g.items.length)
               ),
               React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
-                React.createElement("span",{style:{fontSize:12,color:"#9ca3af"}},"الأقساط"),
-                React.createElement("span",{style:{fontSize:14,fontWeight:800,color:"#374151"}},SAR(g.totalInst))
+                React.createElement("span",{style:{fontSize:12,color:"#1a1a2e",fontWeight:700}},"الأقساط"),
+                React.createElement("span",{style:{fontSize:14,fontWeight:800,color:"#c8922a"}},SAR(g.totalInst))
               )
             )
           ))
@@ -8386,23 +8386,25 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
     <div style={styles.main}>
       <div style={{...styles.panel,borderTop:"4px solid "+C.red}}>
         <div style={{padding:"16px 20px"}}>
-          <h2 style={{margin:"0 0 14px",fontSize:19,fontWeight:900,color:C.ink}}>🚨 المتعثرون</h2>
+          <h2 style={{margin:"0 0 14px",fontSize:19,fontWeight:900,color:C.ink,display:"flex",alignItems:"center",gap:8}}>
+            <svg width="21" height="21" viewBox="0 0 24 24"><g fill="none" stroke="#dc2626" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4.2 21.4 20.4H2.6Z"/><path d="M12 10.2v4.4"/></g><circle cx="12" cy="17.4" r="1.25" fill="#dc2626"/></svg>
+            المتعثرون</h2>
           <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:14}}>
-            <div style={{flex:1,minWidth:100,background:C.redLt,borderRadius:10,padding:"10px 14px",textAlign:"center"}}>
-              <div style={{fontSize:13,color:C.red,fontWeight:700}}>عدد المتعثرين</div>
-              <div style={{fontSize:26,fontWeight:900,color:C.red}}>{totalDefaulters}</div>
+            <div style={{flex:1,minWidth:100,background:"linear-gradient(135deg,#1a1a2e,#0f3460)",borderRadius:10,padding:"12px 14px",textAlign:"center"}}>
+              <div style={{fontSize:13,color:"#fff",fontWeight:700,opacity:0.85}}>عدد المتعثرين</div>
+              <div style={{fontSize:26,fontWeight:900,color:"#fff"}}>{totalDefaulters}</div>
             </div>
-            <div style={{flex:1,minWidth:100,background:"#fef3c7",borderRadius:10,padding:"10px 14px",textAlign:"center"}}>
-              <div style={{fontSize:13,color:"#92400e",fontWeight:700}}>المبالغ المتأخرة</div>
-              <div style={{fontSize:20,fontWeight:900,color:"#92400e"}}>{NUM(totalOverdue)}</div>
+            <div style={{flex:1,minWidth:100,background:"linear-gradient(135deg,#1a1a2e,#0f3460)",borderRadius:10,padding:"12px 14px",textAlign:"center"}}>
+              <div style={{fontSize:13,color:"#fff",fontWeight:700,opacity:0.85}}>المبالغ المتأخرة</div>
+              <div style={{fontSize:20,fontWeight:900,color:"#e0b85c"}}>{NUM(totalOverdue)}</div>
             </div>
-            <div style={{flex:1,minWidth:100,background:C.gray,borderRadius:10,padding:"10px 14px",textAlign:"center"}}>
-              <div style={{fontSize:13,color:C.ink,fontWeight:700}}>إجمالي المتبقي</div>
-              <div style={{fontSize:20,fontWeight:900,color:C.ink}}>{NUM(totalRemaining)}</div>
+            <div style={{flex:1,minWidth:100,background:"linear-gradient(135deg,#1a1a2e,#0f3460)",borderRadius:10,padding:"12px 14px",textAlign:"center"}}>
+              <div style={{fontSize:13,color:"#fff",fontWeight:700,opacity:0.85}}>إجمالي المتبقي</div>
+              <div style={{fontSize:20,fontWeight:900,color:"#fff"}}>{NUM(totalRemaining)}</div>
             </div>
           </div>
           <select style={{...styles.select,marginBottom:0}} value={filterInv} onChange={e=>setFilterInv(e.target.value)}>
-            <option value="all">👥 كل المستثمرين</option>
+            <option value="all">كل المستثمرين</option>
             {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
           </select>
         </div>
@@ -8444,7 +8446,7 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
                       <td style={{...styles.td,textAlign:"center",color:"#9ca3af",fontSize:12}}>{xi+1}</td>
                       <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}>
                         {c.client}
-                        {c.defaulter && <span style={{background:"#7c3aed",color:"#fff",borderRadius:6,padding:"1px 6px",fontSize:10,fontWeight:700,marginRight:6}}>يدوي</span>}
+                        {c.defaulter && <span style={{background:"#c8922a",color:"#fff",borderRadius:6,padding:"1px 6px",fontSize:10,fontWeight:700,marginRight:6}}>يدوي</span>}
                       </td>
                       <td style={{...styles.td,textAlign:"center"}}>{NUM(c.amount||0)}</td>
                       <td style={{...styles.td,textAlign:"center"}}>{NUM(c.totalInst||0)}</td>
