@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-25-portfolio-detail-brand -->
+<!-- build: 2026-07-25-portfolio-full-navy -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -4001,9 +4001,9 @@ function BankReconcile({bankTx, contracts, investors, payments, setPayments, don
         </div>
       )}
       <div style={{display:"flex",gap:6,marginTop:10,flexWrap:"wrap"}}>
-        {kind==="alert" && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"none",background:"linear-gradient(135deg,#16a34a,#15803d)",color:"#fff",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>recordPay(item)}>✅ سجّل السداد</button>}
-        {(kind==="unknown"||kind==="exp") && item.cls && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"none",background:"linear-gradient(135deg,#0d9488,#0f766e)",color:"#fff",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>recordExpense(item)}>📒 أضف لليومية</button>}
-        {kind==="review" && item.best && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"none",background:"linear-gradient(135deg,#f97316,#ea580c)",color:"#fff",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>{ if(window.confirm("تأكيد ربط "+SAR(item.amt)+" بـ "+item.best.c.client+"؟\n\nالأدلة ضعيفة — تأكد بنفسك.")) recordPay(item); }}>🔗 اربط يدوياً</button>}
+        {kind==="alert" && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"none",background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}} onClick={()=>recordPay(item)}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7 10 17l-5-5"/></g></svg>سجّل السداد</button>}
+        {(kind==="unknown"||kind==="exp") && item.cls && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"none",background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}} onClick={()=>recordExpense(item)}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h13v16H7a2 2 0 0 1-2-2Z"/><path d="M5 17h13"/></g></svg>أضف لليومية</button>}
+        {kind==="review" && item.best && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"none",background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}} onClick={()=>{ if(window.confirm("تأكيد ربط "+SAR(item.amt)+" بـ "+item.best.c.client+"؟\n\nالأدلة ضعيفة — تأكد بنفسك.")) recordPay(item); }}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></g></svg>اربط يدوياً</button>}
         <button style={{padding:"10px 14px",borderRadius:9,border:"1.5px solid #e2e8f0",background:"#fff",color:"#94a3b8",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>ign(item.key)}>تجاهل</button>
       </div>
     </div>
@@ -4367,9 +4367,9 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12,marginBottom:14}}>
           <div style={{fontSize:18,fontWeight:800,color:C.ink,display:"flex",alignItems:"center",gap:8}}><svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg>رصيد الحساب البنكي (الراجحي)</div>
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-            <button style={styles.btn(C.teal)} onClick={()=>fileRef.current&&fileRef.current.click()}>📥 رفع كشف (Excel أو PDF)</button>
-            {rows.length>0 && <button style={styles.btn(C.gold)} onClick={()=>printBankStatement(shownRows,lastBalance,_bq?qDain:totalDain,_bq?qMadin:totalMadin,_bq?("بحث: "+bankQuery):"")}>طباعة الكشف</button>}
-            {rows.length>0 && <button style={styles.btn(C.red)} onClick={()=>{if(window.confirm("مسح كل الحركات؟"))setBankTx([]);}}>مسح</button>}
+            <button style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:10,padding:"10px 16px",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>fileRef.current&&fileRef.current.click()}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V4M8 8l4-4 4 4M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></g></svg>رفع كشف (Excel أو PDF)</button>
+            {rows.length>0 && <button style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:10,padding:"10px 16px",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>printBankStatement(shownRows,lastBalance,_bq?qDain:totalDain,_bq?qMadin:totalMadin,_bq?("بحث: "+bankQuery):"")}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9V4h10v5M6 18H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1M7 15h10v5H7Z"/></g></svg>طباعة الكشف</button>}
+            {rows.length>0 && <button style={{...styles.btn(C.red),display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>{if(window.confirm("مسح كل الحركات؟"))setBankTx([]);}}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></g></svg>مسح</button>}
           </div>
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style={{display:"none"}}
             onChange={e=>{const f=e.target.files&&e.target.files[0]; readFile(f); e.target.value="";}}/>
@@ -4390,47 +4390,48 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
         <>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10,marginBottom:16}}>
             {/* الرصيد الحالي — غير قابل للنقر */}
-            <div style={{...styles.card,textAlign:"center",borderTop:"3px solid "+C.gold,padding:"12px"}}>
-              <div style={{fontSize:13,color:"#6b7280",marginBottom:4,fontWeight:600}}>الرصيد الحالي</div>
-              <div style={{fontSize:18,fontWeight:900,color:C.gold}}>{SAR(lastBalance)}</div>
+            <div style={{...styles.card,textAlign:"center",borderTop:"3px solid #1a1a2e",padding:"12px"}}>
+              <div style={{fontSize:13,color:"#1a1a2e",marginBottom:4,fontWeight:700}}>الرصيد الحالي</div>
+              <div style={{fontSize:18,fontWeight:900,color:"#c8922a"}}>{SAR(lastBalance)}</div>
             </div>
             {/* الوارد — قابل للنقر */}
             <div onClick={()=>setBankFilter(f=>f==="in"?"all":"in")} title="اضغط لعرض الحركات الواردة"
-              style={{...styles.card,textAlign:"center",borderTop:"3px solid "+C.green,padding:"12px",cursor:"pointer",
-                background: bankFilter==="in"?"#f0fdf4":"#fff", outline: bankFilter==="in"?"2px solid "+C.green:"none",transition:"all .12s"}}>
-              <div style={{fontSize:13,color:"#6b7280",marginBottom:4,fontWeight:600}}>إجمالي الوارد</div>
-              <div style={{fontSize:18,fontWeight:900,color:C.green}}>{SAR(totalDain)}</div>
-              <div style={{fontSize:11,color:C.green,marginTop:3,fontWeight:700}}>اضغط للعرض</div>
+              style={{...styles.card,textAlign:"center",borderTop:"3px solid #1a1a2e",padding:"12px",cursor:"pointer",
+                background: bankFilter==="in"?"#fefbf3":"#fff", outline: bankFilter==="in"?"2px solid #c8922a":"none",transition:"all .12s"}}>
+              <div style={{fontSize:13,color:"#1a1a2e",marginBottom:4,fontWeight:700}}>إجمالي الوارد</div>
+              <div style={{fontSize:18,fontWeight:900,color:"#c8922a"}}>{SAR(totalDain)}</div>
+              <div style={{fontSize:11,color:"#64748b",marginTop:3,fontWeight:700}}>اضغط للعرض</div>
             </div>
             {/* المنصرف — قابل للنقر */}
             <div onClick={()=>setBankFilter(f=>f==="out"?"all":"out")} title="اضغط لعرض الحركات المنصرفة"
-              style={{...styles.card,textAlign:"center",borderTop:"3px solid "+C.red,padding:"12px",cursor:"pointer",
-                background: bankFilter==="out"?"#fef2f2":"#fff", outline: bankFilter==="out"?"2px solid "+C.red:"none",transition:"all .12s"}}>
-              <div style={{fontSize:13,color:"#6b7280",marginBottom:4,fontWeight:600}}>إجمالي المنصرف</div>
-              <div style={{fontSize:18,fontWeight:900,color:C.red}}>{SAR(totalMadin)}</div>
-              <div style={{fontSize:11,color:C.red,marginTop:3,fontWeight:700}}>اضغط للعرض</div>
+              style={{...styles.card,textAlign:"center",borderTop:"3px solid #1a1a2e",padding:"12px",cursor:"pointer",
+                background: bankFilter==="out"?"#fefbf3":"#fff", outline: bankFilter==="out"?"2px solid #c8922a":"none",transition:"all .12s"}}>
+              <div style={{fontSize:13,color:"#1a1a2e",marginBottom:4,fontWeight:700}}>إجمالي المنصرف</div>
+              <div style={{fontSize:18,fontWeight:900,color:"#c8922a"}}>{SAR(totalMadin)}</div>
+              <div style={{fontSize:11,color:"#64748b",marginTop:3,fontWeight:700}}>اضغط للعرض</div>
             </div>
             {/* عدد الحركات — غير قابل للنقر */}
-            <div style={{...styles.card,textAlign:"center",borderTop:"3px solid "+C.teal,padding:"12px"}}>
-              <div style={{fontSize:13,color:"#6b7280",marginBottom:4,fontWeight:600}}>عدد الحركات</div>
-              <div style={{fontSize:18,fontWeight:900,color:C.teal}}>{rows.length}</div>
+            <div style={{...styles.card,textAlign:"center",borderTop:"3px solid #1a1a2e",padding:"12px"}}>
+              <div style={{fontSize:13,color:"#1a1a2e",marginBottom:4,fontWeight:700}}>عدد الحركات</div>
+              <div style={{fontSize:18,fontWeight:900,color:"#c8922a"}}>{rows.length}</div>
             </div>
           </div>
 
           {/* ═══ تبويبات تلقائية: بطاقة لكل نوع حركة موجود في الكشف ═══ */}
-          <div style={{fontSize:13,fontWeight:700,color:C.ink2,marginBottom:8}}>📁 أنواع الحركات (اضغط أي نوع لعرض حركاته)</div>
+          <div style={{fontSize:13,fontWeight:700,color:C.ink2,marginBottom:8,display:"flex",alignItems:"center",gap:7}}>
+            <svg width="17" height="17" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></g></svg>
+            أنواع الحركات (اضغط أي نوع لعرض حركاته)</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginBottom:16}}>
             {typeGroups.map(g=>{
-              const col = colorFor(g.key);
               const active = bankFilter===g.key;
-              const net = g.dain - g.madin; // موجب=وارد، سالب=منصرف
+              const net = g.dain - g.madin;
               return (
                 <div key={g.key} onClick={()=>setBankFilter(f=>f===g.key?"all":g.key)} title={"اضغط لعرض: "+g.key}
-                  style={{...styles.card,textAlign:"center",borderTop:"3px solid "+col,padding:"11px 10px",cursor:"pointer",
-                    background: active ? col+"11" : "#fff", outline: active ? "2px solid "+col : "none",transition:"all .12s"}}>
-                  <div style={{fontSize:12.5,color:"#374151",marginBottom:5,fontWeight:700,lineHeight:1.4,minHeight:34,display:"flex",alignItems:"center",justifyContent:"center"}}>{g.key}</div>
-                  <div style={{fontSize:16,fontWeight:900,color:col}}>{net<0?"−":(net>0?"+":"")}{SAR(Math.abs(net))}</div>
-                  <div style={{fontSize:11,color:col,marginTop:3,fontWeight:700}}>{g.count} حركة · اضغط</div>
+                  style={{...styles.card,textAlign:"center",borderTop:"3px solid #1a1a2e",padding:"11px 10px",cursor:"pointer",
+                    background: active ? "#fefbf3" : "#fff", outline: active ? "2px solid #c8922a" : "none",transition:"all .12s"}}>
+                  <div style={{fontSize:12.5,color:"#1a1a2e",marginBottom:5,fontWeight:700,lineHeight:1.4,minHeight:34,display:"flex",alignItems:"center",justifyContent:"center"}}>{g.key}</div>
+                  <div style={{fontSize:16,fontWeight:900,color:"#c8922a"}}>{net<0?"−":(net>0?"+":"")}{SAR(Math.abs(net))}</div>
+                  <div style={{fontSize:11,color:"#64748b",marginTop:3,fontWeight:700}}>{g.count} حركة · اضغط</div>
                 </div>
               );
             })}
@@ -4439,20 +4440,20 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
           {/* شارة الفلتر النشط */}
           {bankFilter!=="all" && (()=>{
             let lbl, col, bg, sum;
-            if(bankFilter==="in"){ lbl="⬆️ الحركات الواردة (الإيداعات)"; col=C.green; bg="#f0fdf4"; sum=qDain; }
-            else if(bankFilter==="out"){ lbl="⬇️ الحركات المنصرفة"; col=C.red; bg="#fef2f2"; sum=qMadin; }
-            else { lbl="📁 "+bankFilter; col=colorFor(bankFilter); bg=col+"11"; sum=(qDain-qMadin>=0?qDain:qMadin); }
+            if(bankFilter==="in"){ lbl="الحركات الواردة (الإيداعات)"; col=C.green; bg="#f0fdf4"; sum=qDain; }
+            else if(bankFilter==="out"){ lbl="الحركات المنصرفة"; col=C.red; bg="#fef2f2"; sum=qMadin; }
+            else { lbl=bankFilter; col=colorFor(bankFilter); bg=col+"11"; sum=(qDain-qMadin>=0?qDain:qMadin); }
             return (
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:12,background:bg,border:"2px solid "+col,borderRadius:12,padding:"10px 14px",flexWrap:"wrap"}}>
                 <span style={{fontSize:14,fontWeight:800,color:col}}>{lbl} — {shownRows.length} حركة · وارد {SAR(qDain)} · منصرف {SAR(qMadin)}</span>
-                <button onClick={()=>setBankFilter("all")} style={{border:"none",background:col,color:"#fff",borderRadius:8,padding:"5px 12px",cursor:"pointer",fontSize:13,fontWeight:700}}>✕ إلغاء</button>
+                <button onClick={()=>setBankFilter("all")} style={{border:"none",background:col,color:"#fff",borderRadius:8,padding:"5px 12px",cursor:"pointer",fontSize:13,fontWeight:700}}>إلغاء</button>
               </div>
             );
           })()}
 
           {/* 🔍 بحث عن اسم شخص أو نوع عملية */}
           <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:12,background:"#f8fafc",border:"2px solid "+C.border,borderRadius:12,padding:"8px 12px"}}>
-            <span style={{fontSize:18}}>🔍</span>
+            <svg width="17" height="17" viewBox="0 0 24 24" style={{flexShrink:0}}><g fill="none" stroke="#94a3b8" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-4-4"/></g></svg>
             <input type="text" placeholder="ابحث باسم شخص أو نوع عملية (تحويل / راتب / إيداع ...)"
               value={bankQuery} onChange={e=>setBankQuery(e.target.value)}
               style={{flex:1,border:"none",outline:"none",background:"transparent",fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:600,color:C.ink}}/>
@@ -4687,8 +4688,8 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
               مؤشرات المحفظة الشهرية</h2>
             <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
               <span style={{fontSize:13,color:"#1f2937",fontWeight:700}}>المتبقي الكلي: <span style={{color:C.red,fontWeight:900}}>{SAR(totalRemaining)}</span></span>
-              <button style={{...styles.btn(C.green,"#fff"),fontSize:13,padding:"7px 12px",display:"inline-flex",alignItems:"center",gap:6}} onClick={closeCycleAndReset}>
-                <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></g></svg>
+              <button style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:10,fontSize:13,fontWeight:800,padding:"7px 12px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}} onClick={closeCycleAndReset}>
+                <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></g></svg>
                 إقفال الدورة وبدء شهر جديد</button>
               <button style={{...styles.btn(C.gold),fontSize:13,padding:"7px 12px",display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>printAll(months.map(ym=>({ym,d:calcMonth(ym)})),"المؤشرات الشهرية")}>
                 <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9V4h10v5M6 18H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1M7 15h10v5H7Z"/></g></svg>
