@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-25-overdue-merged-in-collect -->
+<!-- build: 2026-07-25-nav-8tabs-compass-moved -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -4501,7 +4501,7 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
   );
 }
 
-function MonthlyPortfolio({contracts, investors, settings, payments, monthClose, setMonthClose, JardComp, toast, BankComp, daily, dailyOpen, setDailyOpen}) {
+function MonthlyPortfolio({contracts, investors, settings, payments, monthClose, setMonthClose, JardComp, toast, BankComp, CashComp, daily, dailyOpen, setDailyOpen}) {
   const [tab, setTab] = React.useState("ind");
   const [openMonth, setOpenMonth] = React.useState(null);
   const getPeriod = d => fiscalYM(d);
@@ -4656,7 +4656,8 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
   const subTabs=[
     {k:"ind",l:"المؤشرات",icon:'<path d="M3.5 7.5h17v12h-17Z"/><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/>'},
     {k:"jard",l:"الجرد",icon:'<path d="M3.6 7.6h16.8v12H3.6Z"/><path d="M3.6 11.6h16.8M12 7.6v12"/>'},
-    {k:"bank",l:"رصيد الحساب",icon:'<path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/>'}
+    {k:"bank",l:"رصيد الحساب",icon:'<path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/>'},
+    {k:"cash",l:"البوصلة المالية",icon:'<circle cx="12" cy="12" r="8.4"/><path d="M15.7 8.3 13.1 13.1 8.3 15.7l2.6-4.8Z"/>'}
   ];
 
   return (
@@ -4757,6 +4758,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
 
       {tab==="jard" && JardComp}
       {tab==="bank" && BankComp}
+      {tab==="cash" && CashComp}
     </div>
   );
 }
@@ -9311,9 +9313,7 @@ function App() {
     {id:"accounts",label:"💰",name:"الحسابات",color:"#b45309"},
     {id:"collect",label:"⚡",name:"التحصيل",color:"#0d9488"},
     {id:"goods",label:"📦",name:"البضاعة",color:"#78350f"},
-    {id:"overdue",label:"🚨",name:"المتعثرون",color:"#dc2626"},
     {id:"portfolio",label:"📊",name:"المحفظة الشهرية",color:"#0d9488"},
-    {id:"cashflow",label:"🧭",name:"البوصلة المالية",color:"#0369a1"},
     {id:"qimaai",label:"🤖",name:"قمة AI",color:"#6d28d9"},
     {id:"settings",label:"⚙️",name:"الإعدادات",color:"#4b5563"},
   ];
@@ -9402,16 +9402,16 @@ function App() {
       </nav>
 
       <div style={styles.main}>
-        {page==="overdue" && <OverduePage contracts={activeContracts} investors={investors} payments={payments} goCollect={()=>setPage("collect")} onFlag={(id,val)=>{setContracts(p=>p.map(c=>c.id===id?{...c,defaulter:val}:c));}} />}
+        {/* المتعثرون انتقلت لتبويب داخل التحصيل */}
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={payments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="qimaai" && <QimaAI contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct}/>}
         {page==="collect" && <CollectionPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={activeContracts}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
-        {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>}/>}
+        {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast} gsWrite={gsWrite}/>}
-        {page==="cashflow" && <CashFlowPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>}
+        {/* البوصلة المالية انتقلت لتبويب داخل المحفظة الشهرية */}
         {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast} setPage={setPage}/>}
         {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup} payments={payments} setPayments={setPayments} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} setPage={setPage} investors={investors} contracts={activeContracts} setInvestors={setInvestors}/>}
       </div>
