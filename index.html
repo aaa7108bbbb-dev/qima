@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-25-collect-late-tabs -->
+<!-- build: 2026-07-25-overdue-merged-in-collect -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -8092,10 +8092,10 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
 // ══════════════════════════════════════════════════════════════
 // ⚡ صفحة التحصيل — تصميم أبيض + بطاقات مستثمرين + مؤشر دائري
 // ══════════════════════════════════════════════════════════════
-function CollectionPage({contracts, investors, settings, payments, setPayments, toast, logAct, doneIds, markDone}) {
+function CollectionPage({contracts, investors, settings, payments, setPayments, toast, logAct, doneIds, markDone, setContracts, activeContracts}) {
   const [colDate, setColDate] = useState(todayLocal());
   const [selInv, setSelInv] = useState(null); // المستثمر المختار (null = شاشة الاختيار)
-  const [viewMode, setViewMode] = useState("all"); // all = كل العملاء | late = المتأخرون فقط
+  const [viewMode, setViewMode] = useState("collect"); // collect = التحصيل | overdue = المتعثرون
   const [colSearch, setColSearch] = useState("");
   const [colAmts, setColAmts] = useState({});
   const [expanded, setExpanded] = useState({});
@@ -8199,69 +8199,61 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
     return (
       React.createElement("div",{style:{minHeight:"80vh"}},
         React.createElement(Header,{title:"التحصيل"}),
-        // ── تبويبا الحالة: كل العملاء / المتأخرون ──
+        // ── تبويبا الحالة: التحصيل / المتعثرون ──
         React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}},
-          React.createElement("button",{onClick:()=>setViewMode("all"),
-            style:{padding:"13px",borderRadius:13,border:viewMode==="all"?"none":"2px solid #e6eaf0",
-              background:viewMode==="all"?"linear-gradient(135deg,#1a1a2e,#0f3460)":"#fff",
-              color:viewMode==="all"?"#e0b85c":"#64748b",fontWeight:800,fontSize:14.5,cursor:"pointer",
+          React.createElement("button",{onClick:()=>setViewMode("collect"),
+            style:{padding:"13px",borderRadius:13,border:viewMode==="collect"?"none":"2px solid #e6eaf0",
+              background:viewMode==="collect"?"linear-gradient(135deg,#1a1a2e,#0f3460)":"#fff",
+              color:viewMode==="collect"?"#e0b85c":"#64748b",fontWeight:800,fontSize:14.5,cursor:"pointer",
               fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
             React.createElement("svg",{width:18,height:18,viewBox:"0 0 24 24"},
-              React.createElement("g",{fill:"none",stroke:viewMode==="all"?"#e0b85c":"#8b93a7",strokeWidth:1.75,strokeLinecap:"round",strokeLinejoin:"round",dangerouslySetInnerHTML:{__html:'<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M15.5 5.5a3.2 3.2 0 0 1 0 6M17 19a5.5 5.5 0 0 0-3-4.9"/>'}})
+              React.createElement("g",{fill:"none",stroke:viewMode==="collect"?"#e0b85c":"#8b93a7",strokeWidth:1.75,strokeLinecap:"round",strokeLinejoin:"round",dangerouslySetInnerHTML:{__html:'<path d="M13.6 3.2 6.6 13.4h4.6L10.4 20.8l7-10.2h-4.6Z"/>'}})
             ),
-            "كل العملاء"
+            "التحصيل"
           ),
-          React.createElement("button",{onClick:()=>setViewMode("late"),
-            style:{padding:"13px",borderRadius:13,border:viewMode==="late"?"none":"2px solid #e6eaf0",
-              background:viewMode==="late"?"linear-gradient(135deg,#1a1a2e,#0f3460)":"#fff",
-              color:viewMode==="late"?"#e0b85c":"#64748b",fontWeight:800,fontSize:14.5,cursor:"pointer",
+          React.createElement("button",{onClick:()=>setViewMode("overdue"),
+            style:{padding:"13px",borderRadius:13,border:viewMode==="overdue"?"none":"2px solid #e6eaf0",
+              background:viewMode==="overdue"?"linear-gradient(135deg,#1a1a2e,#0f3460)":"#fff",
+              color:viewMode==="overdue"?"#e0b85c":"#64748b",fontWeight:800,fontSize:14.5,cursor:"pointer",
               fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
             React.createElement("svg",{width:18,height:18,viewBox:"0 0 24 24"},
-              React.createElement("g",{fill:"none",stroke:viewMode==="late"?"#e0b85c":"#8b93a7",strokeWidth:1.75,strokeLinecap:"round",strokeLinejoin:"round",dangerouslySetInnerHTML:{__html:'<path d="M12 4.2 21.4 20.4H2.6Z"/><path d="M12 10.2v4.4"/>'}}),
-              React.createElement("g",{fill:viewMode==="late"?"#e0b85c":"#8b93a7",dangerouslySetInnerHTML:{__html:'<circle cx="12" cy="17.4" r="1.25"/>'}})
+              React.createElement("g",{fill:"none",stroke:viewMode==="overdue"?"#e0b85c":"#8b93a7",strokeWidth:1.75,strokeLinecap:"round",strokeLinejoin:"round",dangerouslySetInnerHTML:{__html:'<path d="M12 4.2 21.4 20.4H2.6Z"/><path d="M12 10.2v4.4"/>'}}),
+              React.createElement("g",{fill:viewMode==="overdue"?"#e0b85c":"#8b93a7",dangerouslySetInnerHTML:{__html:'<circle cx="12" cy="17.4" r="1.25"/>'}})
             ),
-            "المتأخرون",
-            (()=>{const n=invCards.filter(g=>g.lateCount>0).length; return n>0?React.createElement("span",{style:{fontSize:12,opacity:.85}},"("+n+")"):null;})()
+            "المتعثرون",
+            (()=>{const n=invCards.reduce((s,g)=>s+g.lateCount,0); return n>0?React.createElement("span",{style:{fontSize:12,opacity:.85}},"("+n+")"):null;})()
           )
         ),
-        React.createElement("div",{style:{display:"flex",gap:8,marginBottom:14,alignItems:"center",flexWrap:"wrap"}},
-          React.createElement("label",{style:{fontSize:13,fontWeight:700,color:"#374151"}},"📅"),
-          React.createElement("input",{type:"date",value:colDate,onChange:e=>setColDate(e.target.value),style:{...styles.input,width:"auto",flex:1}})
-        ),
-        (()=>{
-          const shownCards = viewMode==="late" ? invCards.filter(g=>g.lateCount>0) : invCards;
-          if(shownCards.length===0) return React.createElement("div",{style:{...styles.card,textAlign:"center",padding:40,color:"#6b7280"}}, viewMode==="late"?"لا يوجد متأخرون — كل العملاء منتظمون":"لا يوجد عقود نشطة");
-          return React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
-            shownCards.map(g=>(
-            React.createElement("div",{key:g.inv.id,onClick:()=>{setSelInv(g.inv);setColSearch("");setExpanded({});},
-              style:{background:"#fff",borderRadius:16,padding:"18px 16px",cursor:"pointer",boxShadow:"0 2px 12px rgba(0,0,0,0.06)",borderRight:"5px solid "+(viewMode==="late"?"#dc2626":"#1a1a2e"),position:"relative",transition:"transform 0.15s",overflow:"hidden"}},
-              g.lateCount>0 && React.createElement("span",{style:{position:"absolute",top:10,left:10,background:"#fef2f2",color:"#dc2626",borderRadius:8,padding:"2px 8px",fontSize:11,fontWeight:800}},g.lateCount+" متأخر"),
-              React.createElement("div",{style:{fontSize:18,fontWeight:900,color:"#1a1a2e",marginBottom:12}},invLabel(g.inv)),
-              viewMode==="late"
-                ? React.createElement(React.Fragment,null,
-                    React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:4}},
-                      React.createElement("span",{style:{fontSize:12,color:"#1a1a2e",fontWeight:700}},"عدد المتأخرين"),
-                      React.createElement("span",{style:{fontSize:16,fontWeight:900,color:"#dc2626"}},g.lateCount)
-                    ),
-                    React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
-                      React.createElement("span",{style:{fontSize:12,color:"#1a1a2e",fontWeight:700}},"المبلغ المتأخر"),
-                      React.createElement("span",{style:{fontSize:14,fontWeight:800,color:"#dc2626"}},SAR(g.items.reduce((s,c)=>s+(c.lateAmt||0),0)))
+        // ── محتوى التبويب ──
+        viewMode==="overdue"
+          ? React.createElement(OverduePage,{contracts:activeContracts||contracts, investors:investors, payments:payments,
+              goCollect:()=>setViewMode("collect"),
+              onFlag:(id,val)=>{ setContracts && setContracts(p=>p.map(c=>c.id===id?{...c,defaulter:val}:c)); }})
+          : React.createElement(React.Fragment,null,
+              React.createElement("div",{style:{display:"flex",gap:8,marginBottom:14,alignItems:"center",flexWrap:"wrap"}},
+                React.createElement("label",{style:{fontSize:13,fontWeight:700,color:"#374151"}},"📅"),
+                React.createElement("input",{type:"date",value:colDate,onChange:e=>setColDate(e.target.value),style:{...styles.input,width:"auto",flex:1}})
+              ),
+              invCards.length===0
+                ? React.createElement("div",{style:{...styles.card,textAlign:"center",padding:40,color:"#6b7280"}},"لا يوجد عقود نشطة")
+                : React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+                    invCards.map(g=>(
+                    React.createElement("div",{key:g.inv.id,onClick:()=>{setSelInv(g.inv);setColSearch("");setExpanded({});},
+                      style:{background:"#fff",borderRadius:16,padding:"18px 16px",cursor:"pointer",boxShadow:"0 2px 12px rgba(0,0,0,0.06)",borderRight:"5px solid #1a1a2e",position:"relative",transition:"transform 0.15s",overflow:"hidden"}},
+                      g.lateCount>0 && React.createElement("span",{style:{position:"absolute",top:10,left:10,background:"#fef2f2",color:"#dc2626",borderRadius:8,padding:"2px 8px",fontSize:11,fontWeight:800}},g.lateCount+" متأخر"),
+                      React.createElement("div",{style:{fontSize:18,fontWeight:900,color:"#1a1a2e",marginBottom:12}},invLabel(g.inv)),
+                      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:4}},
+                        React.createElement("span",{style:{fontSize:12,color:"#1a1a2e",fontWeight:700}},"العقود"),
+                        React.createElement("span",{style:{fontSize:16,fontWeight:900,color:"#c8922a"}},g.items.length)
+                      ),
+                      React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
+                        React.createElement("span",{style:{fontSize:12,color:"#1a1a2e",fontWeight:700}},"الأقساط"),
+                        React.createElement("span",{style:{fontSize:14,fontWeight:800,color:"#c8922a"}},SAR(g.totalInst))
+                      )
                     )
-                  )
-                : React.createElement(React.Fragment,null,
-                    React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:4}},
-                      React.createElement("span",{style:{fontSize:12,color:"#1a1a2e",fontWeight:700}},"العقود"),
-                      React.createElement("span",{style:{fontSize:16,fontWeight:900,color:"#c8922a"}},g.items.length)
-                    ),
-                    React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
-                      React.createElement("span",{style:{fontSize:12,color:"#1a1a2e",fontWeight:700}},"الأقساط"),
-                      React.createElement("span",{style:{fontSize:14,fontWeight:800,color:"#c8922a"}},SAR(g.totalInst))
-                    )
-                  )
+                  ))
+                )
             )
-          ))
-          );
-        })()
       )
     );
   }
@@ -9414,7 +9406,7 @@ function App() {
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={payments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="qimaai" && <QimaAI contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct}/>}
-        {page==="collect" && <CollectionPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone}/>}
+        {page==="collect" && <CollectionPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={activeContracts}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
         {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast}/>}
