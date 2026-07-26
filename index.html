@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-25-nav-8tabs-compass-moved -->
+<!-- build: 2026-07-26-fix-duplicate-aimodels -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -843,7 +843,7 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
 function NewContractPage({investors, settings, contracts, onSave, toast, setInvTxList}) {
   const today = todayLocal();
   const nextNum = contracts.length ? Math.max(...contracts.map(c=>parseInt(c.num)||0).filter(n=>n>0), 0) + 1 : (settings.startNum||1);
-  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}],contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",bankAccount:"",stockName:"",stockQty:"",isOldContract:false});
+  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}],contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",payMethod:"نقدي",bankName:"",bankAccount:"",stockName:"",stockQty:"",isOldContract:false});
   const _autoFill = (f,prev) => ({...f, client:prev.client||f.client, idNum:prev.idNum||f.idNum, job:prev.job||f.job, cPhone:prev.cPhone||f.cPhone, nationality:prev.nationality||f.nationality, address:prev.address||f.address, idType:prev.idType||f.idType, gName:prev.gName||f.gName, gId:prev.gId||f.gId, gJob:prev.gJob||f.gJob, gPhone:prev.gPhone||f.gPhone});
   const set = (k,v) => {
     setForm(f=>({...f,[k]:v}));
@@ -1059,17 +1059,14 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
           <svg width="19" height="19" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6.2 3.2h7.4l4.2 4.2V20.8H6.2Z"/><path d="M13.6 3.2v4.2h4.2M9.2 12.4h5.6M9.2 15.8h3.8"/></g><circle cx="15.6" cy="17.6" r="1.3" fill="#a87520"/></svg>
           <h3 style={secTitle()}>نوع العقد</h3>
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:form.contractType==="defer"?16:0}}>
-          <button type="button" onClick={()=>set("contractType","monthly")}
-            style={{padding:"16px",borderRadius:14,border:"2.5px solid "+(form.contractType==="monthly"?"#16a34a":"#e2e8f0"),background:form.contractType==="monthly"?"linear-gradient(135deg,#f0fdf4,#dcfce7)":"#fff",color:form.contractType==="monthly"?"#16a34a":"#94a3b8",fontWeight:900,fontSize:16,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-            <svg width="18" height="18" viewBox="0 0 24 24" style={{stroke:"currentColor"}}><g fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M8 3v4M16 3v4"/></g></svg>
-            شهري
-          </button>
-          <button type="button" onClick={()=>set("contractType","defer")}
-            style={{padding:"16px",borderRadius:14,border:"2.5px solid "+(form.contractType==="defer"?"#1a1a2e":"#e2e8f0"),background:form.contractType==="defer"?"linear-gradient(135deg,#f4f6f9,#e9edf3)":"#fff",color:form.contractType==="defer"?"#1a1a2e":"#94a3b8",fontWeight:900,fontSize:16,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-            <svg width="18" height="18" viewBox="0 0 24 24" style={{stroke:"currentColor"}}><g fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.5V12l3 2"/></g></svg>
-            مؤجل
-          </button>
+        <div style={{marginBottom:form.contractType==="defer"?16:0}}>
+          <select style={{...styles.select,borderRadius:12,padding:"14px 14px",fontSize:16,fontWeight:800,
+            borderColor:form.contractType==="monthly"?"#16a34a":"#1a1a2e",
+            color:form.contractType==="monthly"?"#16a34a":"#1a1a2e"}}
+            value={form.contractType} onChange={e=>set("contractType",e.target.value)}>
+            <option value="monthly">شهري</option>
+            <option value="defer">مؤجل</option>
+          </select>
         </div>
         {form.contractType==="defer" && (
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
@@ -1097,22 +1094,44 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
           <svg width="19" height="19" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></g><circle cx="7" cy="14" r="1.2" fill="#a87520"/></svg>
           <h3 style={secTitle()}>نوع السداد</h3>
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:form.payType==="deduction"?16:0}}>
-          <button type="button" onClick={()=>set("payType","normal")}
-            style={{padding:"16px",borderRadius:14,border:"2.5px solid "+(form.payType==="normal"?"#16a34a":"#e2e8f0"),background:form.payType==="normal"?"linear-gradient(135deg,#f0fdf4,#dcfce7)":"#fff",color:form.payType==="normal"?"#16a34a":"#94a3b8",fontWeight:900,fontSize:16,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-            <svg width="18" height="18" viewBox="0 0 24 24" style={{stroke:"currentColor"}}><g fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></g></svg>
-            نقدي
-          </button>
-          <button type="button" onClick={()=>set("payType","deduction")}
-            style={{padding:"16px",borderRadius:14,border:"2.5px solid "+(form.payType==="deduction"?"#1a1a2e":"#e2e8f0"),background:form.payType==="deduction"?"linear-gradient(135deg,#f4f6f9,#e9edf3)":"#fff",color:form.payType==="deduction"?"#1a1a2e":"#94a3b8",fontWeight:900,fontSize:16,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-            <svg width="18" height="18" viewBox="0 0 24 24" style={{stroke:"currentColor"}}><g fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg>
-            استقطاع
-          </button>
+        <div style={{marginBottom:(form.payType==="deduction"||form.payMethod==="شيكات")?16:0}}>
+          <select style={{...styles.select,borderRadius:12,padding:"14px 14px",fontSize:16,fontWeight:800,
+            borderColor:form.payType==="deduction"?"#1a1a2e":"#16a34a",
+            color:form.payType==="deduction"?"#1a1a2e":"#16a34a"}}
+            value={form.payMethod||"نقدي"}
+            onChange={e=>{
+              const m=e.target.value;
+              set("payMethod",m);
+              // القيمة الداخلية: الاستقطاع فقط يفعّل منطق الاستقطاع، الباقي كله normal
+              set("payType", m==="استقطاع" ? "deduction" : "normal");
+              // تصفير حقل البنك إذا لم يكن شيكات
+              if(m!=="شيكات") set("bankName","");
+            }}>
+            <option value="نقدي">نقدي</option>
+            <option value="استقطاع">استقطاع</option>
+            <option value="تحويل">تحويل</option>
+            <option value="صرافة">صرافة</option>
+            <option value="شيكات">شيكات</option>
+          </select>
         </div>
         {form.payType==="deduction" && (
           <div>
             <label style={fLabel}>رقم حساب الزبون (للمطابقة مع البنك)</label>
             <input style={fInput} type="text" placeholder="رقم الحساب / الآيبان" value={form.bankAccount} onChange={e=>set("bankAccount",e.target.value)}/>
+          </div>
+        )}
+        {form.payMethod==="شيكات" && (
+          <div>
+            <label style={fLabel}>البنك</label>
+            <select style={{...styles.select,borderRadius:10}} value={form.bankName||""} onChange={e=>set("bankName",e.target.value)}>
+              <option value="">— اختر البنك —</option>
+              <option value="الراجحي">الراجحي</option>
+              <option value="الأهلي">الأهلي</option>
+              <option value="الإنماء">الإنماء</option>
+              <option value="البلاد">البلاد</option>
+              <option value="العربي">العربي</option>
+              <option value="الرياض">الرياض</option>
+            </select>
           </div>
         )}
       </div>
@@ -5101,9 +5120,9 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
 
       {/* شريط التقدّم */}
       <div style={{background:C.white,border:"1px solid #e6eaf0",borderRadius:13,padding:"12px 15px",marginBottom:14,boxShadow:"0 2px 10px rgba(0,0,0,.04)"}}>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:11.5,marginBottom:7,fontWeight:600}}>
-          <span style={{color:C.green,fontWeight:700}}>أنجزت {donePct}%</span>
-          <span style={{color:"#64748b"}}>باقي {remCount} قسط · {SARf(remAmount)}</span>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:15,marginBottom:9,fontWeight:800}}>
+          <span style={{color:C.green,fontWeight:900,fontSize:15}}>أنجزت {donePct}%</span>
+          <span style={{color:"#1a1a2e",fontWeight:900,fontSize:16}}>باقي <span style={{color:"#c8922a"}}>{remCount}</span> قسط · <span style={{color:"#c8922a"}}>{SARf(remAmount)}</span></span>
         </div>
         <div style={{height:8,background:"#eef2f7",borderRadius:4,overflow:"hidden"}}>
           <div style={{height:"100%",width:donePct+"%",background:"linear-gradient(90deg,#c8922a,#e0b85c)",borderRadius:4,transition:"width .4s"}}/>
@@ -7376,11 +7395,45 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
   const stripAction = (txt) => String(txt||"").replace(/```(?:action|json)?\s*\{[\s\S]*?\}\s*```/g,"").trim();
 
   const findContract = (nameOrId) => {
-    const s = String(nameOrId||"").trim();
-    let c = activeC.find(x=>x.client===s);
-    if(!c) c = activeC.find(x=>String(x.idNum)===s || String(x.num)===s);
-    if(!c) c = activeC.find(x=>String(x.client||"").includes(s));
-    return c||null;
+    const raw = String(nameOrId||"").trim();
+    if(!raw) return null;
+    // 1) مطابقة تامة للاسم
+    let c = activeC.find(x=>x.client===raw);
+    if(c) return c;
+    // 2) مطابقة رقم الهوية أو رقم العقد أو الجوال
+    const digits = raw.replace(/\D/g,"");
+    if(digits.length>=1 && /^\d+$/.test(raw.trim())){
+      // رقم صرف (رقم عقد أو هوية) — طابق رقم العقد مباشرة
+      c = activeC.find(x=>String(x.num||"")===digits);
+      if(c) return c;
+    }
+    if(digits.length>=4){
+      c = activeC.find(x=>String(x.idNum||"")===digits || String(x.cPhone||"").replace(/\D/g,"").endsWith(digits));
+      if(c) return c;
+    }
+    // 3) تطبيع عربي + مطابقة كل الكلمات المميزة
+    const norm = s => String(s||"")
+      .replace(/[\u064B-\u0652\u0640]/g,"")
+      .replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه")
+      .replace(/\s+/g," ").trim();
+    const nq = norm(raw);
+    // مطابقة تامة بعد التطبيع
+    c = activeC.find(x=>norm(x.client)===nq);
+    if(c) return c;
+    // مطابقة: كل كلمات الاستعلام (3+ أحرف) موجودة في اسم العميل
+    const qWords = nq.split(" ").filter(w=>w.length>=3);
+    if(qWords.length>=2){
+      const matches = activeC.filter(x=>{ const cn=norm(x.client); return qWords.every(w=>cn.includes(w)); });
+      if(matches.length===1) return matches[0];
+      // لو أكثر من تطابق، خذ الأقرب طولاً
+      if(matches.length>1) return matches.sort((a,b)=>Math.abs(norm(a.client).length-nq.length)-Math.abs(norm(b.client).length-nq.length))[0];
+    }
+    // 4) احتواء جزئي (اسم واحد مميز 4+ أحرف) — فقط لو تطابق وحيد
+    if(qWords.length===1 && qWords[0].length>=4){
+      const matches = activeC.filter(x=>norm(x.client).includes(qWords[0]));
+      if(matches.length===1) return matches[0];
+    }
+    return null;
   };
 
   const runAction = (act) => {
@@ -7390,11 +7443,17 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
         if(!c){ toast&&toast("⚠️ ما لقيت العميل: "+act.client,"warn"); return false; }
         const amt = _n(act.amount);
         if(amt<=0){ toast&&toast("⚠️ مبلغ غير صحيح","warn"); return false; }
+        // تحقق أن العقد مربوط بمستثمر — وإلا السداد ما يظهر برصيد المستثمر
+        const invObj = (investors||[]).find(v=>v.id===c.investorId);
+        if(c.investorId===undefined || c.investorId===null || !invObj){
+          toast&&toast("⚠️ عقد "+c.client+" غير مربوط بمستثمر — السداد ما راح يظهر في رصيد أي مستثمر. صحّح ربط العقد أولاً.","warn");
+          return false;
+        }
         const receiptNum = (payments.length+1);
         const dt = act.date || todayLocal();
-        setPayments(p=>[...p,{id:Date.now(),contractId:c.id,amount:amt,date:dt,note:act.note||"قسط — عبر قمة AI",receipt:receiptNum}]);
-        logAct && logAct("سداد","قمة AI",c.client+" — "+SAR(amt));
-        toast && toast("✅ تم تسجيل "+SAR(amt)+" على "+c.client);
+        setPayments(p=>[...p,{id:Date.now(),contractId:c.id,investorId:c.investorId,amount:amt,date:dt,note:act.note||"قسط — عبر قمة AI",receipt:receiptNum}]);
+        logAct && logAct("سداد","قمة AI",c.client+" — "+SAR(amt)+" ("+(invObj.name||"مستثمر")+")");
+        toast && toast("✅ سُجّل "+SAR(amt)+" على "+c.client+" — يظهر في رصيد: "+(invObj.name||"المستثمر"));
         return true;
       }
       if(act.action==="mark_done"){
@@ -7916,6 +7975,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
     )
   );
 }
+
 
 // ─── Search Page ─────────────────────────────────────────────
 function SearchPage({contracts, investors, settings, payments, setPayments, toast, setPage}) {
