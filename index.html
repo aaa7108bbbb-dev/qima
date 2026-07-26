@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-25-portfolio-brand -->
+<!-- build: 2026-07-25-portfolio-detail-brand -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -3959,11 +3959,11 @@ function BankReconcile({bankTx, contracts, investors, payments, setPayments, don
   const sumUn=analysis.unrecorded.reduce((s,i)=>s+i.amt,0);
 
   const TABS=[
-    {id:"alert", label:"⚠️ لم تُسجّل", n:nUn, col:"#dc2626"},
-    {id:"review",label:"🔍 مراجعة",   n:nRev, col:"#f97316"},
-    {id:"unknown",label:"❓ مجهولة",  n:nUnk, col:"#6d28d9"},
-    {id:"ok",    label:"✅ مطابقة",   n:analysis.matched.length, col:"#16a34a"},
-    {id:"exp",   label:"💳 مصروفات",  n:analysis.expense.length, col:"#64748b"},
+    {id:"alert", label:"لم تُسجّل", n:nUn, icon:'<path d="M12 4.2 21.4 20.4H2.6Z"/><path d="M12 10.2v4.4"/>',dot:'<circle cx="12" cy="17.4" r="1.25"/>'},
+    {id:"review",label:"مراجعة",   n:nRev, icon:'<circle cx="11" cy="11" r="6"/><path d="m20 20-4-4"/>',dot:''},
+    {id:"unknown",label:"مجهولة",  n:nUnk, icon:'<circle cx="12" cy="12" r="8.4"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.6 1.3c0 1.7-2.4 2-2.4 3.6"/>',dot:'<circle cx="12" cy="17.2" r="1.2"/>'},
+    {id:"ok",    label:"مطابقة",   n:analysis.matched.length, icon:'<circle cx="12" cy="12" r="8.4"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/>',dot:''},
+    {id:"exp",   label:"مصروفات",  n:analysis.expense.length, icon:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/>',dot:''},
   ];
 
   const Card = ({item, kind}) => (
@@ -4022,15 +4022,19 @@ function BankReconcile({bankTx, contracts, investors, payments, setPayments, don
         </div>
       )}
       <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:5,marginBottom:14}}>
-        {TABS.map(t=>(
+        {TABS.map(t=>{
+          const on = tab===t.id;
+          return (
           <button key={t.id} onClick={()=>setTab(t.id)}
-            style={{padding:"10px 4px",borderRadius:11,border:tab===t.id?"none":"1.5px solid #e2e8f0",
-              background:tab===t.id?t.col:"#fff",color:tab===t.id?"#fff":"#64748b",
-              fontWeight:800,fontSize:11,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",textAlign:"center"}}>
+            style={{padding:"10px 4px",borderRadius:11,border:on?"none":"1.5px solid #e2e8f0",
+              background:on?"linear-gradient(135deg,#1a1a2e,#0f3460)":"#fff",color:on?"#e0b85c":"#64748b",
+              fontWeight:800,fontSize:11,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",textAlign:"center",
+              display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+            <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke={on?"#e0b85c":"#8b93a7"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{__html:t.icon}}/><g fill={on?"#e0b85c":"#8b93a7"} dangerouslySetInnerHTML={{__html:t.dot}}/></svg>
             <div>{t.label}</div>
-            <div style={{fontSize:15,fontWeight:900,marginTop:2}}>{t.n}</div>
+            <div style={{fontSize:15,fontWeight:900}}>{t.n}</div>
           </button>
-        ))}
+        );})}
       </div>
       {ignored.length>0 && (
         <div style={{fontSize:12,color:"#94a3b8",marginBottom:10,display:"flex",alignItems:"center",gap:8}}>
@@ -4762,19 +4766,19 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
   const [cardOrder,setCardOrder] = React.useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_cardorder")||"null");}catch{return null;}});
   const [dragIdx,setDragIdx] = React.useState(null);
   const cards=[
-    ["📋 عدد العقود",d.count,"#475569",true,"count"],
-    ["💵 عقود مؤجلة",d.cashCount,"#0891b2",true,"cashCount"],
-    ["📅 عقود شهرية",d.monthlyCount,C.teal,true,"monthlyCount"],
-    ["💰 النقدي (القيمة)",d.tot.amt,C.teal,false,"amt"],
-    ["🧾 الإجمالي (بالفائدة)",d.totalWithProfit,"#7c3aed",false,"totalWithProfit"],
-    ["📆 مجموع الأقساط",d.instSum,"#9a6a00",false,"instSum"],
-    ["📈 الأرباح",d.tot.profit,C.green,false,"profit"],
-    ["✅ المحصّل",d.collected,C.green,false,"collected"],
-    ["📌 المستحق",d.due,"#9a6a00",false,"due"],
-    ["⚠️ المتعثّر",d.late,C.red,false,"late"],
-    ["💰 ربح المستثمرين",d.tot.profit - d.tot.inst - d.tot.acc,"#0891b2",false,"net"],
-    ["👤 ربح المدير",d.tot.inst,"#9a6a00",false,"inst"],
-    ["🧮 ربح المحاسب",d.tot.acc,"#4f46e5",false,"acc"],
+    ["عدد العقود",d.count,"#475569",true,"count"],
+    ["عقود مؤجلة",d.cashCount,"#0891b2",true,"cashCount"],
+    ["عقود شهرية",d.monthlyCount,C.teal,true,"monthlyCount"],
+    ["النقدي (القيمة)",d.tot.amt,C.teal,false,"amt"],
+    ["الإجمالي (بالفائدة)",d.totalWithProfit,"#7c3aed",false,"totalWithProfit"],
+    ["مجموع الأقساط",d.instSum,"#9a6a00",false,"instSum"],
+    ["الأرباح",d.tot.profit,C.green,false,"profit"],
+    ["المحصّل",d.collected,C.green,false,"collected"],
+    ["المستحق",d.due,"#9a6a00",false,"due"],
+    ["المتعثّر",d.late,C.red,false,"late"],
+    ["ربح المستثمرين",d.tot.profit - d.tot.inst - d.tot.acc,"#0891b2",false,"net"],
+    ["ربح المدير",d.tot.inst,"#9a6a00",false,"inst"],
+    ["ربح المحاسب",d.tot.acc,"#4f46e5",false,"acc"],
   ];
   // ترتيب البطاقات حسب المحفوظ (بالمفتاح)، والجديدة تنضاف بالنهاية
   const orderedCards = (()=>{
@@ -4804,13 +4808,19 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
       <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <button onClick={onBack} style={{...styles.btn("#e5e7eb","#374151"),fontSize:14,padding:"7px 14px"}}>‹ رجوع</button>
-          <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>{mLabel(ym)} {isClosed&&<span style={{fontSize:12,background:C.green,color:"#fff",borderRadius:10,padding:"2px 10px",marginRight:6}}>🔒 مقفل</span>}</h2>
+          <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>{mLabel(ym)} {isClosed&&<span style={{fontSize:12,background:C.green,color:"#fff",borderRadius:10,padding:"2px 10px",marginRight:6}}>مقفل</span>}</h2>
         </div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-          <button onClick={printReport} style={{...styles.btn(C.gold),fontSize:14,padding:"8px 16px"}}>طباعة التقرير</button>
+          <button onClick={printReport} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:10,fontSize:14,fontWeight:800,padding:"8px 16px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
+            <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9V4h10v5M6 18H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1M7 15h10v5H7Z"/></g></svg>
+            طباعة التقرير</button>
           {isClosed
-            ? <button onClick={onReopen} style={{...styles.btn(C.red,"#fff"),fontSize:14,padding:"8px 16px"}}>🔓 فتح الشهر</button>
-            : <button onClick={onClose} style={{...styles.btn(C.green,"#fff"),fontSize:14,padding:"8px 16px"}}>🔒 إقفال هذا الشهر</button>}
+            ? <button onClick={onReopen} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:10,fontSize:14,fontWeight:800,padding:"8px 16px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
+                <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7-2.6"/></g></svg>
+                فتح الشهر</button>
+            : <button onClick={onClose} style={{...styles.btn(C.green,"#fff"),fontSize:14,padding:"8px 16px",display:"inline-flex",alignItems:"center",gap:6}}>
+                <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></g></svg>
+                إقفال هذا الشهر</button>}
         </div>
       </div>
       <div style={{padding:16}}>
@@ -4824,10 +4834,10 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
               onDragOver={e=>e.preventDefault()}
               onDrop={()=>onDrop(i)}
               onClick={()=>rows.length>0&&setCardDetail({title:l,color:col,rows,isCount})}
-              style={{...styles.card,textAlign:"center",borderTop:"4px solid "+col,cursor:"grab",opacity:dragIdx===i?0.5:1}}>
-              <div style={{fontSize:13,color:"#1f2937",marginBottom:6,fontWeight:700}}>{l}</div>
-              <div style={{fontSize:22,fontWeight:900,color:col}}>{isCount?v:SAR(v)}</div>
-              {rows.length>0 && <div style={{fontSize:11,color:C.teal,marginTop:4,fontWeight:700}}>التفاصيل ({rows.length}) ›</div>}
+              style={{...styles.card,textAlign:"center",borderTop:"4px solid #1a1a2e",cursor:"grab",opacity:dragIdx===i?0.5:1}}>
+              <div style={{fontSize:13,color:"#1a1a2e",marginBottom:6,fontWeight:700}}>{l}</div>
+              <div style={{fontSize:22,fontWeight:900,color:"#c8922a"}}>{isCount?v:SAR(v)}</div>
+              {rows.length>0 && <div style={{fontSize:11,color:"#64748b",marginTop:4,fontWeight:700}}>التفاصيل ({rows.length}) ›</div>}
             </div>
           );})}
         </div>
@@ -4855,7 +4865,7 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
           )}
         </Modal>
 
-        <div style={{fontSize:17,fontWeight:900,color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12,marginBottom:12}}>👥 محصلة المستثمرين</div>
+        <div style={{fontSize:17,fontWeight:900,color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12,marginBottom:12}}>محصلة المستثمرين</div>
         <div style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",borderRadius:10,overflow:"hidden"}}>
             <thead><tr>
