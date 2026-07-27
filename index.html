@@ -3069,6 +3069,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
         // تجميع كل السبعة
         let bidaya=0,netCash=0,leftMonthly=0,leftDefer=0,monthlyInst=0,profit=0,commAdmin=0,commAcc=0,
             working=0,paidAll=0,totalWP=0,overCount=0,overAmt=0,activeC=0,doneC=0,deferC=0,consAll=0,amtAll=0,lastPay=null;
+        const perInvData=[];
         specialInvs.forEach(inv=>{
           const myCon=contracts.filter(c=>c.investorId===inv.id);
           consAll+=myCon.length;
@@ -3098,6 +3099,12 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                     const od=Math.min(total,inst*mEl)-paid; if(od>0){overCount++;overAmt+=od;} } } }
             } else doneC++;
           });
+          const _invCash=(+inv.capital||0)+_auto+paidSum+manualSum;
+          let _invLeft=0;
+          myCon.forEach(c=>{const total=+c.totalInst||+c.amount||0,paid=_getPaid(payments,c.id),rem=Math.max(0,total-paid);if(rem>0)_invLeft+=rem;});
+          const _nm=(inv.name||"").trim();
+          const _num=specialNames.find(n=>_nm.includes("الفرصة "+n)||_nm.includes("الفرصة"+n)||_nm.endsWith(" "+n));
+          perInvData.push({inv,num:_num||"?",cash:_invCash,left:_invLeft,total:_invCash+_invLeft,cons:myCon.length});
         });
         const grand=netCash+leftMonthly+leftDefer;
         const collectPct=totalWP>0?Math.round(paidAll/totalWP*100):0;
@@ -3184,6 +3191,37 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
               </div>
             </div>
           </div>
+          {/* تفصيل كل فرصة */}
+          <div style={{background:K.panel,border:"1px solid "+K.line,borderRadius:17,overflow:"hidden",marginTop:12}}>
+            <div style={{padding:"12px 15px",borderBottom:"1px solid "+K.line}}>
+              <div style={{fontSize:13,fontWeight:700,color:K.txt}}>تفصيل كل فرصة</div>
+            </div>
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                <thead><tr style={{borderBottom:"1px solid "+K.line}}>
+                  <th style={{padding:"10px 12px",textAlign:"right",color:K.dim,fontWeight:600,fontSize:11}}>الفرصة</th>
+                  <th style={{padding:"10px 8px",textAlign:"left",color:K.green,fontWeight:600,fontSize:11}}>النقدي</th>
+                  <th style={{padding:"10px 8px",textAlign:"left",color:K.amber,fontWeight:600,fontSize:11}}>عند الزبائن</th>
+                  <th style={{padding:"10px 8px",textAlign:"left",color:K.gold,fontWeight:700,fontSize:11}}>الإجمالي</th>
+                </tr></thead>
+                <tbody>{perInvData.map((d,i)=>(
+                  <tr key={i} style={{borderBottom:"1px solid "+K.line}}>
+                    <td style={{padding:"10px 12px",fontWeight:700,color:K.txt,whiteSpace:"nowrap"}}>الفرصة {d.num} <span style={{fontSize:10,color:K.dim2,fontWeight:400}}>({d.cons})</span></td>
+                    <td style={{padding:"10px 8px",fontWeight:700,color:d.cash>=0?K.green:K.red,fontFamily:"monospace",fontSize:13}}>{NF(d.cash)}</td>
+                    <td style={{padding:"10px 8px",fontWeight:700,color:K.amber,fontFamily:"monospace",fontSize:13}}>{NF(d.left)}</td>
+                    <td style={{padding:"10px 8px",fontWeight:700,color:K.gold,fontFamily:"monospace",fontSize:13}}>{NF(d.total)}</td>
+                  </tr>
+                ))}</tbody>
+                <tfoot><tr style={{background:"rgba(255,255,255,.04)"}}>
+                  <td style={{padding:"10px 12px",fontWeight:700,color:K.txt,fontSize:11}}>المجموع</td>
+                  <td style={{padding:"10px 8px",fontWeight:700,color:netCash>=0?K.green:K.red,fontFamily:"monospace",fontSize:13}}>{NF(netCash)}</td>
+                  <td style={{padding:"10px 8px",fontWeight:700,color:K.amber,fontFamily:"monospace",fontSize:13}}>{NF(leftMonthly+leftDefer)}</td>
+                  <td style={{padding:"10px 8px",fontWeight:700,color:K.gold,fontFamily:"monospace",fontSize:13}}>{NF(grand)}</td>
+                </tr></tfoot>
+              </table>
+            </div>
+          </div>
+
         </div>);
       })()}
 
