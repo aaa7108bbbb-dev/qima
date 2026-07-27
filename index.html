@@ -3064,7 +3064,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
         const specialNames = ["1","2","4","7","8","9","11"];
         const specialInvs = sortedInvestors(investors.filter(inv=>{
           const nm = (inv.name||"").trim();
-          return specialNames.some(n=>nm.includes("الفرصة "+n)||nm.includes("الفرصة"+n));
+          return specialNames.some(n=>nm.endsWith(" "+n));
         }));
         // تجميع كل السبعة
         let bidaya=0,netCash=0,leftMonthly=0,leftDefer=0,monthlyInst=0,profit=0,commAdmin=0,commAcc=0,
@@ -3103,7 +3103,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
           let _invLeft=0;
           myCon.forEach(c=>{const total=+c.totalInst||+c.amount||0,paid=_getPaid(payments,c.id),rem=Math.max(0,total-paid);if(rem>0)_invLeft+=rem;});
           const _nm=(inv.name||"").trim();
-          const _num=specialNames.find(n=>_nm.includes("الفرصة "+n)||_nm.includes("الفرصة"+n)||_nm.endsWith(" "+n));
+          const _num=specialNames.find(n=>_nm.endsWith(" "+n));
           perInvData.push({inv,num:_num||"?",cash:_invCash,left:_invLeft,total:_invCash+_invLeft,cons:myCon.length});
         });
         const grand=netCash+leftMonthly+leftDefer;
