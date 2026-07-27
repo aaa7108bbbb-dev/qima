@@ -3064,7 +3064,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
         const specialNames = ["1","2","4","7","8","9","11"];
         const specialInvs = sortedInvestors(investors.filter(inv=>{
           const nm = (inv.name||"").trim();
-          return specialNames.some(n=>nm.includes("الفرصة "+n)||nm.includes("الفرصة"+n)||nm.endsWith(" "+n)||nm.endsWith(n));
+          return specialNames.some(n=>nm.includes("الفرصة "+n)||nm.includes("الفرصة"+n));
         }));
         // تجميع كل السبعة
         let bidaya=0,netCash=0,leftMonthly=0,leftDefer=0,monthlyInst=0,profit=0,commAdmin=0,commAcc=0,
