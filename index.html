@@ -3070,11 +3070,11 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
       <div style={{fontSize:19,fontWeight:800,marginBottom:16}}>💰 الحسابات</div>
 
       {/* Sub tabs */}
-      <div style={{display:"flex",gap:0,marginBottom:20,background:C.white,borderRadius:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",width:"fit-content"}}>
+      <div style={{display:"flex",gap:0,marginBottom:20,background:"#141428",borderRadius:10,overflow:"hidden",border:"2px solid #c8922a",width:"fit-content",position:"sticky",top:0,zIndex:20}}>
         {subTabs.map(t=>(
           <button key={t.key} onClick={()=>setSubTab(t.key)}
-            style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:700,padding:"10px 16px",border:"none",
-              cursor:"pointer",background:subTab===t.key?C.teal:C.white,color:subTab===t.key?"white":C.ink2,
+            style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:800,padding:"10px 16px",border:"none",
+              cursor:"pointer",background:subTab===t.key?"linear-gradient(150deg,#c8922a,#a87520)":"transparent",color:subTab===t.key?"#fff":"#c8922a",
               transition:"all 0.2s",whiteSpace:"nowrap"}}>
             {t.label}
           </button>
@@ -6101,15 +6101,12 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
               {/* رأس البطاقة */}
               <div onClick={()=>setOpenId(isOpen?null:inv.id)}
                 style={{padding:"14px 15px",display:"flex",alignItems:"center",gap:11,cursor:"pointer"}}>
-                <div style={{width:40,height:40,borderRadius:12,flexShrink:0,display:"flex",alignItems:"center",
-                  justifyContent:"center",fontSize:15,fontWeight:800,background:"rgba(45,212,191,.16)",
-                  color:K.teal,border:"1px solid rgba(45,212,191,.3)"}}>{invLabel(inv)}</div>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:14,fontWeight:700,color:K.txt,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{inv.name}</div>
+                  <div style={{fontSize:14,fontWeight:800,color:"#c8922a",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{inv.name}</div>
                   <div style={{fontSize:11,color:K.dim,marginTop:2}}>{r.myCon.length} عقد · آخر سداد {shortDate(r.lastPay)}</div>
                 </div>
                 <div style={{textAlign:"left",flexShrink:0}}>
-                  <div style={{fontSize:17,fontWeight:700,color:K.teal}}>{NF(r.grand)}</div>
+                  <div style={{fontSize:17,fontWeight:800,color:"#c8922a"}}>{NF(r.grand)}</div>
                   <div style={{fontSize:9,color:K.dim2}}>الإجمالي</div>
                 </div>
                 <span style={{color:K.dim2,fontSize:11,transform:isOpen?"rotate(180deg)":"none",transition:".25s"}}>▼</span>
