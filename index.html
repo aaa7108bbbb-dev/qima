@@ -1547,7 +1547,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
 
   // Investor report
   const invReportContracts = invSearch
-    ? contracts.filter(c=>!c.deleted && (investors.find(i=>String(i.id)===String(c.investorId))?.name||"")===invSearch && !doneIds.includes(c.id))
+    ? contracts.filter(c=>!c.deleted && c.contractType!=="defer" && (investors.find(i=>String(i.id)===String(c.investorId))?.name||"")===invSearch && !doneIds.includes(c.id))
     : [];
 
   const today2 = todayLocal();
@@ -2373,6 +2373,16 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                 <input style={styles.input} type={t} value={editForm[k]||""} onChange={e=>setEditForm(f=>({...f,[k]:e.target.value}))}/>
               </div>
             ))}
+            <div style={{gridColumn:"1/-1"}}>
+              <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>نوع السداد</label>
+              <select style={{...styles.input,fontWeight:700,fontSize:15,color:"#16a34a"}} value={editForm.payMethod||"نقدي"} onChange={e=>setEditForm(f=>({...f,payMethod:e.target.value,payType:e.target.value==="استقطاع"?"deduction":"normal"}))}>
+                <option value="نقدي">نقدي</option>
+                <option value="استقطاع">استقطاع</option>
+                <option value="تحويل">تحويل</option>
+                <option value="صرافة">صرافة</option>
+                <option value="شيكات">شيكات</option>
+              </select>
+            </div>
             <div style={{gridColumn:"1/-1"}}>
               <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المستثمر (الصندوق)</label>
               <select style={styles.input} value={editForm.investorId||""} onChange={e=>setEditForm(f=>({...f,investorId:e.target.value}))}>
@@ -6296,7 +6306,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
         {stmtInv && (()=>{
           const _grp = stmtInv.__group;
           const _grpIds = _grp ? _grp.map(i=>i.id) : [stmtInv.id];
-          const myCon = contracts.filter(c=>_grpIds.includes(c.investorId));
+          const myCon = contracts.filter(c=>_grpIds.includes(c.investorId) && c.contractType!=="defer");
           const totalAmt   = myCon.reduce((s,c)=>s+c.amount,0);
           const totalPaid  = myCon.reduce((s,c)=>s+_getPaid(payments,c.id),0);
           const totalLeft  = myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
