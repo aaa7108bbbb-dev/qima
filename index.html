@@ -9147,9 +9147,9 @@ function NavIcon({id, on}){
   const [strokes, dot] = raw.split("|");
   return (
     <svg viewBox="0 0 24 24" style={{width:"100%",height:"100%",display:"block"}} aria-hidden="true">
-      <g fill="none" stroke={on?"#e0b85c":"#8b93a7"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+      <g fill="none" stroke={"#c8922a"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
          dangerouslySetInnerHTML={{__html:strokes}}/>
-      <g fill={on?"#c8922a":"#6b7488"} dangerouslySetInnerHTML={{__html:dot}}/>
+      <g fill={"#c8922a"} dangerouslySetInnerHTML={{__html:dot}}/>
     </svg>
   );
 }
@@ -9543,13 +9543,13 @@ function App() {
               background:on?"linear-gradient(150deg,#0d1830,#122747)":"rgba(255,255,255,0.055)",
               display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s",
               padding:"clamp(9px,2.4vw,15px)",
-              border:on?"1.5px solid #c8922a":"1.5px solid rgba(255,255,255,0.09)",
+              border:"2px solid #c8922a",
               boxShadow:on?"0 5px 20px rgba(200,146,42,0.32), inset 0 0 0 1px rgba(224,184,92,0.16)":"none"}}>
               <NavIcon id={t.id} on={on}/>
             </div>
-            <span style={{fontSize:"clamp(10px,2.5vw,14px)",fontWeight:on?800:600,
-              color:on?"#e0b85c":"#ffffff",whiteSpace:"nowrap",lineHeight:1.25,
-              letterSpacing:"-0.2px",textShadow:on?"none":"0 1px 2px rgba(0,0,0,0.35)"}}>{t.name}</span>
+            <span style={{fontSize:"clamp(10px,2.5vw,14px)",fontWeight:800,
+              color:"#c8922a",whiteSpace:"nowrap",lineHeight:1.25,
+              letterSpacing:"-0.2px"}}>{t.name}</span>
             <div style={{width:on?"clamp(14px,3.5vw,20px)":0,height:2,borderRadius:2,
               background:"#c8922a",transition:"width 0.2s"}}/>
           </button>
