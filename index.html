@@ -2383,6 +2383,26 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                 <option value="شيكات">شيكات</option>
               </select>
             </div>
+            {editForm.payMethod==="شيكات" && (
+              <div style={{gridColumn:"1/-1"}}>
+                <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>البنك</label>
+                <select style={{...styles.input,fontWeight:700,fontSize:15}} value={editForm.bankName||""} onChange={e=>setEditForm(f=>({...f,bankName:e.target.value}))}>
+                  <option value="">— اختر البنك —</option>
+                  <option value="الراجحي">الراجحي</option>
+                  <option value="الأهلي">الأهلي</option>
+                  <option value="الإنماء">الإنماء</option>
+                  <option value="البلاد">البلاد</option>
+                  <option value="العربي">العربي</option>
+                  <option value="الرياض">الرياض</option>
+                </select>
+              </div>
+            )}
+            {editForm.payType==="deduction" && (
+              <div style={{gridColumn:"1/-1"}}>
+                <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>رقم حساب الزبون</label>
+                <input style={styles.input} type="text" placeholder="رقم الحساب / الآيبان" value={editForm.bankAccount||""} onChange={e=>setEditForm(f=>({...f,bankAccount:e.target.value}))}/>
+              </div>
+            )}
             <div style={{gridColumn:"1/-1"}}>
               <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المستثمر (الصندوق)</label>
               <select style={styles.input} value={editForm.investorId||""} onChange={e=>setEditForm(f=>({...f,investorId:e.target.value}))}>
