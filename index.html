@@ -3224,28 +3224,28 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
           {/* تفصيل كل فرصة */}
           <div style={{background:K.panel,border:"1px solid "+K.line,borderRadius:17,overflow:"hidden",marginTop:12}}>
             <div style={{padding:"12px 15px",borderBottom:"1px solid "+K.line}}>
-              <div style={{fontSize:13,fontWeight:700,color:K.txt}}>تفصيل كل فرصة</div>
+              <div style={{fontSize:13,fontWeight:700,color:K.gold}}>تفصيل كل فرصة</div>
             </div>
             <div style={{overflowX:"auto"}}>
               <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
                 <thead><tr style={{borderBottom:"1px solid "+K.line}}>
-                  <th style={{padding:"10px 12px",textAlign:"right",color:K.dim,fontWeight:600,fontSize:11}}>الفرصة</th>
-                  <th style={{padding:"10px 8px",textAlign:"left",color:K.green,fontWeight:600,fontSize:11}}>النقدي</th>
-                  <th style={{padding:"10px 8px",textAlign:"left",color:K.amber,fontWeight:600,fontSize:11}}>عند الزبائن</th>
+                  <th style={{padding:"10px 12px",textAlign:"right",color:K.gold,fontWeight:700,fontSize:11}}>الفرصة</th>
+                  <th style={{padding:"10px 8px",textAlign:"left",color:K.gold,fontWeight:700,fontSize:11}}>النقدي</th>
+                  <th style={{padding:"10px 8px",textAlign:"left",color:K.gold,fontWeight:700,fontSize:11}}>عند الزبائن</th>
                   <th style={{padding:"10px 8px",textAlign:"left",color:K.gold,fontWeight:700,fontSize:11}}>الإجمالي</th>
                 </tr></thead>
                 <tbody>{perInvData.map((d,i)=>(
                   <tr key={i} style={{borderBottom:"1px solid "+K.line}}>
-                    <td style={{padding:"10px 12px",fontWeight:700,color:K.txt,whiteSpace:"nowrap"}}>الفرصة {d.num} <span style={{fontSize:10,color:K.dim2,fontWeight:400}}>({d.cons})</span></td>
+                    <td style={{padding:"10px 12px",fontWeight:700,color:K.gold,whiteSpace:"nowrap"}}>الفرصة {d.num} <span style={{fontSize:10,color:K.dim2,fontWeight:400}}>({d.cons})</span></td>
                     <td style={{padding:"10px 8px",fontWeight:700,color:d.cash>=0?K.green:K.red,fontFamily:"monospace",fontSize:13}}>{NF(d.cash)}</td>
-                    <td style={{padding:"10px 8px",fontWeight:700,color:K.amber,fontFamily:"monospace",fontSize:13}}>{NF(d.left)}</td>
+                    <td style={{padding:"10px 8px",fontWeight:700,color:"#ffffff",fontFamily:"monospace",fontSize:13}}>{NF(d.left)}</td>
                     <td style={{padding:"10px 8px",fontWeight:700,color:K.gold,fontFamily:"monospace",fontSize:13}}>{NF(d.total)}</td>
                   </tr>
                 ))}</tbody>
                 <tfoot><tr style={{background:"rgba(255,255,255,.04)"}}>
-                  <td style={{padding:"10px 12px",fontWeight:700,color:K.txt,fontSize:11}}>المجموع</td>
+                  <td style={{padding:"10px 12px",fontWeight:700,color:K.gold,fontSize:11}}>المجموع</td>
                   <td style={{padding:"10px 8px",fontWeight:700,color:netCash>=0?K.green:K.red,fontFamily:"monospace",fontSize:13}}>{NF(netCash)}</td>
-                  <td style={{padding:"10px 8px",fontWeight:700,color:K.amber,fontFamily:"monospace",fontSize:13}}>{NF(leftMonthly+leftDefer)}</td>
+                  <td style={{padding:"10px 8px",fontWeight:700,color:"#ffffff",fontFamily:"monospace",fontSize:13}}>{NF(leftMonthly+leftDefer)}</td>
                   <td style={{padding:"10px 8px",fontWeight:700,color:K.gold,fontFamily:"monospace",fontSize:13}}>{NF(grand)}</td>
                 </tr></tfoot>
               </table>
@@ -6057,21 +6057,21 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
               <span style={{fontSize:11,color:K.gold,fontWeight:600}}>{list.length} مستثمرين · {T.cons} عقد</span>
             </div>
             <div style={{textAlign:"center",padding:"6px 0 14px"}}>
-              <div style={{fontSize:11,color:K.gold,fontWeight:600,marginBottom:3}}>الإجمالي</div>
+              <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>الإجمالي</div>
               <div style={{fontSize:34,fontWeight:700,color:K.gold,lineHeight:1.1,letterSpacing:"-.5px"}}>{NF(T.grand)}</div>
               <div style={{fontSize:11,color:K.gold,marginTop:5}}>﷼</div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:1,background:K.line,borderRadius:11,overflow:"hidden"}}>
               <div style={{background:K.panel2,padding:"9px 5px",textAlign:"center"}}>
-                <div style={{fontSize:10,color:K.gold,fontWeight:600,marginBottom:4}}>البداية</div>
+                <div style={{fontSize:10,color:"#fff",fontWeight:600,marginBottom:4}}>البداية</div>
                 <div style={{fontSize:13.5,fontWeight:700,color:K.gold}}>{T.bidaya>0?NF(T.bidaya):"—"}</div>
               </div>
               <div style={{background:K.panel2,padding:"9px 5px",textAlign:"center"}}>
-                <div style={{fontSize:10,color:K.gold,fontWeight:600,marginBottom:4}}>النقدي حالياً</div>
+                <div style={{fontSize:10,color:"#fff",fontWeight:600,marginBottom:4}}>النقدي حالياً</div>
                 <div style={{fontSize:13.5,fontWeight:700,color:K.gold}}>{NF(T.netCash)}</div>
               </div>
               <div style={{background:K.panel2,padding:"9px 5px",textAlign:"center"}}>
-                <div style={{fontSize:10,color:K.gold,fontWeight:600,marginBottom:4}}>عند الزبائن</div>
+                <div style={{fontSize:10,color:"#fff",fontWeight:600,marginBottom:4}}>عند الزبائن</div>
                 <div style={{fontSize:13.5,fontWeight:700,color:K.gold}}>{NF(T.left)}</div>
               </div>
             </div>
@@ -6115,126 +6115,90 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
               {/* جسم البطاقة */}
               {isOpen && (
               <div style={{padding:"0 15px 15px",borderTop:"1px solid "+K.line}}>
-
                 <div style={{paddingTop:14}}>
-                  {secLbl("الأساس")}
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 15px"}}>
-                    {editBidId===inv.id ? (
-                      <div style={{display:"flex",gap:5,alignItems:"center",gridColumn:"1 / -1"}}>
-                        <span style={{fontSize:12,color:K.dim,fontWeight:500}}>البداية</span>
-                        <input type="number" value={editBidVal} onChange={e=>setEditBidVal(e.target.value)}
-                          style={{flex:1,background:K.panel2,border:"1px solid "+K.line,borderRadius:8,
-                            padding:"5px 9px",color:K.txt,fontSize:13,fontWeight:700,fontFamily:"inherit",outline:"none"}}/>
-                        <button onClick={()=>saveBidaya(inv.id)} style={{background:K.teal,border:"none",borderRadius:8,
-                          padding:"5px 11px",color:"#0e1621",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>حفظ</button>
-                        <button onClick={()=>setEditBidId(null)} style={{background:"transparent",border:"1px solid "+K.line,
-                          borderRadius:8,padding:"5px 9px",color:K.dim,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>✕</button>
-                      </div>
-                    ) : (
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",fontSize:12}}>
-                        <span style={{color:K.dim,fontWeight:500}}>البداية</span>
-                        <span onClick={()=>{setEditBidId(inv.id);setEditBidVal(String(r.bidaya||""));}}
-                          style={{fontWeight:700,color:r.bidaya>0?K.teal:K.dim2,cursor:"pointer",borderBottom:"1px dashed "+K.line}}>
-                          {r.bidaya>0?NF(r.bidaya):"—"} ✎</span>
-                      </div>
-                    )}
+                  {secLbl("الوضع الحالي")}
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:"rgba(255,255,255,.06)",borderRadius:11,overflow:"hidden",marginBottom:14}}>
+                    <div style={{background:K.panel2,padding:"10px 12px"}}>
+                      <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>البداية</div>
+                      <div style={{fontSize:15,fontWeight:700,color:K.gold}}>{r.bidaya>0?NF(r.bidaya):"—"}</div>
+                    </div>
+                    <div style={{background:K.panel2,padding:"10px 12px"}}>
+                      <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>النقدي حالياً</div>
+                      <div style={{fontSize:15,fontWeight:700,color:r.netCash>=0?K.gold:K.red}}>{NF(r.netCash)}</div>
+                    </div>
+                    <div style={{background:K.panel2,padding:"10px 12px"}}>
+                      <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>عند الزبائن</div>
+                      <div style={{fontSize:15,fontWeight:700,color:K.gold}}>{NF(r.leftMonthly)}</div>
+                    </div>
+                    <div style={{background:K.panel2,padding:"10px 12px"}}>
+                      <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>المؤجلة</div>
+                      <div style={{fontSize:15,fontWeight:700,color:r.leftDefer>0?K.gold:K.dim2}}>{r.leftDefer>0?NF(r.leftDefer):"—"}</div>
+                    </div>
+                    <div style={{background:"linear-gradient(135deg,rgba(200,146,42,.12),rgba(200,146,42,.05))",gridColumn:"1/-1",padding:"10px 12px"}}>
+                      <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>الإجمالي</div>
+                      <div style={{fontSize:17,fontWeight:800,color:K.gold}}>{NF(r.grand)}</div>
+                    </div>
                   </div>
                 </div>
-
-                <div style={{paddingTop:14}}>
-                  {secLbl("وضعه الحين")}
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 15px"}}>
-                    {kvRow("النقدي حالياً",NF(r.netCash),r.netCash>=0?K.gold:K.red)}
-                    {kvRow("عند الزبائن",NF(r.leftMonthly),K.gold)}
-                    {kvRow("المؤجلة",r.leftDefer>0?NF(r.leftDefer):"—",r.leftDefer>0?K.gold:K.dim2)}
-                    {kvRow("الإجمالي",NF(r.grand),K.gold)}
-                  </div>
-                </div>
-
-                <div style={{paddingTop:14}}>
+                <div>
                   {secLbl("العائد")}
-                  <div style={{background:"rgba(200,146,42,.06)",border:"1px solid rgba(200,146,42,.18)",
-                    borderRadius:13,padding:"12px 13px"}}>
-                    <div style={{marginBottom:11}}>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5}}>
-                        <span style={{fontSize:11,color:K.dim,fontWeight:600}}>العائد الحقيقي <span style={{fontSize:9.5,color:K.dim2}}>÷ البداية</span></span>
-                        <span style={{fontSize:15,fontWeight:700,color:r.roiReal!=null?K.gold:K.dim2}}>{r.roiReal!=null?r.roiReal.toFixed(1)+"%":"—"}</span>
-                      </div>
-                      <div style={{height:8,background:"rgba(255,255,255,.06)",borderRadius:5,overflow:"hidden"}}>
-                        <div style={{height:"100%",width:Math.min(100,Math.max(0,(r.roiReal||0)/30*100))+"%",
-                          borderRadius:5,background:"linear-gradient(90deg,#c8922a,#e0b85c)"}}/>
-                      </div>
+                  <div style={{background:"rgba(200,146,42,.05)",border:"1px solid rgba(200,146,42,.15)",borderRadius:12,padding:"11px 12px",marginBottom:14}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5}}>
+                      <span style={{fontSize:11,color:"#fff",fontWeight:600}}>العائد الحقيقي <span style={{fontSize:9,color:K.dim2}}>÷ البداية</span></span>
+                      <span style={{fontSize:16,fontWeight:800,color:r.roiReal!=null?K.gold:K.dim2}}>{r.roiReal!=null?r.roiReal.toFixed(1)+"%":"—"}</span>
                     </div>
-                    <div>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5}}>
-                        <span style={{fontSize:11,color:K.dim,fontWeight:600}}>العائد على المشغّل <span style={{fontSize:9.5,color:K.dim2}}>÷ {NF(r.working)}</span></span>
-                        <span style={{fontSize:15,fontWeight:700,color:r.roiWork!=null?K.gold:K.dim2}}>{r.roiWork!=null?r.roiWork.toFixed(1)+"%":"—"}</span>
-                      </div>
-                      <div style={{height:8,background:"rgba(255,255,255,.06)",borderRadius:5,overflow:"hidden"}}>
-                        <div style={{height:"100%",width:Math.min(100,Math.max(0,(r.roiWork||0)/30*100))+"%",
-                          borderRadius:5,background:"linear-gradient(90deg,#a87520,#c8922a)"}}/>
-                      </div>
-                      <div style={{display:"flex",justifyContent:"space-between",fontSize:9,color:K.dim2,marginTop:4}}>
-                        <span>30%</span><span>15%</span><span>0</span>
-                      </div>
+                    <div style={{height:7,background:"rgba(255,255,255,.06)",borderRadius:4,overflow:"hidden",marginBottom:10}}>
+                      <div style={{height:"100%",width:Math.min(100,Math.max(0,r.roiReal||0))+"%",borderRadius:4,background:"linear-gradient(90deg,#a87520,#c8922a)"}}/>
+                    </div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5}}>
+                      <span style={{fontSize:11,color:"#fff",fontWeight:600}}>العائد على المشغّل <span style={{fontSize:9,color:K.dim2}}>÷ {NF(r.working)}</span></span>
+                      <span style={{fontSize:16,fontWeight:800,color:r.roiWork!=null?K.gold:K.dim2}}>{r.roiWork!=null?r.roiWork.toFixed(1)+"%":"—"}</span>
+                    </div>
+                    <div style={{height:7,background:"rgba(255,255,255,.06)",borderRadius:4,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:Math.min(100,Math.max(0,r.roiWork||0))+"%",borderRadius:4,background:"linear-gradient(90deg,#a87520,#c8922a)"}}/>
                     </div>
                   </div>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 15px",marginTop:11}}>
-                    {kvRow("صافي الربح",NF(r.profit),K.gold)}
-                    {kvRow("القسط الشهري",NF(r.monthlyInst),K.gold)}
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:"rgba(255,255,255,.06)",borderRadius:11,overflow:"hidden",marginBottom:14}}>
+                    <div style={{background:K.panel2,padding:"9px 8px",textAlign:"center"}}>
+                      <div style={{fontSize:10,color:"#fff",fontWeight:600,marginBottom:3}}>صافي الربح</div>
+                      <div style={{fontSize:14,fontWeight:700,color:K.gold}}>{NF(r.profit)}</div>
+                    </div>
+                    <div style={{background:K.panel2,padding:"9px 8px",textAlign:"center"}}>
+                      <div style={{fontSize:10,color:"#fff",fontWeight:600,marginBottom:3}}>القسط الشهري</div>
+                      <div style={{fontSize:14,fontWeight:700,color:K.gold}}>{NF(r.monthlyInst)}</div>
+                    </div>
                   </div>
                 </div>
-
-                <div style={{paddingTop:14}}>
+                <div>
                   {secLbl("التحصيل")}
-                  <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:5}}>
-                    <span style={{color:K.dim}}>محصّل من الإجمالي</span>
-                    <span style={{color:K.gold,fontWeight:700}}>{r.collectPct}%</span>
+                  <div style={{marginBottom:14}}>
+                    <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:5}}>
+                      <span style={{color:"#fff",fontWeight:600}}>محصّل من الإجمالي</span>
+                      <span style={{color:K.gold,fontWeight:700}}>{r.collectPct}%</span>
+                    </div>
+                    <div style={{height:7,background:"rgba(255,255,255,.06)",borderRadius:4,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:Math.min(100,r.collectPct)+"%",borderRadius:4,background:"linear-gradient(90deg,#a87520,#c8922a)"}}/>
+                    </div>
+                    {r.overCount>0 && <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
+                      <span style={{fontSize:10,fontWeight:700,padding:"5px 10px",borderRadius:9,background:K.panel2,
+                        border:"1px solid rgba(251,113,133,.4)",color:K.red}}>متعثر <b style={{fontSize:12}}>{r.overCount}</b> · {NF(r.overAmt)}</span>
+                    </div>}
                   </div>
-                  <div style={{height:8,background:"rgba(255,255,255,.06)",borderRadius:5,overflow:"hidden"}}>
-                    <div style={{height:"100%",width:Math.min(100,r.collectPct)+"%",borderRadius:5,
-                      background:"linear-gradient(90deg,#a87520,#c8922a)"}}/>
-                  </div>
-                  {r.overCount>0 && <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:10}}>
-                    <span style={{fontSize:10,fontWeight:700,padding:"5px 10px",borderRadius:9,background:K.panel2,
-                      border:"1px solid rgba(200,146,42,.4)",color:K.gold}}>متعثر <b style={{fontSize:12}}>{r.overCount}</b> · {NF(r.overAmt)}</span>
-                  </div>}
                 </div>
-
-                <div style={{paddingTop:14}}>
+                <div>
                   {secLbl("العقود")}
-                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>
                     {chip("نشط",r.activeC,"rgba(200,146,42,.3)",K.gold)}
                     {chip("منتهي",r.doneC)}
                     {r.deferC>0 && chip("مؤجل",r.deferC,"rgba(200,146,42,.3)",K.gold)}
                     {chip("متوسط العقد",NF(r.avgC))}
                   </div>
                 </div>
-
-                <div style={{display:"flex",gap:6,marginTop:15}}>
-                  <button onClick={()=>{setStmtInv(inv);setStmtType("brief");}} style={{flex:1,padding:"9px 4px",
-                    borderRadius:10,border:"1px solid "+K.line,background:K.panel2,color:K.txt,fontSize:11,
-                    fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>كشف مختصر</button>
-                  <button onClick={()=>{setStmtInv(inv);setStmtType("detailed");}} style={{flex:1,padding:"9px 4px",
-                    borderRadius:10,border:"1px solid "+K.line,background:K.panel2,color:K.txt,fontSize:11,
-                    fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>كشف مفصل</button>
-                  <button onClick={()=>setYearInv(inv)} style={{flex:1,padding:"9px 4px",borderRadius:10,
-                    border:"1px solid "+K.line,background:K.panel2,color:K.txt,fontSize:11,fontWeight:700,
-                    cursor:"pointer",fontFamily:"inherit"}}>كشف سنوي</button>
-                  {confirmId===inv.id ? (
-                    <>
-                      <button onClick={()=>{onDelete(inv.id);setConfirmId(null);toast("تم الحذف");}}
-                        style={{padding:"9px 11px",borderRadius:10,border:"none",background:K.red,color:"#0e1621",
-                          fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>تأكيد</button>
-                      <button onClick={()=>setConfirmId(null)} style={{padding:"9px 9px",borderRadius:10,
-                        border:"1px solid "+K.line,background:"transparent",color:K.dim,fontSize:11,
-                        cursor:"pointer",fontFamily:"inherit"}}>✕</button>
-                    </>
-                  ) : (
-                    <button onClick={()=>setConfirmId(inv.id)} style={{padding:"9px 11px",borderRadius:10,
-                      border:"1px solid rgba(251,113,133,.3)",background:K.panel2,color:K.red,fontSize:12,
-                      cursor:"pointer",fontFamily:"inherit"}}>🗑️</button>
-                  )}
+                <div style={{height:1,background:K.line,marginBottom:10}}/>
+                <div style={{display:"flex",gap:6}}>
+                  <button onClick={()=>{setStmtInv(inv);setStmtType("brief");}} style={{flex:1,padding:"9px 4px",borderRadius:10,border:"1px solid rgba(200,146,42,.3)",background:K.panel2,color:"#c8922a",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>كشف مختصر</button>
+                  <button onClick={()=>{setStmtInv(inv);setStmtType("detailed");}} style={{flex:1,padding:"9px 4px",borderRadius:10,border:"1px solid rgba(200,146,42,.3)",background:K.panel2,color:"#c8922a",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>كشف مفصل</button>
+                  <button onClick={()=>setYearInv(inv)} style={{flex:1,padding:"9px 4px",borderRadius:10,border:"1px solid rgba(200,146,42,.3)",background:K.panel2,color:"#c8922a",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>كشف سنوي</button>
                 </div>
               </div>)}
             </div>);
@@ -7780,11 +7744,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
       const hist = msgs.filter(m=>!String(m.text||"").startsWith("⚠️") && !String(m.text||"").startsWith("⚙️") && !String(m.text||"").startsWith("☀️")).slice(-6);
       const contents = hist.map(m=>({role: m.role==="user"?"user":"model", parts:[{text: stripChart(stripAction(m.text))}]}));
       const userParts = [{text: question || "اقرأ النص في هذه الصورة واكتبه بالكامل"}];
-      if(img){
-        const b64 = img.data;
-        const mime = img.mime || "image/jpeg";
-        userParts.push({inline_data:{mime_type:mime, data:b64}});
-      }
+      if(img){ userParts.push({inline_data:{mime_type:img.mime||"image/jpeg", data:img.data}}); }
       contents.push({role:"user", parts:userParts});
       const body = {
         system_instruction: {parts:[{text: systemPrompt + "\n\n" + context}]},
@@ -7847,20 +7807,13 @@ tbody tr:nth-child(even){background:#f7f9fb}
     const q = String(preset!==undefined?preset:input).trim();
     const img = imgData;
     if(!q && !img || loading) return;
-    const displayText = q || "📷 قراءة صورة";
-    setMsgs(p=>[...p, {role:"user",text:displayText,img:img?img.preview:null}]);
-    setInput("");
-    setImgData(null);
-    setLoading(true);
-    scrollDown();
+    setMsgs(p=>[...p, {role:"user",text:q||"📷 قراءة صورة",img:img?img.preview:null}]);
+    setInput(""); setImgData(null);
+    setLoading(true); scrollDown();
 
-    if(!aiKey && !img){
-      const local = localQuery(q);
-      setMsgs(p=>[...p, {role:"ai", text: local || "⚙️ **فعّل Gemini AI** للإجابة على أي سؤال.\n\nاضغط ⚙️ فوق."}]);
-      setLoading(false); scrollDown(); return;
-    }
-    if(!aiKey && img){
-      setMsgs(p=>[...p, {role:"ai", text: "⚙️ **فعّل Gemini AI** لقراءة الصور.\n\nاضغط ⚙️ فوق."}]);
+    if(!aiKey){
+      const local = img ? null : localQuery(q);
+      setMsgs(p=>[...p, {role:"ai", text: local || "⚙️ **فعّل Gemini AI** للإجابة.\n\nاضغط ⚙️ فوق."}]);
       setLoading(false); scrollDown(); return;
     }
     const answer = await sendToAI(q, img);
@@ -8050,7 +8003,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
       /* Input */
       imgData && React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:6,background:"#f8fafc",borderRadius:12,padding:8,border:"1.5px solid #e2e8f0"}},
         React.createElement("img",{src:imgData.preview,style:{width:48,height:48,borderRadius:8,objectFit:"cover"}}),
-        React.createElement("div",{style:{flex:1,fontSize:12,color:"#64748b",fontFamily:"IBM Plex Sans Arabic,Arial"}},"📷 صورة مرفقة — اكتب سؤال أو أرسل مباشرة"),
+        React.createElement("div",{style:{flex:1,fontSize:12,color:"#64748b",fontFamily:"IBM Plex Sans Arabic,Arial"}},"📷 صورة مرفقة"),
         React.createElement("button",{onClick:()=>setImgData(null),style:{padding:"4px 10px",borderRadius:8,border:"1px solid #e2e8f0",background:"#fff",color:"#ef4444",fontSize:13,cursor:"pointer"}},"✕")
       ),
       React.createElement("input",{ref:imgRef,type:"file",accept:"image/*",style:{display:"none"},onChange:e=>{
@@ -8061,9 +8014,9 @@ tbody tr:nth-child(even){background:#f7f9fb}
         }; reader.readAsDataURL(f); e.target.value="";
       }}),
       React.createElement("div",{style:{display:"flex",gap:6,paddingBottom:4,flexShrink:0}},
-        React.createElement("button",{onClick:()=>imgRef.current&&imgRef.current.click(),style:{padding:"14px 14px",borderRadius:14,border:"2px solid "+(imgData?"#6d28d9":"#e2e8f0"),background:imgData?"#ede9fe":"#fff",fontSize:17,cursor:"pointer",flexShrink:0}},"📷"),
+        React.createElement("button",{onClick:()=>imgRef.current&&imgRef.current.click(),style:{padding:"14px 14px",borderRadius:14,border:"2px solid #e2e8f0",background:"#fff",fontSize:17,cursor:"pointer",flexShrink:0}},"📷"),
         React.createElement("button",{onClick:toggleVoice,style:{padding:"14px 14px",borderRadius:14,border:"2px solid "+(listening?"#dc2626":"#e2e8f0"),background:listening?"#fee2e2":"#fff",fontSize:17,cursor:"pointer",flexShrink:0}},listening?"⏹":"🎙"),
-        React.createElement("input",{style:{flex:1,minWidth:0,padding:"14px 16px",borderRadius:14,border:"2px solid #e2e8f0",fontSize:15,fontFamily:"IBM Plex Sans Arabic,Arial",background:"#fff",outline:"none"},placeholder:listening?"جاري الاستماع...":imgData?"اكتب سؤال عن الصورة أو أرسل...":"اسأل قمة AI...",value:input,onChange:e=>setInput(e.target.value),onKeyDown:e=>{if(e.key==="Enter"&&!loading)send();},disabled:loading}),
+        React.createElement("input",{style:{flex:1,minWidth:0,padding:"14px 16px",borderRadius:14,border:"2px solid #e2e8f0",fontSize:15,fontFamily:"IBM Plex Sans Arabic,Arial",background:"#fff",outline:"none"},placeholder:listening?"جاري الاستماع...":imgData?"سؤال عن الصورة...":"اسأل قمة AI...",value:input,onChange:e=>setInput(e.target.value),onKeyDown:e=>{if(e.key==="Enter"&&!loading)send();},disabled:loading}),
         React.createElement("button",{onClick:()=>send(),disabled:loading,style:{padding:"14px 18px",borderRadius:14,border:"none",background:loading?"#d1d5db":"linear-gradient(135deg,#6d28d9,#7c3aed)",color:"#fff",fontSize:17,fontWeight:900,cursor:loading?"default":"pointer",flexShrink:0}},"↑")
       )
     )
