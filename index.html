@@ -238,8 +238,13 @@
   @media (max-width: 768px) { .login-card { padding: 40px 30px; } .login-title h1 { font-size: 24px; } .logo { width: 70px; height: 70px; font-size: 40px; } }
   @media (min-width: 1024px) {
     nav { justify-content: center !important; }
-    nav button div:first-child { width: 56px !important; height: 56px !important; font-size: 28px !important; border-radius: 12px !important; }
-    nav button span { font-size: 13px !important; }
+    nav button div:first-child { width: 72px !important; height: 72px !important; font-size: 28px !important; border-radius: 16px !important; }
+    nav button span { font-size: 15px !important; }
+    /* بطاقات المستثمرين أكبر على الشاشات الكبيرة */
+    [data-inv-card] { padding: 18px 20px !important; }
+    [data-inv-card] [data-inv-name] { font-size: 18px !important; }
+    [data-inv-card] [data-inv-total] { font-size: 22px !important; }
+    [data-inv-card] [data-inv-sub] { font-size: 13px !important; }
   }
 </style>
 <script>
@@ -3194,7 +3199,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
         const chip=(label,val,bc,vc)=>(<span style={{fontSize:10,fontWeight:700,padding:"5px 10px",borderRadius:9,
           background:K.panel2,border:"1px solid "+(bc||K.line),color:K.dim}}>{label} <b style={{fontSize:12,color:vc||K.txt}}>{val}</b></span>);
 
-        return (<div style={{marginBottom:16,maxWidth:640,marginLeft:"auto",marginRight:"auto"}}>
+        return (<div style={{marginBottom:16,maxWidth:900,marginLeft:"auto",marginRight:"auto"}}>
           <div style={{background:K.panel,border:"1px solid "+K.line,borderRadius:17,overflow:"hidden"}}>
             <div style={{padding:"14px 15px",display:"flex",alignItems:"center",gap:11}}>
               <div style={{flex:1,minWidth:0}}>
@@ -6152,7 +6157,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
 
           {/* ══════ المربع العلوي ══════ */}
           <div style={{background:"linear-gradient(140deg,#153040,#101e2b)",border:"1px solid rgba(200,146,42,.3)",
-            borderRadius:18,padding:16,marginBottom:16,position:"relative",overflow:"hidden",maxWidth:640,marginLeft:"auto",marginRight:"auto"}}>
+            borderRadius:18,padding:16,marginBottom:16,position:"relative",overflow:"hidden",maxWidth:900,marginLeft:"auto",marginRight:"auto"}}>
             <div style={{position:"absolute",left:-30,bottom:-30,width:110,height:110,borderRadius:"50%",
               background:"radial-gradient(circle,rgba(200,146,42,.12),transparent 70%)",pointerEvents:"none"}}/>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:14}}>
@@ -6161,7 +6166,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
             </div>
             <div style={{textAlign:"center",padding:"6px 0 14px"}}>
               <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>الإجمالي</div>
-              <div style={{fontSize:34,fontWeight:700,color:K.gold,lineHeight:1.1,letterSpacing:"-.5px"}}>{NF(T.grand)}</div>
+              <div style={{fontSize:"clamp(28px,4vw,42px)",fontWeight:700,color:K.gold,lineHeight:1.1,letterSpacing:"-.5px"}}>{NF(T.grand)}</div>
               <div style={{fontSize:11,color:K.gold,marginTop:5}}>﷼</div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:1,background:K.line,borderRadius:11,overflow:"hidden"}}>
@@ -6187,7 +6192,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
           </div>
 
           {/* ══════ بطاقات المستثمرين ══════ */}
-          <div style={{display:"flex",flexDirection:"column",gap:11,maxWidth:640,margin:"0 auto",width:"100%"}}>
+          <div style={{display:"flex",flexDirection:"column",gap:11,maxWidth:900,margin:"0 auto",width:"100%"}}>
           {list.map(r=>{
             const inv=r.inv, isOpen=openId===inv.id;
             const secLbl = t => (<div style={{fontSize:10,color:K.dim2,fontWeight:700,letterSpacing:".7px",
@@ -6202,14 +6207,14 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
             return (
             <div key={inv.id} style={{background:K.panel,border:"1px solid "+K.line,borderRadius:17,overflow:"hidden"}}>
               {/* رأس البطاقة */}
-              <div onClick={()=>setOpenId(isOpen?null:inv.id)}
+              <div data-inv-card="" onClick={()=>setOpenId(isOpen?null:inv.id)}
                 style={{padding:"14px 15px",display:"flex",alignItems:"center",gap:11,cursor:"pointer"}}>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:14,fontWeight:800,color:"#c8922a",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{inv.name}</div>
-                  <div style={{fontSize:11,color:K.dim,marginTop:2}}>{r.myCon.length} عقد · آخر سداد {shortDate(r.lastPay)}</div>
+                  <div data-inv-name="" style={{fontSize:14,fontWeight:800,color:"#c8922a",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{inv.name}</div>
+                  <div data-inv-sub="" style={{fontSize:11,color:K.dim,marginTop:2}}>{r.myCon.length} عقد · آخر سداد {shortDate(r.lastPay)}</div>
                 </div>
                 <div style={{textAlign:"left",flexShrink:0}}>
-                  <div style={{fontSize:17,fontWeight:800,color:"#c8922a"}}>{NF(r.grand)}</div>
+                  <div data-inv-total="" style={{fontSize:17,fontWeight:800,color:"#c8922a"}}>{NF(r.grand)}</div>
                   <div style={{fontSize:9,color:K.dim2}}>الإجمالي</div>
                 </div>
                 <span style={{color:K.dim2,fontSize:11,transform:isOpen?"rotate(180deg)":"none",transition:".25s"}}>▼</span>
