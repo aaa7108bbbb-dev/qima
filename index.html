@@ -1541,8 +1541,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   const filtered = statusTab==="deleted" ? deletedList
     : statusTab==="defer" ? deferList
     : monthlyFiltered.filter(c=> statusTab==="active" ? !doneIds.includes(c.id) : doneIds.includes(c.id));
-  // ترتيب موحد: المرحلة أولاً ثم بالتاريخ
-  const sortedFiltered = _sortContracts(filtered);
+  // ترتيب تنازلي بالتاريخ (الأحدث فوق)
+  const sortedFiltered = [...filtered].sort((a,b)=>(b.date||"").localeCompare(a.date||""));
   // تاريخ بداية الدورة الحالية
   const _doC = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
   const _baseC = _doC.__base && typeof _doC.__base==="object" ? _doC.__base : null;
