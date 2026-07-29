@@ -1277,6 +1277,13 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
 
 // ─── Contracts Page ──────────────────────────────────────────
 const _getPaid = (payments, cid) => (payments||[]).filter(p=>p.contractId===cid).reduce((s,p)=>s+p.amount,0);
+// ترتيب موحد: المرحلة أولاً ثم حسب التاريخ
+const _sortContracts = (arr) => [...arr].sort((a,b)=>{
+  const am = a.contractType==="migrated"?0:1;
+  const bm = b.contractType==="migrated"?0:1;
+  if(am!==bm) return am-bm;
+  return (a.date||"").localeCompare(b.date||"");
+});
 
 // ═══ تقييم مخاطر العميل ═══
 // يحسب عدد الأقساط المتأخرة (المستحقة وغير المدفوعة) ويعطي مستوى + لون
@@ -1534,8 +1541,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   const filtered = statusTab==="deleted" ? deletedList
     : statusTab==="defer" ? deferList
     : monthlyFiltered.filter(c=> statusTab==="active" ? !doneIds.includes(c.id) : doneIds.includes(c.id));
-  // ترتيب تنازلي بالتاريخ (الأحدث فوق)
-  const sortedFiltered = [...filtered].sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  // ترتيب موحد: المرحلة أولاً ثم بالتاريخ
+  const sortedFiltered = _sortContracts(filtered);
   // تاريخ بداية الدورة الحالية
   const _doC = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
   const _baseC = _doC.__base && typeof _doC.__base==="object" ? _doC.__base : null;
@@ -1547,7 +1554,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
 
   // Investor report
   const invReportContracts = invSearch
-    ? contracts.filter(c=>!c.deleted && c.contractType!=="defer" && (investors.find(i=>String(i.id)===String(c.investorId))?.name||"")===invSearch && !doneIds.includes(c.id))
+    ? _sortContracts(contracts.filter(c=>!c.deleted && c.contractType!=="defer" && (investors.find(i=>String(i.id)===String(c.investorId))?.name||"")===invSearch && !doneIds.includes(c.id)))
     : [];
 
   const today2 = todayLocal();
@@ -6307,7 +6314,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
         {stmtInv && (()=>{
           const _grp = stmtInv.__group;
           const _grpIds = _grp ? _grp.map(i=>i.id) : [stmtInv.id];
-          const myCon = contracts.filter(c=>_grpIds.includes(c.investorId) && c.contractType!=="defer");
+          const myCon = _sortContracts(contracts.filter(c=>_grpIds.includes(c.investorId) && c.contractType!=="defer"));
           const totalAmt   = myCon.reduce((s,c)=>s+c.amount,0);
           const totalPaid  = myCon.reduce((s,c)=>s+_getPaid(payments,c.id),0);
           const totalLeft  = myCon.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
@@ -8264,10 +8271,9 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
   }).filter(g=>g.items.length>0);
 
   // عقود المستثمر المختار
-  const selRows = selInv ? allRows
+  const selRows = selInv ? _sortContracts(allRows
     .filter(c=>String(c.investorId)===String(selInv.id))
-    .filter(c=>!colSearch||c.client.includes(colSearch)||(c.cPhone||"").includes(colSearch))
-    .sort((a,b)=>(a.client||"").localeCompare(b.client||""))
+    .filter(c=>!colSearch||c.client.includes(colSearch)||(c.cPhone||"").includes(colSearch)))
     : [];
 
   const doCollect=(c)=>{
