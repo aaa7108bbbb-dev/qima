@@ -1413,7 +1413,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   const printInvReport = () => {
     const list = invReportContracts;
     if(!list.length) return;
-    const invName = invSearch || "";
+    const invName = invSearch==="__all__" ? "كل المستثمرين" : (invSearch || "");
     let thead, rows;
     if(reportMode==="brief"){
       thead = `<tr><th>اسم الزبون</th><th>رقم الجوال</th><th>القسط</th><th>ملاحظات</th></tr>`;
@@ -1531,6 +1531,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   const [contractDoc,setContractDoc] = useState(null);
   const [invSearch,setInvSearch] = useState("");
   const [reportMode,setReportMode] = useState("detailed"); // detailed or brief
+  const [payFilter,setPayFilter] = useState(""); // "" | نقدي | تحويل | صرافة | شيكات | شيكات:الراجحي etc
   const _matchInv = c => !filterInv || String(c.investorId)===String(filterInv);
   const allFiltered = contracts.filter(c=>!c.deleted && _matchInv(c) && (c.client.includes(search)||(investors.find(i=>String(i.id)===String(c.investorId))?.name||"").includes(search)));
   const deletedList = contracts.filter(c=>c.deleted && _matchInv(c) && (c.client.includes(search)||(investors.find(i=>String(i.id)===String(c.investorId))?.name||"").includes(search)));
@@ -1553,9 +1554,20 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   const deletedCount = deletedList.length;
 
   // Investor report
-  const invReportContracts = invSearch
-    ? _sortContracts(contracts.filter(c=>!c.deleted && c.contractType!=="defer" && (investors.find(i=>String(i.id)===String(c.investorId))?.name||"")===invSearch && !doneIds.includes(c.id)))
-    : [];
+  const invReportContracts = (()=>{
+    let list = contracts.filter(c=>!c.deleted && c.contractType!=="defer" && !doneIds.includes(c.id));
+    if(invSearch && invSearch!=="__all__") list = list.filter(c=>(investors.find(i=>String(i.id)===String(c.investorId))?.name||"")===invSearch);
+    else if(!invSearch) list = [];
+    if(payFilter){
+      if(payFilter.startsWith("شيكات:")){
+        const bank=payFilter.split(":")[1];
+        list = list.filter(c=>c.payMethod==="شيكات" && c.bankName===bank);
+      } else {
+        list = list.filter(c=>(c.payMethod||"نقدي")===payFilter);
+      }
+    }
+    return _sortContracts(list);
+  })();
 
   const today2 = todayLocal();
 
@@ -1861,8 +1873,9 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           <span style={{fontSize:17,fontWeight:900,color:C.gold}}>كشف المستثمر</span>
         </div>
         <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
-          <select style={{flex:1,minWidth:180,padding:"12px 14px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:15,fontWeight:600,background:"#fff",fontFamily:"IBM Plex Sans Arabic,Arial",cursor:"pointer"}} value={invSearch} onChange={e=>setInvSearch(e.target.value)}>
+          <select style={{flex:1,minWidth:180,padding:"12px 14px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:15,fontWeight:600,background:"#fff",fontFamily:"IBM Plex Sans Arabic,Arial",cursor:"pointer"}} value={invSearch} onChange={e=>{setInvSearch(e.target.value);setPayFilter("");}}>
             <option value="">-- اختار المستثمر --</option>
+            <option value="__all__">📋 كل المستثمرين</option>
             {sortedInvestors(investors).map(i=>(
               <option key={i.id} value={i.name}>{invLabel(i)}</option>
             ))}
@@ -1879,6 +1892,30 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
             </button>
           )}
         </div>
+        {/* فلتر نوع السداد */}
+        {invSearch && (
+          <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:12}}>
+            {[{v:"",l:"الكل"},{v:"نقدي",l:"نقدي"},{v:"تحويل",l:"تحويل"},{v:"صرافة",l:"صرافة"},{v:"شيكات",l:"شيكات"}].map(f=>(
+              <button key={f.v} onClick={()=>setPayFilter(payFilter===f.v && f.v?"":f.v)}
+                style={{padding:"6px 12px",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
+                  border:payFilter===f.v?"2px solid #c8922a":"1px solid #e2e8f0",
+                  background:payFilter===f.v?"#fffbf0":"#fff",
+                  color:payFilter===f.v?"#c8922a":"#64748b"}}>{f.l}</button>
+            ))}
+            {(payFilter==="شيكات"||payFilter.startsWith("شيكات:")) && (
+              <>
+                {["الراجحي","الأهلي","الإنماء","البلاد","العربي","الرياض"].map(b=>(
+                  <button key={b} onClick={()=>setPayFilter(payFilter==="شيكات:"+b?"شيكات":"شيكات:"+b)}
+                    style={{padding:"6px 10px",borderRadius:8,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
+                      border:payFilter==="شيكات:"+b?"2px solid #c8922a":"1px solid #d1d5db",
+                      background:payFilter==="شيكات:"+b?"#fffbf0":"#f8fafc",
+                      color:payFilter==="شيكات:"+b?"#c8922a":"#64748b"}}>{b}</button>
+                ))}
+              </>
+            )}
+            {payFilter && <span style={{fontSize:11,color:"#c8922a",fontWeight:700,padding:"6px 0",alignSelf:"center"}}>{invReportContracts.length} عقد</span>}
+          </div>
+        )}
         {invSearch && invReportContracts.length===0 && (
           <div style={{color:"#1f2937",fontSize:15,textAlign:"center",padding:16}}>لا توجد عقود</div>
         )}
