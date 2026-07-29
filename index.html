@@ -5534,7 +5534,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   const addRow=()=>{
     if(!form.amount||parseFloat(form.amount)<=0){toast("أدخل مبلغ صحيح","warn");return;}
     if((form.type==="zakat"||form.type==="salf") && !form.desc){toast("اكتب اسم الشخص","warn");return;}
-    if(isPastDay && !checkPin()) return;
+    const doAdd = () => {
     const receiptNum = getNextReceipt();
     const newRow = {id:Date.now(),date:selDay,type:form.type,amount:parseFloat(form.amount),desc:form.desc||"",receiptNum};
     setDaily(p=>[...p,newRow]);
@@ -5554,28 +5554,67 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
         printDailyReceipt(newRow, receiptNum);
       }
     },300);
+    };
+    checkPin(doAdd);
   };
   const isPastDay = selDay < today;
-  const checkPin = () => {
-    const pin = prompt("🔒 أدخل الرقم السري للتعديل على يوم سابق:");
-    if(!pin) return false;
+  const [pinModal,setPinModal] = useState(null); // null | {action: fn}
+  const [pinVal,setPinVal] = useState("");
+  const [pinErr,setPinErr] = useState(false);
+  const hashPinSync = async (pin) => {
+    const enc = new TextEncoder().encode(pin+"qima_salt_2024");
+    const buf = await crypto.subtle.digest("SHA-256", enc);
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+  };
+  const checkPin = (action) => {
+    if(!isPastDay){ action(); return; }
+    setPinModal({action}); setPinVal(""); setPinErr(false);
+  };
+  const confirmPinModal = async () => {
     let savedPin = "1234";
     try{ savedPin = localStorage.getItem("qimma_settings_pin")||"1234"; }catch(e){}
-    if(pin === savedPin) return true;
-    toast("❌ رقم سري خاطئ","error");
-    return false;
+    let ok = false;
+    if(savedPin.length===64){
+      const h = await hashPinSync(pinVal);
+      ok = (h===savedPin);
+    } else {
+      ok = (pinVal===savedPin);
+    }
+    if(ok){ setPinModal(null); pinModal.action(); }
+    else { setPinErr(true); setPinVal(""); }
   };
 
-  const delRow=(id)=>{ 
-    if(isPastDay && !checkPin()) return;
-    if(!window.confirm("حذف هذا السطر؟"))return; 
-    setDaily(p=>p.filter(d=>d.id!==id)); 
+  const delRow=(id)=>{
+    checkPin(()=>{
+      if(!window.confirm("حذف هذا السطر؟"))return;
+      setDaily(p=>p.filter(d=>d.id!==id));
+    });
   };
 
   const dLabel = ymd => { if(!ymd) return ""; const [y,m,d]=ymd.split("-"); return d+"/"+parseInt(m)+"/"+y; };
 
   return (
     <div>
+
+      {/* مودال الرمز السري */}
+      {pinModal && (
+        <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setPinModal(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:16,padding:"28px 22px",textAlign:"center",maxWidth:320,width:"90%",boxShadow:"0 8px 32px rgba(0,0,0,.3)"}}>
+            <div style={{fontSize:36,marginBottom:8}}>🔒</div>
+            <div style={{fontSize:15,fontWeight:700,color:"#1f2937",marginBottom:4}}>يوم سابق</div>
+            <div style={{fontSize:13,color:"#6b7280",marginBottom:16}}>أدخل الرمز السري للتعديل</div>
+            <input type="password" inputMode="numeric" maxLength={8} placeholder="الرمز السري"
+              value={pinVal} onChange={e=>{setPinVal(e.target.value);setPinErr(false);}}
+              onKeyDown={e=>{if(e.key==="Enter")confirmPinModal();}}
+              style={{width:"100%",padding:"12px",fontSize:20,textAlign:"center",border:"2px solid "+(pinErr?"#dc2626":"#d1d5db"),borderRadius:10,marginBottom:10,fontWeight:800,letterSpacing:6,fontFamily:"monospace",outline:"none",boxSizing:"border-box"}}/>
+            {pinErr && <div style={{color:"#dc2626",fontSize:13,fontWeight:700,marginBottom:8}}>رمز خاطئ</div>}
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={confirmPinModal} style={{flex:1,padding:"11px",fontSize:15,fontWeight:800,background:"#0d9488",color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontFamily:"inherit"}}>فتح</button>
+              <button onClick={()=>setPinModal(null)} style={{padding:"11px 16px",fontSize:15,fontWeight:700,background:"transparent",color:"#6b7280",border:"1px solid #d1d5db",borderRadius:10,cursor:"pointer",fontFamily:"inherit"}}>إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* إضافة حركة */}
       <div style={{...styles.panel,marginBottom:16}}>
@@ -6486,7 +6525,12 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
 
 // ─── Settings Page ───────────────────────────────────────────
 function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,setPayments,dailyOpen,setDailyOpen,setPage,investors,contracts,setInvestors}) {
-  // 🔒 قفل الإعدادات برقم سري
+  // 🔒 تشفير الرمز السري
+  const hashPin = async (pin) => {
+    const enc = new TextEncoder().encode(pin+"qima_salt_2024");
+    const buf = await crypto.subtle.digest("SHA-256", enc);
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+  };
   const [settingsPin] = useState(()=>{ try{ return localStorage.getItem("qimma_settings_pin")||"1234"; }catch(e){ return "1234"; } });
   const [pinInput,setPinInput] = useState("");
   const [unlocked,setUnlocked] = useState(false);
@@ -6496,17 +6540,25 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
   const [confirmPin,setConfirmPin] = useState("");
   const [currentPin,setCurrentPin] = useState(settingsPin);
 
-  const checkPin = ()=>{
-    if(pinInput===currentPin){ setUnlocked(true); setPinError(false); }
-    else { setPinError(true); setPinInput(""); }
+  const checkPin = async ()=>{
+    // دعم الرمز القديم (نص عادي) والجديد (مشفر)
+    if(currentPin.length===64){
+      const h = await hashPin(pinInput);
+      if(h===currentPin){ setUnlocked(true); setPinError(false); }
+      else { setPinError(true); setPinInput(""); }
+    } else {
+      if(pinInput===currentPin){ setUnlocked(true); setPinError(false); }
+      else { setPinError(true); setPinInput(""); }
+    }
   };
-  const changePin = ()=>{
+  const changePin = async ()=>{
     if(!newPin||newPin.length<4){ toast&&toast("الرقم السري لازم 4 خانات على الأقل","error"); return; }
     if(newPin!==confirmPin){ toast&&toast("الرقم السري غير متطابق","error"); return; }
-    try{ localStorage.setItem("qimma_settings_pin",newPin); }catch(e){}
-    setCurrentPin(newPin);
+    const hashed = await hashPin(newPin);
+    try{ localStorage.setItem("qimma_settings_pin",hashed); }catch(e){}
+    setCurrentPin(hashed);
     setShowChangePin(false); setNewPin(""); setConfirmPin("");
-    toast&&toast("✅ تم تغيير الرقم السري");
+    toast&&toast("✅ تم تغيير الرقم السري وتشفيره");
   };
 
   const [s,setS]=useState({...settings});
@@ -6539,7 +6591,7 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
             style={{width:"100%",padding:"14px",fontSize:17,fontWeight:800,background:"#0d9488",color:"#fff",border:"none",borderRadius:12,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>
             🔓 فتح الإعدادات
           </button>
-          <div style={{fontSize:12,color:"#9ca3af",marginTop:16}}>الرقم الافتراضي: 1234</div>
+          <div style={{fontSize:12,color:"#9ca3af",marginTop:16}}>أدخل الرمز السري</div>
         </div>
       </div>
     );
