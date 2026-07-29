@@ -2897,7 +2897,7 @@ function DeductionsSheet({contracts, investors, payments}){
     let body=rows.map((c,i)=>`<tr><td>${i+1}</td><td>${c.client}</td><td>${c.cPhone||"—"}</td><td>${c.num||"—"}</td><td>${c.bankAccount||"—"}</td><td>${c.invName}</td><td class="amt">${fmt(c.instAmt)}</td><td class="amt">${fmt(c.left)}</td></tr>`).join("");
     const win=window.open("","_blank");
     win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>كشف الاستقطاعات</title>
-    <style>body{font-family:Arial;padding:18px;color:#000}.header{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:10px}.org{font-size:16px;font-weight:900}.sub{font-size:11px}.title{text-align:center;font-size:17px;font-weight:900;border:2px solid #000;padding:8px;margin-bottom:10px}table{width:100%;border-collapse:collapse;font-size:12px;border:2px solid #000}th,td{border:1px solid #000;padding:5px 7px;text-align:right;white-space:nowrap}th{font-weight:900;border-bottom:2px solid #000;font-size:11px}td.amt{font-weight:bold;text-align:left}.foot{text-align:center;color:#444;font-size:10px;margin-top:12px;border-top:1px solid #000;padding-top:6px}@media print{button{display:none}}</style>
+    <style>body{font-family:Arial;padding:22px;color:#000}.header{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:14px}.org{font-size:17px;font-weight:900}.sub{font-size:12px}.title{text-align:center;font-size:19px;font-weight:900;border:2px solid #000;padding:10px;margin-bottom:14px}table{width:100%;border-collapse:collapse;font-size:14px;border:2px solid #000}th,td{border:1px solid #000;padding:7px 10px;text-align:right;white-space:nowrap}th{font-weight:900;border-bottom:2px solid #000;font-size:13px}td.amt{font-weight:bold;text-align:left}.foot{text-align:center;color:#444;font-size:11px;margin-top:16px;border-top:1px solid #000;padding-top:8px}@media print{button{display:none}}</style>
     </head><body>
     <div class="header"><div><div class="org">مؤسسة قمة الفرصة التجارية</div><div class="sub">بريدة - شارع الثلاثين</div><div class="sub">ج: 0555171283  ت: 0163839323</div></div>
     <div style="text-align:left"><div class="sub">كشف الاستقطاعات</div><div class="sub">التاريخ: ${(()=>{const d=new Date();return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0");})()}</div></div></div>
@@ -3194,20 +3194,20 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
         const pctColor=p=>p>=70?K.green:p>=40?K.amber:K.red;
         const secLbl=t=>(<div style={{fontSize:10,color:K.dim2,fontWeight:700,letterSpacing:".7px",marginBottom:9,
           display:"flex",alignItems:"center",gap:8}}>{t}<span style={{flex:1,height:1,background:K.line}}/></div>);
-        const kvRow=(k,v,col)=>(<div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",fontSize:12}}>
+        const kvRow=(k,v,col)=>(<div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",fontSize:"clamp(12px,1.3vw,18px)"}}>
           <span style={{color:K.dim,fontWeight:500}}>{k}</span><span style={{fontWeight:700,color:col||K.txt}}>{v}</span></div>);
-        const chip=(label,val,bc,vc)=>(<span style={{fontSize:10,fontWeight:700,padding:"5px 10px",borderRadius:9,
-          background:K.panel2,border:"1px solid "+(bc||K.line),color:K.dim}}>{label} <b style={{fontSize:12,color:vc||K.txt}}>{val}</b></span>);
+        const chip=(label,val,bc,vc)=>(<span style={{fontSize:"clamp(10px,1.1vw,15px)",fontWeight:700,padding:"clamp(5px,0.7vw,10px) clamp(10px,1.2vw,18px)",borderRadius:9,
+          background:K.panel2,border:"1px solid "+(bc||K.line),color:vc||K.gold}}>{label} <b style={{fontSize:"clamp(12px,1.3vw,18px)",color:vc||K.gold}}>{val}</b></span>);
 
         return (<div style={{marginBottom:16,maxWidth:1200,marginLeft:"auto",marginRight:"auto"}}>
           <div style={{background:K.panel,border:"1px solid "+K.line,borderRadius:17,overflow:"hidden"}}>
-            <div style={{padding:"14px 15px",display:"flex",alignItems:"center",gap:11}}>
+            <div data-inv-card="" style={{padding:"14px 15px",display:"flex",alignItems:"center",gap:11}}>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:14,fontWeight:800,color:"#c8922a"}}>حسابات خاصة</div>
-                <div style={{fontSize:11,color:K.dim,marginTop:2}}>{specialInvs.length} حسابات · {consAll} عقد · آخر سداد {shortDate(lastPay)}</div>
+                <div data-inv-name="" style={{fontSize:14,fontWeight:800,color:"#c8922a"}}>حسابات خاصة</div>
+                <div data-inv-sub="" style={{fontSize:11,color:K.dim,marginTop:2}}>{specialInvs.length} حسابات · {consAll} عقد · آخر سداد {shortDate(lastPay)}</div>
               </div>
               <div style={{textAlign:"left",flexShrink:0}}>
-                <div style={{fontSize:17,fontWeight:800,color:"#c8922a"}}>{NF(grand)}</div>
+                <div data-inv-total="" style={{fontSize:17,fontWeight:800,color:"#c8922a"}}>{NF(grand)}</div>
                 <div style={{fontSize:9,color:K.dim2}}>الإجمالي</div>
               </div>
             </div>
@@ -3215,25 +3215,25 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
               <div style={{paddingTop:14}}>
                 {secLbl("الوضع الحالي")}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:"rgba(255,255,255,.06)",borderRadius:11,overflow:"hidden",marginBottom:14}}>
-                  <div style={{background:K.panel2,padding:"10px 12px"}}>
-                    <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>البداية</div>
-                    <div style={{fontSize:15,fontWeight:700,color:K.gold}}>{bidaya>0?NF(bidaya):"—"}</div>
+                  <div style={{background:K.panel2,padding:"clamp(10px,1.5vw,18px) clamp(12px,1.5vw,20px)"}}>
+                    <div style={{fontSize:"clamp(11px,1.2vw,16px)",color:"#fff",fontWeight:600,marginBottom:3}}>البداية</div>
+                    <div style={{fontSize:"clamp(15px,1.8vw,24px)",fontWeight:700,color:K.gold}}>{bidaya>0?NF(bidaya):"—"}</div>
                   </div>
-                  <div style={{background:K.panel2,padding:"10px 12px"}}>
-                    <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>النقدي حالياً</div>
-                    <div style={{fontSize:15,fontWeight:700,color:netCash>=0?K.gold:K.red}}>{NF(netCash)}</div>
+                  <div style={{background:K.panel2,padding:"clamp(10px,1.5vw,18px) clamp(12px,1.5vw,20px)"}}>
+                    <div style={{fontSize:"clamp(11px,1.2vw,16px)",color:"#fff",fontWeight:600,marginBottom:3}}>النقدي حالياً</div>
+                    <div style={{fontSize:"clamp(15px,1.8vw,24px)",fontWeight:700,color:netCash>=0?K.gold:K.red}}>{NF(netCash)}</div>
                   </div>
-                  <div style={{background:K.panel2,padding:"10px 12px"}}>
-                    <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>عند الزبائن</div>
-                    <div style={{fontSize:15,fontWeight:700,color:K.gold}}>{NF(leftMonthly)}</div>
+                  <div style={{background:K.panel2,padding:"clamp(10px,1.5vw,18px) clamp(12px,1.5vw,20px)"}}>
+                    <div style={{fontSize:"clamp(11px,1.2vw,16px)",color:"#fff",fontWeight:600,marginBottom:3}}>عند الزبائن</div>
+                    <div style={{fontSize:"clamp(15px,1.8vw,24px)",fontWeight:700,color:K.gold}}>{NF(leftMonthly)}</div>
                   </div>
-                  <div style={{background:K.panel2,padding:"10px 12px"}}>
-                    <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>المؤجلة</div>
-                    <div style={{fontSize:15,fontWeight:700,color:leftDefer>0?K.gold:K.dim2}}>{leftDefer>0?NF(leftDefer):"—"}</div>
+                  <div style={{background:K.panel2,padding:"clamp(10px,1.5vw,18px) clamp(12px,1.5vw,20px)"}}>
+                    <div style={{fontSize:"clamp(11px,1.2vw,16px)",color:"#fff",fontWeight:600,marginBottom:3}}>المؤجلة</div>
+                    <div style={{fontSize:"clamp(15px,1.8vw,24px)",fontWeight:700,color:leftDefer>0?K.gold:K.dim2}}>{leftDefer>0?NF(leftDefer):"—"}</div>
                   </div>
-                  <div style={{background:"linear-gradient(135deg,rgba(200,146,42,.12),rgba(200,146,42,.05))",gridColumn:"1/-1",padding:"10px 12px"}}>
-                    <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>الإجمالي</div>
-                    <div style={{fontSize:17,fontWeight:800,color:K.gold}}>{NF(grand)}</div>
+                  <div style={{background:"linear-gradient(135deg,rgba(200,146,42,.12),rgba(200,146,42,.05))",gridColumn:"1/-1",padding:"clamp(10px,1.5vw,18px) clamp(12px,1.5vw,20px)"}}>
+                    <div style={{fontSize:"clamp(11px,1.2vw,16px)",color:"#fff",fontWeight:600,marginBottom:3}}>الإجمالي</div>
+                    <div style={{fontSize:"clamp(17px,2.2vw,30px)",fontWeight:800,color:K.gold}}>{NF(grand)}</div>
                   </div>
                 </div>
               </div>
@@ -3241,81 +3241,81 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                 {secLbl("العائد")}
                 <div style={{background:"rgba(200,146,42,.05)",border:"1px solid rgba(200,146,42,.15)",borderRadius:12,padding:"11px 12px",marginBottom:14}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5}}>
-                    <span style={{fontSize:11,color:"#fff",fontWeight:600}}>العائد الحقيقي <span style={{fontSize:9,color:K.dim2}}>÷ البداية</span></span>
-                    <span style={{fontSize:16,fontWeight:800,color:roiReal!=null?K.gold:K.dim2}}>{roiReal!=null?roiReal.toFixed(1)+"%":"—"}</span></div>
+                    <span style={{fontSize:"clamp(11px,1.2vw,16px)",color:"#fff",fontWeight:600}}>العائد الحقيقي <span style={{fontSize:"clamp(9px,1vw,13px)",color:K.dim2}}>÷ البداية</span></span>
+                    <span style={{fontSize:"clamp(16px,1.8vw,24px)",fontWeight:800,color:roiReal!=null?K.gold:K.dim2}}>{roiReal!=null?roiReal.toFixed(1)+"%":"—"}</span></div>
                   <div style={{height:7,background:"rgba(255,255,255,.06)",borderRadius:4,overflow:"hidden",marginBottom:10}}>
                     <div style={{height:"100%",width:Math.min(100,Math.max(0,roiReal||0))+"%",borderRadius:4,background:"linear-gradient(90deg,#a87520,#c8922a)"}}/></div>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5}}>
-                    <span style={{fontSize:11,color:"#fff",fontWeight:600}}>العائد على المشغّل <span style={{fontSize:9,color:K.dim2}}>÷ {NF(working)}</span></span>
-                    <span style={{fontSize:16,fontWeight:800,color:roiWork!=null?K.gold:K.dim2}}>{roiWork!=null?roiWork.toFixed(1)+"%":"—"}</span></div>
+                    <span style={{fontSize:"clamp(11px,1.2vw,16px)",color:"#fff",fontWeight:600}}>العائد على المشغّل <span style={{fontSize:"clamp(9px,1vw,13px)",color:K.dim2}}>÷ {NF(working)}</span></span>
+                    <span style={{fontSize:"clamp(16px,1.8vw,24px)",fontWeight:800,color:roiWork!=null?K.gold:K.dim2}}>{roiWork!=null?roiWork.toFixed(1)+"%":"—"}</span></div>
                   <div style={{height:7,background:"rgba(255,255,255,.06)",borderRadius:4,overflow:"hidden"}}>
                     <div style={{height:"100%",width:Math.min(100,Math.max(0,roiWork||0))+"%",borderRadius:4,background:"linear-gradient(90deg,#a87520,#c8922a)"}}/></div>
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:"rgba(255,255,255,.06)",borderRadius:11,overflow:"hidden",marginBottom:14}}>
-                  <div style={{background:K.panel2,padding:"9px 8px",textAlign:"center"}}>
-                    <div style={{fontSize:10,color:"#fff",fontWeight:600,marginBottom:3}}>صافي الربح</div>
-                    <div style={{fontSize:14,fontWeight:700,color:K.gold}}>{NF(profit)}</div>
+                  <div style={{background:K.panel2,padding:"clamp(9px,1.2vw,16px) 8px",textAlign:"center"}}>
+                    <div style={{fontSize:"clamp(10px,1.1vw,15px)",color:"#fff",fontWeight:600,marginBottom:3}}>صافي الربح</div>
+                    <div style={{fontSize:"clamp(14px,1.7vw,22px)",fontWeight:700,color:K.gold}}>{NF(profit)}</div>
                   </div>
-                  <div style={{background:K.panel2,padding:"9px 8px",textAlign:"center"}}>
-                    <div style={{fontSize:10,color:"#fff",fontWeight:600,marginBottom:3}}>القسط الشهري</div>
-                    <div style={{fontSize:14,fontWeight:700,color:K.gold}}>{NF(monthlyInst)}</div>
+                  <div style={{background:K.panel2,padding:"clamp(9px,1.2vw,16px) 8px",textAlign:"center"}}>
+                    <div style={{fontSize:"clamp(10px,1.1vw,15px)",color:"#fff",fontWeight:600,marginBottom:3}}>القسط الشهري</div>
+                    <div style={{fontSize:"clamp(14px,1.7vw,22px)",fontWeight:700,color:K.gold}}>{NF(monthlyInst)}</div>
                   </div>
                 </div>
               </div>
               <div>
                 {secLbl("التحصيل")}
                 <div style={{marginBottom:14}}>
-                  <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:5}}>
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:"clamp(11px,1.2vw,16px)",marginBottom:5}}>
                     <span style={{color:"#fff",fontWeight:600}}>محصّل من الإجمالي</span>
                     <span style={{color:K.gold,fontWeight:700}}>{collectPct}%</span></div>
                   <div style={{height:7,background:"rgba(255,255,255,.06)",borderRadius:4,overflow:"hidden"}}>
                     <div style={{height:"100%",width:Math.min(100,collectPct)+"%",borderRadius:4,background:"linear-gradient(90deg,#a87520,#c8922a)"}}/></div>
                   {overCount>0 && <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
-                    <span style={{fontSize:10,fontWeight:700,padding:"5px 10px",borderRadius:9,background:K.panel2,
-                      border:"1px solid rgba(251,113,133,.4)",color:K.red}}>متعثر <b style={{fontSize:12}}>{overCount}</b> · {NF(overAmt)}</span></div>}
+                    <span style={{fontSize:"clamp(10px,1.1vw,14px)",fontWeight:700,padding:"5px 10px",borderRadius:9,background:K.panel2,
+                      border:"1px solid rgba(251,113,133,.4)",color:K.red}}>متعثر <b style={{fontSize:"clamp(12px,1.3vw,16px)"}}>{overCount}</b> · {NF(overAmt)}</span></div>}
                 </div>
               </div>
               <div>
                 {secLbl("العقود")}
                 <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>
                   {chip("نشط",activeC,"rgba(200,146,42,.3)",K.gold)}
-                  {chip("منتهي",doneC)}
+                  {chip("منتهي",doneC,"rgba(200,146,42,.3)",K.gold)}
                   {deferC>0 && chip("مؤجل",deferC,"rgba(200,146,42,.3)",K.gold)}
-                  {chip("متوسط العقد",NF(avgC))}
+                  {chip("متوسط العقد",NF(avgC),"rgba(200,146,42,.3)",K.gold)}
                 </div>
               </div>
               <div style={{height:1,background:K.line,marginBottom:10}}/>
               <button onClick={()=>{setStmtInv({__group:specialInvs,name:"حسابات خاصة (مجمّع)"});setStmtType("brief");}}
-                style={{width:"100%",padding:"11px",borderRadius:10,border:"1px solid rgba(200,146,42,.3)",background:K.panel2,
-                color:"#c8922a",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🖨️ كشف مجمّع للسبعة</button>
+                style={{width:"100%",padding:"clamp(11px,1.2vw,16px)",borderRadius:10,border:"1px solid rgba(200,146,42,.3)",background:K.panel2,
+                color:"#c8922a",fontSize:"clamp(13px,1.3vw,18px)",fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🖨️ كشف مجمّع للسبعة</button>
             </div>
           </div>
           {/* تفصيل كل فرصة */}
           <div style={{background:K.panel,border:"1px solid "+K.line,borderRadius:17,overflow:"hidden",marginTop:12}}>
-            <div style={{padding:"12px 15px",borderBottom:"1px solid "+K.line}}>
-              <div style={{fontSize:13,fontWeight:700,color:K.gold}}>تفصيل كل فرصة</div>
+            <div style={{padding:"clamp(12px,1.3vw,18px) 15px",borderBottom:"1px solid "+K.line}}>
+              <div style={{fontSize:"clamp(13px,1.4vw,20px)",fontWeight:700,color:K.gold}}>تفصيل كل فرصة</div>
             </div>
             <div style={{overflowX:"auto"}}>
-              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:"clamp(12px,1.3vw,18px)"}}>
                 <thead><tr style={{borderBottom:"1px solid "+K.line}}>
-                  <th style={{padding:"10px 12px",textAlign:"right",color:K.gold,fontWeight:700,fontSize:11}}>الفرصة</th>
-                  <th style={{padding:"10px 8px",textAlign:"left",color:K.gold,fontWeight:700,fontSize:11}}>النقدي</th>
-                  <th style={{padding:"10px 8px",textAlign:"left",color:K.gold,fontWeight:700,fontSize:11}}>عند الزبائن</th>
-                  <th style={{padding:"10px 8px",textAlign:"left",color:K.gold,fontWeight:700,fontSize:11}}>الإجمالي</th>
+                  <th style={{padding:"clamp(10px,1.2vw,16px) 12px",textAlign:"right",color:K.gold,fontWeight:700,fontSize:"clamp(11px,1.2vw,17px)"}}>الفرصة</th>
+                  <th style={{padding:"clamp(10px,1.2vw,16px) 8px",textAlign:"left",color:K.gold,fontWeight:700,fontSize:"clamp(11px,1.2vw,17px)"}}>النقدي</th>
+                  <th style={{padding:"clamp(10px,1.2vw,16px) 8px",textAlign:"left",color:K.gold,fontWeight:700,fontSize:"clamp(11px,1.2vw,17px)"}}>عند الزبائن</th>
+                  <th style={{padding:"clamp(10px,1.2vw,16px) 8px",textAlign:"left",color:K.gold,fontWeight:700,fontSize:"clamp(11px,1.2vw,17px)"}}>الإجمالي</th>
                 </tr></thead>
                 <tbody>{perInvData.map((d,i)=>(
                   <tr key={i} style={{borderBottom:"1px solid "+K.line}}>
-                    <td style={{padding:"10px 12px",fontWeight:700,color:K.gold,whiteSpace:"nowrap"}}>الفرصة {d.num} <span style={{fontSize:10,color:K.dim2,fontWeight:400}}>({d.cons})</span></td>
-                    <td style={{padding:"10px 8px",fontWeight:700,color:d.cash>=0?K.green:K.red,fontFamily:"monospace",fontSize:13}}>{NF(d.cash)}</td>
-                    <td style={{padding:"10px 8px",fontWeight:700,color:"#ffffff",fontFamily:"monospace",fontSize:13}}>{NF(d.left)}</td>
-                    <td style={{padding:"10px 8px",fontWeight:700,color:K.gold,fontFamily:"monospace",fontSize:13}}>{NF(d.total)}</td>
+                    <td style={{padding:"clamp(10px,1.2vw,16px) 12px",fontWeight:700,color:K.gold,whiteSpace:"nowrap",fontSize:"clamp(12px,1.3vw,18px)"}}>الفرصة {d.num} <span style={{fontSize:"clamp(10px,1vw,14px)",color:K.dim2,fontWeight:400}}>({d.cons})</span></td>
+                    <td style={{padding:"clamp(10px,1.2vw,16px) 8px",fontWeight:700,color:d.cash>=0?K.green:K.red,fontFamily:"monospace",fontSize:"clamp(13px,1.5vw,20px)"}}>{NF(d.cash)}</td>
+                    <td style={{padding:"clamp(10px,1.2vw,16px) 8px",fontWeight:700,color:K.gold,fontFamily:"monospace",fontSize:"clamp(13px,1.5vw,20px)"}}>{NF(d.left)}</td>
+                    <td style={{padding:"clamp(10px,1.2vw,16px) 8px",fontWeight:700,color:K.gold,fontFamily:"monospace",fontSize:"clamp(13px,1.5vw,20px)"}}>{NF(d.total)}</td>
                   </tr>
                 ))}</tbody>
                 <tfoot><tr style={{background:"rgba(255,255,255,.04)"}}>
-                  <td style={{padding:"10px 12px",fontWeight:700,color:K.gold,fontSize:11}}>المجموع</td>
-                  <td style={{padding:"10px 8px",fontWeight:700,color:netCash>=0?K.green:K.red,fontFamily:"monospace",fontSize:13}}>{NF(netCash)}</td>
-                  <td style={{padding:"10px 8px",fontWeight:700,color:"#ffffff",fontFamily:"monospace",fontSize:13}}>{NF(leftMonthly+leftDefer)}</td>
-                  <td style={{padding:"10px 8px",fontWeight:700,color:K.gold,fontFamily:"monospace",fontSize:13}}>{NF(grand)}</td>
+                  <td style={{padding:"clamp(10px,1.2vw,16px) 12px",fontWeight:700,color:K.gold,fontSize:"clamp(11px,1.2vw,17px)"}}>المجموع</td>
+                  <td style={{padding:"clamp(10px,1.2vw,16px) 8px",fontWeight:700,color:netCash>=0?K.green:K.red,fontFamily:"monospace",fontSize:"clamp(13px,1.5vw,20px)"}}>{NF(netCash)}</td>
+                  <td style={{padding:"clamp(10px,1.2vw,16px) 8px",fontWeight:700,color:K.gold,fontFamily:"monospace",fontSize:"clamp(13px,1.5vw,20px)"}}>{NF(leftMonthly+leftDefer)}</td>
+                  <td style={{padding:"clamp(10px,1.2vw,16px) 8px",fontWeight:700,color:K.gold,fontFamily:"monospace",fontSize:"clamp(13px,1.5vw,20px)"}}>{NF(grand)}</td>
                 </tr></tfoot>
               </table>
             </div>
