@@ -955,13 +955,13 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
   // ═══ Premium Section Styles ═══
   const secStyle = {background:"rgba(255,255,255,0.85)",backdropFilter:"blur(12px)",borderRadius:16,padding:"20px",marginBottom:16,border:"1px solid rgba(200,146,42,0.15)",boxShadow:"0 4px 24px rgba(0,0,0,0.04)"};
   const secHead = (icon,title,color) => ({display:"flex",alignItems:"center",gap:10,marginBottom:16,paddingBottom:10,borderBottom:"2px solid "+(color||"rgba(200,146,42,0.2)")});
-  const secTitle = (color) => ({fontSize:17,fontWeight:900,color:color||C.gold,margin:0});
-  const fLabel = {fontSize:14,fontWeight:700,color:"#4a5568",display:"block",marginBottom:6};
-  const fInput = {...styles.input,borderRadius:10,border:"1.5px solid #e2e8f0",transition:"all 0.2s",fontSize:15};
+  const secTitle = (color) => ({fontSize:"clamp(17px,2vw,22px)",fontWeight:900,color:color||C.gold,margin:0});
+  const fLabel = {fontSize:"clamp(14px,1.5vw,18px)",fontWeight:700,color:"#4a5568",display:"block",marginBottom:6};
+  const fInput = {...styles.input,borderRadius:10,border:"1.5px solid #e2e8f0",transition:"all 0.2s",fontSize:"clamp(15px,1.5vw,19px)",padding:"clamp(10px,1.2vw,16px) 14px"};
   const fInputFocus = "border-color:#c8922a;box-shadow:0 0 0 3px rgba(200,146,42,0.1)";
 
   return (
-    <div style={{maxWidth:720,margin:"0 auto"}}>
+    <div style={{maxWidth:1100,margin:"0 auto"}}>
       {/* ═══ Header ═══ */}
       <div style={{background:"linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)",borderRadius:20,padding:"24px 20px",marginBottom:20,position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,background:"radial-gradient(circle at 20% 50%,rgba(200,146,42,0.15),transparent 60%)",pointerEvents:"none"}}/>
@@ -2897,7 +2897,7 @@ function DeductionsSheet({contracts, investors, payments}){
     let body=rows.map((c,i)=>`<tr><td>${i+1}</td><td>${c.client}</td><td>${c.cPhone||"—"}</td><td>${c.num||"—"}</td><td>${c.bankAccount||"—"}</td><td>${c.invName}</td><td class="amt">${fmt(c.instAmt)}</td><td class="amt">${fmt(c.left)}</td></tr>`).join("");
     const win=window.open("","_blank");
     win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>كشف الاستقطاعات</title>
-    <style>body{font-family:Arial;padding:24px;color:#000}.header{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:14px}.org{font-size:18px;font-weight:900}.sub{font-size:13px}.title{text-align:center;font-size:20px;font-weight:900;border:2px solid #000;padding:10px;margin-bottom:14px}table{width:100%;border-collapse:collapse;font-size:15px;border:2px solid #000}th,td{border:1px solid #000;padding:9px 11px;text-align:right;white-space:nowrap}th{font-weight:900;border-bottom:2px solid #000}td.amt{font-weight:bold;text-align:left}.foot{text-align:center;color:#444;font-size:12px;margin-top:18px;border-top:1px solid #000;padding-top:8px}@media print{button{display:none}}</style>
+    <style>body{font-family:Arial;padding:18px;color:#000}.header{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:10px}.org{font-size:16px;font-weight:900}.sub{font-size:11px}.title{text-align:center;font-size:17px;font-weight:900;border:2px solid #000;padding:8px;margin-bottom:10px}table{width:100%;border-collapse:collapse;font-size:12px;border:2px solid #000}th,td{border:1px solid #000;padding:5px 7px;text-align:right;white-space:nowrap}th{font-weight:900;border-bottom:2px solid #000;font-size:11px}td.amt{font-weight:bold;text-align:left}.foot{text-align:center;color:#444;font-size:10px;margin-top:12px;border-top:1px solid #000;padding-top:6px}@media print{button{display:none}}</style>
     </head><body>
     <div class="header"><div><div class="org">مؤسسة قمة الفرصة التجارية</div><div class="sub">بريدة - شارع الثلاثين</div><div class="sub">ج: 0555171283  ت: 0163839323</div></div>
     <div style="text-align:left"><div class="sub">كشف الاستقطاعات</div><div class="sub">التاريخ: ${(()=>{const d=new Date();return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0");})()}</div></div></div>
@@ -3400,7 +3400,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
               {/* Opening balance row */}
               <tr style={{background:"#f0fdf4"}}>
                 <td style={{...styles.td,fontSize:14,color:"#333"}}>{inv?.date||"—"}</td>
-                <td style={styles.td}><span style={{...styles.badge(C.tealLt,C.teal)}}>رصيد افتتاحي</span></td>
+                <td style={styles.td}><span style={{...styles.badge("#141428","#c8922a")}}>رصيد افتتاحي</span></td>
                 <td style={styles.td}>رأس المال المبدئي</td>
                 <td style={{...styles.td,color:C.green,fontWeight:700}}>{SAR(inv?.capital||0)}</td>
                 <td style={styles.td}>—</td>
@@ -3414,7 +3414,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                   <tr key={tx.id} style={{background:i%2===0?C.white:C.gray}}>
                     <td style={{...styles.td,fontSize:14,color:"#1f2937"}}>{tx.date}</td>
                     <td style={styles.td}>
-                      <span style={{...styles.badge(txType.color+"22",txType.color)}}>{txType.label}</span>
+                      <span style={{...styles.badge("#141428","#c8922a")}}>{txType.label}</span>
                     </td>
                     <td style={styles.td}>
                       <div>{tx.note||"—"}</div>
@@ -8468,16 +8468,16 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
                 : React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
                     invCards.map(g=>(
                     React.createElement("div",{key:g.inv.id,onClick:()=>{setSelInv(g.inv);setColSearch("");setExpanded({});},
-                      style:{background:"#fff",borderRadius:16,padding:"18px 16px",cursor:"pointer",boxShadow:"0 2px 12px rgba(0,0,0,0.06)",borderRight:"5px solid #1a1a2e",position:"relative",transition:"transform 0.15s",overflow:"hidden"}},
+                      style:{background:"#fff",borderRadius:16,padding:"clamp(18px,2.5vw,28px) clamp(16px,2vw,24px)",cursor:"pointer",boxShadow:"0 2px 12px rgba(0,0,0,0.06)",border:"2px solid #c8922a",position:"relative",transition:"transform 0.15s",overflow:"hidden"}},
                       g.lateCount>0 && React.createElement("span",{style:{position:"absolute",top:10,left:10,background:"#fef2f2",color:"#dc2626",borderRadius:8,padding:"2px 8px",fontSize:11,fontWeight:800}},g.lateCount+" متأخر"),
-                      React.createElement("div",{style:{fontSize:18,fontWeight:900,color:"#1a1a2e",marginBottom:12}},invLabel(g.inv)),
+                      React.createElement("div",{style:{fontSize:"clamp(18px,2.5vw,26px)",fontWeight:900,color:"#1a1a2e",marginBottom:12}},invLabel(g.inv)),
                       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:4}},
-                        React.createElement("span",{style:{fontSize:12,color:"#1a1a2e",fontWeight:700}},"العقود"),
-                        React.createElement("span",{style:{fontSize:16,fontWeight:900,color:"#c8922a"}},g.items.length)
+                        React.createElement("span",{style:{fontSize:"clamp(13px,1.5vw,18px)",color:"#1a1a2e",fontWeight:700}},"العقود"),
+                        React.createElement("span",{style:{fontSize:"clamp(16px,2vw,24px)",fontWeight:900,color:"#c8922a"}},g.items.length)
                       ),
                       React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
-                        React.createElement("span",{style:{fontSize:12,color:"#1a1a2e",fontWeight:700}},"الأقساط"),
-                        React.createElement("span",{style:{fontSize:14,fontWeight:800,color:"#c8922a"}},SAR(g.totalInst))
+                        React.createElement("span",{style:{fontSize:"clamp(13px,1.5vw,18px)",color:"#1a1a2e",fontWeight:700}},"الأقساط"),
+                        React.createElement("span",{style:{fontSize:"clamp(14px,1.8vw,22px)",fontWeight:800,color:"#c8922a"}},SAR(g.totalInst))
                       )
                     )
                   ))
@@ -8531,7 +8531,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
               React.createElement("div",null,
                 React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
                   React.createElement("span",{style:{width:10,height:10,borderRadius:"50%",background:dotClr,flexShrink:0}}),
-                  React.createElement("span",{style:{fontWeight:700,fontSize:14,color:"#1f2937"}},c.client)
+                  React.createElement("span",{style:{fontWeight:700,fontSize:"clamp(14px,1.6vw,20px)",color:"#1f2937"}},c.client)
                 ),
                 React.createElement("div",{style:{fontSize:11,color:"#9ca3af",marginRight:16}},c.cPhone||"")
               ),
