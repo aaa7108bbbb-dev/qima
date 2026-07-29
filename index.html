@@ -240,7 +240,7 @@
     nav { justify-content: center !important; }
     nav button div:first-child { width: 80px !important; height: 80px !important; font-size: 32px !important; border-radius: 18px !important; }
     nav button span { font-size: 17px !important; }
-    /* بطاقات المستثمرين أكبر على الشاشات الكبيرة */
+    /* بطاقات المستثمرين — رأس البطاقة */
     [data-inv-card] { padding: 22px 28px !important; }
     [data-inv-card] [data-inv-name] { font-size: 22px !important; }
     [data-inv-card] [data-inv-total] { font-size: 28px !important; }
@@ -6201,9 +6201,9 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
             const kvRow = (k,v,col) => (<div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",fontSize:12}}>
               <span style={{color:K.dim,fontWeight:500}}>{k}</span>
               <span style={{fontWeight:700,color:col||K.txt}}>{v}</span></div>);
-            const chip = (label,val,bc,vc) => (<span style={{fontSize:10,fontWeight:700,padding:"5px 10px",
-              borderRadius:9,background:K.panel2,border:"1px solid "+(bc||K.line),color:K.dim}}>
-              {label} <b style={{fontSize:12,color:vc||K.txt}}>{val}</b></span>);
+            const chip = (label,val,bc,vc) => (<span style={{fontSize:"clamp(10px,1.1vw,15px)",fontWeight:700,padding:"clamp(5px,0.7vw,10px) clamp(10px,1.2vw,18px)",
+              borderRadius:9,background:K.panel2,border:"1px solid "+(bc||K.line),color:vc||K.gold}}>
+              {label} <b style={{fontSize:"clamp(12px,1.3vw,18px)",color:vc||K.gold}}>{val}</b></span>);
             return (
             <div key={inv.id} style={{background:K.panel,border:"1px solid "+K.line,borderRadius:17,overflow:"hidden"}}>
               {/* رأس البطاقة */}
@@ -6226,25 +6226,25 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
                 <div style={{paddingTop:14}}>
                   {secLbl("الوضع الحالي")}
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:"rgba(255,255,255,.06)",borderRadius:11,overflow:"hidden",marginBottom:14}}>
-                    <div style={{background:K.panel2,padding:"10px 12px"}}>
-                      <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>البداية</div>
-                      <div style={{fontSize:15,fontWeight:700,color:K.gold}}>{r.bidaya>0?NF(r.bidaya):"—"}</div>
+                    <div style={{background:K.panel2,padding:"clamp(10px,1.5vw,18px) clamp(12px,1.5vw,20px)"}}>
+                      <div style={{fontSize:"clamp(11px,1.2vw,16px)",color:"#fff",fontWeight:600,marginBottom:3}}>البداية</div>
+                      <div style={{fontSize:"clamp(15px,1.8vw,24px)",fontWeight:700,color:K.gold}}>{r.bidaya>0?NF(r.bidaya):"—"}</div>
                     </div>
-                    <div style={{background:K.panel2,padding:"10px 12px"}}>
-                      <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>النقدي حالياً</div>
-                      <div style={{fontSize:15,fontWeight:700,color:r.netCash>=0?K.gold:K.red}}>{NF(r.netCash)}</div>
+                    <div style={{background:K.panel2,padding:"clamp(10px,1.5vw,18px) clamp(12px,1.5vw,20px)"}}>
+                      <div style={{fontSize:"clamp(11px,1.2vw,16px)",color:"#fff",fontWeight:600,marginBottom:3}}>النقدي حالياً</div>
+                      <div style={{fontSize:"clamp(15px,1.8vw,24px)",fontWeight:700,color:r.netCash>=0?K.gold:K.red}}>{NF(r.netCash)}</div>
                     </div>
-                    <div style={{background:K.panel2,padding:"10px 12px"}}>
-                      <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>عند الزبائن</div>
-                      <div style={{fontSize:15,fontWeight:700,color:K.gold}}>{NF(r.leftMonthly)}</div>
+                    <div style={{background:K.panel2,padding:"clamp(10px,1.5vw,18px) clamp(12px,1.5vw,20px)"}}>
+                      <div style={{fontSize:"clamp(11px,1.2vw,16px)",color:"#fff",fontWeight:600,marginBottom:3}}>عند الزبائن</div>
+                      <div style={{fontSize:"clamp(15px,1.8vw,24px)",fontWeight:700,color:K.gold}}>{NF(r.leftMonthly)}</div>
                     </div>
-                    <div style={{background:K.panel2,padding:"10px 12px"}}>
-                      <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>المؤجلة</div>
-                      <div style={{fontSize:15,fontWeight:700,color:r.leftDefer>0?K.gold:K.dim2}}>{r.leftDefer>0?NF(r.leftDefer):"—"}</div>
+                    <div style={{background:K.panel2,padding:"clamp(10px,1.5vw,18px) clamp(12px,1.5vw,20px)"}}>
+                      <div style={{fontSize:"clamp(11px,1.2vw,16px)",color:"#fff",fontWeight:600,marginBottom:3}}>المؤجلة</div>
+                      <div style={{fontSize:"clamp(15px,1.8vw,24px)",fontWeight:700,color:r.leftDefer>0?K.gold:K.dim2}}>{r.leftDefer>0?NF(r.leftDefer):"—"}</div>
                     </div>
-                    <div style={{background:"linear-gradient(135deg,rgba(200,146,42,.12),rgba(200,146,42,.05))",gridColumn:"1/-1",padding:"10px 12px"}}>
-                      <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>الإجمالي</div>
-                      <div style={{fontSize:17,fontWeight:800,color:K.gold}}>{NF(r.grand)}</div>
+                    <div style={{background:"linear-gradient(135deg,rgba(200,146,42,.12),rgba(200,146,42,.05))",gridColumn:"1/-1",padding:"clamp(10px,1.5vw,18px) clamp(12px,1.5vw,20px)"}}>
+                      <div style={{fontSize:"clamp(11px,1.2vw,16px)",color:"#fff",fontWeight:600,marginBottom:3}}>الإجمالي</div>
+                      <div style={{fontSize:"clamp(17px,2.2vw,30px)",fontWeight:800,color:K.gold}}>{NF(r.grand)}</div>
                     </div>
                   </div>
                 </div>
@@ -6252,35 +6252,35 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
                   {secLbl("العائد")}
                   <div style={{background:"rgba(200,146,42,.05)",border:"1px solid rgba(200,146,42,.15)",borderRadius:12,padding:"11px 12px",marginBottom:14}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5}}>
-                      <span style={{fontSize:11,color:"#fff",fontWeight:600}}>العائد الحقيقي <span style={{fontSize:9,color:K.dim2}}>÷ البداية</span></span>
-                      <span style={{fontSize:16,fontWeight:800,color:r.roiReal!=null?K.gold:K.dim2}}>{r.roiReal!=null?r.roiReal.toFixed(1)+"%":"—"}</span>
+                      <span style={{fontSize:"clamp(11px,1.2vw,16px)",color:"#fff",fontWeight:600}}>العائد الحقيقي <span style={{fontSize:"clamp(9px,1vw,13px)",color:K.dim2}}>÷ البداية</span></span>
+                      <span style={{fontSize:"clamp(16px,1.8vw,24px)",fontWeight:800,color:r.roiReal!=null?K.gold:K.dim2}}>{r.roiReal!=null?r.roiReal.toFixed(1)+"%":"—"}</span>
                     </div>
                     <div style={{height:7,background:"rgba(255,255,255,.06)",borderRadius:4,overflow:"hidden",marginBottom:10}}>
                       <div style={{height:"100%",width:Math.min(100,Math.max(0,r.roiReal||0))+"%",borderRadius:4,background:"linear-gradient(90deg,#a87520,#c8922a)"}}/>
                     </div>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5}}>
-                      <span style={{fontSize:11,color:"#fff",fontWeight:600}}>العائد على المشغّل <span style={{fontSize:9,color:K.dim2}}>÷ {NF(r.working)}</span></span>
-                      <span style={{fontSize:16,fontWeight:800,color:r.roiWork!=null?K.gold:K.dim2}}>{r.roiWork!=null?r.roiWork.toFixed(1)+"%":"—"}</span>
+                      <span style={{fontSize:"clamp(11px,1.2vw,16px)",color:"#fff",fontWeight:600}}>العائد على المشغّل <span style={{fontSize:"clamp(9px,1vw,13px)",color:K.dim2}}>÷ {NF(r.working)}</span></span>
+                      <span style={{fontSize:"clamp(16px,1.8vw,24px)",fontWeight:800,color:r.roiWork!=null?K.gold:K.dim2}}>{r.roiWork!=null?r.roiWork.toFixed(1)+"%":"—"}</span>
                     </div>
                     <div style={{height:7,background:"rgba(255,255,255,.06)",borderRadius:4,overflow:"hidden"}}>
                       <div style={{height:"100%",width:Math.min(100,Math.max(0,r.roiWork||0))+"%",borderRadius:4,background:"linear-gradient(90deg,#a87520,#c8922a)"}}/>
                     </div>
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:"rgba(255,255,255,.06)",borderRadius:11,overflow:"hidden",marginBottom:14}}>
-                    <div style={{background:K.panel2,padding:"9px 8px",textAlign:"center"}}>
-                      <div style={{fontSize:10,color:"#fff",fontWeight:600,marginBottom:3}}>صافي الربح</div>
-                      <div style={{fontSize:14,fontWeight:700,color:K.gold}}>{NF(r.profit)}</div>
+                    <div style={{background:K.panel2,padding:"clamp(9px,1.2vw,16px) 8px",textAlign:"center"}}>
+                      <div style={{fontSize:"clamp(10px,1.1vw,15px)",color:"#fff",fontWeight:600,marginBottom:3}}>صافي الربح</div>
+                      <div style={{fontSize:"clamp(14px,1.7vw,22px)",fontWeight:700,color:K.gold}}>{NF(r.profit)}</div>
                     </div>
-                    <div style={{background:K.panel2,padding:"9px 8px",textAlign:"center"}}>
-                      <div style={{fontSize:10,color:"#fff",fontWeight:600,marginBottom:3}}>القسط الشهري</div>
-                      <div style={{fontSize:14,fontWeight:700,color:K.gold}}>{NF(r.monthlyInst)}</div>
+                    <div style={{background:K.panel2,padding:"clamp(9px,1.2vw,16px) 8px",textAlign:"center"}}>
+                      <div style={{fontSize:"clamp(10px,1.1vw,15px)",color:"#fff",fontWeight:600,marginBottom:3}}>القسط الشهري</div>
+                      <div style={{fontSize:"clamp(14px,1.7vw,22px)",fontWeight:700,color:K.gold}}>{NF(r.monthlyInst)}</div>
                     </div>
                   </div>
                 </div>
                 <div>
                   {secLbl("التحصيل")}
                   <div style={{marginBottom:14}}>
-                    <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:5}}>
+                    <div style={{display:"flex",justifyContent:"space-between",fontSize:"clamp(11px,1.2vw,16px)",marginBottom:5}}>
                       <span style={{color:"#fff",fontWeight:600}}>محصّل من الإجمالي</span>
                       <span style={{color:K.gold,fontWeight:700}}>{r.collectPct}%</span>
                     </div>
@@ -6297,9 +6297,9 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
                   {secLbl("العقود")}
                   <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>
                     {chip("نشط",r.activeC,"rgba(200,146,42,.3)",K.gold)}
-                    {chip("منتهي",r.doneC)}
+                    {chip("منتهي",r.doneC,"rgba(200,146,42,.3)",K.gold)}
                     {r.deferC>0 && chip("مؤجل",r.deferC,"rgba(200,146,42,.3)",K.gold)}
-                    {chip("متوسط العقد",NF(r.avgC))}
+                    {chip("متوسط العقد",NF(r.avgC),"rgba(200,146,42,.3)",K.gold)}
                   </div>
                 </div>
                 <div style={{height:1,background:K.line,marginBottom:10}}/>
@@ -8017,7 +8017,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
   const QUICK = ["☀️ التقرير الصباحي","⚠️ من راح يتعثر قريباً؟","أسوأ 10 متعثرين","قارن كل المستثمرين","التحصيل آخر 6 شهور","أفضل الزبائن التزاماً","تحليل ربح البضائع","مصروفات هذا الشهر","توقع دخل الشهر الجاي"];
 
   return (
-    React.createElement("div",{style:{maxWidth:720,margin:"0 auto",display:"flex",flexDirection:"column",height:"calc(100vh - 140px)"}},
+    React.createElement("div",{style:{maxWidth:1100,margin:"0 auto",display:"flex",flexDirection:"column",height:"calc(100vh - 140px)"}},
       /* Header */
       React.createElement("div",{style:{background:"linear-gradient(135deg,#1a1a2e 0%,#16213e 40%,#0f3460 100%)",borderRadius:20,padding:"18px 20px",marginBottom:12,position:"relative",overflow:"hidden",flexShrink:0}},
         React.createElement("div",{style:{position:"absolute",top:0,left:0,right:0,bottom:0,background:"radial-gradient(circle at 80% 30%,rgba(109,40,217,0.2),transparent 60%)",pointerEvents:"none"}}),
@@ -8074,7 +8074,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
           return React.createElement("div",{key:i},
             React.createElement("div",{style:{display:"flex",justifyContent:m.role==="user"?"flex-start":"flex-end",gap:8}},
               m.role==="ai" && React.createElement("div",{style:{width:30,height:30,borderRadius:10,background:"linear-gradient(135deg,#6d28d9,#7c3aed)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}},"🤖"),
-              React.createElement("div",{style:{maxWidth:"88%",padding:"12px 16px",borderRadius:m.role==="user"?"14px 14px 4px 14px":"14px 14px 14px 4px",background:m.role==="user"?"linear-gradient(135deg,#0d9488,#0f766e)":"rgba(255,255,255,0.95)",color:m.role==="user"?"#fff":"#1a1a2e",fontSize:14,lineHeight:1.9,fontWeight:m.role==="user"?600:400,boxShadow:"0 2px 12px rgba(0,0,0,0.05)",border:m.role==="user"?"none":"1px solid rgba(200,146,42,0.12)"}},
+              React.createElement("div",{style:{maxWidth:"88%",padding:"14px 20px",borderRadius:m.role==="user"?"14px 14px 4px 14px":"14px 14px 14px 4px",background:m.role==="user"?"linear-gradient(135deg,#0d9488,#0f766e)":"rgba(255,255,255,0.95)",color:m.role==="user"?"#fff":"#1a1a2e",fontSize:"clamp(14px,1.5vw,18px)",lineHeight:1.9,fontWeight:m.role==="user"?600:400,boxShadow:"0 2px 12px rgba(0,0,0,0.05)",border:m.role==="user"?"none":"1px solid rgba(200,146,42,0.12)"}},
                 m.img && React.createElement("img",{src:m.img,style:{maxWidth:"100%",maxHeight:180,borderRadius:8,marginBottom:8,display:"block"}}),
                 fmt(m.text)
               )
