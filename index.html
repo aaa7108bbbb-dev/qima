@@ -3153,72 +3153,92 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
         return (<div style={{marginBottom:16,maxWidth:640,marginLeft:"auto",marginRight:"auto"}}>
           <div style={{background:K.panel,border:"1px solid "+K.line,borderRadius:17,overflow:"hidden"}}>
             <div style={{padding:"14px 15px",display:"flex",alignItems:"center",gap:11}}>
-              <div style={{width:40,height:40,borderRadius:12,flexShrink:0,display:"flex",alignItems:"center",
-                justifyContent:"center",fontSize:19,background:"rgba(45,212,191,.16)",border:"1px solid rgba(45,212,191,.3)"}}>🏢</div>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:14,fontWeight:700,color:K.txt}}>حسابات خاصة</div>
+                <div style={{fontSize:14,fontWeight:800,color:"#c8922a"}}>حسابات خاصة</div>
                 <div style={{fontSize:11,color:K.dim,marginTop:2}}>{specialInvs.length} حسابات · {consAll} عقد · آخر سداد {shortDate(lastPay)}</div>
               </div>
               <div style={{textAlign:"left",flexShrink:0}}>
-                <div style={{fontSize:17,fontWeight:700,color:K.teal}}>{NF(grand)}</div>
+                <div style={{fontSize:17,fontWeight:800,color:"#c8922a"}}>{NF(grand)}</div>
                 <div style={{fontSize:9,color:K.dim2}}>الإجمالي</div>
               </div>
             </div>
             <div style={{padding:"0 15px 15px",borderTop:"1px solid "+K.line}}>
-              <div style={{paddingTop:14}}>{secLbl("الأساس")}
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 15px"}}>
-                  {kvRow("البداية",bidaya>0?NF(bidaya):"—",bidaya>0?K.teal:K.dim2)}
-                </div></div>
-              <div style={{paddingTop:14}}>{secLbl("وضعه الحين")}
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 15px"}}>
-                  {kvRow("النقدي حالياً",NF(netCash),netCash>=0?K.green:K.red)}
-                  {kvRow("عند الزبائن",NF(leftMonthly),K.amber)}
-                  {kvRow("المؤجلة",leftDefer>0?NF(leftDefer):"—",leftDefer>0?K.violet:K.dim2)}
-                  {kvRow("الإجمالي",NF(grand),K.gold)}
-                </div></div>
-              <div style={{paddingTop:14}}>{secLbl("العائد")}
-                <div style={{background:"rgba(56,189,248,.06)",border:"1px solid rgba(56,189,248,.18)",borderRadius:13,padding:"12px 13px"}}>
-                  <div style={{marginBottom:11}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5}}>
-                      <span style={{fontSize:11,color:K.dim,fontWeight:600}}>العائد الحقيقي <span style={{fontSize:9.5,color:K.dim2}}>÷ البداية</span></span>
-                      <span style={{fontSize:15,fontWeight:700,color:roiReal!=null?K.blue:K.dim2}}>{roiReal!=null?roiReal.toFixed(1)+"%":"—"}</span></div>
-                    <div style={{height:8,background:"rgba(255,255,255,.06)",borderRadius:5,overflow:"hidden"}}>
-                      <div style={{height:"100%",width:Math.min(100,Math.max(0,(roiReal||0)/30*100))+"%",borderRadius:5,background:"linear-gradient(90deg,#0ea5e9,#38bdf8)"}}/></div>
+              <div style={{paddingTop:14}}>
+                {secLbl("الوضع الحالي")}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:"rgba(255,255,255,.06)",borderRadius:11,overflow:"hidden",marginBottom:14}}>
+                  <div style={{background:K.panel2,padding:"10px 12px"}}>
+                    <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>البداية</div>
+                    <div style={{fontSize:15,fontWeight:700,color:K.gold}}>{bidaya>0?NF(bidaya):"—"}</div>
                   </div>
-                  <div>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5}}>
-                      <span style={{fontSize:11,color:K.dim,fontWeight:600}}>العائد على المشغّل <span style={{fontSize:9.5,color:K.dim2}}>÷ {NF(working)}</span></span>
-                      <span style={{fontSize:15,fontWeight:700,color:roiWork!=null?K.green:K.dim2}}>{roiWork!=null?roiWork.toFixed(1)+"%":"—"}</span></div>
-                    <div style={{height:8,background:"rgba(255,255,255,.06)",borderRadius:5,overflow:"hidden"}}>
-                      <div style={{height:"100%",width:Math.min(100,Math.max(0,(roiWork||0)/30*100))+"%",borderRadius:5,background:"linear-gradient(90deg,#2dd4bf,#4ade80)"}}/></div>
-                    <div style={{display:"flex",justifyContent:"space-between",fontSize:9,color:K.dim2,marginTop:4}}><span>30%</span><span>15%</span><span>0</span></div>
+                  <div style={{background:K.panel2,padding:"10px 12px"}}>
+                    <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>النقدي حالياً</div>
+                    <div style={{fontSize:15,fontWeight:700,color:netCash>=0?K.gold:K.red}}>{NF(netCash)}</div>
+                  </div>
+                  <div style={{background:K.panel2,padding:"10px 12px"}}>
+                    <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>عند الزبائن</div>
+                    <div style={{fontSize:15,fontWeight:700,color:K.gold}}>{NF(leftMonthly)}</div>
+                  </div>
+                  <div style={{background:K.panel2,padding:"10px 12px"}}>
+                    <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>المؤجلة</div>
+                    <div style={{fontSize:15,fontWeight:700,color:leftDefer>0?K.gold:K.dim2}}>{leftDefer>0?NF(leftDefer):"—"}</div>
+                  </div>
+                  <div style={{background:"linear-gradient(135deg,rgba(200,146,42,.12),rgba(200,146,42,.05))",gridColumn:"1/-1",padding:"10px 12px"}}>
+                    <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>الإجمالي</div>
+                    <div style={{fontSize:17,fontWeight:800,color:K.gold}}>{NF(grand)}</div>
                   </div>
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 15px",marginTop:11}}>
-                  {kvRow("صافي الربح",NF(profit),K.green)}
-                  {kvRow("القسط الشهري",NF(monthlyInst))}
-                </div></div>
-              <div style={{paddingTop:14}}>{secLbl("التحصيل")}
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:5}}>
-                  <span style={{color:K.dim}}>محصّل من الإجمالي</span><span style={{color:pctColor(collectPct),fontWeight:700}}>{collectPct}%</span></div>
-                <div style={{height:8,background:"rgba(255,255,255,.06)",borderRadius:5,overflow:"hidden"}}>
-                  <div style={{height:"100%",width:Math.min(100,collectPct)+"%",borderRadius:5,background:"linear-gradient(90deg,#2dd4bf,#4ade80)"}}/></div>
-                {overCount>0 && <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:10}}>
-                  <span style={{fontSize:10,fontWeight:700,padding:"5px 10px",borderRadius:9,background:K.panel2,
-                    border:"1px solid rgba(251,113,133,.4)",color:K.red}}>متعثر <b style={{fontSize:12}}>{overCount}</b> · {NF(overAmt)}</span></div>}
               </div>
-              <div style={{paddingTop:14}}>{secLbl("العقود")}
-                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                  {chip("نشط",activeC,"rgba(74,222,128,.3)",K.green)}
+              <div>
+                {secLbl("العائد")}
+                <div style={{background:"rgba(200,146,42,.05)",border:"1px solid rgba(200,146,42,.15)",borderRadius:12,padding:"11px 12px",marginBottom:14}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5}}>
+                    <span style={{fontSize:11,color:"#fff",fontWeight:600}}>العائد الحقيقي <span style={{fontSize:9,color:K.dim2}}>÷ البداية</span></span>
+                    <span style={{fontSize:16,fontWeight:800,color:roiReal!=null?K.gold:K.dim2}}>{roiReal!=null?roiReal.toFixed(1)+"%":"—"}</span></div>
+                  <div style={{height:7,background:"rgba(255,255,255,.06)",borderRadius:4,overflow:"hidden",marginBottom:10}}>
+                    <div style={{height:"100%",width:Math.min(100,Math.max(0,roiReal||0))+"%",borderRadius:4,background:"linear-gradient(90deg,#a87520,#c8922a)"}}/></div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5}}>
+                    <span style={{fontSize:11,color:"#fff",fontWeight:600}}>العائد على المشغّل <span style={{fontSize:9,color:K.dim2}}>÷ {NF(working)}</span></span>
+                    <span style={{fontSize:16,fontWeight:800,color:roiWork!=null?K.gold:K.dim2}}>{roiWork!=null?roiWork.toFixed(1)+"%":"—"}</span></div>
+                  <div style={{height:7,background:"rgba(255,255,255,.06)",borderRadius:4,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:Math.min(100,Math.max(0,roiWork||0))+"%",borderRadius:4,background:"linear-gradient(90deg,#a87520,#c8922a)"}}/></div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:"rgba(255,255,255,.06)",borderRadius:11,overflow:"hidden",marginBottom:14}}>
+                  <div style={{background:K.panel2,padding:"9px 8px",textAlign:"center"}}>
+                    <div style={{fontSize:10,color:"#fff",fontWeight:600,marginBottom:3}}>صافي الربح</div>
+                    <div style={{fontSize:14,fontWeight:700,color:K.gold}}>{NF(profit)}</div>
+                  </div>
+                  <div style={{background:K.panel2,padding:"9px 8px",textAlign:"center"}}>
+                    <div style={{fontSize:10,color:"#fff",fontWeight:600,marginBottom:3}}>القسط الشهري</div>
+                    <div style={{fontSize:14,fontWeight:700,color:K.gold}}>{NF(monthlyInst)}</div>
+                  </div>
+                </div>
+              </div>
+              <div>
+                {secLbl("التحصيل")}
+                <div style={{marginBottom:14}}>
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:5}}>
+                    <span style={{color:"#fff",fontWeight:600}}>محصّل من الإجمالي</span>
+                    <span style={{color:K.gold,fontWeight:700}}>{collectPct}%</span></div>
+                  <div style={{height:7,background:"rgba(255,255,255,.06)",borderRadius:4,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:Math.min(100,collectPct)+"%",borderRadius:4,background:"linear-gradient(90deg,#a87520,#c8922a)"}}/></div>
+                  {overCount>0 && <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
+                    <span style={{fontSize:10,fontWeight:700,padding:"5px 10px",borderRadius:9,background:K.panel2,
+                      border:"1px solid rgba(251,113,133,.4)",color:K.red}}>متعثر <b style={{fontSize:12}}>{overCount}</b> · {NF(overAmt)}</span></div>}
+                </div>
+              </div>
+              <div>
+                {secLbl("العقود")}
+                <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>
+                  {chip("نشط",activeC,"rgba(200,146,42,.3)",K.gold)}
                   {chip("منتهي",doneC)}
-                  {deferC>0 && chip("مؤجل",deferC,"rgba(192,132,252,.3)",K.violet)}
+                  {deferC>0 && chip("مؤجل",deferC,"rgba(200,146,42,.3)",K.gold)}
                   {chip("متوسط العقد",NF(avgC))}
-                </div></div>
-              <div style={{marginTop:15}}>
-                <button onClick={()=>{setStmtInv({__group:specialInvs,name:"حسابات خاصة (مجمّع)"});setStmtType("brief");}}
-                  style={{width:"100%",padding:"11px",borderRadius:10,border:"1px solid "+K.line,background:K.panel2,
-                  color:K.txt,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🖨️ كشف مجمّع للسبعة</button>
+                </div>
               </div>
+              <div style={{height:1,background:K.line,marginBottom:10}}/>
+              <button onClick={()=>{setStmtInv({__group:specialInvs,name:"حسابات خاصة (مجمّع)"});setStmtType("brief");}}
+                style={{width:"100%",padding:"11px",borderRadius:10,border:"1px solid rgba(200,146,42,.3)",background:K.panel2,
+                color:"#c8922a",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🖨️ كشف مجمّع للسبعة</button>
             </div>
           </div>
           {/* تفصيل كل فرصة */}
@@ -7152,7 +7172,7 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
         ctx += `  المستثمر: ${_invName(c)} | البضاعة: ${c.goods||"—"} ${c.qty||""} ${c.category||""}\n`;
         ctx += `  النقدي: ${_n(c.amount)} | الأقساط: ${_n(c.totalInst)} | القسط: ${_n(c.instAmt)}\n`;
         ctx += `  الواصل: ${_paid(c.id)} | المتبقي: ${_left(c)} | متأخر: ${_overdue(c)} شهر\n`;
-        ctx += `  تاريخ العقد: ${c.date||"—"} | أول قسط: ${c.firstInst||"—"} | النوع: ${c.contractType||"monthly"}\n`;
+        ctx += `  تاريخ العقد: ${c.date||"—"} | أول قسط: ${c.firstInst||"—"} | النوع: ${c.contractType||"monthly"} | طريقة السداد: ${c.payMethod||"نقدي"}${c.bankName?" ("+c.bankName+")":""}\n`;
         ctx += `  الكفيل: ${c.gName||"—"} | هويته: ${c.gId||"—"} | جواله: ${c.gPhone||"—"}\n`;
         if(c.note) ctx += `  ملاحظة: ${c.note}\n`;
         const ps=(payments||[]).filter(p=>p.contractId===c.id).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
@@ -7202,10 +7222,10 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
 
     if(sec.contracts){
       ctx += `\n═══ العقود النشطة (${activeC.length}) ═══\n`;
-      ctx += `رقم|العميل|الجوال|المستثمر|النقدي|الأقساط|القسط|الواصل|المتبقي|متأخر|يوم_الاستحقاق|البضاعة|تاريخ|أول_قسط|النوع\n`;
+      ctx += `رقم|العميل|الجوال|المستثمر|النقدي|الأقساط|القسط|الواصل|المتبقي|متأخر|يوم_الاستحقاق|البضاعة|تاريخ|أول_قسط|النوع|طريقة_السداد|البنك\n`;
       activeC.forEach(c=>{
         const dd = c.firstInst ? new Date(c.firstInst).getDate() : "";
-        ctx += `${c.num||""}|${c.client}|${c.cPhone||""}|${_invName(c)}|${_n(c.amount)}|${_n(c.totalInst)}|${_n(c.instAmt)}|${_paid(c.id)}|${_left(c)}|${_overdue(c)}|${dd}|${c.goods||""}|${c.date||""}|${c.firstInst||""}|${c.contractType||"monthly"}\n`;
+        ctx += `${c.num||""}|${c.client}|${c.cPhone||""}|${_invName(c)}|${_n(c.amount)}|${_n(c.totalInst)}|${_n(c.instAmt)}|${_paid(c.id)}|${_left(c)}|${_overdue(c)}|${dd}|${c.goods||""}|${c.date||""}|${c.firstInst||""}|${c.contractType||"monthly"}|${c.payMethod||"نقدي"}|${c.bankName||""}\n`;
       });
       ctx += `\nملاحظة: "يوم_الاستحقاق" = رقم اليوم من الشهر الذي يستحق فيه القسط (مستخرج من تاريخ أول قسط).\n`;
     }
