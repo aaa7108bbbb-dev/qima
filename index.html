@@ -6881,95 +6881,96 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
       {investors && <FundsPanel investors={investors} contracts={contracts} settings={settings} setInvestors={setInvestors} toast={toast}/>}
 
       {/* ═══ الدفتر الخاص (مخفي) ═══ */}
-      {(()=>{
-        const [pvtOpen,setPvtOpen] = useState(false);
-        const [pvtPin,setPvtPin] = useState("");
-        const [pvtUnlocked,setPvtUnlocked] = useState(false);
-        const [pvtErr,setPvtErr] = useState(false);
-        const [pvtNotes,setPvtNotes] = useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_pvt_notes")||"[]");}catch{return[];}});
-        const [pvtForm,setPvtForm] = useState({title:"",body:"",amount:""});
-        const PVT_PIN_KEY = "qimma_pvt_pin";
-        const savedPvtPin = (()=>{try{return localStorage.getItem(PVT_PIN_KEY)||"";}catch{return"";}})();
+      <PrivateNotes toast={toast}/>
+    </div>
+  );
+}
 
-        const hashP = async (p) => {
-          const enc = new TextEncoder().encode(p+"qima_pvt_salt");
-          const buf = await crypto.subtle.digest("SHA-256", enc);
-          return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
-        };
-        const checkPvt = async () => {
-          if(!savedPvtPin){
-            // أول مرة — تعيين رمز جديد
-            if(pvtPin.length<4){setPvtErr(true);return;}
-            const h = await hashP(pvtPin);
-            localStorage.setItem(PVT_PIN_KEY,h);
-            setPvtUnlocked(true); setPvtErr(false);
-            toast&&toast("✅ تم تعيين رمز الدفتر الخاص");
-          } else {
-            const h = await hashP(pvtPin);
-            if(h===savedPvtPin){setPvtUnlocked(true);setPvtErr(false);}
-            else{setPvtErr(true);setPvtPin("");}
-          }
-        };
-        const saveNotes = n => {setPvtNotes(n);localStorage.setItem("qimma_pvt_notes",JSON.stringify(n));};
-        const addNote = () => {
-          if(!pvtForm.title&&!pvtForm.body)return;
-          saveNotes([{id:Date.now(),date:todayLocal(),...pvtForm},...pvtNotes]);
-          setPvtForm({title:"",body:"",amount:""});
-        };
-        const delNote = id => {if(window.confirm("حذف؟"))saveNotes(pvtNotes.filter(n=>n.id!==id));};
+function PrivateNotes({toast}){
+  const [pvtOpen,setPvtOpen] = useState(false);
+  const [pvtPin,setPvtPin] = useState("");
+  const [pvtUnlocked,setPvtUnlocked] = useState(false);
+  const [pvtErr,setPvtErr] = useState(false);
+  const [pvtNotes,setPvtNotes] = useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_pvt_notes")||"[]");}catch{return[];}});
+  const [pvtForm,setPvtForm] = useState({title:"",body:"",amount:""});
+  const PVT_PIN_KEY = "qimma_pvt_pin";
+  const savedPvtPin = (()=>{try{return localStorage.getItem(PVT_PIN_KEY)||"";}catch{return"";}})();
 
-        return (
-          <div style={{marginTop:30}}>
-            <button onClick={()=>setPvtOpen(!pvtOpen)} style={{background:"transparent",border:"none",cursor:"pointer",padding:8,opacity:0.3}}>
-              <span style={{fontSize:11,color:"#94a3b8"}}>···</span>
-            </button>
-            {pvtOpen && !pvtUnlocked && (
-              <div style={{...styles.card,maxWidth:400,margin:"10px auto",textAlign:"center",padding:24}}>
-                <div style={{fontSize:28,marginBottom:8}}>🔐</div>
-                <div style={{fontSize:15,fontWeight:700,color:"#1f2937",marginBottom:4}}>الدفتر الخاص</div>
-                <div style={{fontSize:12,color:"#6b7280",marginBottom:16}}>{savedPvtPin?"أدخل الرمز":"عيّن رمز جديد (4 أرقام على الأقل)"}</div>
-                <input type="password" inputMode="numeric" maxLength={8} placeholder="الرمز السري"
-                  value={pvtPin} onChange={e=>{setPvtPin(e.target.value);setPvtErr(false);}}
-                  onKeyDown={e=>{if(e.key==="Enter")checkPvt();}}
-                  style={{width:"100%",padding:12,fontSize:20,textAlign:"center",border:"2px solid "+(pvtErr?"#dc2626":"#d1d5db"),borderRadius:10,fontWeight:800,letterSpacing:6,fontFamily:"monospace",outline:"none",boxSizing:"border-box",marginBottom:10}}/>
-                {pvtErr && <div style={{color:"#dc2626",fontSize:13,fontWeight:700,marginBottom:8}}>رمز خاطئ</div>}
-                <button onClick={checkPvt} style={{...styles.btn("#1a1a2e","#fff"),width:"100%",padding:12,fontSize:15}}>فتح</button>
-              </div>
-            )}
-            {pvtOpen && pvtUnlocked && (
-              <div style={{...styles.card,maxWidth:600,margin:"10px auto",padding:20}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-                  <div style={{fontSize:17,fontWeight:800,color:"#1a1a2e"}}>🔐 الدفتر الخاص</div>
-                  <button onClick={()=>{setPvtUnlocked(false);setPvtPin("");setPvtOpen(false);}} style={{padding:"6px 14px",borderRadius:8,border:"1px solid #e2e8f0",background:"#fff",color:"#6b7280",fontSize:12,cursor:"pointer"}}>قفل</button>
-                </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
-                  <input placeholder="العنوان" value={pvtForm.title} onChange={e=>setPvtForm(f=>({...f,title:e.target.value}))}
-                    style={{...styles.input,gridColumn:"1/-1"}}/>
-                  <textarea placeholder="التفاصيل..." value={pvtForm.body} onChange={e=>setPvtForm(f=>({...f,body:e.target.value}))}
-                    style={{...styles.input,gridColumn:"1/-1",minHeight:60,resize:"vertical"}}/>
-                  <input placeholder="المبلغ (اختياري)" type="number" value={pvtForm.amount} onChange={e=>setPvtForm(f=>({...f,amount:e.target.value}))}
-                    style={styles.input}/>
-                  <button onClick={addNote} style={styles.btn(C.gold)}>➕ إضافة</button>
-                </div>
-                {pvtNotes.length===0 && <div style={{textAlign:"center",color:"#94a3b8",padding:20,fontSize:14}}>لا توجد ملاحظات</div>}
-                {pvtNotes.map(n=>(
-                  <div key={n.id} style={{background:"#f8fafc",borderRadius:10,padding:12,marginBottom:8,border:"1px solid #e2e8f0"}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                      <span style={{fontWeight:700,fontSize:14,color:"#1f2937"}}>{n.title||"بدون عنوان"}</span>
-                      <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                        {n.amount && <span style={{fontWeight:800,color:C.gold,fontSize:14}}>{SAR(n.amount)}</span>}
-                        <span style={{fontSize:11,color:"#94a3b8"}}>{n.date}</span>
-                        <button onClick={()=>delNote(n.id)} style={{background:"none",border:"none",color:"#ef4444",fontSize:14,cursor:"pointer"}}>✕</button>
-                      </div>
-                    </div>
-                    {n.body && <div style={{fontSize:13,color:"#4a5568",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{n.body}</div>}
-                  </div>
-                ))}
-              </div>
-            )}
+  const hashP = async (p) => {
+    const enc = new TextEncoder().encode(p+"qima_pvt_salt");
+    const buf = await crypto.subtle.digest("SHA-256", enc);
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+  };
+  const checkPvt = async () => {
+    if(!savedPvtPin){
+      if(pvtPin.length<4){setPvtErr(true);return;}
+      const h = await hashP(pvtPin);
+      localStorage.setItem(PVT_PIN_KEY,h);
+      setPvtUnlocked(true); setPvtErr(false);
+      toast&&toast("✅ تم تعيين رمز الدفتر الخاص");
+    } else {
+      const h = await hashP(pvtPin);
+      if(h===savedPvtPin){setPvtUnlocked(true);setPvtErr(false);}
+      else{setPvtErr(true);setPvtPin("");}
+    }
+  };
+  const saveNotes = n => {setPvtNotes(n);localStorage.setItem("qimma_pvt_notes",JSON.stringify(n));};
+  const addNote = () => {
+    if(!pvtForm.title&&!pvtForm.body)return;
+    saveNotes([{id:Date.now(),date:todayLocal(),...pvtForm},...pvtNotes]);
+    setPvtForm({title:"",body:"",amount:""});
+  };
+  const delNote = id => {if(window.confirm("حذف؟"))saveNotes(pvtNotes.filter(n=>n.id!==id));};
+
+  return (
+    <div style={{marginTop:30}}>
+      <button onClick={()=>setPvtOpen(!pvtOpen)} style={{background:"transparent",border:"none",cursor:"pointer",padding:8,opacity:0.3}}>
+        <span style={{fontSize:11,color:"#94a3b8"}}>···</span>
+      </button>
+      {pvtOpen && !pvtUnlocked && (
+        <div style={{background:"#fff",borderRadius:14,boxShadow:"0 2px 12px rgba(0,0,0,.08)",maxWidth:400,margin:"10px auto",textAlign:"center",padding:24}}>
+          <div style={{fontSize:28,marginBottom:8}}>🔐</div>
+          <div style={{fontSize:15,fontWeight:700,color:"#1f2937",marginBottom:4}}>الدفتر الخاص</div>
+          <div style={{fontSize:12,color:"#6b7280",marginBottom:16}}>{savedPvtPin?"أدخل الرمز":"عيّن رمز جديد (4 أرقام على الأقل)"}</div>
+          <input type="password" inputMode="numeric" maxLength={8} placeholder="الرمز السري"
+            value={pvtPin} onChange={e=>{setPvtPin(e.target.value);setPvtErr(false);}}
+            onKeyDown={e=>{if(e.key==="Enter")checkPvt();}}
+            style={{width:"100%",padding:12,fontSize:20,textAlign:"center",border:"2px solid "+(pvtErr?"#dc2626":"#d1d5db"),borderRadius:10,fontWeight:800,letterSpacing:6,fontFamily:"monospace",outline:"none",boxSizing:"border-box",marginBottom:10}}/>
+          {pvtErr && <div style={{color:"#dc2626",fontSize:13,fontWeight:700,marginBottom:8}}>رمز خاطئ</div>}
+          <button onClick={checkPvt} style={{width:"100%",padding:12,fontSize:15,fontWeight:800,background:"#1a1a2e",color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontFamily:"inherit"}}>فتح</button>
+        </div>
+      )}
+      {pvtOpen && pvtUnlocked && (
+        <div style={{background:"#fff",borderRadius:14,boxShadow:"0 2px 12px rgba(0,0,0,.08)",maxWidth:600,margin:"10px auto",padding:20}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+            <div style={{fontSize:17,fontWeight:800,color:"#1a1a2e"}}>🔐 الدفتر الخاص</div>
+            <button onClick={()=>{setPvtUnlocked(false);setPvtPin("");setPvtOpen(false);}} style={{padding:"6px 14px",borderRadius:8,border:"1px solid #e2e8f0",background:"#fff",color:"#6b7280",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>قفل</button>
           </div>
-        );
-      })()}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+            <input placeholder="العنوان" value={pvtForm.title} onChange={e=>setPvtForm(f=>({...f,title:e.target.value}))}
+              style={{gridColumn:"1/-1",padding:"10px 14px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:15,fontFamily:"inherit",outline:"none"}}/>
+            <textarea placeholder="التفاصيل..." value={pvtForm.body} onChange={e=>setPvtForm(f=>({...f,body:e.target.value}))}
+              style={{gridColumn:"1/-1",padding:"10px 14px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:15,fontFamily:"inherit",outline:"none",minHeight:60,resize:"vertical"}}/>
+            <input placeholder="المبلغ (اختياري)" type="number" value={pvtForm.amount} onChange={e=>setPvtForm(f=>({...f,amount:e.target.value}))}
+              style={{padding:"10px 14px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:15,fontFamily:"inherit",outline:"none"}}/>
+            <button onClick={addNote} style={{padding:"10px",borderRadius:10,border:"none",background:"#c8922a",color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>➕ إضافة</button>
+          </div>
+          {pvtNotes.length===0 && <div style={{textAlign:"center",color:"#94a3b8",padding:20,fontSize:14}}>لا توجد ملاحظات</div>}
+          {pvtNotes.map(n=>(
+            <div key={n.id} style={{background:"#f8fafc",borderRadius:10,padding:12,marginBottom:8,border:"1px solid #e2e8f0"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                <span style={{fontWeight:700,fontSize:14,color:"#1f2937"}}>{n.title||"بدون عنوان"}</span>
+                <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                  {n.amount && <span style={{fontWeight:800,color:"#c8922a",fontSize:14}}>{Math.round(+(n.amount||0)).toLocaleString("en-US")}</span>}
+                  <span style={{fontSize:11,color:"#94a3b8"}}>{n.date}</span>
+                  <button onClick={()=>delNote(n.id)} style={{background:"none",border:"none",color:"#ef4444",fontSize:14,cursor:"pointer"}}>✕</button>
+                </div>
+              </div>
+              {n.body && <div style={{fontSize:13,color:"#4a5568",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{n.body}</div>}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
