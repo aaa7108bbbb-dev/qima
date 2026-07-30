@@ -2883,28 +2883,41 @@ const TX_TYPES = [
 function DeductionsSheet({contracts, investors, payments}){
   const [checked,setChecked]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_deduct_check")||"{}");}catch{return{};}});
   const toggle=id=>{const n={...checked,[id]:!checked[id]};setChecked(n);localStorage.setItem("qimma_deduct_check",JSON.stringify(n));};
-  // كل العقود الاستقطاع (غير محذوفة)
-  const rows=contracts.filter(c=>!c.deleted && c.payType==="deduction").map(c=>{
+  const [payF,setPayF]=useState("استقطاع"); // فلتر نوع السداد
+  const [dayF,setDayF]=useState(""); // فلتر يوم الاستحقاق
+  const getDueDay=c=>{if(!c.firstInst)return""; return String(new Date(c.firstInst).getDate());};
+  // كل العقود حسب الفلتر
+  const rows=contracts.filter(c=>{
+    if(c.deleted) return false;
+    const pm=c.payMethod||"نقدي";
+    const pt=c.payType;
+    if(payF==="استقطاع" && pt!=="deduction") return false;
+    if(payF && payF!=="استقطاع" && payF!=="الكل" && pm!==payF) return false;
+    if(dayF && getDueDay(c)!==dayF) return false;
+    return true;
+  }).map(c=>{
     const inv=investors.find(i=>String(i.id)===String(c.investorId));
     const paid=_getPaid(payments,c.id);
     const left=Math.max(0,(c.totalInst||0)-paid);
-    return {...c, invName:inv?invLabel(inv):"—", paid, left};
+    return {...c, invName:inv?invLabel(inv):"—", paid, left, dueDay:getDueDay(c)};
   });
   const totalInst=rows.reduce((s,c)=>s+(c.instAmt||0),0);
+  const payLabel=payF==="الكل"?"جميع الأنواع":payF;
+  const titleLabel=payF==="استقطاع"?"كشف حسابات الاستقطاع البنكي":"كشف "+payLabel+(dayF?" — يوم "+dayF:"");
 
   const printSheet=()=>{
     const fmt=n=>Math.round(+(n||0)).toLocaleString("en-US");
-    let body=rows.map((c,i)=>`<tr><td>${i+1}</td><td>${c.client}</td><td>${c.cPhone||"—"}</td><td>${c.num||"—"}</td><td>${c.bankAccount||"—"}</td><td>${c.invName}</td><td class="amt">${fmt(c.instAmt)}</td><td class="amt">${fmt(c.left)}</td></tr>`).join("");
+    let body=rows.map((c,i)=>`<tr><td>${i+1}</td><td>${c.client}</td><td>${c.cPhone||"—"}</td><td>${c.num||"—"}</td><td>${c.bankAccount||"—"}</td><td>${c.invName}</td><td>${c.dueDay||"—"}</td><td class="amt">${fmt(c.instAmt)}</td><td class="amt">${fmt(c.left)}</td></tr>`).join("");
     const win=window.open("","_blank");
     win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>كشف الاستقطاعات</title>
     <style>body{font-family:Arial;padding:22px;color:#000}.header{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:14px}.org{font-size:17px;font-weight:900}.sub{font-size:12px}.title{text-align:center;font-size:19px;font-weight:900;border:2px solid #000;padding:10px;margin-bottom:14px}table{width:100%;border-collapse:collapse;font-size:14px;border:2px solid #000}th,td{border:1px solid #000;padding:7px 10px;text-align:right;white-space:nowrap}th{font-weight:900;border-bottom:2px solid #000;font-size:13px}td.amt{font-weight:bold;text-align:left}.foot{text-align:center;color:#444;font-size:11px;margin-top:16px;border-top:1px solid #000;padding-top:8px}@media print{button{display:none}}</style>
     </head><body>
     <div class="header"><div><div class="org">مؤسسة قمة الفرصة التجارية</div><div class="sub">بريدة - شارع الثلاثين</div><div class="sub">ج: 0555171283  ت: 0163839323</div></div>
     <div style="text-align:left"><div class="sub">كشف الاستقطاعات</div><div class="sub">التاريخ: ${(()=>{const d=new Date();return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0");})()}</div></div></div>
-    <div class="title">كشف حسابات الاستقطاع البنكي</div>
-    <table style="width:auto"><thead><tr><th>#</th><th>اسم الزبون</th><th>رقم الجوال</th><th>رقم العقد</th><th>رقم الحساب</th><th>المستثمر</th><th>القسط</th><th>المتبقي</th></tr></thead>
-    <tbody>${body||'<tr><td colspan="8" style="text-align:center;color:#666">لا يوجد زبائن استقطاع</td></tr>'}
-    <tr style="font-weight:900;border-top:2px solid #000"><td colspan="6">الإجمالي</td><td class="amt">${fmt(totalInst)}</td><td class="amt">${fmt(rows.reduce((s,c)=>s+(c.left||0),0))}</td></tr></tbody></table>
+    <div class="title">${titleLabel}</div>
+    <table style="width:auto"><thead><tr><th>#</th><th>اسم الزبون</th><th>رقم الجوال</th><th>رقم العقد</th><th>رقم الحساب</th><th>المستثمر</th><th>يوم</th><th>القسط</th><th>المتبقي</th></tr></thead>
+    <tbody>${body||'<tr><td colspan="9" style="text-align:center;color:#666">لا يوجد بيانات</td></tr>'}
+    <tr style="font-weight:900;border-top:2px solid #000"><td colspan="7">الإجمالي</td><td class="amt">${fmt(totalInst)}</td><td class="amt">${fmt(rows.reduce((s,c)=>s+(c.left||0),0))}</td></tr></tbody></table>
     <div class="foot">طُبع بتاريخ ${new Date().toLocaleString("en-US")}</div>
     <button onclick="window.print()" style="display:block;margin:20px auto;padding:10px 30px;font-size:16px;background:#333;color:#fff;border:none;border-radius:8px;cursor:pointer">🖨️ طباعة</button>
     </body></html>`);
@@ -2913,21 +2926,45 @@ function DeductionsSheet({contracts, investors, payments}){
 
   return (
     <div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:10}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:10}}>
         <div style={{fontSize:18,fontWeight:800,display:"flex",alignItems:"center",gap:8}}>
           <svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg>
-          كشف الاستقطاعات ({rows.length})</div>
+          {payLabel} ({rows.length})</div>
         <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px",display:"inline-flex",alignItems:"center",gap:6}} onClick={printSheet}>
           <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9V4h10v5M6 18H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1M7 15h10v5H7Z"/></g></svg>
           طباعة الكشف</button>
       </div>
-      <div style={{fontSize:14,color:"#1f2937",marginBottom:12}}>أشّر على الزبون اللي نزل استقطاعه بعد مطابقته مع كشف البنك. (كل الزبائن من جميع المستثمرين)</div>
+      {/* فلتر نوع السداد */}
+      <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
+        {["استقطاع","شيكات","نقدي","تحويل","صرافة","الكل"].map(f=>(
+          <button key={f} onClick={()=>setPayF(f)}
+            style={{padding:"6px 14px",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
+              border:payF===f?"2px solid #c8922a":"1px solid #e2e8f0",
+              background:payF===f?"#fffbf0":"#fff",
+              color:payF===f?"#c8922a":"#64748b"}}>{f}</button>
+        ))}
+      </div>
+      {/* فلتر يوم الاستحقاق */}
+      {(()=>{
+        const allDays = [...new Set(contracts.filter(c=>!c.deleted).map(c=>getDueDay(c)).filter(Boolean))].sort((a,b)=>parseInt(a)-parseInt(b));
+        return (
+        <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:14,flexWrap:"wrap"}}>
+          <span style={{fontSize:13,fontWeight:700,color:"#4a5568"}}>يوم الاستحقاق:</span>
+          <select value={dayF} onChange={e=>setDayF(e.target.value)}
+            style={{padding:"8px 14px",borderRadius:8,border:dayF?"2px solid #c8922a":"1px solid #e2e8f0",fontSize:15,fontWeight:700,
+              fontFamily:"IBM Plex Sans Arabic,Arial",cursor:"pointer",background:dayF?"#fffbf0":"#fff",color:dayF?"#c8922a":"#4a5568",outline:"none"}}>
+            <option value="">كل الأيام</option>
+            {allDays.map(d=><option key={d} value={d}>يوم {d}</option>)}
+          </select>
+          {dayF && <span style={{fontSize:12,color:"#c8922a",fontWeight:700}}>{rows.length} عقد</span>}
+        </div>);
+      })()}
       {rows.length===0 ? (
         <div style={{...styles.card,textAlign:"center",color:"#1f2937",padding:30}}>لا يوجد زبائن استقطاع</div>
       ) : (
         <div style={{overflowX:"auto",maxHeight:"75vh",overflowY:"auto"}}>
           <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14}}>
-            <thead><tr>{["✓","اسم الزبون","رقم الجوال","رقم العقد","رقم الحساب","المستثمر","القسط","المتبقي"].map((h,hi)=>{
+            <thead><tr>{["✓","اسم الزبون","رقم الجوال","رقم العقد","رقم الحساب","المستثمر","يوم","القسط","المتبقي"].map((h,hi)=>{
               const isName = h==="اسم الزبون";
               return <th key={h} style={{...styles.th,whiteSpace:"nowrap",position:"sticky",top:0,zIndex:isName?12:10,...(isName?{right:0,zIndex:12}:{})}}>{h}</th>;
             })}</tr></thead>
@@ -2940,12 +2977,13 @@ function DeductionsSheet({contracts, investors, payments}){
                   <td style={{...styles.td,textAlign:"center"}}>{c.num||"—"}</td>
                   <td style={{...styles.td,fontFamily:"monospace",whiteSpace:"nowrap"}}>{c.bankAccount||"—"}</td>
                   <td style={{...styles.td,whiteSpace:"nowrap"}}>{c.invName}</td>
+                  <td style={{...styles.td,textAlign:"center",fontWeight:700,color:C.gold}}>{c.dueDay||"—"}</td>
                   <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}>{SAR(c.instAmt||0)}</td>
                   <td style={{...styles.td,color:C.red,whiteSpace:"nowrap"}}>{SAR(c.left)}</td>
                 </tr>
               ))}
             </tbody>
-            <tfoot><tr style={{background:"#fffbf0",fontWeight:800}}><td colSpan={6} style={styles.td}>الإجمالي</td><td style={styles.td}>{SAR(totalInst)}</td><td style={{...styles.td,color:C.red}}>{SAR(rows.reduce((s,c)=>s+(c.left||0),0))}</td></tr></tfoot>
+            <tfoot><tr style={{background:"#fffbf0",fontWeight:800}}><td colSpan={7} style={styles.td}>الإجمالي</td><td style={styles.td}>{SAR(totalInst)}</td><td style={{...styles.td,color:C.red}}>{SAR(rows.reduce((s,c)=>s+(c.left||0),0))}</td></tr></tfoot>
           </table>
         </div>
       )}
