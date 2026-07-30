@@ -246,7 +246,52 @@
     [data-inv-card] [data-inv-total] { font-size: 28px !important; }
     [data-inv-card] [data-inv-sub] { font-size: 15px !important; }
   }
+  /* أعمدة قابلة للتحجيم */
+  th.resizable { position: relative; }
+  th.resizable .col-resizer {
+    position: absolute; top: 0; left: 0; width: 5px; height: 100%;
+    cursor: col-resize; background: transparent; z-index: 10;
+    transition: background 0.2s;
+  }
+  th.resizable .col-resizer:hover, th.resizable .col-resizer.active {
+    background: #c8922a;
+  }
 </style>
+<script>
+// تحجيم أعمدة الجداول
+document.addEventListener('mousedown', function(e) {
+  if (!e.target.classList.contains('col-resizer')) return;
+  const th = e.target.parentElement;
+  const table = th.closest('table');
+  if (!table) return;
+  table.style.tableLayout = 'fixed';
+  const startX = e.clientX;
+  const startW = th.offsetWidth;
+  e.target.classList.add('active');
+  const onMove = function(ev) {
+    const dir = document.documentElement.dir === 'rtl' ? -1 : 1;
+    const diff = (ev.clientX - startX) * dir;
+    th.style.width = Math.max(40, startW + diff) + 'px';
+  };
+  const onUp = function() {
+    e.target.classList.remove('active');
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+});
+// إضافة resizer لكل th عند تحميل الصفحة وعند تغيير DOM
+function addResizers() {
+  document.querySelectorAll('table th:not(.resizable)').forEach(function(th) {
+    th.classList.add('resizable');
+    var div = document.createElement('div');
+    div.className = 'col-resizer';
+    th.appendChild(div);
+  });
+}
+setInterval(addResizers, 2000);
+</script>
 <script>
 // شاشة الدخول الآن عبر Firebase (LoginGate) — الشاشة القديمة أُزيلت
 </script>
@@ -6924,8 +6969,8 @@ function PrivateNotes({toast}){
 
   return (
     <div style={{marginTop:30}}>
-      <button onClick={()=>setPvtOpen(!pvtOpen)} style={{background:"transparent",border:"none",cursor:"pointer",padding:8,opacity:0.3}}>
-        <span style={{fontSize:11,color:"#94a3b8"}}>···</span>
+      <button onClick={()=>setPvtOpen(!pvtOpen)} style={{background:"transparent",border:"none",cursor:"pointer",padding:12,opacity:0.4,marginTop:20}}>
+        <span style={{fontSize:13,color:"#94a3b8",letterSpacing:4}}>· · ·</span>
       </button>
       {pvtOpen && !pvtUnlocked && (
         <div style={{background:"#fff",borderRadius:14,boxShadow:"0 2px 12px rgba(0,0,0,.08)",maxWidth:400,margin:"10px auto",textAlign:"center",padding:24}}>
