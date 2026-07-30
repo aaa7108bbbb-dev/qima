@@ -6936,8 +6936,9 @@ function PrivateNotes({toast}){
   const [pvtPin,setPvtPin] = useState("");
   const [pvtUnlocked,setPvtUnlocked] = useState(false);
   const [pvtErr,setPvtErr] = useState(false);
-  const [pvtNotes,setPvtNotes] = useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_pvt_notes")||"[]");}catch{return[];}});
-  const [pvtForm,setPvtForm] = useState({title:"",body:"",amount:""});
+  const [loans,setLoans] = useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_pvt_loans")||"[]");}catch{return[];}});
+  const [form,setForm] = useState({name:"",amount:""});
+  const [payForm,setPayForm] = useState({id:null,amount:"",note:""});
   const PVT_PIN_KEY = "qimma_pvt_pin";
   const savedPvtPin = (()=>{try{return localStorage.getItem(PVT_PIN_KEY)||"";}catch{return"";}})();
 
@@ -6951,7 +6952,7 @@ function PrivateNotes({toast}){
       if(pvtPin.length<4){setPvtErr(true);return;}
       const h = await hashP(pvtPin);
       localStorage.setItem(PVT_PIN_KEY,h);
-      setPvtUnlocked(true); setPvtErr(false);
+      setPvtUnlocked(true);setPvtErr(false);
       toast&&toast("✅ تم تعيين رمز الدفتر الخاص");
     } else {
       const h = await hashP(pvtPin);
@@ -6959,13 +6960,25 @@ function PrivateNotes({toast}){
       else{setPvtErr(true);setPvtPin("");}
     }
   };
-  const saveNotes = n => {setPvtNotes(n);localStorage.setItem("qimma_pvt_notes",JSON.stringify(n));};
-  const addNote = () => {
-    if(!pvtForm.title&&!pvtForm.body)return;
-    saveNotes([{id:Date.now(),date:todayLocal(),...pvtForm},...pvtNotes]);
-    setPvtForm({title:"",body:"",amount:""});
+  const save = d => {setLoans(d);localStorage.setItem("qimma_pvt_loans",JSON.stringify(d));};
+  const NF = n => Math.round(+(n||0)).toLocaleString("en-US");
+  const addLoan = () => {
+    if(!form.name||!form.amount||parseFloat(form.amount)<=0)return;
+    save([...loans,{id:Date.now(),name:form.name,amount:parseFloat(form.amount),date:todayLocal(),payments:[],note:""}]);
+    setForm({name:"",amount:""});
   };
-  const delNote = id => {if(window.confirm("حذف؟"))saveNotes(pvtNotes.filter(n=>n.id!==id));};
+  const addPayment = () => {
+    if(!payForm.id||!payForm.amount||parseFloat(payForm.amount)<=0)return;
+    save(loans.map(l=>l.id===payForm.id?{...l,payments:[...l.payments,{id:Date.now(),amount:parseFloat(payForm.amount),date:todayLocal(),note:payForm.note}]}:l));
+    setPayForm({id:null,amount:"",note:""});
+  };
+  const delLoan = id => {if(window.confirm("حذف السلفة بالكامل؟"))save(loans.filter(l=>l.id!==id));};
+  const delPay = (lid,pid) => {if(window.confirm("حذف الدفعة؟"))save(loans.map(l=>l.id===lid?{...l,payments:l.payments.filter(p=>p.id!==pid)}:l));};
+  const totalGiven = loans.reduce((s,l)=>s+l.amount,0);
+  const totalPaid = loans.reduce((s,l)=>s+l.payments.reduce((s2,p)=>s2+p.amount,0),0);
+  const totalLeft = totalGiven - totalPaid;
+
+  const iS = {padding:"10px 14px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:15,fontFamily:"inherit",outline:"none",boxSizing:"border-box"};
 
   return (
     <div style={{marginTop:30}}>
@@ -6986,34 +6999,98 @@ function PrivateNotes({toast}){
         </div>
       )}
       {pvtOpen && pvtUnlocked && (
-        <div style={{background:"#fff",borderRadius:14,boxShadow:"0 2px 12px rgba(0,0,0,.08)",maxWidth:600,margin:"10px auto",padding:20}}>
+        <div style={{background:"#fff",borderRadius:14,boxShadow:"0 2px 12px rgba(0,0,0,.08)",maxWidth:700,margin:"10px auto",padding:20}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
             <div style={{fontSize:17,fontWeight:800,color:"#1a1a2e"}}>🔐 الدفتر الخاص</div>
             <button onClick={()=>{setPvtUnlocked(false);setPvtPin("");setPvtOpen(false);}} style={{padding:"6px 14px",borderRadius:8,border:"1px solid #e2e8f0",background:"#fff",color:"#6b7280",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>قفل</button>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
-            <input placeholder="العنوان" value={pvtForm.title} onChange={e=>setPvtForm(f=>({...f,title:e.target.value}))}
-              style={{gridColumn:"1/-1",padding:"10px 14px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:15,fontFamily:"inherit",outline:"none"}}/>
-            <textarea placeholder="التفاصيل..." value={pvtForm.body} onChange={e=>setPvtForm(f=>({...f,body:e.target.value}))}
-              style={{gridColumn:"1/-1",padding:"10px 14px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:15,fontFamily:"inherit",outline:"none",minHeight:60,resize:"vertical"}}/>
-            <input placeholder="المبلغ (اختياري)" type="number" value={pvtForm.amount} onChange={e=>setPvtForm(f=>({...f,amount:e.target.value}))}
-              style={{padding:"10px 14px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:15,fontFamily:"inherit",outline:"none"}}/>
-            <button onClick={addNote} style={{padding:"10px",borderRadius:10,border:"none",background:"#c8922a",color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>➕ إضافة</button>
-          </div>
-          {pvtNotes.length===0 && <div style={{textAlign:"center",color:"#94a3b8",padding:20,fontSize:14}}>لا توجد ملاحظات</div>}
-          {pvtNotes.map(n=>(
-            <div key={n.id} style={{background:"#f8fafc",borderRadius:10,padding:12,marginBottom:8,border:"1px solid #e2e8f0"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                <span style={{fontWeight:700,fontSize:14,color:"#1f2937"}}>{n.title||"بدون عنوان"}</span>
-                <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                  {n.amount && <span style={{fontWeight:800,color:"#c8922a",fontSize:14}}>{Math.round(+(n.amount||0)).toLocaleString("en-US")}</span>}
-                  <span style={{fontSize:11,color:"#94a3b8"}}>{n.date}</span>
-                  <button onClick={()=>delNote(n.id)} style={{background:"none",border:"none",color:"#ef4444",fontSize:14,cursor:"pointer"}}>✕</button>
-                </div>
-              </div>
-              {n.body && <div style={{fontSize:13,color:"#4a5568",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{n.body}</div>}
+
+          {/* الإجماليات */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1,background:"#e2e8f0",borderRadius:11,overflow:"hidden",marginBottom:16}}>
+            <div style={{background:"#f0fdf4",padding:"10px 8px",textAlign:"center"}}>
+              <div style={{fontSize:11,color:"#16a34a",fontWeight:600}}>إجمالي السلف</div>
+              <div style={{fontSize:16,fontWeight:800,color:"#16a34a"}}>{NF(totalGiven)}</div>
             </div>
-          ))}
+            <div style={{background:"#eff6ff",padding:"10px 8px",textAlign:"center"}}>
+              <div style={{fontSize:11,color:"#2563eb",fontWeight:600}}>المسدد</div>
+              <div style={{fontSize:16,fontWeight:800,color:"#2563eb"}}>{NF(totalPaid)}</div>
+            </div>
+            <div style={{background:"#fef2f2",padding:"10px 8px",textAlign:"center"}}>
+              <div style={{fontSize:11,color:"#dc2626",fontWeight:600}}>المتبقي</div>
+              <div style={{fontSize:16,fontWeight:800,color:"#dc2626"}}>{NF(totalLeft)}</div>
+            </div>
+          </div>
+
+          {/* إضافة سلفة */}
+          <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+            <input placeholder="اسم الشخص" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}
+              style={{...iS,flex:2,minWidth:140}}/>
+            <input placeholder="المبلغ" type="number" value={form.amount} onChange={e=>setForm(f=>({...f,amount:e.target.value}))}
+              onKeyDown={e=>{if(e.key==="Enter")addLoan();}}
+              style={{...iS,flex:1,minWidth:100}}/>
+            <button onClick={addLoan} style={{padding:"10px 18px",borderRadius:10,border:"none",background:"#c8922a",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>➕ إضافة</button>
+          </div>
+
+          {/* قائمة السلف */}
+          {loans.length===0 && <div style={{textAlign:"center",color:"#94a3b8",padding:24,fontSize:14}}>لا توجد سلف مسجلة</div>}
+          {loans.map(l=>{
+            const paid = l.payments.reduce((s,p)=>s+p.amount,0);
+            const left = l.amount - paid;
+            const done = left <= 0;
+            return (
+              <div key={l.id} style={{background:done?"#f0fdf4":"#f8fafc",borderRadius:12,padding:14,marginBottom:10,border:"1px solid "+(done?"#86efac":"#e2e8f0")}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                  <div>
+                    <span style={{fontWeight:800,fontSize:16,color:"#1f2937"}}>{l.name}</span>
+                    {done && <span style={{marginRight:8,fontSize:11,color:"#16a34a",fontWeight:700,background:"#dcfce7",padding:"2px 8px",borderRadius:6}}>✓ مسدد</span>}
+                  </div>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <span style={{fontSize:11,color:"#94a3b8"}}>{l.date}</span>
+                    <button onClick={()=>delLoan(l.id)} style={{background:"none",border:"none",color:"#ef4444",fontSize:14,cursor:"pointer"}}>✕</button>
+                  </div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:8}}>
+                  <div><div style={{fontSize:10,color:"#6b7280"}}>السلفة</div><div style={{fontSize:15,fontWeight:700,color:"#1f2937"}}>{NF(l.amount)}</div></div>
+                  <div><div style={{fontSize:10,color:"#6b7280"}}>المسدد</div><div style={{fontSize:15,fontWeight:700,color:"#2563eb"}}>{NF(paid)}</div></div>
+                  <div><div style={{fontSize:10,color:"#6b7280"}}>المتبقي</div><div style={{fontSize:15,fontWeight:700,color:left>0?"#dc2626":"#16a34a"}}>{NF(left)}</div></div>
+                </div>
+                {/* شريط التقدم */}
+                <div style={{height:6,background:"#e2e8f0",borderRadius:4,overflow:"hidden",marginBottom:8}}>
+                  <div style={{height:"100%",width:Math.min(100,l.amount>0?(paid/l.amount*100):0)+"%",borderRadius:4,background:done?"#16a34a":"#c8922a"}}/>
+                </div>
+                {/* الدفعات */}
+                {l.payments.length>0 && (
+                  <div style={{marginBottom:8}}>
+                    {l.payments.map((p,pi)=>(
+                      <div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,padding:"4px 0",borderBottom:"1px solid #f1f5f9"}}>
+                        <span style={{color:"#6b7280"}}>{pi+1}. {p.date}{p.note?" — "+p.note:""}</span>
+                        <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                          <span style={{fontWeight:700,color:"#2563eb"}}>{NF(p.amount)}</span>
+                          <button onClick={()=>delPay(l.id,p.id)} style={{background:"none",border:"none",color:"#ef4444",fontSize:11,cursor:"pointer"}}>✕</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* إضافة دفعة */}
+                {!done && (
+                  payForm.id===l.id ? (
+                    <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                      <input placeholder="المبلغ" type="number" value={payForm.amount} onChange={e=>setPayForm(f=>({...f,amount:e.target.value}))}
+                        onKeyDown={e=>{if(e.key==="Enter")addPayment();}}
+                        style={{...iS,flex:1,minWidth:80,fontSize:14,padding:"8px 10px"}}/>
+                      <input placeholder="ملاحظة (اختياري)" value={payForm.note} onChange={e=>setPayForm(f=>({...f,note:e.target.value}))}
+                        style={{...iS,flex:2,minWidth:100,fontSize:14,padding:"8px 10px"}}/>
+                      <button onClick={addPayment} style={{padding:"8px 14px",borderRadius:8,border:"none",background:"#2563eb",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>سداد</button>
+                      <button onClick={()=>setPayForm({id:null,amount:"",note:""})} style={{padding:"8px 10px",borderRadius:8,border:"1px solid #e2e8f0",background:"#fff",color:"#6b7280",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>✕</button>
+                    </div>
+                  ) : (
+                    <button onClick={()=>setPayForm({id:l.id,amount:"",note:""})} style={{padding:"6px 14px",borderRadius:8,border:"1px solid #e2e8f0",background:"#fff",color:"#2563eb",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>💰 تسديد دفعة</button>
+                  )
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
