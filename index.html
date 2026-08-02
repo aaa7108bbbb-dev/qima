@@ -10109,19 +10109,15 @@ function App() {
 
   return (
     <div style={styles.body}>
-      <div className="noprint" style={styles.header}>
-        {/* يمين: الشعار */}
-        <div style={{display:"flex",alignItems:"center",flexShrink:0}}>
-          <img src={window._QIMA_LOGO} alt="شعار قمة الفرصة" style={{height:44,width:"auto",objectFit:"contain"}}/>
-        </div>
+      <div className="noprint" style={{...styles.header,position:"sticky",top:0,zIndex:101}}>
 
         {/* الوسط: اسم المؤسسة بخط فخم */}
         <div style={{flex:1,textAlign:"center",padding:"0 8px",minWidth:0}}>
-          <div style={{fontWeight:800,fontSize:"clamp(15px,4.4vw,22px)",letterSpacing:"0.5px",
-            color:"#fff",lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+          <div style={{fontWeight:900,fontSize:"clamp(18px,4.4vw,28px)",letterSpacing:"0.5px",
+            color:"#c8922a",lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
             مؤسسة قمة الفرصة التجارية
           </div>
-          <div style={{width:"clamp(40px,12vw,70px)",height:2.5,background:"linear-gradient(90deg,transparent,#c8922a,transparent)",
+          <div style={{width:"clamp(50px,16vw,100px)",height:2.5,background:"linear-gradient(90deg,transparent,#c8922a,transparent)",
             margin:"5px auto 0",borderRadius:2}}/>
         </div>
 
@@ -10145,7 +10141,7 @@ function App() {
         </div>
       )}
 
-      <nav className="noprint" style={{...styles.nav,position:"sticky",top:0,zIndex:100}}>
+      <nav className="noprint" style={{...styles.nav,position:"sticky",top:52,zIndex:100}}>
         {orderedTabs.map((t,idx)=>{
           const on = page===t.id;
           return (
