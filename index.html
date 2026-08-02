@@ -7283,7 +7283,12 @@ function PastClientsPage({toast, settings}){
     setLoading(true);
     try{
       const buf = await f.arrayBuffer();
-      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      // تحويل آمن للملفات الكبيرة
+      const bytes = new Uint8Array(buf);
+      let binary = "";
+      const chunk = 8192;
+      for(let i=0;i<bytes.length;i+=chunk){ binary += String.fromCharCode.apply(null, bytes.slice(i,i+chunk)); }
+      const b64 = btoa(binary);
       const mime = f.type || "application/pdf";
       
       const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key="+aiKey,{
