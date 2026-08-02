@@ -5960,7 +5960,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
             </thead>
             <tbody>
               <tr style={{background:"#f8fafc"}}>
-                <td style={{...styles.td,fontWeight:700,color:"#334155"}}>رصيد افتتاحي</td>
+                <td style={{...styles.td,fontWeight:700,color:"#c8922a"}}>رصيد افتتاحي</td>
                 <td style={{...styles.td,color:"#1f2937",position:"sticky",right:0,background:"#f8fafc",zIndex:5,borderLeft:"2px solid #e2e8f0"}}>متبقي أمس</td>
                 <td style={{...styles.td,fontWeight:800,color:"#334155"}}>{SAR(openingBalance)}</td>
                 <td style={styles.td}></td>
@@ -5971,7 +5971,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                 const t=DAILY_TYPES.find(x=>x.key===d.type);
                 return (
                   <tr key={d.id} style={{background:i%2===0?C.white:C.gray}}>
-                    <td style={styles.td}><span style={styles.badge("#eef2f7","#334155")}>{t?.label||d.type}</span>{d.channel==="transfer"&&<span style={{fontSize:9,fontWeight:700,color:"#2563eb",marginRight:4}}>🏦</span>}</td>
+                    <td style={styles.td}><span style={styles.badge("#141428","#c8922a")}>{t?.label||d.type}</span>{d.channel==="transfer"&&<span style={{fontSize:9,fontWeight:700,color:"#2563eb",marginRight:4}}>🏦</span>}</td>
                     <td style={{...styles.td,fontWeight:700,position:"sticky",right:0,background:i%2===0?C.white:C.gray,zIndex:5,borderLeft:"2px solid #e2e8f0"}}>{d.desc||"—"}</td>
                     <td style={{...styles.td,fontWeight:800,color:t&&t.sign<0?"#dc2626":"#16a34a"}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
                     <td style={{...styles.td,whiteSpace:"nowrap"}}>
@@ -6193,7 +6193,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                         )}
                         <tr style={{background:d.date>=baseDate?(i%2===0?C.white:C.gray):"#f8fafc",opacity:d.date>=baseDate?1:0.65}}>
                           <td style={{...styles.td,whiteSpace:"nowrap",color:"#475569",fontWeight:600}}>{dLabel(d.date)}</td>
-                          <td style={styles.td}><span style={styles.badge("#eef2f7","#334155")}>{t?.label||d.type}</span></td>
+                          <td style={styles.td}><span style={styles.badge("#141428","#c8922a")}>{t?.label||d.type}</span></td>
                           <td style={{...styles.td,fontWeight:700,position:"sticky",right:0,background:d.date>=baseDate?(i%2===0?C.white:C.gray):"#f8fafc",zIndex:5,borderLeft:"2px solid #e2e8f0"}}>{d.desc||"—"}</td>
                           <td style={{...styles.td,fontWeight:800,color:t&&t.sign<0?"#dc2626":"#16a34a",whiteSpace:"nowrap"}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
                         </tr>
@@ -6221,14 +6221,14 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
               <tbody>
                 {baseAmount !== 0 && (
                   <tr style={{background:"#f0fdfa"}}>
-                    <td style={styles.td}><span style={styles.badge("#0d9488"+"22","#0d9488")}>رصيد سابق</span></td>
+                    <td style={styles.td}><span style={styles.badge("#141428","#c8922a")}>رصيد سابق</span></td>
                     <td style={{...styles.td,textAlign:"center",fontWeight:700}}>—</td>
                     <td style={{...styles.td,fontWeight:900,color:"#0d9488"}}>+{SAR(baseAmount)}</td>
                   </tr>
                 )}
                 {(stmtShowAll ? stmtTotals : stmtTotals.slice(0,10)).map((t,i)=>(
                   <tr key={t.key} style={{background:(baseAmount?i+1:i)%2===0?C.white:C.gray}}>
-                    <td style={styles.td}><span style={styles.badge("#eef2f7","#334155")}>{t.label}</span></td>
+                    <td style={styles.td}><span style={styles.badge("#141428","#c8922a")}>{t.label}</span></td>
                     <td style={{...styles.td,textAlign:"center",fontWeight:700}}>{t.count}</td>
                     <td style={{...styles.td,fontWeight:800,color:t.sign<0?"#dc2626":"#16a34a"}}>{t.sign<0?"−":"+"}{SAR(t.total)}</td>
                   </tr>
