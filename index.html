@@ -5698,7 +5698,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   const [baseInput,setBaseInput] = useState("");
   const [baseDateInput,setBaseDateInput] = useState(today);
   const [editingBase,setEditingBase] = useState(false);
-  const [form,setForm] = useState({type:"sadad", amount:"", desc:""});
+  const [form,setForm] = useState({type:"sadad", amount:"", desc:"", channel:"cash"});
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
 
   // ═══ كشف حساب شامل: فترة (من/إلى) + بحث + فلتر نوع ═══
@@ -5799,7 +5799,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
     if((form.type==="zakat"||form.type==="salf") && !form.desc){toast("اكتب اسم الشخص","warn");return;}
     const doAdd = () => {
     const receiptNum = getNextReceipt();
-    const newRow = {id:Date.now(),date:selDay,type:form.type,amount:parseFloat(form.amount),desc:form.desc||"",receiptNum};
+    const newRow = {id:Date.now(),date:selDay,type:form.type,amount:parseFloat(form.amount),desc:form.desc||"",receiptNum,channel:form.channel||"cash"};
     setDaily(p=>[...p,newRow]);
     // ربط الزكاة تلقائياً
     if(form.type==="zakat" && setZakatTx){
@@ -5809,7 +5809,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
     if(form.type==="salf" && setLoans){
       setLoans(p=>[...p,{id:Date.now(),date:selDay,amount:parseFloat(form.amount),name:form.desc||"سلف",status:"active",payments:[],note:"من دفتر اليومية"}]);
     }
-    setForm({type:form.type,amount:"",desc:""});
+    setForm({type:form.type,amount:"",desc:"",channel:form.channel});
     toast("✅ تمت الإضافة — إيصال رقم "+String(receiptNum).padStart(5,"0"));
     // سؤال طباعة الإيصال
     setTimeout(()=>{
@@ -5924,6 +5924,18 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
               <input style={styles.input} type="text" placeholder="اسم الشخص أو نوع المصروف" value={form.desc} onChange={e=>set("desc",e.target.value)}/>
             </div>
           </div>
+          {/* نقدي أو تحويل */}
+          <div style={{display:"flex",gap:8,marginBottom:12}}>
+            {[{k:"cash",l:"💵 نقدي",c:"#16a34a"},{k:"transfer",l:"🏦 تحويل",c:"#2563eb"}].map(ch=>(
+              <button key={ch.k} onClick={()=>set("channel",ch.k)}
+                style={{flex:1,fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:14,fontWeight:700,padding:"11px 10px",borderRadius:10,cursor:"pointer",
+                  border:form.channel===ch.k?"2px solid "+ch.c:"1.5px solid #e2e8f0",
+                  background:form.channel===ch.k?(ch.k==="cash"?"#f0fdf4":"#eff6ff"):"#fff",
+                  color:form.channel===ch.k?ch.c:"#64748b"}}>
+                {ch.l}
+              </button>
+            ))}
+          </div>
           <button onClick={addRow}
             style={{width:"100%",padding:"14px",borderRadius:12,border:"none",cursor:"pointer",
               background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",
@@ -5959,7 +5971,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                 const t=DAILY_TYPES.find(x=>x.key===d.type);
                 return (
                   <tr key={d.id} style={{background:i%2===0?C.white:C.gray}}>
-                    <td style={styles.td}><span style={styles.badge("#eef2f7","#334155")}>{t?.label||d.type}</span></td>
+                    <td style={styles.td}><span style={styles.badge("#eef2f7","#334155")}>{t?.label||d.type}</span>{d.channel==="transfer"&&<span style={{fontSize:9,fontWeight:700,color:"#2563eb",marginRight:4}}>🏦</span>}</td>
                     <td style={{...styles.td,fontWeight:700,position:"sticky",right:0,background:i%2===0?C.white:C.gray,zIndex:5,borderLeft:"2px solid #e2e8f0"}}>{d.desc||"—"}</td>
                     <td style={{...styles.td,fontWeight:800,color:t&&t.sign<0?"#dc2626":"#16a34a"}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
                     <td style={{...styles.td,whiteSpace:"nowrap"}}>
