@@ -7280,33 +7280,50 @@ function PastClientsPage({toast, settings}){
 
     if(!aiKey){toast("⚙️ فعّل مفتاح Gemini في الإعدادات لقراءة PDF","warn");return;}
 
+    // حد الحجم 10MB
+    if(f.size > 10*1024*1024){toast("الملف كبير جداً (الحد 10MB)","error");return;}
+
     setLoading(true);
     try{
-      const buf = await f.arrayBuffer();
-      // تحويل آمن للملفات الكبيرة
-      const bytes = new Uint8Array(buf);
-      let binary = "";
-      const chunk = 8192;
-      for(let i=0;i<bytes.length;i+=chunk){ binary += String.fromCharCode.apply(null, bytes.slice(i,i+chunk)); }
-      const b64 = btoa(binary);
+      // تحويل لـ base64 عبر FileReader
+      const b64 = await new Promise((resolve,reject)=>{
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(",")[1]);
+        reader.onerror = () => reject(new Error("فشل قراءة الملف"));
+        reader.readAsDataURL(f);
+      });
       const mime = f.type || "application/pdf";
       
       const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key="+aiKey,{
         method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({contents:[{parts:[
           {inline_data:{mime_type:mime,data:b64}},
-          {text:"استخرج جميع أسماء الأشخاص وأرقام الجوال من هذا الملف. أرجع النتيجة كـ JSON array فقط بدون أي نص إضافي بالشكل: [{\"name\":\"الاسم\",\"phone\":\"الرقم\"}] — الأرقام بصيغة 05xxxxxxxx"}
+          {text:"استخرج جميع أسماء الأشخاص وأرقام الجوال من هذا الملف.\nأرجع النتيجة كـ JSON array فقط بدون أي نص أو شرح أو backticks.\nالصيغة: [{\"name\":\"الاسم\",\"phone\":\"الرقم\"}]\nالأرقام بصيغة 05xxxxxxxx\nلو ما لقيت أرقام أرجع: []"}
         ]}]})
       });
+      
+      if(!res.ok){
+        const errData = await res.json().catch(()=>({}));
+        throw new Error(errData.error?.message || "خطأ من Gemini: "+res.status);
+      }
+      
       const data = await res.json();
       const txt = (data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text)||"";
-      const clean = txt.replace(/```json|```/g,"").trim();
+      
+      if(!txt.trim()){throw new Error("Gemini لم يرجع نتيجة — جرب ملف أصغر");}
+      
+      // تنظيف الرد من أي نص إضافي
+      let clean = txt.replace(/```json/g,"").replace(/```/g,"").trim();
+      // محاولة استخراج JSON من النص
+      const jsonMatch = clean.match(/\[[\s\S]*\]/);
+      if(jsonMatch) clean = jsonMatch[0];
+      
       const arr = JSON.parse(clean);
       if(Array.isArray(arr) && arr.length>0){
-        const newC = arr.filter(c=>c.phone).map(c=>({id:Date.now()+Math.random(),name:c.name||"",phone:c.phone}));
+        const newC = arr.filter(c=>c.phone).map(c=>({id:Date.now()+Math.random(),name:(c.name||"").trim(),phone:(c.phone||"").trim()}));
         save([...clients,...newC]);
         toast("✅ تم استخراج "+newC.length+" جهة اتصال من الملف");
-      } else { toast("لم يتم العثور على بيانات","warn"); }
+      } else { toast("لم يتم العثور على أرقام جوال في الملف","warn"); }
     }catch(err){ toast("خطأ في قراءة الملف: "+err.message,"error"); }
     setLoading(false);
   };
