@@ -5717,13 +5717,13 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   const base = _dailyOpen.__base && typeof _dailyOpen.__base==="object" ? _dailyOpen.__base : null;
   const baseAmount = base ? (+base.amount||0) : 0;
   const baseDate = base ? base.date : "0000-00-00";
-  // الرصيد الافتتاحي لليوم المختار = رصيد البداية + صافي كل الحركات من تاريخ البداية حتى أمس
-  const prevNet = _daily.filter(d=>d.date < selDay && d.date >= baseDate)
+  // الرصيد الافتتاحي لليوم المختار = رصيد البداية + صافي كل الحركات النقدية من تاريخ البداية حتى أمس
+  const prevNet = _daily.filter(d=>d.date < selDay && d.date >= baseDate && d.channel!=="transfer")
     .reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
   const openingBalance = baseAmount + prevNet;
 
-  // صافي حركات اليوم
-  const dayNet = dayRows.reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
+  // صافي حركات اليوم (النقدية فقط)
+  const dayNet = dayRows.filter(d=>d.channel!=="transfer").reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
   const closingBalance = openingBalance + dayNet;
 
   // إجماليات حسب النوع لهذا اليوم
