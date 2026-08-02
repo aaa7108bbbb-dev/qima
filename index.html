@@ -7247,15 +7247,15 @@ function PrivateNotes({toast}){
   );
 }
 // ═══ صفحة زبائن الماضي ═══
-function PastClientsPage({toast, settings}){
-  const [clients, setClients] = useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_past_clients")||"[]");}catch{return[];}});
+function PastClientsPage({toast, settings, pastClients, setPastClients}){
+  const clients = pastClients || [];
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [msg, setMsg] = useState("السلام عليكم ورحمة الله\nنسعد بخدمتكم من جديد ..\n\nمؤسسة قمة الفرصه التجاريه\n0555171283");
   const [showMsg, setShowMsg] = useState(false);
   const fileRef = React.useRef(null);
 
-  const save = d => {setClients(d);localStorage.setItem("qimma_past_clients",JSON.stringify(d));};
+  const save = d => { setPastClients(d); };
 
   const handleFile = async (e) => {
     const f = e.target.files&&e.target.files[0]; if(!f)return;
@@ -7294,7 +7294,7 @@ function PastClientsPage({toast, settings}){
       });
       const mime = f.type || "application/pdf";
       
-      const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key="+aiKey,{
+      const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key="+aiKey,{
         method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           contents:[{parts:[
@@ -10050,6 +10050,8 @@ function App() {
   const [completionAlert,setCompletionAlert]=useState(null);
   const [doneIds,setDoneIdsRaw]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_done")||"[]");}catch{return[];}});
   const setDoneIds = v => { const d=_arr(typeof v==="function"?v(doneIds):v); setDoneIdsRaw(d); localStorage.setItem("qimma_done",JSON.stringify(d)); gsWrite("doneIds",d); };
+  const [pastClients,setPastClientsRaw]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_past_clients")||"[]");}catch{return[];}});
+  const setPastClients = d => { const arr=_arr(d); setPastClientsRaw(arr); localStorage.setItem("qimma_past_clients",JSON.stringify(arr)); gsWrite("pastClients",arr); };
   const markDone = (id) => { setDoneIds(prev=>[...prev,id]); };
 
   const toast=(msg,type="success")=>{setToastMsg(msg);setToastType(type);setTimeout(()=>setToastMsg(null),3000);};
@@ -10059,12 +10061,12 @@ function App() {
     let _unsubSnap = null;
     (async ()=>{
       setSyncStatus("loading");
-      const [inv, con, set, tx, ln, zk, pd, pay, gd, jov, dly, dlyo, act, mcl, pov, btx, dids] = await Promise.all([
+      const [inv, con, set, tx, ln, zk, pd, pay, gd, jov, dly, dlyo, act, mcl, pov, btx, dids, pcl] = await Promise.all([
         gsRead("investors"), gsRead("contracts"), gsRead("settings"),
         gsRead("txlist"), gsRead("loans"), gsRead("zakat"),
         gsRead("pending"), gsRead("payments"), gsRead("goods3"), gsRead("jard_ov"),
         gsRead("daily"), gsRead("daily_open"), gsRead("activity"), gsRead("monthclose"), gsRead("price_ov"), gsRead("banktx"),
-        gsRead("doneIds")
+        gsRead("doneIds"), gsRead("pastClients")
       ]);
       if (inv) { setInvestorsRaw(inv); saveLS("qimma_investors", inv); }
       if (con) { setContractsRaw(con); saveLS("qimma_contracts", con); }
@@ -10083,6 +10085,7 @@ function App() {
       if (mcl && typeof mcl==="object" && !Array.isArray(mcl)) { setMonthCloseRaw(mcl); saveLS("qimma_monthclose", JSON.stringify(mcl)); }
       if (btx) { setBankTxRaw(_arr(btx)); saveLS("qimma_banktx", JSON.stringify(_arr(btx))); }
       if (dids) { setDoneIdsRaw(_arr(dids)); localStorage.setItem("qimma_done", JSON.stringify(_arr(dids))); }
+      if (pcl) { setPastClientsRaw(_arr(pcl)); localStorage.setItem("qimma_past_clients", JSON.stringify(_arr(pcl))); }
       setSyncStatus("idle");
 
       // ═══ مزامنة لحظية: Firestore onSnapshot ═══
@@ -10113,6 +10116,7 @@ function App() {
               case "monthclose": if(typeof data==="object" && !Array.isArray(data)) { setMonthCloseRaw(data); saveLS("qimma_monthclose", JSON.stringify(data)); } break;
               case "banktx": setBankTxRaw(_arr(data)); saveLS("qimma_banktx", JSON.stringify(_arr(data))); break;
               case "doneIds": setDoneIdsRaw(_arr(data)); localStorage.setItem("qimma_done", JSON.stringify(_arr(data))); break;
+              case "pastClients": setPastClientsRaw(_arr(data)); localStorage.setItem("qimma_past_clients", JSON.stringify(_arr(data))); break;
               case "goods3": localStorage.setItem("qimma_goods3", JSON.stringify(data)); break;
               case "price_ov": localStorage.setItem("qimma_price_ov", JSON.stringify(data)); break;
               case "jard_ov": localStorage.setItem("qimma_jard_ov", JSON.stringify(data)); break;
@@ -10219,7 +10223,7 @@ function App() {
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={payments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="qimaai" && <QimaAI contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct}/>}
-        {page==="pastclients" && <PastClientsPage toast={toast} settings={settings}/>}
+        {page==="pastclients" && <PastClientsPage toast={toast} settings={settings} pastClients={pastClients} setPastClients={setPastClients}/>}
         {page==="collect" && <CollectionPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={activeContracts}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
         {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>}/>}
