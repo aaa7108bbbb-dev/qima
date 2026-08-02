@@ -10145,7 +10145,7 @@ function App() {
         </div>
       )}
 
-      <nav className="noprint" style={styles.nav}>
+      <nav className="noprint" style={{...styles.nav,position:"sticky",top:0,zIndex:100}}>
         {orderedTabs.map((t,idx)=>{
           const on = page===t.id;
           return (
