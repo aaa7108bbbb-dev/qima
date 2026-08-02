@@ -1640,6 +1640,74 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     toast("✅ تم تصدير "+rowsX.length+" عقد");
   };
 
+  // تصدير جهات الاتصال (بدون تكرار)
+  const exportContacts = () => {
+    const seen = new Set();
+    const rows = [];
+    contracts.filter(c=>!c.deleted).forEach(c=>{
+      const phone = (c.cPhone||c.phone||"").replace(/\s/g,"");
+      if(!phone || seen.has(phone)) return;
+      seen.add(phone);
+      const inv = investors.find(i=>String(i.id)===String(c.investorId));
+      const paid = (payments||[]).filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
+      const tot = +c.totalInst||+c.amount||0;
+      const isDone = doneIds.includes(c.id);
+      rows.push([c.client||"", phone, phone.startsWith("05")?"966"+phone.slice(1):phone, inv?invLabel(inv):"", isDone?"منتهي":"نشط"]);
+    });
+    const head = ["الاسم","الجوال","الجوال الدولي","المستثمر","الحالة"];
+    const esc = v => '"'+String(v).replace(/"/g,'""')+'"';
+    const csv = "\uFEFF" + [head.map(esc).join(","), ...rows.map(r=>r.map(esc).join(","))].join("\r\n");
+    const blob = new Blob([csv],{type:"text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href=url; a.download=`جهات-اتصال-${today2}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast("✅ تم تصدير "+rows.length+" جهة اتصال");
+  };
+
+  // حملة واتساب
+  const [waCampaign,setWaCampaign] = useState(false);
+  const [waContacts,setWaContacts] = useState([]);
+  const [waMsg,setWaMsg] = useState("السلام عليكم {name}\nمؤسسة قمة الفرصة التجارية تحييكم\nنسعد بخدمتكم من جديد بأفضل خدمات التقسيط\nبريدة - شارع الثلاثين\nللتواصل: 0555171283");
+  const [waSearch,setWaSearch] = useState("");
+  const [waSent,setWaSent] = useState(new Set());
+  const waFileRef = React.useRef(null);
+
+  const parseWaFile = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const lines = text.split(/\r?\n/).filter(l=>l.trim());
+      const contacts = [];
+      const seen = new Set();
+      lines.forEach((line,i) => {
+        if(i===0 && (line.includes("الاسم")||line.toLowerCase().includes("name"))) return;
+        const parts = line.split(/[,;\t]/);
+        if(parts.length<2) return;
+        const name = parts[0].trim().replace(/^"|"$/g,"");
+        let phone = parts[1].trim().replace(/^"|"$/g,"").replace(/\s|-/g,"");
+        if(!phone || phone.length<9) return;
+        if(phone.startsWith("05")) phone = "966"+phone.slice(1);
+        else if(phone.startsWith("5") && phone.length===9) phone = "966"+phone;
+        else if(!phone.startsWith("966") && !phone.startsWith("+966")) phone = "966"+phone;
+        phone = phone.replace("+","");
+        if(seen.has(phone)) return;
+        seen.add(phone);
+        contacts.push({name, phone});
+      });
+      setWaContacts(contacts);
+      setWaSent(new Set());
+      toast("✅ تم تحميل "+contacts.length+" جهة اتصال");
+    };
+    reader.readAsText(file, "UTF-8");
+  };
+
+  const sendWa = (contact) => {
+    const msg = waMsg.replace(/\{name\}/g, contact.name).replace(/\{phone\}/g, contact.phone);
+    window.open("https://wa.me/"+contact.phone+"?text="+encodeURIComponent(msg), "_blank");
+    setWaSent(prev => new Set([...prev, contact.phone]));
+  };
+
 
   // ═══ شاشة عقد مرحّل ═══
   if(showMigrated){
@@ -2067,7 +2135,77 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         <button onClick={exportExcel} style={{marginRight:"auto",padding:"6px 14px",borderRadius:8,border:"1.5px solid #e2e8f0",background:"#fff",color:"#64748b",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
           <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#16a34a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6.2 3.2h7.4l4.2 4.2V20.8H6.2Z"/><path d="M13.6 3.2v4.2h4.2M9 12l4 5M13 12l-4 5"/></g></svg>
           Excel</button>
+        <button onClick={exportContacts} style={{padding:"6px 14px",borderRadius:8,border:"1.5px solid #c8922a",background:"#fffbf0",color:"#c8922a",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
+          📱 جهات الاتصال</button>
+        <button onClick={()=>setWaCampaign(true)} style={{padding:"6px 14px",borderRadius:8,border:"1.5px solid #25d366",background:"#f0fdf4",color:"#16a34a",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
+          💬 حملة واتساب</button>
       </div>
+
+      {/* مودال حملة واتساب */}
+      {waCampaign && (
+        <Modal wide onClose={()=>setWaCampaign(false)}>
+          <div style={{padding:20}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <div style={{fontSize:19,fontWeight:800,color:"#1a1a2e"}}>💬 حملة واتساب</div>
+              <button onClick={()=>setWaCampaign(false)} style={{padding:"6px 12px",borderRadius:8,border:"1px solid #e2e8f0",background:"#fff",color:"#6b7280",fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>✕ إغلاق</button>
+            </div>
+
+            {/* رفع الملف */}
+            <div style={{background:"#f8fafc",borderRadius:12,padding:16,marginBottom:16,border:"1px solid #e2e8f0"}}>
+              <div style={{fontSize:14,fontWeight:700,color:"#1f2937",marginBottom:8}}>1. ارفع ملف الزبائن (CSV أو Excel)</div>
+              <div style={{fontSize:12,color:"#6b7280",marginBottom:10}}>الملف لازم يكون فيه عمودين: الاسم والجوال</div>
+              <input ref={waFileRef} type="file" accept=".csv,.txt,.xls,.xlsx" onChange={e=>{if(e.target.files[0])parseWaFile(e.target.files[0]);}} style={{display:"none"}}/>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                <button onClick={()=>waFileRef.current?.click()} style={{padding:"10px 20px",borderRadius:10,border:"none",background:"#c8922a",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>📂 اختار ملف</button>
+                <button onClick={()=>{
+                  const seen=new Set(); const list=[];
+                  contracts.filter(c=>!c.deleted).forEach(c=>{
+                    const phone=(c.cPhone||c.phone||"").replace(/\s|-/g,"");
+                    if(!phone||phone.length<9||seen.has(phone))return; seen.add(phone);
+                    let p=phone; if(p.startsWith("05"))p="966"+p.slice(1); else if(p.startsWith("5")&&p.length===9)p="966"+p;
+                    list.push({name:c.client||"",phone:p});
+                  });
+                  setWaContacts(list); setWaSent(new Set());
+                  toast("✅ تم تحميل "+list.length+" زبون من النظام");
+                }} style={{padding:"10px 20px",borderRadius:10,border:"1.5px solid #c8922a",background:"#fffbf0",color:"#c8922a",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>📋 زبائن النظام الحاليين</button>
+              </div>
+              {waContacts.length>0 && <div style={{marginTop:8,fontSize:13,fontWeight:700,color:"#16a34a"}}>✅ {waContacts.length} جهة اتصال جاهزة · تم الإرسال: {waSent.size}</div>}
+            </div>
+
+            {/* الرسالة */}
+            <div style={{background:"#f8fafc",borderRadius:12,padding:16,marginBottom:16,border:"1px solid #e2e8f0"}}>
+              <div style={{fontSize:14,fontWeight:700,color:"#1f2937",marginBottom:8}}>2. الرسالة <span style={{fontSize:11,color:"#94a3b8",fontWeight:400}}>({"{name}"} = اسم الزبون)</span></div>
+              <textarea value={waMsg} onChange={e=>setWaMsg(e.target.value)} style={{width:"100%",minHeight:100,padding:12,borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:14,fontFamily:"inherit",outline:"none",resize:"vertical",boxSizing:"border-box",lineHeight:1.8}}/>
+            </div>
+
+            {/* قائمة الزبائن */}
+            {waContacts.length>0 && (
+              <div>
+                <div style={{display:"flex",gap:8,marginBottom:10,alignItems:"center"}}>
+                  <div style={{fontSize:14,fontWeight:700,color:"#1f2937"}}>3. أرسل</div>
+                  <input placeholder="بحث بالاسم أو الرقم..." value={waSearch} onChange={e=>setWaSearch(e.target.value)}
+                    style={{flex:1,padding:"8px 12px",borderRadius:8,border:"1px solid #e2e8f0",fontSize:13,fontFamily:"inherit",outline:"none"}}/>
+                </div>
+                <div style={{maxHeight:400,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:12}}>
+                  {waContacts.filter(c=>!waSearch||c.name.includes(waSearch)||c.phone.includes(waSearch)).map((c,i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",borderBottom:"1px solid #f1f5f9",background:waSent.has(c.phone)?"#f0fdf4":"#fff"}}>
+                      <div>
+                        <div style={{fontWeight:700,fontSize:14,color:"#1f2937"}}>{c.name}</div>
+                        <div style={{fontSize:12,color:"#6b7280",fontFamily:"monospace"}}>{c.phone}</div>
+                      </div>
+                      <button onClick={()=>sendWa(c)} style={{padding:"8px 16px",borderRadius:8,border:"none",
+                        background:waSent.has(c.phone)?"#dcfce7":"#25d366",color:waSent.has(c.phone)?"#16a34a":"#fff",
+                        fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                        {waSent.has(c.phone)?"✓ تم":"💬 أرسل"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
       <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
         <div style={{flex:1,minWidth:140,position:"relative"}}>
           <input style={{width:"100%",padding:"12px 14px 12px 36px",borderRadius:12,border:"1.5px solid #e2e8f0",fontSize:15,fontFamily:"IBM Plex Sans Arabic,Arial",background:"#fff",boxSizing:"border-box"}} placeholder="بحث بالاسم..." value={search} onChange={e=>setSearch(e.target.value)}/>
@@ -7096,6 +7234,146 @@ function PrivateNotes({toast}){
     </div>
   );
 }
+// ═══ صفحة زبائن الماضي ═══
+function PastClientsPage({toast, settings}){
+  const [clients, setClients] = useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_past_clients")||"[]");}catch{return[];}});
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [msg, setMsg] = useState("السلام عليكم ورحمة الله\nنسعد بخدمتكم من جديد ..\n\nمؤسسة قمة الفرصه التجاريه\n0555171283");
+  const [showMsg, setShowMsg] = useState(false);
+  const fileRef = React.useRef(null);
+
+  const save = d => {setClients(d);localStorage.setItem("qimma_past_clients",JSON.stringify(d));};
+
+  const handleFile = async (e) => {
+    const f = e.target.files&&e.target.files[0]; if(!f)return;
+    e.target.value="";
+    const aiKey = settings?.geminiKey || localStorage.getItem("qimma_gemini_key");
+    
+    if(f.type==="text/csv" || f.name.endsWith(".csv")){
+      // CSV مباشرة
+      const text = await f.text();
+      const lines = text.split(/\r?\n/).filter(l=>l.trim());
+      const parsed = [];
+      lines.forEach(line=>{
+        const cols = line.split(/[,;\t]/);
+        const phone = cols.find(c=>/^0[5]\d{8}$/.test(c.trim()) || /^966\d{9}$/.test(c.trim()));
+        const name = cols.find(c=>c.trim().length>2 && !/^\d+$/.test(c.trim()) && c!==phone);
+        if(phone) parsed.push({id:Date.now()+Math.random(),name:(name||"").trim(),phone:phone.trim()});
+      });
+      if(parsed.length>0){save([...clients,...parsed]);toast("✅ تم استيراد "+parsed.length+" جهة اتصال");}
+      else toast("لم يتم العثور على أرقام جوال","warn");
+      return;
+    }
+
+    if(!aiKey){toast("⚙️ فعّل مفتاح Gemini في الإعدادات لقراءة PDF","warn");return;}
+
+    setLoading(true);
+    try{
+      const buf = await f.arrayBuffer();
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      const mime = f.type || "application/pdf";
+      
+      const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key="+aiKey,{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({contents:[{parts:[
+          {inline_data:{mime_type:mime,data:b64}},
+          {text:"استخرج جميع أسماء الأشخاص وأرقام الجوال من هذا الملف. أرجع النتيجة كـ JSON array فقط بدون أي نص إضافي بالشكل: [{\"name\":\"الاسم\",\"phone\":\"الرقم\"}] — الأرقام بصيغة 05xxxxxxxx"}
+        ]}]})
+      });
+      const data = await res.json();
+      const txt = (data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text)||"";
+      const clean = txt.replace(/```json|```/g,"").trim();
+      const arr = JSON.parse(clean);
+      if(Array.isArray(arr) && arr.length>0){
+        const newC = arr.filter(c=>c.phone).map(c=>({id:Date.now()+Math.random(),name:c.name||"",phone:c.phone}));
+        save([...clients,...newC]);
+        toast("✅ تم استخراج "+newC.length+" جهة اتصال من الملف");
+      } else { toast("لم يتم العثور على بيانات","warn"); }
+    }catch(err){ toast("خطأ في قراءة الملف: "+err.message,"error"); }
+    setLoading(false);
+  };
+
+  const del = id => save(clients.filter(c=>c.id!==id));
+  const clearAll = () => {if(window.confirm("حذف جميع الزبائن؟")){save([]);toast("تم الحذف");}};
+  const sendWA = (phone, name) => {
+    const p = phone.startsWith("05")?"966"+phone.slice(1):phone.startsWith("966")?phone:phone;
+    const m = msg;
+    window.open("https://wa.me/"+p+"?text="+encodeURIComponent(m),"_blank");
+  };
+  const exportCSV = () => {
+    const esc = v => '"'+String(v).replace(/"/g,'""')+'"';
+    const head = ["الاسم","الجوال","الجوال الدولي"];
+    const rows = clients.map(c=>[c.name, c.phone, c.phone.startsWith("05")?"966"+c.phone.slice(1):c.phone]);
+    const csv = "\uFEFF" + [head.map(esc).join(","), ...rows.map(r=>r.map(esc).join(","))].join("\r\n");
+    const blob = new Blob([csv],{type:"text/csv;charset=utf-8;"});
+    const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="زبائن-الماضي.csv"; a.click();
+    toast("✅ تم التصدير");
+  };
+
+  const filtered = search ? clients.filter(c=>(c.name||"").includes(search)||(c.phone||"").includes(search)) : clients;
+
+  return (
+    <div style={{maxWidth:1200,margin:"0 auto"}}>
+      <div style={{fontSize:22,fontWeight:900,color:"#c8922a",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
+        📇 زبائن الماضي
+        <span style={{fontSize:13,fontWeight:600,color:"#94a3b8"}}>{clients.length} زبون</span>
+      </div>
+
+      {/* رفع ملف */}
+      <div style={{background:"#fff",borderRadius:14,padding:20,marginBottom:16,boxShadow:"0 2px 8px rgba(0,0,0,.06)",border:"1px solid #e2e8f0"}}>
+        <input ref={fileRef} type="file" accept=".pdf,.csv,.xlsx" style={{display:"none"}} onChange={handleFile}/>
+        <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
+          <button onClick={()=>fileRef.current&&fileRef.current.click()} disabled={loading}
+            style={{padding:"12px 24px",borderRadius:12,border:"2px solid #c8922a",background:loading?"#f1f5f9":"#fffbf0",color:"#c8922a",fontSize:16,fontWeight:800,cursor:loading?"wait":"pointer",fontFamily:"inherit"}}>
+            {loading?"⏳ جاري القراءة...":"📄 رفع ملف PDF أو CSV"}
+          </button>
+          {clients.length>0 && <>
+            <button onClick={()=>setShowMsg(!showMsg)} style={{padding:"10px 18px",borderRadius:10,border:"1px solid #e2e8f0",background:"#fff",color:"#1f2937",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>✏️ تعديل الرسالة</button>
+            <button onClick={exportCSV} style={{padding:"10px 18px",borderRadius:10,border:"1px solid #e2e8f0",background:"#fff",color:"#64748b",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>📥 تصدير CSV</button>
+            <button onClick={clearAll} style={{padding:"10px 14px",borderRadius:10,border:"1px solid #fecaca",background:"#fff",color:"#dc2626",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🗑 حذف الكل</button>
+          </>}
+        </div>
+        <div style={{fontSize:12,color:"#94a3b8",marginTop:8}}>ارفع ملف PDF من البرنامج القديم — الذكاء يستخرج الأسماء والأرقام تلقائياً. أو ارفع CSV مباشرة.</div>
+      </div>
+
+      {/* تعديل الرسالة */}
+      {showMsg && (
+        <div style={{background:"#fff",borderRadius:14,padding:16,marginBottom:16,border:"1px solid #e2e8f0"}}>
+          <div style={{fontSize:14,fontWeight:700,color:"#1f2937",marginBottom:8}}>نص الرسالة</div>
+          <textarea value={msg} onChange={e=>setMsg(e.target.value)} rows={5}
+            style={{width:"100%",padding:12,borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:15,fontFamily:"inherit",outline:"none",resize:"vertical",boxSizing:"border-box"}}/>
+        </div>
+      )}
+
+      {/* بحث */}
+      {clients.length>0 && (
+        <div style={{marginBottom:14}}>
+          <input placeholder="🔍 بحث بالاسم أو الرقم..." value={search} onChange={e=>setSearch(e.target.value)}
+            style={{width:"100%",padding:"12px 16px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:15,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
+        </div>
+      )}
+
+      {/* القائمة */}
+      {filtered.map((c,i)=>(
+        <div key={c.id||i} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:"#fff",borderRadius:10,marginBottom:6,border:"1px solid #f1f5f9"}}>
+          <div style={{width:36,height:36,borderRadius:10,background:"#fffbf0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:"#c8922a",flexShrink:0}}>{i+1}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:15,fontWeight:700,color:"#1f2937",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{c.name||"بدون اسم"}</div>
+            <div style={{fontSize:13,color:"#64748b",direction:"ltr",textAlign:"right"}}>{c.phone}</div>
+          </div>
+          <button onClick={()=>sendWA(c.phone,c.name)} style={{padding:"8px 14px",borderRadius:8,border:"none",background:"#25d366",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>واتساب</button>
+          <button onClick={()=>del(c.id)} style={{background:"none",border:"none",color:"#ef4444",fontSize:16,cursor:"pointer",flexShrink:0}}>✕</button>
+        </div>
+      ))}
+
+      {clients.length===0 && (
+        <div style={{textAlign:"center",padding:40,color:"#94a3b8",fontSize:16}}>لا يوجد زبائن — ارفع ملف PDF أو CSV</div>
+      )}
+    </div>
+  );
+}
+
 function GoodsPage({investors, contracts, toast, gsWrite}) {
   const [priceOverrides, setPriceOverrides] = useState(()=>{
     try{return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}");}catch{return{};}
@@ -9462,6 +9740,7 @@ const NAV_ICONS = {
   portfolio:'<path d="M3.6 20.4h16.8"/><path d="M7.2 20.4v-4.6M12 20.4v-8.2M16.8 20.4v-6.4"/>|<circle cx="12" cy="9.2" r="1.35"/>',
   cashflow:'<circle cx="12" cy="12" r="8.4"/><path d="M15.7 8.3 13.1 13.1 8.3 15.7l2.6-4.8Z"/>|<circle cx="12" cy="12" r="1.25"/>',
   qimaai:'<rect x="3.6" y="3.6" width="16.8" height="16.8" rx="4.6"/><path d="M12 7.4v2.4M12 14.2v2.4M7.4 12h2.4M14.2 12h2.4"/>|<circle cx="12" cy="12" r="1.6"/>',
+  pastclients:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>|',
   settings:'<circle cx="12" cy="12" r="3.3"/><path d="M17.4 12h2.2M15.8 8.2l1.6-1.6M12 6.6V4.4M8.2 8.2 6.6 6.6M6.6 12H4.4M8.2 15.8 6.6 17.4M12 17.4v2.2M15.8 15.8l1.6 1.6"/>|<circle cx="12" cy="12" r="1.3"/>',
 };
 function NavIcon({id, on}){
@@ -9794,6 +10073,7 @@ function App() {
     {id:"collect",label:"⚡",name:"التحصيل",color:"#0d9488"},
     {id:"portfolio",label:"📊",name:"المحفظة الشهرية",color:"#0d9488"},
     {id:"qimaai",label:"🤖",name:"قمة AI",color:"#6d28d9"},
+    {id:"pastclients",label:"📇",name:"زبائن الماضي",color:"#c8922a"},
     {id:"settings",label:"⚙️",name:"الإعدادات",color:"#4b5563"},
   ];
   // ترتيب التبويبات حسب المحفوظ
@@ -9885,6 +10165,7 @@ function App() {
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={payments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="qimaai" && <QimaAI contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct}/>}
+        {page==="pastclients" && <PastClientsPage toast={toast} settings={settings}/>}
         {page==="collect" && <CollectionPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={activeContracts}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
         {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>}/>}
