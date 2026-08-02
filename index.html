@@ -7260,7 +7260,7 @@ function PastClientsPage({toast, settings}){
   const handleFile = async (e) => {
     const f = e.target.files&&e.target.files[0]; if(!f)return;
     e.target.value="";
-    const aiKey = settings?.geminiKey || localStorage.getItem("qimma_gemini_key");
+    const aiKey = settings?.geminiKey || localStorage.getItem("qimma_ai_key");
     
     if(f.type==="text/csv" || f.name.endsWith(".csv")){
       // CSV مباشرة
