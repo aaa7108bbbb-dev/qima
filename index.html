@@ -7264,9 +7264,9 @@ function PastClientsPage({toast, settings, pastClients, setPastClients}){
     reader.readAsDataURL(f);
   });
 
-  const extractViaGemini = async (parts, aiKey, modelName) => {
-    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+(modelName||"gemini-2.5-flash")+":generateContent",{
-      method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":aiKey},
+  const extractViaGemini = async (parts, aiKey) => {
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key="+aiKey,{
+      method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({
         contents:[{parts}],
         generationConfig:{maxOutputTokens:16000}
@@ -7296,7 +7296,6 @@ function PastClientsPage({toast, settings, pastClients, setPastClients}){
     const files = e.target.files; if(!files||!files.length)return;
     e.target.value="";
     const aiKey = settings?.geminiKey || localStorage.getItem("qimma_ai_key");
-    const aiModel = localStorage.getItem("qimma_ai_model")||"gemini-2.5-flash";
 
     // CSV — معالجة مباشرة بدون AI
     const csvFiles = [...files].filter(f=>f.type==="text/csv"||f.name.endsWith(".csv"));
@@ -7339,7 +7338,7 @@ function PastClientsPage({toast, settings, pastClients, setPastClients}){
       }
       parts.push({text:"استخرج جميع أسماء الأشخاص وأرقام الجوال من "+(aiFiles.length>1?"هذه الملفات/الصور":"هذا الملف")+".\nأرجع النتيجة كـ JSON array فقط بدون أي نص أو شرح أو backticks.\nالصيغة: [{\"name\":\"الاسم الكامل\",\"phone\":\"05XXXXXXXX\"}]\nقواعد:\n- أرقام الجوال 10 أرقام تبدأ بـ 05\n- لا تخلط رقم الحساب (3-4 أرقام) مع رقم الجوال\n- اقرأ كل الصفوف بدون استثناء\n- لو الرقم مو واضح اكتب phone فاضي \"\"\n- لو ما لقيت أرقام أرجع: []"});
 
-      const txt = await extractViaGemini(parts, aiKey, aiModel);
+      const txt = await extractViaGemini(parts, aiKey);
       if(!txt.trim()) throw new Error("Gemini لم يرجع نتيجة");
 
       const arr = parseGeminiResult(txt);
@@ -7688,7 +7687,7 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
 
   // حفظ المحادثة تلقائياً
   useEffect(()=>{
-    try{ localStorage.setItem("qimma_ai_chat", JSON.stringify(msgs.slice(-60))); }catch(e){}
+    try{ localStorage.setItem("qimma_ai_chat", JSON.stringify(msgs.slice(-200))); }catch(e){}
   },[msgs]);
 
   // التقرير الصباحي تلقائياً مرة واحدة كل يوم
@@ -8462,7 +8461,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
     try {
       const context = buildContext(question);
       setLastCost(Math.round((context.length + systemPrompt.length)/4));
-      const hist = msgs.filter(m=>!String(m.text||"").startsWith("⚠️") && !String(m.text||"").startsWith("⚙️") && !String(m.text||"").startsWith("☀️")).slice(-6);
+      const hist = msgs.filter(m=>!String(m.text||"").startsWith("⚠️") && !String(m.text||"").startsWith("⚙️") && !String(m.text||"").startsWith("☀️")).slice(-20);
       const contents = hist.map(m=>({role: m.role==="user"?"user":"model", parts:[{text: stripChart(stripAction(m.text))}]}));
       const userParts = [{text: question || "اقرأ النص في هذه الصور واكتبه بالكامل"}];
       if(img && Array.isArray(img)){ img.forEach(im=>userParts.push({inline_data:{mime_type:im.mime||"image/jpeg", data:im.data}})); }
@@ -8471,7 +8470,8 @@ tbody tr:nth-child(even){background:#f7f9fb}
       const body = {
         system_instruction: {parts:[{text: systemPrompt + "\n\n" + context}]},
         contents: contents,
-        generationConfig: {maxOutputTokens:8192, temperature:0.2}
+        generationConfig: {maxOutputTokens:8192, temperature:0.2},
+        tools: [{googleSearch: {}}]
       };
 
       // 1) الموديل المختار
@@ -8528,7 +8528,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
   const send = async (preset) => {
     const q = String(preset!==undefined?preset:input).trim();
     const img = imgData.length ? imgData : null;
-    if(!q && !img || loading) return;
+    if((!q && !img) || loading) return;
     setMsgs(p=>[...p, {role:"user",text:q||(img?"📷 قراءة "+img.length+" صورة":""),imgs:img?img.map(i=>i.preview):null,img:img?img[0].preview:null}]);
     setInput(""); setImgData([]);
     setLoading(true); scrollDown();
