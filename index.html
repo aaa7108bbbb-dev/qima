@@ -8636,7 +8636,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
   const QUICK = ["☀️ التقرير الصباحي","⚠️ من راح يتعثر قريباً؟","أسوأ 10 متعثرين","قارن كل المستثمرين","التحصيل آخر 6 شهور","أفضل الزبائن التزاماً","تحليل ربح البضائع","مصروفات هذا الشهر","توقع دخل الشهر الجاي"];
 
   return (
-    React.createElement("div",{style:{maxWidth:1100,margin:"0 auto",display:"flex",flexDirection:"column",height:"calc(100vh - 140px)"}},
+    React.createElement("div",{style:{maxWidth:1100,margin:"0 auto",display:"flex",flexDirection:"column",height:"calc(100vh - 140px)",background:"#0d0d1f",borderRadius:20,padding:"0 10px 10px"}},
       /* Header - Premium Gold/Navy */
       React.createElement("div",{style:{background:"linear-gradient(180deg,#141428 0%,#0d0d1f 100%)",borderRadius:20,padding:"18px 20px 14px",marginBottom:0,flexShrink:0}},
         React.createElement("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:14}},
@@ -8691,7 +8691,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
       ),
 
       /* ═══ INSIGHTS TAB ═══ */
-      aiTab==="insights" && !drillDown && React.createElement("div",{style:{flex:1,overflowY:"auto",padding:"12px 0",display:"flex",flexDirection:"column",gap:12}},
+      aiTab==="insights" && !drillDown && React.createElement("div",{style:{flex:1,overflowY:"auto",padding:"12px 0",display:"flex",flexDirection:"column",gap:12,background:"#0d0d1f",borderRadius:16}},
         /* Hero */
         React.createElement("div",{style:{background:"linear-gradient(145deg,#1a1a2e,#141428)",borderRadius:20,padding:22,border:"1px solid rgba(200,146,42,0.1)"}},
           React.createElement("div",{style:{fontSize:14,color:"#f0f0f5",fontWeight:800,marginBottom:8}},"الأداء العام"),
@@ -8761,7 +8761,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
       ),
 
       /* ═══ DRILL DOWN ═══ */
-      aiTab==="insights" && drillDown && React.createElement("div",{style:{flex:1,overflowY:"auto",padding:"12px 0",display:"flex",flexDirection:"column",gap:10}},
+      aiTab==="insights" && drillDown && React.createElement("div",{style:{flex:1,overflowY:"auto",padding:"12px 0",display:"flex",flexDirection:"column",gap:10,background:"#0d0d1f",borderRadius:16}},
         React.createElement("button",{onClick:()=>setDrillDown(null),style:{alignSelf:"flex-start",background:"rgba(200,146,42,0.08)",border:"1px solid rgba(200,146,42,0.15)",borderRadius:12,padding:"8px 16px",color:"#e0b85c",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"inherit"}},"→ رجوع"),
         React.createElement("div",{style:{fontSize:18,fontWeight:900,color:"#f0f0f5",marginBottom:4}},drillDown==="active"?"العقود النشطة":drillDown==="remaining"?"المتبقي على العملاء":drillDown.name||""),
         (drillDown==="active"?activeC:drillDown==="remaining"?activeC.filter(c=>_left(c)>0):drillDown.type==="investor"?activeC.filter(c=>String(c.investorId)===String(drillDown.id)):[]).map((c,i)=>
@@ -8790,7 +8790,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
       ),
 
       /* ═══ SEARCH TAB ═══ */
-      aiTab==="search" && React.createElement("div",{style:{flex:1,overflowY:"auto",padding:"12px 0",display:"flex",flexDirection:"column",gap:12}},
+      aiTab==="search" && React.createElement("div",{style:{flex:1,overflowY:"auto",padding:"12px 0",display:"flex",flexDirection:"column",gap:12,background:"#0d0d1f",borderRadius:16}},
         React.createElement("input",{placeholder:"اسم العميل أو رقم الجوال أو رقم العقد...",value:input,onChange:e=>setInput(e.target.value),style:{width:"100%",padding:"16px",borderRadius:16,border:"1px solid rgba(200,146,42,0.1)",fontSize:15,fontFamily:"IBM Plex Sans Arabic,Arial",outline:"none",boxSizing:"border-box",background:"rgba(255,255,255,0.03)",color:"#f0f0f5"}}),
         input.length>=2 && allC.filter(c=>String(c.client||"").includes(input)||String(c.idNum||"").includes(input)||String(c.cPhone||"").includes(input)||String(c.num||"").includes(input)).slice(0,20).map((c,i)=>{
           const paid=_paid(c.id),left=_left(c),od=_overdue(c),pct=_n(c.totalInst)>0?Math.round(paid/_n(c.totalInst)*100):0;
@@ -8822,7 +8822,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
       ),
 
       /* ═══ ALERTS TAB ═══ */
-      aiTab==="alerts" && React.createElement("div",{style:{flex:1,overflowY:"auto",padding:"12px 0",display:"flex",flexDirection:"column",gap:12}},
+      aiTab==="alerts" && React.createElement("div",{style:{flex:1,overflowY:"auto",padding:"12px 0",display:"flex",flexDirection:"column",gap:12,background:"#0d0d1f",borderRadius:16}},
         (()=>{
           const risky=activeC.map(c=>({c,r:riskScore(c)})).filter(x=>x.r.score>=22).sort((a,b)=>b.r.score-a.r.score);
           return React.createElement(React.Fragment,null,
