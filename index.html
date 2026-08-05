@@ -7316,55 +7316,62 @@ function PastClientsPage({toast, settings, pastClients, setPastClients}){
     try {
       const files = e.target.files;
       if (!files || !files.length) { toast("لم تختر ملف", "warn"); return; }
-      
       e.target.value = "";
       let allParsed = [...clients];
       let totalParsed = 0;
+      let diagSample = "";
+
+      const normPhone = (v) => {
+        let s = String(v==null?"":v).replace(/[^\d]/g,"");
+        if(!s) return "";
+        if(s.startsWith("966")) s = "0"+s.slice(3);
+        else if(s.startsWith("5") && s.length===9) s = "0"+s;
+        return /^05\d{8}$/.test(s) ? s : "";
+      };
+      const isName = (v) => {
+        const s = String(v==null?"":v).trim();
+        return s.length>=2 && /[\u0600-\u06FFa-zA-Z]/.test(s);
+      };
+      const pushRow = (cells) => {
+        let phone = "", name = "";
+        for(const c of cells){ if(!phone){ const p=normPhone(c); if(p) phone=p; } }
+        for(const c of cells){ const s=String(c==null?"":c).trim(); if(!name && isName(s) && normPhone(s)!==phone) name=s; }
+        if(phone || name){ allParsed.push({id:Date.now()+Math.random(), name, phone}); totalParsed++; return true; }
+        return false;
+      };
 
       for (const f of files) {
+        const lower = f.name.toLowerCase();
         try {
-          if (f.type === "text/csv" || f.name.endsWith(".csv")) {
-            // CSV - قراءة مباشرة
+          if (lower.endsWith(".csv") || lower.endsWith(".txt") || f.type==="text/csv" || f.type==="text/plain") {
             const text = await f.text();
-            const lines = text.split(/\r?\n/).filter(l => l.trim());
-            lines.forEach(line => {
-              const cols = line.split(/[,;\t]/);
-              const phone = cols.find(c => /^0[5]\d{8}$/.test(c.trim()));
-              const name = cols.find(c => c.trim().length > 2 && !/^\d+$/.test(c.trim()) && c !== phone);
-              if (phone || name) {
-                allParsed.push({ id: Date.now() + Math.random(), name: (name || "").trim(), phone: (phone || "").trim() });
-                totalParsed++;
-              }
+            if(!diagSample) diagSample = text.slice(0,200);
+            const lines = text.replace(/^\uFEFF/,"").split(/\r?\n/).filter(l=>l.trim());
+            lines.forEach(line=>{
+              const cells = line.split(/[,;\t|]/).map(c=>c.replace(/^["']|["']$/g,"").trim());
+              pushRow(cells);
             });
           }
-          // XLSX - استخدام SheetJS (مدمج بالفايل)
-          else if (f.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || f.name.endsWith(".xlsx") || f.name.endsWith(".xls")) {
+          else if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) {
+            if(typeof XLSX==="undefined"){ toast("مكتبة Excel لم تُحمّل — أعد تحميل الصفحة","error"); continue; }
             const ab = await f.arrayBuffer();
-            const wb = XLSX.read(ab, { type: "array" });
-            const ws = wb.Sheets[wb.SheetNames[0]];
-            const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
-            data.forEach(row => {
-              const phone = row.find(c => /^0[5]\d{8}$/.test(String(c || "").trim()));
-              const name = row.find(c => String(c || "").trim().length > 2 && !/^\d+$/.test(String(c || "").trim()) && c !== phone);
-              if (phone || name) {
-                allParsed.push({ id: Date.now() + Math.random(), name: (name || "").trim(), phone: (phone || "").trim() });
-                totalParsed++;
-              }
+            const wb = XLSX.read(ab, { type:"array" });
+            wb.SheetNames.forEach(sn=>{
+              const rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header:1, raw:false, defval:"" });
+              if(!diagSample && rows.length) diagSample = JSON.stringify(rows.slice(0,3));
+              rows.forEach(r=>pushRow(Array.isArray(r)?r:Object.values(r)));
             });
           }
+          else { toast("صيغة غير مدعومة: "+f.name,"warn"); }
         } catch (err) {
-          toast("❌ خطأ بقراءة " + f.name + ": " + err.message, "error");
+          toast("خطأ بقراءة "+f.name+": "+err.message, "error");
         }
       }
 
-      if (totalParsed > 0) {
-        save(allParsed);
-        toast("✅ تم تحميل " + totalParsed + " جهة اتصال");
-      } else {
-        toast("❌ لم يتم العثور على بيانات صحيحة", "error");
-      }
+      if (totalParsed > 0) { save(allParsed); toast("تم تحميل "+totalParsed+" جهة اتصال"); }
+      else { toast("لم يُقرأ أي صف. أول ما في الملف: "+(diagSample||"(فارغ)"), "error"); }
     } catch (err) {
-      toast("❌ خطأ: " + err.message, "error");
+      toast("خطأ: " + err.message, "error");
     }
   };
 
@@ -7396,7 +7403,7 @@ function PastClientsPage({toast, settings, pastClients, setPastClients}){
 
       {/* رفع ملف */}
       <div style={{background:"#fff",borderRadius:14,padding:20,marginBottom:16,boxShadow:"0 2px 8px rgba(0,0,0,.06)",border:"1px solid #e2e8f0"}}>
-        <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" multiple style={{display:"none"}} onChange={handleFile}/>
+        <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls,.txt" multiple style={{display:"none"}} onChange={handleFile}/>
         <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
           <button onClick={()=>fileRef.current&&fileRef.current.click()} disabled={loading}
             style={{padding:"12px 24px",borderRadius:12,border:"2px solid #c8922a",background:loading?"#f1f5f9":"#fffbf0",color:"#c8922a",fontSize:16,fontWeight:800,cursor:loading?"wait":"pointer",fontFamily:"inherit"}}>
