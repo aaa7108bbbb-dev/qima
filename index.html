@@ -7341,30 +7341,34 @@ function PastClientsPage({toast, settings, pastClients, setPastClients}){
       };
 
       for (const f of files) {
-        const lower = f.name.toLowerCase();
         try {
-          if (lower.endsWith(".csv") || lower.endsWith(".txt") || f.type==="text/csv" || f.type==="text/plain") {
-            const text = await f.text();
-            if(!diagSample) diagSample = text.slice(0,200);
-            const lines = text.replace(/^\uFEFF/,"").split(/\r?\n/).filter(l=>l.trim());
-            lines.forEach(line=>{
-              const cells = line.split(/[,;\t|]/).map(c=>c.replace(/^["']|["']$/g,"").trim());
-              pushRow(cells);
+          const buf = await f.arrayBuffer();
+          const b = new Uint8Array(buf);
+          const isZip = b[0]===0x50 && b[1]===0x4B;              // PK.. => xlsx
+          const isOle = b[0]===0xD0 && b[1]===0xCF;              // .xls قديم
+          const isPdf = b[0]===0x25 && b[1]===0x50 && b[2]===0x44 && b[3]===0x46; // %PDF
+
+          if (isPdf) { toast("ملفات PDF غير مدعومة هنا — حوّله إلى CSV أو Excel", "error"); continue; }
+
+          if (isZip || isOle) {
+            if (typeof XLSX === "undefined") { toast("مكتبة Excel لم تُحمّل — أعد تحميل الصفحة", "error"); continue; }
+            const wb = XLSX.read(b, { type: "array" });
+            wb.SheetNames.forEach(sn => {
+              const rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: false, defval: "" });
+              if (!diagSample && rows.length) diagSample = JSON.stringify(rows.slice(0, 3));
+              rows.forEach(r => pushRow(Array.isArray(r) ? r : Object.values(r)));
+            });
+          } else {
+            // نص: CSV / TSV / TXT — بأي ترميز
+            let text = new TextDecoder("utf-8").decode(b);
+            if (text.indexOf("\uFFFD") >= 0) { try { text = new TextDecoder("windows-1256").decode(b); } catch (e2) {} }
+            if (!diagSample) diagSample = text.slice(0, 200);
+            text.replace(/^\uFEFF/, "").split(/\r?\n/).filter(l => l.trim()).forEach(line => {
+              pushRow(line.split(/[,;\t|]/).map(c => c.replace(/^["']|["']$/g, "").trim()));
             });
           }
-          else if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) {
-            if(typeof XLSX==="undefined"){ toast("مكتبة Excel لم تُحمّل — أعد تحميل الصفحة","error"); continue; }
-            const ab = await f.arrayBuffer();
-            const wb = XLSX.read(ab, { type:"array" });
-            wb.SheetNames.forEach(sn=>{
-              const rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header:1, raw:false, defval:"" });
-              if(!diagSample && rows.length) diagSample = JSON.stringify(rows.slice(0,3));
-              rows.forEach(r=>pushRow(Array.isArray(r)?r:Object.values(r)));
-            });
-          }
-          else { toast("صيغة غير مدعومة: "+f.name,"warn"); }
         } catch (err) {
-          toast("خطأ بقراءة "+f.name+": "+err.message, "error");
+          toast("خطأ بقراءة " + f.name + ": " + err.message, "error");
         }
       }
 
@@ -7403,7 +7407,7 @@ function PastClientsPage({toast, settings, pastClients, setPastClients}){
 
       {/* رفع ملف */}
       <div style={{background:"#fff",borderRadius:14,padding:20,marginBottom:16,boxShadow:"0 2px 8px rgba(0,0,0,.06)",border:"1px solid #e2e8f0"}}>
-        <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls,.txt" multiple style={{display:"none"}} onChange={handleFile}/>
+        <input ref={fileRef} type="file" multiple style={{display:"none"}} onChange={handleFile}/>
         <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
           <button onClick={()=>fileRef.current&&fileRef.current.click()} disabled={loading}
             style={{padding:"12px 24px",borderRadius:12,border:"2px solid #c8922a",background:loading?"#f1f5f9":"#fffbf0",color:"#c8922a",fontSize:16,fontWeight:800,cursor:loading?"wait":"pointer",fontFamily:"inherit"}}>
@@ -7449,7 +7453,7 @@ function PastClientsPage({toast, settings, pastClients, setPastClients}){
       ))}
 
       {clients.length===0 && (
-        <div style={{textAlign:"center",padding:40,color:"#94a3b8",fontSize:16}}>لا يوجد زبائن — ارفع ملف PDF أو CSV</div>
+        <div style={{textAlign:"center",padding:40,color:"#94a3b8",fontSize:16}}>لا يوجد زبائن — ارفع ملف CSV أو Excel</div>
       )}
     </div>
   );
