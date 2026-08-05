@@ -893,7 +893,7 @@ function ContractContent({c,inv,r,settings,investors=[]}) {
 function NewContractPage({investors, settings, contracts, onSave, toast, setInvTxList}) {
   const today = todayLocal();
   const nextNum = contracts.length ? Math.max(...contracts.map(c=>parseInt(c.num)||0).filter(n=>n>0), 0) + 1 : (settings.startNum||1);
-  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}],contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",payMethod:"نقدي",bankName:"",bankAccount:"",stockName:"",stockQty:"",isOldContract:false});
+  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}],contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",payMethod:"نقدي",bankName:"",bankAccount:"",stockName:"",stockQty:"",isOldContract:false,payDay:""});
   const _autoFill = (f,prev) => ({...f, client:prev.client||f.client, idNum:prev.idNum||f.idNum, job:prev.job||f.job, cPhone:prev.cPhone||f.cPhone, nationality:prev.nationality||f.nationality, address:prev.address||f.address, idType:prev.idType||f.idType, gName:prev.gName||f.gName, gId:prev.gId||f.gId, gJob:prev.gJob||f.gJob, gPhone:prev.gPhone||f.gPhone});
   const set = (k,v) => {
     setForm(f=>({...f,[k]:v}));
@@ -1162,6 +1162,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
             <option value="تحويل">تحويل</option>
             <option value="صرافة">صرافة</option>
             <option value="شيكات">شيكات</option>
+            <option value="المقاصة">المقاصة</option>
           </select>
         </div>
         {form.payType==="deduction" && (
@@ -1170,7 +1171,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
             <input style={fInput} type="text" placeholder="رقم الحساب / الآيبان" value={form.bankAccount} onChange={e=>set("bankAccount",e.target.value)}/>
           </div>
         )}
-        {form.payMethod==="شيكات" && (
+        {(form.payMethod==="شيكات"||form.payMethod==="المقاصة") && (
           <div>
             <label style={fLabel}>البنك</label>
             <select style={{...styles.select,borderRadius:10}} value={form.bankName||""} onChange={e=>set("bankName",e.target.value)}>
@@ -1182,6 +1183,21 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
               <option value="العربي">العربي</option>
               <option value="الرياض">الرياض</option>
             </select>
+          </div>
+        )}
+        {/* يوم السداد */}
+        {(form.payMethod==="نقدي"||form.payMethod==="شيكات"||form.payMethod==="استقطاع"||form.payMethod==="المقاصة") && (
+          <div>
+            <label style={fLabel}>يوم السداد</label>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+              {[1,5,10,14,15,20,25,27].map(d=>(
+                <button key={d} type="button" onClick={()=>set("payDay",form.payDay===d?"":d)}
+                  style={{padding:"8px 14px",borderRadius:10,fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
+                    border:form.payDay===d?"2px solid #c8922a":"1px solid #e2e8f0",
+                    background:form.payDay===d?"#fffbf0":"#fff",
+                    color:form.payDay===d?"#c8922a":"#64748b"}}>{d}</button>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -1609,9 +1625,10 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     if(invSearch && invSearch!=="__all__") list = list.filter(c=>(investors.find(i=>String(i.id)===String(c.investorId))?.name||"")===invSearch);
     else if(!invSearch) list = [];
     if(payFilter){
-      if(payFilter.startsWith("شيكات:")){
-        const bank=payFilter.split(":")[1];
-        list = list.filter(c=>c.payMethod==="شيكات" && c.bankName===bank);
+      if(payFilter.startsWith("شيكات:") || payFilter.startsWith("المقاصة:")){
+        const parts=payFilter.split(":");
+        const method=parts[0], bank=parts[1];
+        list = list.filter(c=>c.payMethod===method && c.bankName===bank);
       } else {
         list = list.filter(c=>(c.payMethod||"نقدي")===payFilter);
       }
@@ -2013,22 +2030,23 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         {/* فلتر نوع السداد */}
         {invSearch && (
           <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:12}}>
-            {[{v:"",l:"الكل"},{v:"نقدي",l:"نقدي"},{v:"تحويل",l:"تحويل"},{v:"صرافة",l:"صرافة"},{v:"شيكات",l:"شيكات"}].map(f=>(
+            {[{v:"",l:"الكل"},{v:"نقدي",l:"نقدي"},{v:"تحويل",l:"تحويل"},{v:"صرافة",l:"صرافة"},{v:"شيكات",l:"شيكات"},{v:"المقاصة",l:"المقاصة"},{v:"استقطاع",l:"استقطاع"}].map(f=>(
               <button key={f.v} onClick={()=>setPayFilter(payFilter===f.v && f.v?"":f.v)}
                 style={{padding:"6px 12px",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
                   border:payFilter===f.v?"2px solid #c8922a":"1px solid #e2e8f0",
                   background:payFilter===f.v?"#fffbf0":"#fff",
                   color:payFilter===f.v?"#c8922a":"#64748b"}}>{f.l}</button>
             ))}
-            {(payFilter==="شيكات"||payFilter.startsWith("شيكات:")) && (
+            {(payFilter==="شيكات"||payFilter.startsWith("شيكات:")||payFilter==="المقاصة"||payFilter.startsWith("المقاصة:")) && (
               <>
-                {["الراجحي","الأهلي","الإنماء","البلاد","العربي","الرياض"].map(b=>(
-                  <button key={b} onClick={()=>setPayFilter(payFilter==="شيكات:"+b?"شيكات":"شيكات:"+b)}
+                {["الراجحي","الأهلي","الإنماء","البلاد","العربي","الرياض"].map(b=>{
+                  const prefix=payFilter.startsWith("المقاصة")?"المقاصة":"شيكات";
+                  return <button key={b} onClick={()=>setPayFilter(payFilter===prefix+":"+b?prefix:prefix+":"+b)}
                     style={{padding:"6px 10px",borderRadius:8,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
-                      border:payFilter==="شيكات:"+b?"2px solid #c8922a":"1px solid #d1d5db",
-                      background:payFilter==="شيكات:"+b?"#fffbf0":"#f8fafc",
-                      color:payFilter==="شيكات:"+b?"#c8922a":"#64748b"}}>{b}</button>
-                ))}
+                      border:payFilter===prefix+":"+b?"2px solid #c8922a":"1px solid #d1d5db",
+                      background:payFilter===prefix+":"+b?"#fffbf0":"#f8fafc",
+                      color:payFilter===prefix+":"+b?"#c8922a":"#64748b"}}>{b}</button>;
+                })}
               </>
             )}
             {payFilter && <span style={{fontSize:11,color:"#c8922a",fontWeight:700,padding:"6px 0",alignSelf:"center"}}>{invReportContracts.length} عقد</span>}
@@ -2613,9 +2631,10 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                 <option value="تحويل">تحويل</option>
                 <option value="صرافة">صرافة</option>
                 <option value="شيكات">شيكات</option>
+                <option value="المقاصة">المقاصة</option>
               </select>
             </div>
-            {editForm.payMethod==="شيكات" && (
+            {(editForm.payMethod==="شيكات"||editForm.payMethod==="المقاصة") && (
               <div style={{gridColumn:"1/-1"}}>
                 <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>البنك</label>
                 <select style={{...styles.input,fontWeight:700,fontSize:15}} value={editForm.bankName||""} onChange={e=>setEditForm(f=>({...f,bankName:e.target.value}))}>
@@ -3075,7 +3094,8 @@ function DeductionsSheet({contracts, investors, payments}){
     const pm=c.payMethod||"نقدي";
     const pt=c.payType;
     if(payF==="استقطاع" && pt!=="deduction") return false;
-    if(payF && payF!=="استقطاع" && payF!=="الكل" && pm!==payF) return false;
+    if(payF==="المقاصة" && pm!=="المقاصة") return false;
+    if(payF && payF!=="استقطاع" && payF!=="المقاصة" && payF!=="الكل" && pm!==payF) return false;
     if(dayF && getDueDay(c)!==dayF) return false;
     return true;
   }).map(c=>{
@@ -3119,7 +3139,7 @@ function DeductionsSheet({contracts, investors, payments}){
       </div>
       {/* فلتر نوع السداد */}
       <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
-        {["استقطاع","شيكات","نقدي","تحويل","صرافة","الكل"].map(f=>(
+        {["استقطاع","شيكات","المقاصة","نقدي","تحويل","صرافة","الكل"].map(f=>(
           <button key={f} onClick={()=>setPayF(f)}
             style={{padding:"6px 14px",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
               border:payF===f?"2px solid #c8922a":"1px solid #e2e8f0",
