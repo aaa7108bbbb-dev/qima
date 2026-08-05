@@ -7313,63 +7313,59 @@ function PastClientsPage({toast, settings, pastClients, setPastClients}){
   };
 
   const handleFile = async (e) => {
-    try{
-    const files = e.target.files; if(!files||!files.length){toast("لم يتم اختيار ملف","warn");return;}
-    toast("جاري قراءة "+files.length+" ملف...");
-    e.target.value="";
-    const aiKey = settings?.geminiKey || localStorage.getItem("qimma_ai_key");
-
-    // CSV — معالجة مباشرة بدون AI
-    const csvFiles = [...files].filter(f=>f.type==="text/csv"||f.name.endsWith(".csv"));
-    if(csvFiles.length){
-      let totalParsed = 0;
+    try {
+      const files = e.target.files;
+      if (!files || !files.length) { toast("لم تختر ملف", "warn"); return; }
+      
+      e.target.value = "";
       let allParsed = [...clients];
-      for(const f of csvFiles){
-        const text = await f.text();
-        const lines = text.split(/\r?\n/).filter(l=>l.trim());
-        lines.forEach(line=>{
-          const cols = line.split(/[,;\t]/);
-          const phone = cols.find(c=>/^0[5]\d{8}$/.test(c.trim()) || /^966\d{9}$/.test(c.trim()));
-          const name = cols.find(c=>c.trim().length>2 && !/^\d+$/.test(c.trim()) && c!==phone);
-          if(phone||name){ allParsed.push({id:Date.now()+Math.random(),name:(name||"").trim(),phone:(phone||"").trim()}); totalParsed++; }
-        });
+      let totalParsed = 0;
+
+      for (const f of files) {
+        try {
+          if (f.type === "text/csv" || f.name.endsWith(".csv")) {
+            // CSV - قراءة مباشرة
+            const text = await f.text();
+            const lines = text.split(/\r?\n/).filter(l => l.trim());
+            lines.forEach(line => {
+              const cols = line.split(/[,;\t]/);
+              const phone = cols.find(c => /^0[5]\d{8}$/.test(c.trim()));
+              const name = cols.find(c => c.trim().length > 2 && !/^\d+$/.test(c.trim()) && c !== phone);
+              if (phone || name) {
+                allParsed.push({ id: Date.now() + Math.random(), name: (name || "").trim(), phone: (phone || "").trim() });
+                totalParsed++;
+              }
+            });
+          }
+          // XLSX - استخدام SheetJS (مدمج بالفايل)
+          else if (f.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || f.name.endsWith(".xlsx") || f.name.endsWith(".xls")) {
+            const ab = await f.arrayBuffer();
+            const wb = XLSX.read(ab, { type: "array" });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+            data.forEach(row => {
+              const phone = row.find(c => /^0[5]\d{8}$/.test(String(c || "").trim()));
+              const name = row.find(c => String(c || "").trim().length > 2 && !/^\d+$/.test(String(c || "").trim()) && c !== phone);
+              if (phone || name) {
+                allParsed.push({ id: Date.now() + Math.random(), name: (name || "").trim(), phone: (phone || "").trim() });
+                totalParsed++;
+              }
+            });
+          }
+        } catch (err) {
+          toast("❌ خطأ بقراءة " + f.name + ": " + err.message, "error");
+        }
       }
-      if(totalParsed>0){save(allParsed);toast("✅ تم استيراد "+totalParsed+" جهة اتصال من CSV");}
-      else toast("لم يتم العثور على بيانات بالـ CSV","warn");
-      const nonCsv = [...files].filter(f=>f.type!=="text/csv"&&!f.name.endsWith(".csv"));
-      if(!nonCsv.length) return;
+
+      if (totalParsed > 0) {
+        save(allParsed);
+        toast("✅ تم تحميل " + totalParsed + " جهة اتصال");
+      } else {
+        toast("❌ لم يتم العثور على بيانات صحيحة", "error");
+      }
+    } catch (err) {
+      toast("❌ خطأ: " + err.message, "error");
     }
-
-    if(!aiKey){toast("⚠️ فعّل مفتاح Gemini أولاً من الإعدادات ← ثم ارجع هنا وارفع الملف","error");return;}
-
-    const aiFiles = [...files].filter(f=>f.type!=="text/csv"&&!f.name.endsWith(".csv"));
-    if(!aiFiles.length) return;
-
-    for(const f of aiFiles){ if(f.size>10*1024*1024){toast("الملف "+f.name+" كبير جداً (الحد 10MB)","error");return;} }
-
-    setLoading(true);
-    toast("⏳ جاري استخراج البيانات بالذكاء الاصطناعي...");
-    try{
-      const parts = [];
-      for(const f of aiFiles){
-        const b64 = await toB64(f);
-        const mime = f.type || (f.name.toLowerCase().endsWith(".pdf")?"application/pdf":f.name.toLowerCase().match(/\.(jpg|jpeg)$/i)?"image/jpeg":f.name.toLowerCase().endsWith(".png")?"image/png":"image/jpeg");
-        parts.push({inline_data:{mime_type:mime, data:b64}});
-      }
-      parts.push({text:"استخرج جميع أسماء الأشخاص وأرقام الجوال من "+(aiFiles.length>1?"هذه الملفات/الصور":"هذا الملف")+".\nأرجع النتيجة كـ JSON array فقط بدون أي نص أو شرح أو backticks.\nالصيغة: [{\"name\":\"الاسم الكامل\",\"phone\":\"05XXXXXXXX\"}]\nقواعد:\n- أرقام الجوال 10 أرقام تبدأ بـ 05\n- لا تخلط رقم الحساب (3-4 أرقام) مع رقم الجوال\n- اقرأ كل الصفوف بدون استثناء\n- لو الرقم مو واضح اكتب phone فاضي \"\"\n- لو ما لقيت أرقام أرجع: []"});
-
-      const txt = await extractViaGemini(parts, aiKey);
-      if(!txt.trim()) throw new Error("Gemini لم يرجع نتيجة — جرب ملف أصغر");
-
-      const arr = parseGeminiResult(txt);
-      if(Array.isArray(arr) && arr.length>0){
-        const newC = arr.filter(c=>c.name||c.phone).map(c=>({id:Date.now()+Math.random(),name:(c.name||"").trim(),phone:(c.phone||"").trim()}));
-        save([...clients,...newC]);
-        toast("✅ تم استخراج "+newC.length+" جهة اتصال من "+aiFiles.length+" ملف");
-      } else { toast("لم يتم العثور على أرقام جوال — تأكد إن الملف يحتوي بيانات واضحة","warn"); }
-    }catch(err){ toast("❌ خطأ: "+err.message,"error"); }
-    setLoading(false);
-    }catch(err2){ toast("❌ خطأ غير متوقع: "+err2.message,"error"); setLoading(false); }
   };
 
   const del = id => save(clients.filter(c=>c.id!==id));
@@ -7400,11 +7396,11 @@ function PastClientsPage({toast, settings, pastClients, setPastClients}){
 
       {/* رفع ملف */}
       <div style={{background:"#fff",borderRadius:14,padding:20,marginBottom:16,boxShadow:"0 2px 8px rgba(0,0,0,.06)",border:"1px solid #e2e8f0"}}>
-        <input ref={fileRef} type="file" accept=".pdf,.csv,.xlsx,image/*" multiple style={{display:"none"}} onChange={handleFile}/>
+        <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" multiple style={{display:"none"}} onChange={handleFile}/>
         <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
           <button onClick={()=>fileRef.current&&fileRef.current.click()} disabled={loading}
             style={{padding:"12px 24px",borderRadius:12,border:"2px solid #c8922a",background:loading?"#f1f5f9":"#fffbf0",color:"#c8922a",fontSize:16,fontWeight:800,cursor:loading?"wait":"pointer",fontFamily:"inherit"}}>
-            {loading?"⏳ جاري القراءة...":"📄 رفع ملف أو صور"}
+            {loading?"⏳ جاري التحميل...":"📊 رفع CSV أو Excel"}
           </button>
           {clients.length>0 && <>
             <button onClick={()=>setShowMsg(!showMsg)} style={{padding:"10px 18px",borderRadius:10,border:"1px solid #e2e8f0",background:"#fff",color:"#1f2937",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>✏️ تعديل الرسالة</button>
@@ -7412,7 +7408,7 @@ function PastClientsPage({toast, settings, pastClients, setPastClients}){
             <button onClick={clearAll} style={{padding:"10px 14px",borderRadius:10,border:"1px solid #fecaca",background:"#fff",color:"#dc2626",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🗑 حذف الكل</button>
           </>}
         </div>
-        <div style={{fontSize:12,color:"#94a3b8",marginTop:8}}>ارفع صور أو PDF أو CSV — الذكاء يستخرج الأسماء والأرقام تلقائياً. يدعم رفع عدة ملفات مرة وحدة.</div>
+        <div style={{fontSize:12,color:"#94a3b8",marginTop:8}}>ارفع ملفات CSV أو Excel — تُحمّل مباشرة بدون انتظار. استخرج الأسماء والأرقام من الأعمدة تلقائياً.</div>
       </div>
 
       {/* تعديل الرسالة */}
