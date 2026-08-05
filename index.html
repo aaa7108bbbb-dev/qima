@@ -7313,7 +7313,9 @@ function PastClientsPage({toast, settings, pastClients, setPastClients}){
   };
 
   const handleFile = async (e) => {
-    const files = e.target.files; if(!files||!files.length)return;
+    try{
+    const files = e.target.files; if(!files||!files.length){toast("لم يتم اختيار ملف","warn");return;}
+    toast("جاري قراءة "+files.length+" ملف...");
     e.target.value="";
     const aiKey = settings?.geminiKey || localStorage.getItem("qimma_ai_key");
 
@@ -7329,46 +7331,45 @@ function PastClientsPage({toast, settings, pastClients, setPastClients}){
           const cols = line.split(/[,;\t]/);
           const phone = cols.find(c=>/^0[5]\d{8}$/.test(c.trim()) || /^966\d{9}$/.test(c.trim()));
           const name = cols.find(c=>c.trim().length>2 && !/^\d+$/.test(c.trim()) && c!==phone);
-          if(phone){ allParsed.push({id:Date.now()+Math.random(),name:(name||"").trim(),phone:phone.trim()}); totalParsed++; }
+          if(phone||name){ allParsed.push({id:Date.now()+Math.random(),name:(name||"").trim(),phone:(phone||"").trim()}); totalParsed++; }
         });
       }
-      if(totalParsed>0){save(allParsed);toast("✅ تم استيراد "+totalParsed+" جهة اتصال");}
-      else toast("لم يتم العثور على أرقام جوال","warn");
-      // لو فيه ملفات ثانية غير CSV نكمل
+      if(totalParsed>0){save(allParsed);toast("✅ تم استيراد "+totalParsed+" جهة اتصال من CSV");}
+      else toast("لم يتم العثور على بيانات بالـ CSV","warn");
       const nonCsv = [...files].filter(f=>f.type!=="text/csv"&&!f.name.endsWith(".csv"));
       if(!nonCsv.length) return;
     }
 
-    if(!aiKey){toast("⚙️ فعّل مفتاح Gemini في الإعدادات","warn");return;}
+    if(!aiKey){toast("⚠️ فعّل مفتاح Gemini أولاً من الإعدادات ← ثم ارجع هنا وارفع الملف","error");return;}
 
     const aiFiles = [...files].filter(f=>f.type!=="text/csv"&&!f.name.endsWith(".csv"));
     if(!aiFiles.length) return;
 
-    // تحقق الحجم
-    for(const f of aiFiles){ if(f.size>10*1024*1024){toast("الملف "+f.name+" كبير (الحد 10MB)","error");return;} }
+    for(const f of aiFiles){ if(f.size>10*1024*1024){toast("الملف "+f.name+" كبير جداً (الحد 10MB)","error");return;} }
 
     setLoading(true);
+    toast("⏳ جاري استخراج البيانات بالذكاء الاصطناعي...");
     try{
-      // جمع كل الملفات (صور + PDF) بطلب واحد
       const parts = [];
       for(const f of aiFiles){
         const b64 = await toB64(f);
-        const mime = f.type || (f.name.endsWith(".pdf")?"application/pdf":"image/jpeg");
+        const mime = f.type || (f.name.toLowerCase().endsWith(".pdf")?"application/pdf":f.name.toLowerCase().match(/\.(jpg|jpeg)$/i)?"image/jpeg":f.name.toLowerCase().endsWith(".png")?"image/png":"image/jpeg");
         parts.push({inline_data:{mime_type:mime, data:b64}});
       }
       parts.push({text:"استخرج جميع أسماء الأشخاص وأرقام الجوال من "+(aiFiles.length>1?"هذه الملفات/الصور":"هذا الملف")+".\nأرجع النتيجة كـ JSON array فقط بدون أي نص أو شرح أو backticks.\nالصيغة: [{\"name\":\"الاسم الكامل\",\"phone\":\"05XXXXXXXX\"}]\nقواعد:\n- أرقام الجوال 10 أرقام تبدأ بـ 05\n- لا تخلط رقم الحساب (3-4 أرقام) مع رقم الجوال\n- اقرأ كل الصفوف بدون استثناء\n- لو الرقم مو واضح اكتب phone فاضي \"\"\n- لو ما لقيت أرقام أرجع: []"});
 
       const txt = await extractViaGemini(parts, aiKey);
-      if(!txt.trim()) throw new Error("Gemini لم يرجع نتيجة");
+      if(!txt.trim()) throw new Error("Gemini لم يرجع نتيجة — جرب ملف أصغر");
 
       const arr = parseGeminiResult(txt);
       if(Array.isArray(arr) && arr.length>0){
         const newC = arr.filter(c=>c.name||c.phone).map(c=>({id:Date.now()+Math.random(),name:(c.name||"").trim(),phone:(c.phone||"").trim()}));
         save([...clients,...newC]);
         toast("✅ تم استخراج "+newC.length+" جهة اتصال من "+aiFiles.length+" ملف");
-      } else { toast("لم يتم العثور على أرقام جوال","warn"); }
-    }catch(err){ toast("خطأ: "+err.message,"error"); }
+      } else { toast("لم يتم العثور على أرقام جوال — تأكد إن الملف يحتوي بيانات واضحة","warn"); }
+    }catch(err){ toast("❌ خطأ: "+err.message,"error"); }
     setLoading(false);
+    }catch(err2){ toast("❌ خطأ غير متوقع: "+err2.message,"error"); setLoading(false); }
   };
 
   const del = id => save(clients.filter(c=>c.id!==id));
