@@ -7266,194 +7266,279 @@ function PrivateNotes({toast}){
     </div>
   );
 }
+
 // ═══ صفحة زبائن الماضي ═══
-function PastClientsPage({toast, settings, pastClients, setPastClients}){
+function PastClientsPage({toast, pastClients, setPastClients}){
   const clients = pastClients || [];
-  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [msg, setMsg] = useState("السلام عليكم ورحمة الله\nنسعد بخدمتكم من جديد ..\n\nمؤسسة قمة الفرصه التجاريه\n0555171283");
+  const [mode, setMode] = useState("manual"); // manual | paste | file
+  const [manual, setManual] = useState({name:"", phone:""});
+  const [pasteText, setPasteText] = useState("");
+  const [previewRows, setPreviewRows] = useState([]); // [{id,name,phone,include}]
+  const [editId, setEditId] = useState(null);
+  const [editForm, setEditForm] = useState({name:"", phone:""});
   const [showMsg, setShowMsg] = useState(false);
+  const [msg, setMsg] = useState("السلام عليكم ورحمة الله\nنسعد بخدمتكم من جديد ..\n\nمؤسسة قمة الفرصه التجاريه\n0555171283");
   const fileRef = React.useRef(null);
 
-  const save = d => { setPastClients(d); };
+  const save = d => setPastClients(d);
 
-  const toB64 = (f) => new Promise((resolve,reject)=>{
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(",")[1]);
-    reader.onerror = () => reject(new Error("فشل قراءة الملف"));
-    reader.readAsDataURL(f);
-  });
-
-  const extractViaGemini = async (parts, aiKey) => {
-    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key="+aiKey,{
-      method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        contents:[{parts}],
-        generationConfig:{maxOutputTokens:16000}
-      })
+  // ── تطبيع رقم الجوال السعودي ──
+  const normPhone = (v) => {
+    let s = String(v==null?"":v).replace(/[^\d]/g,"");
+    if(!s) return "";
+    if(s.startsWith("00966")) s = "0"+s.slice(5);
+    else if(s.startsWith("966")) s = "0"+s.slice(3);
+    else if(s.startsWith("5") && s.length===9) s = "0"+s;
+    return /^05\d{8}$/.test(s) ? s : "";
+  };
+  const isName = (v) => {
+    const s = String(v==null?"":v).trim();
+    return s.length>=2 && /[\u0600-\u06FFa-zA-Z]/.test(s) && !normPhone(s);
+  };
+  const cellsToRow = (cells) => {
+    let phone="", name="";
+    for(const c of cells){ const p=normPhone(c); if(p && !phone) phone=p; }
+    for(const c of cells){ const s=String(c==null?"":c).trim(); if(!name && isName(s)) name=s; }
+    if(phone||name) return {name, phone};
+    return null;
+  };
+  const parseDelimited = (text) => {
+    const rows=[];
+    text.replace(/^\uFEFF/,"").split(/\r?\n/).filter(l=>l.trim()).forEach(line=>{
+      const cells = line.split(/[,;\t|]/).map(c=>c.replace(/^["']|["']$/g,"").trim());
+      const row = cellsToRow(cells);
+      if(row) rows.push(row);
     });
-    if(!res.ok){ const t=await res.text().catch(()=>""); throw new Error("خطأ "+res.status+": "+(t.slice(0,100)||"تأكد من مفتاح Gemini")); }
-    const data = await res.json();
-    if(!data.candidates||!data.candidates[0]||!data.candidates[0].content) {
-      const reason=data.candidates&&data.candidates[0]&&data.candidates[0].finishReason;
-      throw new Error("Gemini ما قدر يقرأ"+(reason?" ("+reason+")":""));
-    }
-    return data.candidates[0].content.parts.map(p=>p.text||"").join("");
+    return rows;
   };
 
-  const parseGeminiResult = (txt) => {
-    let clean = txt.replace(/```json/g,"").replace(/```/g,"").trim();
-    const jsonMatch = clean.match(/\[[\s\S]*\]/);
-    if(jsonMatch) clean = jsonMatch[0];
-    try{ return JSON.parse(clean); }catch(e){
-      const phones = txt.match(/0[5][0-9]{8}/g) || [];
-      if(phones.length>0) return [...new Set(phones)].map(p=>({name:"",phone:p}));
-      return [];
-    }
+  // ── معاينة من اللصق ──
+  const previewFromPaste = () => {
+    if(!pasteText.trim()){ toast("الصق نص أولاً — اسم وجوال بكل سطر","warn"); return; }
+    const rows = parseDelimited(pasteText);
+    if(rows.length===0){ toast("لم يتم التعرف على أي بيانات بالنص الملصق","error"); return; }
+    setPreviewRows(rows.map(r=>({...r, id:Math.random(), include:true})));
+    toast("تم التعرف على "+rows.length+" صف — راجعها قبل الحفظ");
   };
 
-  const handleFile = async (e) => {
-    try {
-      const files = e.target.files;
-      if (!files || !files.length) { toast("لم تختر ملف", "warn"); return; }
-      e.target.value = "";
-      let allParsed = [...clients];
-      let totalParsed = 0;
-      let diagSample = "";
-
-      const normPhone = (v) => {
-        let s = String(v==null?"":v).replace(/[^\d]/g,"");
-        if(!s) return "";
-        if(s.startsWith("966")) s = "0"+s.slice(3);
-        else if(s.startsWith("5") && s.length===9) s = "0"+s;
-        return /^05\d{8}$/.test(s) ? s : "";
-      };
-      const isName = (v) => {
-        const s = String(v==null?"":v).trim();
-        return s.length>=2 && /[\u0600-\u06FFa-zA-Z]/.test(s);
-      };
-      const pushRow = (cells) => {
-        let phone = "", name = "";
-        for(const c of cells){ if(!phone){ const p=normPhone(c); if(p) phone=p; } }
-        for(const c of cells){ const s=String(c==null?"":c).trim(); if(!name && isName(s) && normPhone(s)!==phone) name=s; }
-        if(phone || name){ allParsed.push({id:Date.now()+Math.random(), name, phone}); totalParsed++; return true; }
-        return false;
-      };
-
-      for (const f of files) {
-        try {
-          const buf = await f.arrayBuffer();
-          const b = new Uint8Array(buf);
-          const isZip = b[0]===0x50 && b[1]===0x4B;              // PK.. => xlsx
-          const isOle = b[0]===0xD0 && b[1]===0xCF;              // .xls قديم
-          const isPdf = b[0]===0x25 && b[1]===0x50 && b[2]===0x44 && b[3]===0x46; // %PDF
-
-          if (isPdf) { toast("ملفات PDF غير مدعومة هنا — حوّله إلى CSV أو Excel", "error"); continue; }
-
-          if (isZip || isOle) {
-            if (typeof XLSX === "undefined") { toast("مكتبة Excel لم تُحمّل — أعد تحميل الصفحة", "error"); continue; }
-            const wb = XLSX.read(b, { type: "array" });
-            wb.SheetNames.forEach(sn => {
-              const rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: false, defval: "" });
-              if (!diagSample && rows.length) diagSample = JSON.stringify(rows.slice(0, 3));
-              rows.forEach(r => pushRow(Array.isArray(r) ? r : Object.values(r)));
-            });
-          } else {
-            // نص: CSV / TSV / TXT — بأي ترميز
-            let text = new TextDecoder("utf-8").decode(b);
-            if (text.indexOf("\uFFFD") >= 0) { try { text = new TextDecoder("windows-1256").decode(b); } catch (e2) {} }
-            if (!diagSample) diagSample = text.slice(0, 200);
-            text.replace(/^\uFEFF/, "").split(/\r?\n/).filter(l => l.trim()).forEach(line => {
-              pushRow(line.split(/[,;\t|]/).map(c => c.replace(/^["']|["']$/g, "").trim()));
-            });
-          }
-        } catch (err) {
-          toast("خطأ بقراءة " + f.name + ": " + err.message, "error");
+  // ── معاينة من ملف CSV/Excel (اكتشاف النوع من محتوى الملف لا من الاسم) ──
+  const onFilePicked = async (e) => {
+    const files = e.target.files;
+    if(!files || !files.length){ return; }
+    e.target.value = "";
+    let collected = [];
+    let diag = "";
+    for(const f of files){
+      try{
+        const buf = await f.arrayBuffer();
+        const b = new Uint8Array(buf);
+        const isZip = b[0]===0x50 && b[1]===0x4B;   // PK.. => xlsx
+        const isOle = b[0]===0xD0 && b[1]===0xCF;   // xls قديم
+        const isPdf = b[0]===0x25 && b[1]===0x50 && b[2]===0x44 && b[3]===0x46;
+        if(isPdf){ toast("ملفات PDF غير مدعومة — استخدم CSV أو Excel أو الصق النص مباشرة","error"); continue; }
+        if(isZip || isOle){
+          if(typeof XLSX==="undefined"){ toast("مكتبة Excel لم تُحمّل — أعد تحميل الصفحة وحاول مجدداً","error"); continue; }
+          const wb = XLSX.read(b, {type:"array"});
+          wb.SheetNames.forEach(sn=>{
+            const rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], {header:1, raw:false, defval:""});
+            if(!diag && rows.length) diag = JSON.stringify(rows.slice(0,3));
+            rows.forEach(r=>{ const row=cellsToRow(Array.isArray(r)?r:Object.values(r)); if(row) collected.push(row); });
+          });
+        } else {
+          let text = new TextDecoder("utf-8").decode(b);
+          if(text.indexOf("\uFFFD")>=0){ try{ text = new TextDecoder("windows-1256").decode(b); }catch(e2){} }
+          if(!diag) diag = text.slice(0,200);
+          collected = collected.concat(parseDelimited(text));
         }
-      }
-
-      if (totalParsed > 0) { save(allParsed); toast("تم تحميل "+totalParsed+" جهة اتصال"); }
-      else { toast("لم يُقرأ أي صف. أول ما في الملف: "+(diagSample||"(فارغ)"), "error"); }
-    } catch (err) {
-      toast("خطأ: " + err.message, "error");
+      }catch(err){ toast("خطأ بقراءة "+f.name+": "+err.message, "error"); }
     }
+    if(collected.length===0){ toast("لم يُقرأ أي صف من الملف. أول ما بداخله: "+(diag||"(فارغ)"), "error"); return; }
+    setPreviewRows(collected.map(r=>({...r, id:Math.random(), include:true})));
+    toast("تم استخراج "+collected.length+" صف من الملف — راجعها قبل الحفظ");
   };
 
-  const del = id => save(clients.filter(c=>c.id!==id));
-  const clearAll = () => {if(window.confirm("حذف جميع الزبائن؟")){save([]);toast("تم الحذف");}};
-  const sendWA = (phone, name) => {
-    const p = phone.startsWith("05")?"966"+phone.slice(1):phone.startsWith("966")?phone:phone;
-    const m = msg;
-    window.open("https://wa.me/"+p+"?text="+encodeURIComponent(m),"_blank");
+  const toggleRow = (id) => setPreviewRows(p=>p.map(r=>r.id===id?{...r,include:!r.include}:r));
+  const toggleAllRows = (val) => setPreviewRows(p=>p.map(r=>({...r,include:val})));
+  const confirmImport = () => {
+    const toAdd = previewRows.filter(r=>r.include).map(r=>({id:Date.now()+Math.random(), name:(r.name||"").trim(), phone:r.phone||""}));
+    if(!toAdd.length){ toast("لا يوجد صفوف محددة للاستيراد","warn"); return; }
+    save([...clients, ...toAdd]);
+    toast("تم إضافة "+toAdd.length+" جهة اتصال");
+    setPreviewRows([]);
+    setPasteText("");
   };
+  const cancelPreview = () => setPreviewRows([]);
+
+  // ── إضافة يدوية مباشرة ──
+  const addManual = () => {
+    const phone = manual.phone ? normPhone(manual.phone) : "";
+    if(!manual.name.trim() && !phone){ toast("أدخل اسم أو رقم جوال صحيح","warn"); return; }
+    if(manual.phone && !phone){ toast("رقم الجوال غير صحيح — الصيغة 05XXXXXXXX","error"); return; }
+    save([...clients, {id:Date.now()+Math.random(), name:manual.name.trim(), phone}]);
+    setManual({name:"", phone:""});
+    toast("تمت الإضافة");
+  };
+
+  // ── تعديل / حذف ──
+  const startEdit = c => { setEditId(c.id); setEditForm({name:c.name||"", phone:c.phone||""}); };
+  const saveEdit = () => {
+    const phone = editForm.phone ? normPhone(editForm.phone) : "";
+    if(editForm.phone && !phone){ toast("رقم الجوال غير صحيح — الصيغة 05XXXXXXXX","error"); return; }
+    save(clients.map(c=>c.id===editId?{...c, name:editForm.name.trim(), phone}:c));
+    setEditId(null);
+    toast("تم التحديث");
+  };
+  const del = id => save(clients.filter(c=>c.id!==id));
+  const clearAll = () => { if(window.confirm("حذف جميع الزبائن؟ لا يمكن التراجع.")){ save([]); toast("تم حذف الكل"); } };
+
+  const sendWA = (phone) => {
+    const p = phone.startsWith("05") ? "966"+phone.slice(1) : phone;
+    window.open("https://wa.me/"+p+"?text="+encodeURIComponent(msg), "_blank");
+  };
+
   const exportCSV = () => {
-    const esc = v => '"'+String(v).replace(/"/g,'""')+'"';
-    const head = ["الاسم","الجوال","الجوال الدولي"];
-    const rows = clients.map(c=>[c.name, c.phone, c.phone.startsWith("05")?"966"+c.phone.slice(1):c.phone]);
+    const esc = v => '"'+String(v||"").replace(/"/g,'""')+'"';
+    const head = ["الاسم","الجوال"];
+    const rows = clients.map(c=>[c.name||"", c.phone||""]);
     const csv = "\uFEFF" + [head.map(esc).join(","), ...rows.map(r=>r.map(esc).join(","))].join("\r\n");
-    const blob = new Blob([csv],{type:"text/csv;charset=utf-8;"});
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
     const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="زبائن-الماضي.csv"; a.click();
-    toast("✅ تم التصدير");
+    toast("تم التصدير");
   };
 
   const filtered = search ? clients.filter(c=>(c.name||"").includes(search)||(c.phone||"").includes(search)) : clients;
 
   return (
-    <div style={{maxWidth:1200,margin:"0 auto"}}>
-      <div style={{fontSize:22,fontWeight:900,color:"#c8922a",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
+    <div style={{maxWidth:1100,margin:"0 auto"}}>
+      <div style={{fontSize:22,fontWeight:900,color:C.gold,marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
         📇 زبائن الماضي
-        <span style={{fontSize:13,fontWeight:600,color:"#94a3b8"}}>{clients.length} زبون</span>
+        <span style={{fontSize:13,fontWeight:600,color:"#64748b"}}>{clients.length} زبون</span>
       </div>
 
-      {/* رفع ملف */}
-      <div style={{background:"#fff",borderRadius:14,padding:20,marginBottom:16,boxShadow:"0 2px 8px rgba(0,0,0,.06)",border:"1px solid #e2e8f0"}}>
-        <input ref={fileRef} type="file" multiple style={{display:"none"}} onChange={handleFile}/>
-        <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
-          <button onClick={()=>fileRef.current&&fileRef.current.click()} disabled={loading}
-            style={{padding:"12px 24px",borderRadius:12,border:"2px solid #c8922a",background:loading?"#f1f5f9":"#fffbf0",color:"#c8922a",fontSize:16,fontWeight:800,cursor:loading?"wait":"pointer",fontFamily:"inherit"}}>
-            {loading?"⏳ جاري التحميل...":"📊 رفع CSV أو Excel"}
-          </button>
-          {clients.length>0 && <>
-            <button onClick={()=>setShowMsg(!showMsg)} style={{padding:"10px 18px",borderRadius:10,border:"1px solid #e2e8f0",background:"#fff",color:"#1f2937",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>✏️ تعديل الرسالة</button>
-            <button onClick={exportCSV} style={{padding:"10px 18px",borderRadius:10,border:"1px solid #e2e8f0",background:"#fff",color:"#64748b",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>📥 تصدير CSV</button>
-            <button onClick={clearAll} style={{padding:"10px 14px",borderRadius:10,border:"1px solid #fecaca",background:"#fff",color:"#dc2626",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🗑 حذف الكل</button>
-          </>}
-        </div>
-        <div style={{fontSize:12,color:"#94a3b8",marginTop:8}}>ارفع ملفات CSV أو Excel — تُحمّل مباشرة بدون انتظار. استخرج الأسماء والأرقام من الأعمدة تلقائياً.</div>
-      </div>
-
-      {/* تعديل الرسالة */}
-      {showMsg && (
-        <div style={{background:"#fff",borderRadius:14,padding:16,marginBottom:16,border:"1px solid #e2e8f0"}}>
-          <div style={{fontSize:14,fontWeight:700,color:"#1f2937",marginBottom:8}}>نص الرسالة</div>
-          <textarea value={msg} onChange={e=>setMsg(e.target.value)} rows={5}
-            style={{width:"100%",padding:12,borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:15,fontFamily:"inherit",outline:"none",resize:"vertical",boxSizing:"border-box"}}/>
-        </div>
-      )}
-
-      {/* بحث */}
-      {clients.length>0 && (
-        <div style={{marginBottom:14}}>
-          <input placeholder="🔍 بحث بالاسم أو الرقم..." value={search} onChange={e=>setSearch(e.target.value)}
-            style={{width:"100%",padding:"12px 16px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:15,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
-        </div>
-      )}
-
-      {/* القائمة */}
-      {filtered.map((c,i)=>(
-        <div key={c.id||i} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:"#fff",borderRadius:10,marginBottom:6,border:"1px solid #f1f5f9"}}>
-          <div style={{width:36,height:36,borderRadius:10,background:"#fffbf0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:"#c8922a",flexShrink:0}}>{i+1}</div>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:15,fontWeight:700,color:"#1f2937",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{c.name||"بدون اسم"}</div>
-            <div style={{fontSize:13,color:"#64748b",direction:"ltr",textAlign:"right"}}>{c.phone}</div>
+      {/* ═══ إضافة زبائن ═══ */}
+      <div style={{...styles.panel}}>
+        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>➕ إضافة زبائن</h3></div>
+        <div style={{padding:"14px 18px"}}>
+          {/* تبديل الطريقة */}
+          <div style={{marginBottom:14}}>
+            <button style={styles.goodsBtn(mode==="manual")} onClick={()=>setMode("manual")}>✍️ إضافة يدوية</button>
+            <button style={styles.goodsBtn(mode==="paste")} onClick={()=>setMode("paste")}>📋 لصق قائمة</button>
+            <button style={styles.goodsBtn(mode==="file")} onClick={()=>setMode("file")}>📊 رفع CSV / Excel</button>
           </div>
-          <button onClick={()=>sendWA(c.phone,c.name)} style={{padding:"8px 14px",borderRadius:8,border:"none",background:"#25d366",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>واتساب</button>
-          <button onClick={()=>del(c.id)} style={{background:"none",border:"none",color:"#ef4444",fontSize:16,cursor:"pointer",flexShrink:0}}>✕</button>
-        </div>
-      ))}
 
-      {clients.length===0 && (
-        <div style={{textAlign:"center",padding:40,color:"#94a3b8",fontSize:16}}>لا يوجد زبائن — ارفع ملف CSV أو Excel</div>
+          {mode==="manual" && (
+            <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"flex-end"}}>
+              <div style={{flex:"1 1 200px"}}>
+                <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>الاسم</label>
+                <input style={styles.input} value={manual.name} onChange={e=>setManual(f=>({...f,name:e.target.value}))}
+                  onKeyDown={e=>{if(e.key==="Enter")addManual();}} placeholder="اسم العميل"/>
+              </div>
+              <div style={{flex:"1 1 160px"}}>
+                <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>الجوال</label>
+                <input style={styles.input} value={manual.phone} onChange={e=>setManual(f=>({...f,phone:e.target.value}))}
+                  onKeyDown={e=>{if(e.key==="Enter")addManual();}} placeholder="05XXXXXXXX"/>
+              </div>
+              <button style={styles.btn(C.teal)} onClick={addManual}>💾 إضافة</button>
+            </div>
+          )}
+
+          {mode==="paste" && (
+            <div>
+              <div style={{fontSize:13,color:"#64748b",marginBottom:8}}>الصق الأسماء والأرقام من أي مكان (إكسل، ملاحظات، واتساب) — سطر لكل زبون، الاسم والرقم مفصولين بفاصلة أو تاب</div>
+              <textarea style={{...styles.input,minHeight:120,fontFamily:"monospace",resize:"vertical"}}
+                placeholder={"محمد عبدالله, 0512345678\nسعد الحربي, 0523456789"}
+                value={pasteText} onChange={e=>setPasteText(e.target.value)}/>
+              <button style={{...styles.btn(C.teal),marginTop:10}} onClick={previewFromPaste}>🔍 معاينة</button>
+            </div>
+          )}
+
+          {mode==="file" && (
+            <div>
+              <input ref={fileRef} type="file" multiple style={{display:"none"}} onChange={onFilePicked}/>
+              <button onClick={()=>fileRef.current && fileRef.current.click()}
+                style={{padding:"12px 24px",borderRadius:12,border:"2px solid "+C.gold,background:C.goldLt,color:C.gold,fontSize:16,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>
+                📊 اختر ملف CSV أو Excel
+              </button>
+              <div style={{fontSize:12,color:"#64748b",marginTop:8}}>يدعم عدة ملفات مرة وحدة. الملفات تُعاين قبل الحفظ ولا تُحفظ تلقائياً.</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ═══ معاينة قبل الحفظ ═══ */}
+      {previewRows.length>0 && (
+        <div style={{...styles.panel, border:"2px solid "+C.gold}}>
+          <div style={styles.panelHdr}>
+            <h3 style={{margin:0,fontSize:15,fontWeight:700}}>🔍 معاينة — {previewRows.filter(r=>r.include).length} من {previewRows.length} محدد</h3>
+            <div style={{display:"flex",gap:8}}>
+              <button style={{...styles.btn("#e5e7eb",C.ink),fontSize:13,padding:"5px 10px"}} onClick={()=>toggleAllRows(true)}>تحديد الكل</button>
+              <button style={{...styles.btn("#e5e7eb",C.ink),fontSize:13,padding:"5px 10px"}} onClick={()=>toggleAllRows(false)}>إلغاء الكل</button>
+            </div>
+          </div>
+          <div style={{padding:"10px 18px",maxHeight:320,overflowY:"auto"}}>
+            {previewRows.map(r=>(
+              <label key={r.id} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:"1px solid "+C.border,cursor:"pointer",opacity:r.include?1:0.4}}>
+                <input type="checkbox" checked={r.include} onChange={()=>toggleRow(r.id)}/>
+                <span style={{flex:1,fontWeight:700,color:C.ink}}>{r.name || "— بدون اسم —"}</span>
+                <span style={{fontFamily:"monospace",color:r.phone?C.ink2:"#c0392b"}}>{r.phone || "— بدون رقم —"}</span>
+              </label>
+            ))}
+          </div>
+          <div style={{padding:"12px 18px",borderTop:"1px solid "+C.border,display:"flex",gap:8}}>
+            <button style={styles.btn(C.green)} onClick={confirmImport}>✅ حفظ المحدد ({previewRows.filter(r=>r.include).length})</button>
+            <button style={styles.btn("#e5e7eb",C.ink)} onClick={cancelPreview}>إلغاء</button>
+          </div>
+        </div>
+      )}
+
+      {clients.length>0 && <>
+        {/* ═══ أدوات ═══ */}
+        <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center",marginBottom:16}}>
+          <input style={{...styles.input,maxWidth:280}} placeholder="🔍 بحث بالاسم أو الجوال" value={search} onChange={e=>setSearch(e.target.value)}/>
+          <button style={styles.btn("#fff",C.ink2)} onClick={()=>setShowMsg(!showMsg)}>✏️ تعديل رسالة واتساب</button>
+          <button style={styles.btn("#fff",C.ink2)} onClick={exportCSV}>📥 تصدير CSV</button>
+          <button style={{...styles.btn(C.redLt,C.red)}} onClick={clearAll}>🗑 حذف الكل</button>
+        </div>
+
+        {showMsg && (
+          <div style={{...styles.panel,padding:16}}>
+            <div style={{fontSize:14,fontWeight:700,color:C.ink,marginBottom:8}}>نص رسالة واتساب</div>
+            <textarea style={{...styles.input,minHeight:100}} value={msg} onChange={e=>setMsg(e.target.value)}/>
+          </div>
+        )}
+
+        {/* ═══ القائمة ═══ */}
+        <div style={styles.panel}>
+          {filtered.length===0 ? (
+            <div style={{padding:40,textAlign:"center",color:"#64748b"}}>لا توجد نتائج مطابقة</div>
+          ) : filtered.map(c=>(
+            <div key={c.id} style={{padding:"12px 18px",borderBottom:"1px solid "+C.border,display:"flex",alignItems:"center",gap:12}}>
+              {editId===c.id ? (
+                <>
+                  <input style={{...styles.input,flex:1}} value={editForm.name} onChange={e=>setEditForm(f=>({...f,name:e.target.value}))}/>
+                  <input style={{...styles.input,flex:1}} value={editForm.phone} onChange={e=>setEditForm(f=>({...f,phone:e.target.value}))}/>
+                  <button style={styles.btn(C.teal)} onClick={saveEdit}>💾</button>
+                  <button style={styles.btn("#e5e7eb",C.ink)} onClick={()=>setEditId(null)}>✕</button>
+                </>
+              ) : (
+                <>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:800,fontSize:16,color:C.ink}}>{c.name || "— بدون اسم —"}</div>
+                    <div style={{fontFamily:"monospace",fontSize:14,color:"#64748b"}}>{c.phone || "— بدون رقم —"}</div>
+                  </div>
+                  {c.phone && <button style={{...styles.btn("#25D366"),fontSize:13,padding:"6px 12px"}} onClick={()=>sendWA(c.phone)}>💬 واتساب</button>}
+                  <button style={{...styles.btn("#e5e7eb",C.ink),fontSize:13,padding:"6px 10px"}} onClick={()=>startEdit(c)}>✏️</button>
+                  <button style={{...styles.btn(C.redLt,C.red),fontSize:13,padding:"6px 10px"}} onClick={()=>{if(window.confirm("حذف "+(c.name||"هذا الزبون")+"؟"))del(c.id);}}>🗑</button>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      </>}
+
+      {clients.length===0 && previewRows.length===0 && (
+        <div style={{...styles.panel,padding:40,textAlign:"center",color:"#64748b"}}>لا يوجد زبائن بعد — أضف يدوياً أو الصق قائمة أو ارفع ملف من الأعلى</div>
       )}
     </div>
   );
@@ -8431,7 +8516,6 @@ tbody tr:nth-child(even){background:#f7f9fb}
 - "الواصل" = المدفوع | "المتبقي" = الأقساط − الواصل
 
 ═══ صفحات النظام ═══
-- لو طلب إضافة زبائن قدامى أو زبائن الماضي، وجّهه لصفحة "زبائن الماضي" من القائمة الرئيسية — هناك يرفع صور أو PDF أو CSV (يدعم رفع عدة ملفات مرة وحدة) والنظام يستخرج الأسماء والأرقام تلقائياً
 - لو طلب الدفتر الخاص، وجّهه للإعدادات — آخر الصفحة يضغط النقاط الثلاث
 - "متأخر X شهر" = عدد الأقساط المستحقة وغير المدفوعة
 - contractType: monthly=شهري، defer=مؤجل، migrated=مرحّل من النظام القديم
@@ -10030,7 +10114,7 @@ const NAV_ICONS = {
   portfolio:'<path d="M3.6 20.4h16.8"/><path d="M7.2 20.4v-4.6M12 20.4v-8.2M16.8 20.4v-6.4"/>|<circle cx="12" cy="9.2" r="1.35"/>',
   cashflow:'<circle cx="12" cy="12" r="8.4"/><path d="M15.7 8.3 13.1 13.1 8.3 15.7l2.6-4.8Z"/>|<circle cx="12" cy="12" r="1.25"/>',
   qimaai:'<rect x="3.6" y="3.6" width="16.8" height="16.8" rx="4.6"/><path d="M12 7.4v2.4M12 14.2v2.4M7.4 12h2.4M14.2 12h2.4"/>|<circle cx="12" cy="12" r="1.6"/>',
-  pastclients:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>|',
+  pastclients:'<rect x="3.4" y="5.2" width="17.2" height="13.6" rx="2.4"/><circle cx="9.2" cy="10.4" r="1.9"/><path d="M6.2 15.8c0-1.9 1.4-3 3-3s3 1.1 3 3M14.4 9.4h4.6M14.4 12.6h4.6"/>|<circle cx="18.6" cy="16.4" r="1.15"/>',
   settings:'<circle cx="12" cy="12" r="3.3"/><path d="M17.4 12h2.2M15.8 8.2l1.6-1.6M12 6.6V4.4M8.2 8.2 6.6 6.6M6.6 12H4.4M8.2 15.8 6.6 17.4M12 17.4v2.2M15.8 15.8l1.6 1.6"/>|<circle cx="12" cy="12" r="1.3"/>',
 };
 function NavIcon({id, on}){
@@ -10243,6 +10327,8 @@ function App() {
     return raw;
   });
   const setLoans = v => { const d=_arr(typeof v==="function"?v(loans):v); setLoansRaw(d); saveLS("qimma_loans",d); gsWrite("loans",d); };
+  const [pastClients,setPastClientsRaw]=useState(()=>_arr(loadLS("qimma_past_clients",[])));
+  const setPastClients = v => { const d=_arr(typeof v==="function"?v(pastClients):v); setPastClientsRaw(d); saveLS("qimma_past_clients",d); gsWrite("pastClients",d); };
   const [zakatTx,setZakatTxRaw]=useState(()=>_arr(loadLS("qimma_zakat",[])));
   const setZakatTx = v => { const d=_arr(typeof v==="function"?v(zakatTx):v); setZakatTxRaw(d); saveLS("qimma_zakat",d); gsWrite("zakat",d); };
   const [pending,setPendingRaw]=useState(()=>_arr(loadLS("qimma_pending",[])));
@@ -10282,8 +10368,6 @@ function App() {
   const [completionAlert,setCompletionAlert]=useState(null);
   const [doneIds,setDoneIdsRaw]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_done")||"[]");}catch{return[];}});
   const setDoneIds = v => { const d=_arr(typeof v==="function"?v(doneIds):v); setDoneIdsRaw(d); localStorage.setItem("qimma_done",JSON.stringify(d)); gsWrite("doneIds",d); };
-  const [pastClients,setPastClientsRaw]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_past_clients")||"[]");}catch{return[];}});
-  const setPastClients = d => { const arr=_arr(d); setPastClientsRaw(arr); localStorage.setItem("qimma_past_clients",JSON.stringify(arr)); gsWrite("pastClients",arr); };
   const markDone = (id) => { setDoneIds(prev=>[...prev,id]); };
 
   const toast=(msg,type="success")=>{setToastMsg(msg);setToastType(type);setTimeout(()=>setToastMsg(null),3000);};
@@ -10317,7 +10401,7 @@ function App() {
       if (mcl && typeof mcl==="object" && !Array.isArray(mcl)) { setMonthCloseRaw(mcl); saveLS("qimma_monthclose", JSON.stringify(mcl)); }
       if (btx) { setBankTxRaw(_arr(btx)); saveLS("qimma_banktx", JSON.stringify(_arr(btx))); }
       if (dids) { setDoneIdsRaw(_arr(dids)); localStorage.setItem("qimma_done", JSON.stringify(_arr(dids))); }
-      if (pcl) { setPastClientsRaw(_arr(pcl)); localStorage.setItem("qimma_past_clients", JSON.stringify(_arr(pcl))); }
+      if (pcl) { setPastClientsRaw(_arr(pcl)); saveLS("qimma_past_clients", _arr(pcl)); }
       setSyncStatus("idle");
 
       // ═══ مزامنة لحظية: Firestore onSnapshot ═══
@@ -10348,7 +10432,7 @@ function App() {
               case "monthclose": if(typeof data==="object" && !Array.isArray(data)) { setMonthCloseRaw(data); saveLS("qimma_monthclose", JSON.stringify(data)); } break;
               case "banktx": setBankTxRaw(_arr(data)); saveLS("qimma_banktx", JSON.stringify(_arr(data))); break;
               case "doneIds": setDoneIdsRaw(_arr(data)); localStorage.setItem("qimma_done", JSON.stringify(_arr(data))); break;
-              case "pastClients": setPastClientsRaw(_arr(data)); localStorage.setItem("qimma_past_clients", JSON.stringify(_arr(data))); break;
+              case "pastClients": setPastClientsRaw(_arr(data)); saveLS("qimma_past_clients", _arr(data)); break;
               case "goods3": localStorage.setItem("qimma_goods3", JSON.stringify(data)); break;
               case "price_ov": localStorage.setItem("qimma_price_ov", JSON.stringify(data)); break;
               case "jard_ov": localStorage.setItem("qimma_jard_ov", JSON.stringify(data)); break;
@@ -10455,7 +10539,7 @@ function App() {
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={payments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="qimaai" && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:999,background:"#0d0d1f",overflowY:"auto"}}><QimaAI contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct} goBack={()=>setPage("dashboard")}/></div>}
-        {page==="pastclients" && <PastClientsPage toast={toast} settings={settings} pastClients={pastClients} setPastClients={setPastClients}/>}
+        {page==="pastclients" && <PastClientsPage toast={toast} pastClients={pastClients} setPastClients={setPastClients}/>}
         {page==="collect" && <CollectionPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={activeContracts}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
         {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>}/>}
