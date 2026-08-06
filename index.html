@@ -500,6 +500,17 @@ const DEFAULT_INVESTORS = [
 const GOODS_LIST = ["بطاقة سوا","بطاقة موبايلي","بطاقة زين","أسهم","سيارة","جوال"];
 
 // ─── styles ────────────────────────────────────────────────
+// ═══ تطبيع رقم الجوال السعودي — مشترك بين الزبائن والإضافة التلقائية ═══
+// يقبل 05XXXXXXXX / 5XXXXXXXX / 966... / 00966... ويُرجع "" لو الرقم غير صالح
+const _normSaPhone = v => {
+  let s = String(v==null?"":v).replace(/[^\d]/g,"");
+  if(!s) return "";
+  if(s.startsWith("00966")) s = "0"+s.slice(5);
+  else if(s.startsWith("966")) s = "0"+s.slice(3);
+  else if(s.startsWith("5") && s.length===9) s = "0"+s;
+  return /^05\d{8}$/.test(s) ? s : "";
+};
+
 // ═══ قراءة البنك للعرض والفلترة فقط — لا يُعدّل أي بيانات محفوظة ═══
 // العقود القديمة محفوظة بـ payMethod="المقاصة" بدون bankName. هذه الدالة
 // تُظهرها تحت بنك "مقاصة" عند الفلترة والطباعة، والعقد نفسه يبقى كما هو.
@@ -7366,8 +7377,8 @@ function PrivateNotes({toast}){
   );
 }
 
-// ═══ صفحة زبائن الماضي ═══
-function PastClientsPage({toast, pastClients, setPastClients}){
+// ═══ صفحة الزبائن ═══
+function PastClientsPage({toast, pastClients, setPastClients, contracts}){
   const clients = pastClients || [];
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState("manual"); // manual | paste | file
@@ -7383,15 +7394,8 @@ function PastClientsPage({toast, pastClients, setPastClients}){
 
   const save = d => setPastClients(d);
 
-  // ── تطبيع رقم الجوال السعودي ──
-  const normPhone = (v) => {
-    let s = String(v==null?"":v).replace(/[^\d]/g,"");
-    if(!s) return "";
-    if(s.startsWith("00966")) s = "0"+s.slice(5);
-    else if(s.startsWith("966")) s = "0"+s.slice(3);
-    else if(s.startsWith("5") && s.length===9) s = "0"+s;
-    return /^05\d{8}$/.test(s) ? s : "";
-  };
+  // ── تطبيع رقم الجوال السعودي (الدالة المشتركة) ──
+  const normPhone = _normSaPhone;
   const isName = (v) => {
     const s = String(v==null?"":v).trim();
     return s.length>=2 && /[\u0600-\u06FFa-zA-Z]/.test(s) && !normPhone(s);
@@ -7470,6 +7474,28 @@ function PastClientsPage({toast, pastClients, setPastClients}){
   };
   const cancelPreview = () => setPreviewRows([]);
 
+  // ── استيراد عملاء العقود دفعة واحدة (يمر بالمعاينة، ويستبعد المكرر) ──
+  const importFromContracts = () => {
+    const src = (contracts||[]).filter(c=>c && !c.deleted);
+    if(!src.length){ toast("لا توجد عقود في البرنامج","warn"); return; }
+    // المكرر يُحدَّد بالجوال، ومن لا جوال له يُحدَّد بالاسم
+    const seenPhones = new Set(clients.map(c=>normPhone(c.phone)).filter(Boolean));
+    const seenNames  = new Set(clients.filter(c=>!normPhone(c.phone)).map(c=>String(c.name||"").trim()).filter(Boolean));
+    const rows = [];
+    src.forEach(c=>{
+      const phone = normPhone(c.cPhone);
+      const name  = String(c.client||"").trim();
+      if(!phone && !name) return;
+      if(phone ? seenPhones.has(phone) : seenNames.has(name)) return; // مكرر
+      if(phone) seenPhones.add(phone); else seenNames.add(name);      // ويمنع التكرار داخل الدفعة نفسها
+      rows.push({name, phone});
+    });
+    if(!rows.length){ toast("كل عملاء العقود موجودين مسبقاً في القائمة","warn"); return; }
+    setPreviewRows(rows.map(r=>({...r, id:Math.random(), include:true})));
+    setAddOpen(true);
+    toast("وُجد "+rows.length+" عميل جديد من العقود — راجعهم ثم احفظ");
+  };
+
   // ── إضافة يدوية مباشرة ──
   const addManual = () => {
     const phone = manual.phone ? normPhone(manual.phone) : "";
@@ -7503,7 +7529,7 @@ function PastClientsPage({toast, pastClients, setPastClients}){
     const rows = clients.map(c=>[c.name||"", c.phone||""]);
     const csv = "\uFEFF" + [head.map(esc).join(","), ...rows.map(r=>r.map(esc).join(","))].join("\r\n");
     const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
-    const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="زبائن-الماضي.csv"; a.click();
+    const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="الزبائن.csv"; a.click();
     toast("تم التصدير");
   };
 
@@ -7512,7 +7538,7 @@ function PastClientsPage({toast, pastClients, setPastClients}){
   return (
     <div style={{maxWidth:1100,margin:"0 auto"}}>
       <div style={{fontSize:22,fontWeight:900,color:C.gold,marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
-        📇 زبائن الماضي
+        📇 الزبائن
         <span style={{fontSize:13,fontWeight:600,color:"#64748b"}}>{clients.length} زبون</span>
       </div>
 
@@ -7528,6 +7554,7 @@ function PastClientsPage({toast, pastClients, setPastClients}){
             <button style={styles.goodsBtn(mode==="manual")} onClick={()=>setMode("manual")}>✍️ إضافة يدوية</button>
             <button style={styles.goodsBtn(mode==="paste")} onClick={()=>setMode("paste")}>📋 لصق قائمة</button>
             <button style={styles.goodsBtn(mode==="file")} onClick={()=>setMode("file")}>📊 رفع CSV / Excel</button>
+            <button style={styles.goodsBtn(mode==="contracts")} onClick={()=>setMode("contracts")}>📥 استيراد من العقود</button>
           </div>
 
           {mode==="manual" && (
@@ -7564,6 +7591,32 @@ function PastClientsPage({toast, pastClients, setPastClients}){
                 📊 اختر ملف CSV أو Excel
               </button>
               <div style={{fontSize:12,color:"#64748b",marginTop:8}}>يدعم عدة ملفات مرة وحدة. الملفات تُعاين قبل الحفظ ولا تُحفظ تلقائياً.</div>
+            </div>
+          )}
+
+          {mode==="contracts" && (
+            <div>
+              <div style={{fontSize:13,color:"#64748b",marginBottom:10}}>
+                يسحب أسماء وجوالات كل عملاء العقود في البرنامج دفعة واحدة، ويستبعد المكرر تلقائياً بمطابقة رقم الجوال.
+              </div>
+              {(()=>{ 
+                const src=(contracts||[]).filter(c=>c && !c.deleted);
+                const seen=new Set(clients.map(c=>normPhone(c.phone)).filter(Boolean));
+                const newOnes=src.filter(c=>{const p=normPhone(c.cPhone); return p ? !seen.has(p) : !!String(c.client||"").trim();}).length;
+                return (
+                  <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:12}}>
+                    <div style={{background:"#f8fafc",borderRadius:10,padding:"10px 16px",border:"1px solid "+C.border}}>
+                      <div style={{fontSize:11,color:"#64748b"}}>عقود في البرنامج</div>
+                      <div style={{fontSize:18,fontWeight:900,color:C.ink}}>{src.length}</div>
+                    </div>
+                    <div style={{background:"#fffbf0",borderRadius:10,padding:"10px 16px",border:"1px solid "+C.gold}}>
+                      <div style={{fontSize:11,color:"#92600a"}}>غير موجودين بالقائمة</div>
+                      <div style={{fontSize:18,fontWeight:900,color:C.gold}}>{newOnes}</div>
+                    </div>
+                  </div>
+                );
+              })()}
+              <button style={styles.btn(C.teal)} onClick={importFromContracts}>📥 استيراد عملاء العقود</button>
             </div>
           )}
 
@@ -10446,6 +10499,18 @@ function App() {
   const setLoans = v => { const d=_arr(typeof v==="function"?v(loans):v); setLoansRaw(d); saveLS("qimma_loans",d); gsWrite("loans",d); };
   const [pastClients,setPastClientsRaw]=useState(()=>_arr(loadLS("qimma_past_clients",[])));
   const setPastClients = v => { const d=_arr(typeof v==="function"?v(pastClients):v); setPastClientsRaw(d); saveLS("qimma_past_clients",d); gsWrite("pastClients",d); };
+  // ── يضيف عميل العقد الجديد تلقائياً إلى الزبائن (بلا تكرار) ──
+  const addPastClientFromContract = (c) => {
+    const phone = _normSaPhone(c && c.cPhone);
+    const name  = String((c && c.client) || "").trim();
+    if(!phone && !name) return;
+    const list = _arr(pastClients);
+    const dup = list.some(x => phone
+      ? _normSaPhone(x.phone) === phone
+      : String(x.name||"").trim() === name);
+    if(dup) return;
+    setPastClients([...list, {id: Date.now()+Math.random(), name, phone}]);
+  };
   const [zakatTx,setZakatTxRaw]=useState(()=>_arr(loadLS("qimma_zakat",[])));
   const setZakatTx = v => { const d=_arr(typeof v==="function"?v(zakatTx):v); setZakatTxRaw(d); saveLS("qimma_zakat",d); gsWrite("zakat",d); };
   const [pending,setPendingRaw]=useState(()=>_arr(loadLS("qimma_pending",[])));
@@ -10580,7 +10645,7 @@ function App() {
     {id:"collect",label:"⚡",name:"التحصيل",color:"#0d9488"},
     {id:"portfolio",label:"📊",name:"المحفظة الشهرية",color:"#0d9488"},
     {id:"qimaai",label:"🤖",name:"قمة AI",color:"#6d28d9"},
-    {id:"pastclients",label:"📇",name:"زبائن الماضي",color:"#c8922a"},
+    {id:"pastclients",label:"📇",name:"الزبائن",color:"#c8922a"},
     {id:"settings",label:"⚙️",name:"الإعدادات",color:"#4b5563"},
   ];
   // ترتيب التبويبات حسب المحفوظ
@@ -10668,9 +10733,9 @@ function App() {
         {page==="dashboard" && <Dashboard contracts={activeContracts} investors={investors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={payments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans}/>}
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="qimaai" && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:999,background:"#0d0d1f",overflowY:"auto"}}><QimaAI contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct} goBack={()=>setPage("dashboard")}/></div>}
-        {page==="pastclients" && <PastClientsPage toast={toast} pastClients={pastClients} setPastClients={setPastClients}/>}
+        {page==="pastclients" && <PastClientsPage toast={toast} pastClients={pastClients} setPastClients={setPastClients} contracts={contracts}/>}
         {page==="collect" && <CollectionPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={activeContracts}/>}
-        {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
+        {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);addPastClientFromContract(c);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
         {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>}/>}
         {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast} goBack={()=>setPage("contracts")}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast} gsWrite={gsWrite} goBack={()=>setPage("contracts")}/>}
