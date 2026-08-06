@@ -500,6 +500,25 @@ const DEFAULT_INVESTORS = [
 const GOODS_LIST = ["بطاقة سوا","بطاقة موبايلي","بطاقة زين","أسهم","سيارة","جوال"];
 
 // ─── styles ────────────────────────────────────────────────
+// ═══ ترقيم الأسماء المكررة في قائمة الزبائن ═══
+// أي اسم يتكرر يصير "عبدالله 1"، "عبدالله 2" ... حتى تفرّق بينهم.
+// يجرّد الرقم القديم أولاً فهو آمن للتكرار (لا ينتج "عبدالله 1 1").
+// لا يحذف ولا يدمج أي سجل إطلاقاً — الحذف يدوي فقط.
+const _baseName = n => String(n==null?"":n).trim().replace(/\s+\d+$/,"").trim();
+const _numberDupNames = (list) => {
+  if(!Array.isArray(list)) return list;
+  const total = {};
+  list.forEach(c => { const b=_baseName(c && c.name); if(b) total[b]=(total[b]||0)+1; });
+  const seen = {};
+  return list.map(c => {
+    const b = _baseName(c && c.name);
+    if(!b) return c;                            // بلا اسم: يُترك كما هو
+    if(total[b] === 1) return {...c, name:b};    // اسم فريد: بلا رقم
+    seen[b] = (seen[b]||0)+1;
+    return {...c, name: b+" "+seen[b]};
+  });
+};
+
 // ═══ تطبيع رقم الجوال السعودي — مشترك بين الزبائن والإضافة التلقائية ═══
 // يقبل 05XXXXXXXX / 5XXXXXXXX / 966... / 00966... ويُرجع "" لو الرقم غير صالح
 const _normSaPhone = v => {
@@ -7392,7 +7411,7 @@ function PastClientsPage({toast, pastClients, setPastClients, contracts}){
   const [msg, setMsg] = useState("السلام عليكم ورحمة الله\nنسعد بخدمتكم من جديد ..\n\nمؤسسة قمة الفرصه التجاريه\n0555171283");
   const fileRef = React.useRef(null);
 
-  const save = d => setPastClients(d);
+  const save = d => setPastClients(_numberDupNames(_arr(d)));
 
   // ── تطبيع رقم الجوال السعودي (الدالة المشتركة) ──
   const normPhone = _normSaPhone;
@@ -7474,26 +7493,27 @@ function PastClientsPage({toast, pastClients, setPastClients, contracts}){
   };
   const cancelPreview = () => setPreviewRows([]);
 
-  // ── استيراد عملاء العقود دفعة واحدة (يمر بالمعاينة، ويستبعد المكرر) ──
+  // ── استيراد عملاء العقود دفعة واحدة ──
+  // يجيب الكل. لا يحذف ولا يدمج. يتجاهل فقط السجل المطابق تماماً (نفس الاسم ونفس الجوال)
+  // لأن إضافته تكرار محض. الأسماء المتشابهة تُرقَّم تلقائياً بعد الحفظ.
   const importFromContracts = () => {
     const src = (contracts||[]).filter(c=>c && !c.deleted);
     if(!src.length){ toast("لا توجد عقود في البرنامج","warn"); return; }
-    // المكرر يُحدَّد بالجوال، ومن لا جوال له يُحدَّد بالاسم
-    const seenPhones = new Set(clients.map(c=>normPhone(c.phone)).filter(Boolean));
-    const seenNames  = new Set(clients.filter(c=>!normPhone(c.phone)).map(c=>String(c.name||"").trim()).filter(Boolean));
+    const exact = new Set(clients.map(c=>_baseName(c.name)+"|"+normPhone(c.phone)));
     const rows = [];
     src.forEach(c=>{
       const phone = normPhone(c.cPhone);
-      const name  = String(c.client||"").trim();
-      if(!phone && !name) return;
-      if(phone ? seenPhones.has(phone) : seenNames.has(name)) return; // مكرر
-      if(phone) seenPhones.add(phone); else seenNames.add(name);      // ويمنع التكرار داخل الدفعة نفسها
+      const name  = _baseName(c.client);
+      if(!phone && !name) return;                 // سجل فارغ تماماً
+      const key = name+"|"+phone;
+      if(exact.has(key)) return;                  // مطابق تماماً — موجود مسبقاً
+      exact.add(key);
       rows.push({name, phone});
     });
-    if(!rows.length){ toast("كل عملاء العقود موجودين مسبقاً في القائمة","warn"); return; }
+    if(!rows.length){ toast("كل عملاء العقود موجودين مسبقاً بنفس الاسم والجوال","warn"); return; }
     setPreviewRows(rows.map(r=>({...r, id:Math.random(), include:true})));
     setAddOpen(true);
-    toast("وُجد "+rows.length+" عميل جديد من العقود — راجعهم ثم احفظ");
+    toast("جاهز لاستيراد "+rows.length+" سجل من العقود — راجعهم ثم احفظ");
   };
 
   // ── إضافة يدوية مباشرة ──
@@ -7597,12 +7617,16 @@ function PastClientsPage({toast, pastClients, setPastClients, contracts}){
           {mode==="contracts" && (
             <div>
               <div style={{fontSize:13,color:"#64748b",marginBottom:10}}>
-                يسحب أسماء وجوالات كل عملاء العقود في البرنامج دفعة واحدة، ويستبعد المكرر تلقائياً بمطابقة رقم الجوال.
+                يسحب أسماء وجوالات كل عملاء العقود دفعة واحدة. لا يحذف ولا يدمج أي سجل — والأسماء المتشابهة تُرقَّم تلقائياً (عبدالله 1، عبدالله 2).
               </div>
               {(()=>{ 
                 const src=(contracts||[]).filter(c=>c && !c.deleted);
-                const seen=new Set(clients.map(c=>normPhone(c.phone)).filter(Boolean));
-                const newOnes=src.filter(c=>{const p=normPhone(c.cPhone); return p ? !seen.has(p) : !!String(c.client||"").trim();}).length;
+                const exact=new Set(clients.map(c=>_baseName(c.name)+"|"+normPhone(c.phone)));
+                const fresh=new Set();
+                src.forEach(c=>{
+                  const k=_baseName(c.client)+"|"+normPhone(c.cPhone);
+                  if(k!=="|" && !exact.has(k)) fresh.add(k);
+                });
                 return (
                   <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:12}}>
                     <div style={{background:"#f8fafc",borderRadius:10,padding:"10px 16px",border:"1px solid "+C.border}}>
@@ -7610,8 +7634,8 @@ function PastClientsPage({toast, pastClients, setPastClients, contracts}){
                       <div style={{fontSize:18,fontWeight:900,color:C.ink}}>{src.length}</div>
                     </div>
                     <div style={{background:"#fffbf0",borderRadius:10,padding:"10px 16px",border:"1px solid "+C.gold}}>
-                      <div style={{fontSize:11,color:"#92600a"}}>غير موجودين بالقائمة</div>
-                      <div style={{fontSize:18,fontWeight:900,color:C.gold}}>{newOnes}</div>
+                      <div style={{fontSize:11,color:"#92600a"}}>سيُضاف</div>
+                      <div style={{fontSize:18,fontWeight:900,color:C.gold}}>{fresh.size}</div>
                     </div>
                   </div>
                 );
@@ -10499,17 +10523,16 @@ function App() {
   const setLoans = v => { const d=_arr(typeof v==="function"?v(loans):v); setLoansRaw(d); saveLS("qimma_loans",d); gsWrite("loans",d); };
   const [pastClients,setPastClientsRaw]=useState(()=>_arr(loadLS("qimma_past_clients",[])));
   const setPastClients = v => { const d=_arr(typeof v==="function"?v(pastClients):v); setPastClientsRaw(d); saveLS("qimma_past_clients",d); gsWrite("pastClients",d); };
-  // ── يضيف عميل العقد الجديد تلقائياً إلى الزبائن (بلا تكرار) ──
+  // ── يضيف عميل العقد الجديد تلقائياً إلى الزبائن ──
+  // لا يتخطى إلا السجل المطابق تماماً (نفس الاسم ونفس الجوال). الأسماء المتشابهة تُرقَّم.
   const addPastClientFromContract = (c) => {
     const phone = _normSaPhone(c && c.cPhone);
-    const name  = String((c && c.client) || "").trim();
+    const name  = _baseName(c && c.client);
     if(!phone && !name) return;
     const list = _arr(pastClients);
-    const dup = list.some(x => phone
-      ? _normSaPhone(x.phone) === phone
-      : String(x.name||"").trim() === name);
+    const dup = list.some(x => _baseName(x.name)===name && _normSaPhone(x.phone)===phone);
     if(dup) return;
-    setPastClients([...list, {id: Date.now()+Math.random(), name, phone}]);
+    setPastClients(_numberDupNames([...list, {id: Date.now()+Math.random(), name, phone}]));
   };
   const [zakatTx,setZakatTxRaw]=useState(()=>_arr(loadLS("qimma_zakat",[])));
   const setZakatTx = v => { const d=_arr(typeof v==="function"?v(zakatTx):v); setZakatTxRaw(d); saveLS("qimma_zakat",d); gsWrite("zakat",d); };
