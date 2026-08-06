@@ -500,6 +500,26 @@ const DEFAULT_INVESTORS = [
 const GOODS_LIST = ["بطاقة سوا","بطاقة موبايلي","بطاقة زين","أسهم","سيارة","جوال"];
 
 // ─── styles ────────────────────────────────────────────────
+// ═══ ترحيل: "المقاصة" كانت طريقة سداد وصارت بنكاً ═══
+// يحوّل العقود القديمة إلى شيكات + بنك "مقاصة". آمن للتكرار (idempotent)،
+// ويُرجع نفس المرجع إذا لم يتغيّر شيء حتى لا تحدث كتابة أو إعادة رسم بلا داعٍ.
+const _migrateMuqassa = list => {
+  if(!Array.isArray(list)) return list;
+  let changed = false;
+  const out = list.map(c => {
+    if(c && c.payMethod === "المقاصة"){
+      changed = true;
+      return {...c, payMethod:"شيكات", bankName: c.bankName || "مقاصة"};
+    }
+    return c;
+  });
+  return changed ? out : list;
+};
+
+// ═══ قائمة البنوك الموحّدة — تُستخدم في نموذج العقد والفلاتر معاً ═══
+// "مقاصة" تُعامل كبنك ضمن القائمة حسب طلب العمل
+const BANKS = ["الراجحي","الأهلي","الإنماء","البلاد","العربي","الرياض","الجزيرة","السعودي الفرنسي","الاستثمار","ساب","مقاصة"];
+
 const C = {
   ink:"#0f1923", ink2:"#2c3e50", gold:"#c8922a", goldLt:"#f5e6c8",
   teal:"#0d7377", tealLt:"#d0f0f0", red:"#c0392b", redLt:"#fdecea",
@@ -1154,39 +1174,34 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
               set("payMethod",m);
               // القيمة الداخلية: الاستقطاع فقط يفعّل منطق الاستقطاع، الباقي كله normal
               set("payType", m==="استقطاع" ? "deduction" : "normal");
-              // تصفير حقل البنك إذا لم يكن شيكات
-              if(m!=="شيكات") set("bankName","");
+              // البنك يخص الشيكات والاستقطاع فقط
+              if(m!=="شيكات" && m!=="استقطاع") set("bankName","");
+              if(m!=="استقطاع") set("bankAccount","");
             }}>
             <option value="نقدي">نقدي</option>
             <option value="استقطاع">استقطاع</option>
             <option value="تحويل">تحويل</option>
             <option value="صرافة">صرافة</option>
             <option value="شيكات">شيكات</option>
-            <option value="المقاصة">المقاصة</option>
           </select>
         </div>
-        {form.payType==="deduction" && (
+        {(form.payMethod==="شيكات"||form.payMethod==="استقطاع") && (
+          <div>
+            <label style={fLabel}>البنك</label>
+            <select style={{...styles.select,borderRadius:10}} value={form.bankName||""} onChange={e=>set("bankName",e.target.value)}>
+              <option value="">— اختر البنك —</option>
+              {BANKS.map(b=><option key={b} value={b}>{b}</option>)}
+            </select>
+          </div>
+        )}
+        {form.payMethod==="استقطاع" && (
           <div>
             <label style={fLabel}>رقم حساب الزبون (للمطابقة مع البنك)</label>
             <input style={fInput} type="text" placeholder="رقم الحساب / الآيبان" value={form.bankAccount} onChange={e=>set("bankAccount",e.target.value)}/>
           </div>
         )}
-        {(form.payMethod==="شيكات"||form.payMethod==="المقاصة") && (
-          <div>
-            <label style={fLabel}>البنك</label>
-            <select style={{...styles.select,borderRadius:10}} value={form.bankName||""} onChange={e=>set("bankName",e.target.value)}>
-              <option value="">— اختر البنك —</option>
-              <option value="الراجحي">الراجحي</option>
-              <option value="الأهلي">الأهلي</option>
-              <option value="الإنماء">الإنماء</option>
-              <option value="البلاد">البلاد</option>
-              <option value="العربي">العربي</option>
-              <option value="الرياض">الرياض</option>
-            </select>
-          </div>
-        )}
         {/* يوم السداد */}
-        {(form.payMethod==="نقدي"||form.payMethod==="شيكات"||form.payMethod==="استقطاع"||form.payMethod==="المقاصة") && (
+        {(form.payMethod==="نقدي"||form.payMethod==="شيكات"||form.payMethod==="استقطاع") && (
           <div>
             <label style={fLabel}>يوم السداد</label>
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
@@ -1625,13 +1640,11 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     if(invSearch && invSearch!=="__all__") list = list.filter(c=>(investors.find(i=>String(i.id)===String(c.investorId))?.name||"")===invSearch);
     else if(!invSearch) list = [];
     if(payFilter){
-      if(payFilter.startsWith("شيكات:") || payFilter.startsWith("المقاصة:")){
-        const parts=payFilter.split(":");
-        const method=parts[0], bank=parts[1];
-        list = list.filter(c=>c.payMethod===method && c.bankName===bank);
-      } else {
-        list = list.filter(c=>(c.payMethod||"نقدي")===payFilter);
-      }
+      const [method, bank] = payFilter.split(":");
+      const matchMethod = c => method==="استقطاع"
+        ? c.payType==="deduction"
+        : (c.payMethod||"نقدي")===method;
+      list = list.filter(c=> matchMethod(c) && (!bank || (c.bankName||"")===bank));
     }
     return _sortContracts(list);
   })();
@@ -2030,22 +2043,23 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         {/* فلتر نوع السداد */}
         {invSearch && (
           <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:12}}>
-            {[{v:"",l:"الكل"},{v:"نقدي",l:"نقدي"},{v:"تحويل",l:"تحويل"},{v:"صرافة",l:"صرافة"},{v:"شيكات",l:"شيكات"},{v:"المقاصة",l:"المقاصة"},{v:"استقطاع",l:"استقطاع"}].map(f=>(
+            {[{v:"",l:"الكل"},{v:"نقدي",l:"نقدي"},{v:"تحويل",l:"تحويل"},{v:"صرافة",l:"صرافة"},{v:"شيكات",l:"شيكات"},{v:"استقطاع",l:"استقطاع"}].map(f=>(
               <button key={f.v} onClick={()=>setPayFilter(payFilter===f.v && f.v?"":f.v)}
                 style={{padding:"6px 12px",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
-                  border:payFilter===f.v?"2px solid #c8922a":"1px solid #e2e8f0",
-                  background:payFilter===f.v?"#fffbf0":"#fff",
-                  color:payFilter===f.v?"#c8922a":"#64748b"}}>{f.l}</button>
+                  border:(payFilter===f.v||payFilter.startsWith(f.v+":"))&&f.v?"2px solid #c8922a":(payFilter===f.v?"2px solid #c8922a":"1px solid #e2e8f0"),
+                  background:(payFilter===f.v||(f.v&&payFilter.startsWith(f.v+":")))?"#fffbf0":"#fff",
+                  color:(payFilter===f.v||(f.v&&payFilter.startsWith(f.v+":")))?"#c8922a":"#64748b"}}>{f.l}</button>
             ))}
-            {(payFilter==="شيكات"||payFilter.startsWith("شيكات:")||payFilter==="المقاصة"||payFilter.startsWith("المقاصة:")) && (
+            {(payFilter==="شيكات"||payFilter.startsWith("شيكات:")||payFilter==="استقطاع"||payFilter.startsWith("استقطاع:")) && (
               <>
-                {["الراجحي","الأهلي","الإنماء","البلاد","العربي","الرياض"].map(b=>{
-                  const prefix=payFilter.startsWith("المقاصة")?"المقاصة":"شيكات";
-                  return <button key={b} onClick={()=>setPayFilter(payFilter===prefix+":"+b?prefix:prefix+":"+b)}
+                {BANKS.map(b=>{
+                  const prefix=payFilter.split(":")[0];
+                  const active=payFilter===prefix+":"+b;
+                  return <button key={b} onClick={()=>setPayFilter(active?prefix:prefix+":"+b)}
                     style={{padding:"6px 10px",borderRadius:8,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
-                      border:payFilter===prefix+":"+b?"2px solid #c8922a":"1px solid #d1d5db",
-                      background:payFilter===prefix+":"+b?"#fffbf0":"#f8fafc",
-                      color:payFilter===prefix+":"+b?"#c8922a":"#64748b"}}>{b}</button>;
+                      border:active?"2px solid #c8922a":"1px solid #d1d5db",
+                      background:active?"#fffbf0":"#f8fafc",
+                      color:active?"#c8922a":"#64748b"}}>{b}</button>;
                 })}
               </>
             )}
@@ -2625,30 +2639,29 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
             ))}
             <div style={{gridColumn:"1/-1"}}>
               <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>نوع السداد</label>
-              <select style={{...styles.input,fontWeight:700,fontSize:15,color:"#16a34a"}} value={editForm.payMethod||"نقدي"} onChange={e=>setEditForm(f=>({...f,payMethod:e.target.value,payType:e.target.value==="استقطاع"?"deduction":"normal"}))}>
+              <select style={{...styles.input,fontWeight:700,fontSize:15,color:"#16a34a"}} value={editForm.payMethod||"نقدي"} onChange={e=>{
+                const m=e.target.value;
+                setEditForm(f=>({...f, payMethod:m, payType:m==="استقطاع"?"deduction":"normal",
+                  bankName:(m==="شيكات"||m==="استقطاع")?(f.bankName||""):"",
+                  bankAccount:m==="استقطاع"?(f.bankAccount||""):""}));
+              }}>
                 <option value="نقدي">نقدي</option>
                 <option value="استقطاع">استقطاع</option>
                 <option value="تحويل">تحويل</option>
                 <option value="صرافة">صرافة</option>
                 <option value="شيكات">شيكات</option>
-                <option value="المقاصة">المقاصة</option>
               </select>
             </div>
-            {(editForm.payMethod==="شيكات"||editForm.payMethod==="المقاصة") && (
+            {(editForm.payMethod==="شيكات"||editForm.payMethod==="استقطاع") && (
               <div style={{gridColumn:"1/-1"}}>
                 <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>البنك</label>
                 <select style={{...styles.input,fontWeight:700,fontSize:15}} value={editForm.bankName||""} onChange={e=>setEditForm(f=>({...f,bankName:e.target.value}))}>
                   <option value="">— اختر البنك —</option>
-                  <option value="الراجحي">الراجحي</option>
-                  <option value="الأهلي">الأهلي</option>
-                  <option value="الإنماء">الإنماء</option>
-                  <option value="البلاد">البلاد</option>
-                  <option value="العربي">العربي</option>
-                  <option value="الرياض">الرياض</option>
+                  {BANKS.map(b=><option key={b} value={b}>{b}</option>)}
                 </select>
               </div>
             )}
-            {editForm.payType==="deduction" && (
+            {editForm.payMethod==="استقطاع" && (
               <div style={{gridColumn:"1/-1"}}>
                 <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>رقم حساب الزبون</label>
                 <input style={styles.input} type="text" placeholder="رقم الحساب / الآيبان" value={editForm.bankAccount||""} onChange={e=>setEditForm(f=>({...f,bankAccount:e.target.value}))}/>
@@ -3086,16 +3099,19 @@ function DeductionsSheet({contracts, investors, payments}){
   const [checked,setChecked]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_deduct_check")||"{}");}catch{return{};}});
   const toggle=id=>{const n={...checked,[id]:!checked[id]};setChecked(n);localStorage.setItem("qimma_deduct_check",JSON.stringify(n));};
   const [payF,setPayF]=useState("استقطاع"); // فلتر نوع السداد
+  const [bankF,setBankF]=useState(""); // فلتر البنك (للشيكات والاستقطاع)
   const [dayF,setDayF]=useState(""); // فلتر يوم الاستحقاق
   const getDueDay=c=>{if(!c.firstInst)return""; return String(new Date(c.firstInst).getDate());};
+  // البنك يظهر مع الشيكات والاستقطاع فقط
+  const showBanks = payF==="شيكات" || payF==="استقطاع";
   // كل العقود حسب الفلتر
   const rows=contracts.filter(c=>{
     if(c.deleted) return false;
     const pm=c.payMethod||"نقدي";
     const pt=c.payType;
     if(payF==="استقطاع" && pt!=="deduction") return false;
-    if(payF==="المقاصة" && pm!=="المقاصة") return false;
-    if(payF && payF!=="استقطاع" && payF!=="المقاصة" && payF!=="الكل" && pm!==payF) return false;
+    if(payF && payF!=="استقطاع" && payF!=="الكل" && pm!==payF) return false;
+    if(showBanks && bankF && (c.bankName||"")!==bankF) return false;
     if(dayF && getDueDay(c)!==dayF) return false;
     return true;
   }).map(c=>{
@@ -3106,11 +3122,11 @@ function DeductionsSheet({contracts, investors, payments}){
   });
   const totalInst=rows.reduce((s,c)=>s+(c.instAmt||0),0);
   const payLabel=payF==="الكل"?"جميع الأنواع":payF;
-  const titleLabel=payF==="استقطاع"?"كشف حسابات الاستقطاع البنكي":"كشف "+payLabel+(dayF?" — يوم "+dayF:"");
+  const titleLabel=(payF==="استقطاع"?"كشف حسابات الاستقطاع البنكي":"كشف "+payLabel)+(bankF?" — بنك "+bankF:"")+(dayF?" — يوم "+dayF:"");
 
   const printSheet=()=>{
     const fmt=n=>Math.round(+(n||0)).toLocaleString("en-US");
-    let body=rows.map((c,i)=>`<tr><td>${i+1}</td><td>${c.client}</td><td>${c.cPhone||"—"}</td><td>${c.num||"—"}</td><td>${c.bankAccount||"—"}</td><td>${c.invName}</td><td>${c.dueDay||"—"}</td><td class="amt">${fmt(c.instAmt)}</td><td class="amt">${fmt(c.left)}</td></tr>`).join("");
+    let body=rows.map((c,i)=>`<tr><td>${i+1}</td><td>${c.client}</td><td>${c.cPhone||"—"}</td><td>${c.num||"—"}</td><td>${c.bankAccount||"—"}</td><td>${c.bankName||"—"}</td><td>${c.invName}</td><td>${c.dueDay||"—"}</td><td class="amt">${fmt(c.instAmt)}</td><td class="amt">${fmt(c.left)}</td></tr>`).join("");
     const win=window.open("","_blank");
     win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>كشف الاستقطاعات</title>
     <style>body{font-family:Arial;padding:22px;color:#000}.header{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:14px}.org{font-size:17px;font-weight:900}.sub{font-size:12px}.title{text-align:center;font-size:19px;font-weight:900;border:2px solid #000;padding:10px;margin-bottom:14px}table{width:100%;border-collapse:collapse;font-size:14px;border:2px solid #000}th,td{border:1px solid #000;padding:7px 10px;text-align:right;white-space:nowrap}th{font-weight:900;border-bottom:2px solid #000;font-size:13px}td.amt{font-weight:bold;text-align:left}.foot{text-align:center;color:#444;font-size:11px;margin-top:16px;border-top:1px solid #000;padding-top:8px}@media print{button{display:none}}</style>
@@ -3118,9 +3134,9 @@ function DeductionsSheet({contracts, investors, payments}){
     <div class="header"><div><div class="org">مؤسسة قمة الفرصة التجارية</div><div class="sub">بريدة - شارع الثلاثين</div><div class="sub">ج: 0555171283  ت: 0163839323</div></div>
     <div style="text-align:left"><div class="sub">كشف الاستقطاعات</div><div class="sub">التاريخ: ${(()=>{const d=new Date();return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0");})()}</div></div></div>
     <div class="title">${titleLabel}</div>
-    <table style="width:auto"><thead><tr><th>#</th><th>اسم الزبون</th><th>رقم الجوال</th><th>رقم العقد</th><th>رقم الحساب</th><th>المستثمر</th><th>يوم</th><th>القسط</th><th>المتبقي</th></tr></thead>
-    <tbody>${body||'<tr><td colspan="9" style="text-align:center;color:#666">لا يوجد بيانات</td></tr>'}
-    <tr style="font-weight:900;border-top:2px solid #000"><td colspan="7">الإجمالي</td><td class="amt">${fmt(totalInst)}</td><td class="amt">${fmt(rows.reduce((s,c)=>s+(c.left||0),0))}</td></tr></tbody></table>
+    <table style="width:auto"><thead><tr><th>#</th><th>اسم الزبون</th><th>رقم الجوال</th><th>رقم العقد</th><th>رقم الحساب</th><th>البنك</th><th>المستثمر</th><th>يوم</th><th>القسط</th><th>المتبقي</th></tr></thead>
+    <tbody>${body||'<tr><td colspan="10" style="text-align:center;color:#666">لا يوجد بيانات</td></tr>'}
+    <tr style="font-weight:900;border-top:2px solid #000"><td colspan="8">الإجمالي</td><td class="amt">${fmt(totalInst)}</td><td class="amt">${fmt(rows.reduce((s,c)=>s+(c.left||0),0))}</td></tr></tbody></table>
     <div class="foot">طُبع بتاريخ ${new Date().toLocaleString("en-US")}</div>
     <button onclick="window.print()" style="display:block;margin:20px auto;padding:10px 30px;font-size:16px;background:#333;color:#fff;border:none;border-radius:8px;cursor:pointer">🖨️ طباعة</button>
     </body></html>`);
@@ -3139,14 +3155,42 @@ function DeductionsSheet({contracts, investors, payments}){
       </div>
       {/* فلتر نوع السداد */}
       <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
-        {["استقطاع","شيكات","المقاصة","نقدي","تحويل","صرافة","الكل"].map(f=>(
-          <button key={f} onClick={()=>setPayF(f)}
+        {["استقطاع","شيكات","نقدي","تحويل","صرافة","الكل"].map(f=>(
+          <button key={f} onClick={()=>{setPayF(f); setBankF("");}}
             style={{padding:"6px 14px",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
               border:payF===f?"2px solid #c8922a":"1px solid #e2e8f0",
               background:payF===f?"#fffbf0":"#fff",
               color:payF===f?"#c8922a":"#64748b"}}>{f}</button>
         ))}
       </div>
+      {/* فلتر البنك — يظهر مع الشيكات والاستقطاع */}
+      {showBanks && (
+        <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8,alignItems:"center"}}>
+          <span style={{fontSize:13,fontWeight:700,color:"#4a5568"}}>البنك:</span>
+          <button onClick={()=>setBankF("")}
+            style={{padding:"6px 12px",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
+              border:bankF===""?"2px solid #c8922a":"1px solid #d1d5db",
+              background:bankF===""?"#fffbf0":"#f8fafc",
+              color:bankF===""?"#c8922a":"#64748b"}}>الكل</button>
+          {BANKS.map(b=>{
+            const n = contracts.filter(c=>{
+              if(c.deleted) return false;
+              if(payF==="استقطاع" && c.payType!=="deduction") return false;
+              if(payF==="شيكات" && (c.payMethod||"")!=="شيكات") return false;
+              return (c.bankName||"")===b;
+            }).length;
+            return (
+              <button key={b} onClick={()=>setBankF(bankF===b?"":b)}
+                style={{padding:"6px 12px",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
+                  border:bankF===b?"2px solid #c8922a":"1px solid #d1d5db",
+                  background:bankF===b?"#fffbf0":"#f8fafc",
+                  color:bankF===b?"#c8922a":(n?"#64748b":"#cbd5e1")}}>
+                {b}{n?" ("+n+")":""}
+              </button>
+            );
+          })}
+        </div>
+      )}
       {/* فلتر يوم الاستحقاق */}
       {(()=>{
         const allDays = [...new Set(contracts.filter(c=>!c.deleted).map(c=>getDueDay(c)).filter(Boolean))].sort((a,b)=>parseInt(a)-parseInt(b));
@@ -3167,7 +3211,7 @@ function DeductionsSheet({contracts, investors, payments}){
       ) : (
         <div style={{overflowX:"auto",maxHeight:"75vh",overflowY:"auto"}}>
           <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14}}>
-            <thead><tr>{["✓","اسم الزبون","رقم الجوال","رقم العقد","رقم الحساب","المستثمر","يوم","القسط","المتبقي"].map((h,hi)=>{
+            <thead><tr>{["✓","اسم الزبون","رقم الجوال","رقم العقد","رقم الحساب","البنك","المستثمر","يوم","القسط","المتبقي"].map((h,hi)=>{
               const isName = h==="اسم الزبون";
               return <th key={h} style={{...styles.th,whiteSpace:"nowrap",position:"sticky",top:0,zIndex:isName?12:10,...(isName?{right:0,zIndex:12}:{})}}>{h}</th>;
             })}</tr></thead>
@@ -3179,6 +3223,7 @@ function DeductionsSheet({contracts, investors, payments}){
                   <td style={{...styles.td,whiteSpace:"nowrap"}}>{c.cPhone||"—"}</td>
                   <td style={{...styles.td,textAlign:"center"}}>{c.num||"—"}</td>
                   <td style={{...styles.td,fontFamily:"monospace",whiteSpace:"nowrap"}}>{c.bankAccount||"—"}</td>
+                  <td style={{...styles.td,whiteSpace:"nowrap",fontWeight:700,color:c.bankName?C.ink:"#cbd5e1"}}>{c.bankName||"—"}</td>
                   <td style={{...styles.td,whiteSpace:"nowrap"}}>{c.invName}</td>
                   <td style={{...styles.td,textAlign:"center",fontWeight:700,color:C.gold}}>{c.dueDay||"—"}</td>
                   <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}>{SAR(c.instAmt||0)}</td>
@@ -3186,7 +3231,7 @@ function DeductionsSheet({contracts, investors, payments}){
                 </tr>
               ))}
             </tbody>
-            <tfoot><tr style={{background:"#fffbf0",fontWeight:800}}><td colSpan={7} style={styles.td}>الإجمالي</td><td style={styles.td}>{SAR(totalInst)}</td><td style={{...styles.td,color:C.red}}>{SAR(rows.reduce((s,c)=>s+(c.left||0),0))}</td></tr></tfoot>
+            <tfoot><tr style={{background:"#fffbf0",fontWeight:800}}><td colSpan={8} style={styles.td}>الإجمالي</td><td style={styles.td}>{SAR(totalInst)}</td><td style={{...styles.td,color:C.red}}>{SAR(rows.reduce((s,c)=>s+(c.left||0),0))}</td></tr></tfoot>
           </table>
         </div>
       )}
@@ -5946,15 +5991,22 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
           </div>
           {/* نقدي أو تحويل */}
           <div style={{display:"flex",gap:8,marginBottom:12}}>
-            {[{k:"cash",l:"💵 نقدي",c:"#16a34a"},{k:"transfer",l:"🏦 تحويل",c:"#2563eb"}].map(ch=>(
+            {[{k:"cash",l:"نقدي",d:"M3.6 6.8h16.8v10.4H3.6Z|M8.4 12h.01M15.6 12h.01"},
+              {k:"transfer",l:"تحويل",d:"M4 9.4h13.2M14.4 6.6l2.8 2.8-2.8 2.8|M20 14.6H6.8M9.6 11.8 6.8 14.6l2.8 2.8"}].map(ch=>{
+              const on = form.channel===ch.k;
+              return (
               <button key={ch.k} onClick={()=>set("channel",ch.k)}
-                style={{flex:1,fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:14,fontWeight:700,padding:"11px 10px",borderRadius:10,cursor:"pointer",
-                  border:form.channel===ch.k?"2px solid "+ch.c:"1.5px solid #e2e8f0",
-                  background:form.channel===ch.k?(ch.k==="cash"?"#f0fdf4":"#eff6ff"):"#fff",
-                  color:form.channel===ch.k?ch.c:"#64748b"}}>
+                style={{flex:1,fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:14,fontWeight:800,padding:"11px 10px",borderRadius:10,cursor:"pointer",
+                  display:"inline-flex",alignItems:"center",justifyContent:"center",gap:7,
+                  border:on?"2px solid #c8922a":"1.5px solid #e2e8f0",
+                  background:on?"linear-gradient(135deg,#1a1a2e,#0f3460)":"#fff",
+                  color:on?"#e0b85c":"#64748b"}}>
+                <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke={on?"#e0b85c":"#94a3b8"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  {ch.d.split("|").map((p,pi)=><path key={pi} d={p}/>)}
+                </g></svg>
                 {ch.l}
-              </button>
-            ))}
+              </button>);
+            })}
           </div>
           <button onClick={addRow}
             style={{width:"100%",padding:"14px",borderRadius:12,border:"none",cursor:"pointer",
@@ -5968,7 +6020,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
       <div style={styles.panel}>
         <div style={styles.panelHdr}>
           <h3 style={{margin:0,fontSize:15,fontWeight:700}}>📋 حركات يوم {dLabel(selDay)}</h3>
-          <span style={{fontSize:15,fontWeight:800,color:closingBalance>=0?C.teal:C.red}}>المتبقي: {SAR(closingBalance)}</span>
+          <span style={{fontSize:15,fontWeight:800,background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:closingBalance>=0?"#e0b85c":"#fca5a5",padding:"6px 14px",borderRadius:10,border:"1px solid rgba(200,146,42,0.25)"}}>المتبقي: {SAR(closingBalance)}</span>
         </div>
         <div style={{overflowX:"auto",maxHeight:"70vh",overflowY:"auto",WebkitOverflowScrolling:"touch",position:"relative"}}>
           <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:15}}>
@@ -6007,10 +6059,10 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
               })}
             </tbody>
             <tfoot>
-              <tr style={{background:"#f0fdfa"}}>
-                <td colSpan={2} style={{...styles.td,fontWeight:800,color:"#0d9488"}}>المتبقي في الصندوق</td>
-                <td style={{...styles.td,fontWeight:900,fontSize:16,color:closingBalance>=0?"#0d9488":C.red}}>{SAR(closingBalance)}</td>
-                <td style={styles.td}></td>
+              <tr style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)"}}>
+                <td colSpan={2} style={{...styles.td,fontWeight:800,color:"#e0b85c",borderBottom:"none"}}>المتبقي في الصندوق</td>
+                <td style={{...styles.td,fontWeight:900,fontSize:16,color:closingBalance>=0?"#e0b85c":"#fca5a5",borderBottom:"none"}}>{SAR(closingBalance)}</td>
+                <td style={{...styles.td,borderBottom:"none"}}></td>
               </tr>
             </tfoot>
           </table>
@@ -6038,11 +6090,11 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
             المصروفات + السحوبات</div>
           <div style={{fontSize:20,fontWeight:800,color:"#dc2626"}}>{SAR(sumByType("masroof")+sumByType("sahb")+sumByType("estilam"))}</div>
         </div>
-        <div style={{...styles.card,borderRight:"3px solid #c8922a",background:"linear-gradient(150deg,#fefbf3,#fef7e8)"}}>
-          <div style={{fontSize:12,color:"#92600a",marginBottom:6,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>
-            <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g><circle cx="16.9" cy="15.1" r="1.4" fill="#a87520"/></svg>
+        <div style={{...styles.card,borderRight:"3px solid #c8922a",background:"linear-gradient(150deg,#1a1a2e,#0f3460)",border:"1px solid rgba(200,146,42,0.25)"}}>
+          <div style={{fontSize:12,color:"#e0b85c",marginBottom:6,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>
+            <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g><circle cx="16.9" cy="15.1" r="1.4" fill="#e0b85c"/></svg>
             المتبقي في الصندوق</div>
-          <div style={{fontSize:22,fontWeight:800,color:closingBalance>=0?"#a87520":"#dc2626"}}>{SAR(closingBalance)}</div>
+          <div style={{fontSize:22,fontWeight:900,color:closingBalance>=0?"#f5d799":"#fca5a5"}}>{SAR(closingBalance)}</div>
         </div>
       </div>
 
@@ -6134,8 +6186,10 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
           <h3 style={{margin:0,fontSize:16,fontWeight:800,display:"flex",alignItems:"center",gap:8}}>
             <svg width="19" height="19" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.6 20.4h16.8"/><path d="M7.2 20.4v-4.6M12 20.4v-8.2M16.8 20.4v-6.4"/></g><circle cx="12" cy="9.2" r="1.35" fill="#a87520"/></svg>
             كشف حساب شامل</h3>
-          <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px"}}
-            onClick={()=>printAccountStatement(stmtFrom,stmtTo,stmtTotals,stmtIn,stmtOut,stmtNet)}>طباعة الكشف</button>
+          <button style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"1px solid rgba(200,146,42,0.3)",borderRadius:10,padding:"9px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:7}}
+            onClick={()=>printAccountStatement(stmtFrom,stmtTo,stmtTotals,stmtIn,stmtOut,stmtNet)}>
+            <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9V4h10v5M6 18H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1M7 15h10v5H7Z"/></g></svg>
+            طباعة الكشف</button>
         </div>
         <div style={{padding:"14px 18px"}}>
           {/* 🔍 بحث عن شخص/وصف داخل اليومية */}
@@ -6260,10 +6314,10 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                 )}
               </tbody>
               <tfoot>
-                <tr style={{background:"#f0fdfa"}}>
-                  <td style={{...styles.td,fontWeight:800,color:"#0d9488"}}>الداخل: {SAR(stmtIn+(baseAmount||0))} · الخارج: {SAR(stmtOut)}</td>
-                  <td style={{...styles.td,fontWeight:800,color:"#0d9488"}}>الصافي</td>
-                  <td style={{...styles.td,fontWeight:900,fontSize:16,color:(stmtNet+(baseAmount||0))>=0?"#0d9488":C.red}}>{SAR(stmtNet+(baseAmount||0))}</td>
+                <tr style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)"}}>
+                  <td style={{...styles.td,fontWeight:800,color:"#e0b85c",borderBottom:"none"}}>الداخل: {SAR(stmtIn+(baseAmount||0))} · الخارج: {SAR(stmtOut)}</td>
+                  <td style={{...styles.td,fontWeight:800,color:"#e0b85c",borderBottom:"none"}}>الصافي</td>
+                  <td style={{...styles.td,fontWeight:900,fontSize:16,color:(stmtNet+(baseAmount||0))>=0?"#f5d799":"#fca5a5",borderBottom:"none"}}>{SAR(stmtNet+(baseAmount||0))}</td>
                 </tr>
               </tfoot>
             </table>
@@ -7272,6 +7326,7 @@ function PastClientsPage({toast, pastClients, setPastClients}){
   const clients = pastClients || [];
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState("manual"); // manual | paste | file
+  const [addOpen, setAddOpen] = useState(clients.length===0); // مطوية إذا فيه زبائن، مفتوحة إذا القائمة فاضية
   const [manual, setManual] = useState({name:"", phone:""});
   const [pasteText, setPasteText] = useState("");
   const [previewRows, setPreviewRows] = useState([]); // [{id,name,phone,include}]
@@ -7416,10 +7471,13 @@ function PastClientsPage({toast, pastClients, setPastClients}){
         <span style={{fontSize:13,fontWeight:600,color:"#64748b"}}>{clients.length} زبون</span>
       </div>
 
-      {/* ═══ إضافة زبائن ═══ */}
+      {/* ═══ إضافة زبائن (قابل للطي) ═══ */}
       <div style={{...styles.panel}}>
-        <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>➕ إضافة زبائن</h3></div>
-        <div style={{padding:"14px 18px"}}>
+        <div style={{...styles.panelHdr,cursor:"pointer"}} onClick={()=>setAddOpen(!addOpen)}>
+          <h3 style={{margin:0,fontSize:15,fontWeight:700}}>➕ إضافة زبائن</h3>
+          <span style={{fontSize:13,fontWeight:800,color:C.gold}}>{addOpen?"إخفاء ▲":"إظهار ▼"}</span>
+        </div>
+        <div style={{padding:"14px 18px",display:addOpen?"block":"none"}}>
           {/* تبديل الطريقة */}
           <div style={{marginBottom:14}}>
             <button style={styles.goodsBtn(mode==="manual")} onClick={()=>setMode("manual")}>✍️ إضافة يدوية</button>
@@ -8814,7 +8872,11 @@ tbody tr:nth-child(even){background:#f7f9fb}
         /* Investors */
         React.createElement("div",{style:{background:"rgba(255,255,255,0.03)",borderRadius:20,padding:18,border:"1px solid rgba(200,146,42,0.1)"}},
           React.createElement("div",{style:{fontSize:16,fontWeight:900,color:"#f0f0f5",marginBottom:14}},"المستثمرون"),
-          investors.filter(inv=>inv.name).map((inv,i)=>{
+          investors.filter(inv=>inv.name).slice().sort((a,b)=>{
+            const nOf=x=>{const m=String(x.name||"").match(/(\d+)\s*$/); return m?parseInt(m[1],10):9999;};
+            const d=nOf(a)-nOf(b);
+            return d!==0?d:String(a.name||"").localeCompare(String(b.name||""),"ar");
+          }).map((inv,i)=>{
             const ic=activeC.filter(c=>String(c.investorId)===String(inv.id));
             const tot=ic.reduce((s,c)=>s+_n(c.totalInst),0), paid=ic.reduce((s,c)=>s+_paid(c.id),0);
             const profit=ic.reduce((s,c)=>{const p=_paid(c.id),t=_n(c.totalInst),cost=_n(c.amount);return s+(t>0&&cost>0?Math.max(0,p-(cost/t*p)):0);},0);
@@ -10297,7 +10359,7 @@ function App() {
       return DEFAULT_INVESTORS;
     }
     const d=loadLS("qimma_investors",DEFAULT_INVESTORS);return d&&d.length?d:DEFAULT_INVESTORS;});
-  const [contracts,setContractsRaw]=useState(()=>_arr(loadLS("qimma_contracts",[])));
+  const [contracts,setContractsRaw]=useState(()=>_migrateMuqassa(_arr(loadLS("qimma_contracts",[]))));
   const [settings,setSettingsRaw]=useState(()=>loadLS("qimma_settings",{profit:50,admin:2.5,acc:10,inst:10}));
 
   const setInvestors = v => {
@@ -10372,11 +10434,24 @@ function App() {
 
   const toast=(msg,type="success")=>{setToastMsg(msg);setToastType(type);setTimeout(()=>setToastMsg(null),3000);};
 
+  // ═══ انتظار جاهزية Firebase قبل أول قراءة ═══
+  // Firebase يُحمَّل من الشبكة بشكل غير متزامن. بدون هذا الانتظار تبدأ القراءة
+  // و_fbReady لسه false، فيسقط النظام على نسخة Google Sheets القديمة ويُرجِع
+  // السجلات المحذوفة. ننتظر حتى يجهز (أو يفشل) بحد أقصى 12 ثانية.
+  const waitForFirebase = async (maxMs=12000) => {
+    const started = Date.now();
+    while(!window._fbReady && !window._fbFailed && (Date.now()-started) < maxMs){
+      await new Promise(r=>setTimeout(r,120));
+    }
+    return !!window._fbReady;
+  };
+
   // On first load, try syncing from Google Sheets (overwrite local if remote has newer data)
   useEffect(()=>{
     let _unsubSnap = null;
     (async ()=>{
       setSyncStatus("loading");
+      await waitForFirebase();
       const [inv, con, set, tx, ln, zk, pd, pay, gd, jov, dly, dlyo, act, mcl, pov, btx, dids, pcl] = await Promise.all([
         gsRead("investors"), gsRead("contracts"), gsRead("settings"),
         gsRead("txlist"), gsRead("loans"), gsRead("zakat"),
@@ -10385,7 +10460,7 @@ function App() {
         gsRead("doneIds"), gsRead("pastClients")
       ]);
       if (inv) { setInvestorsRaw(inv); saveLS("qimma_investors", inv); }
-      if (con) { setContractsRaw(con); saveLS("qimma_contracts", con); }
+      if (con) { const _c=_migrateMuqassa(_arr(con)); setContractsRaw(_c); saveLS("qimma_contracts", _c); if(_c!==con) gsWrite("contracts", _c); }
       if (set) { setSettingsRaw(set); saveLS("qimma_settings", set); }
       if (tx)  { setInvTxListRaw(tx); saveLS("qimma_txlist", tx); }
       if (ln)  { setLoansRaw(ln); saveLS("qimma_loans", ln); }
@@ -10419,7 +10494,7 @@ function App() {
             if (data == null) return;
             switch(sheet) {
               case "investors": setInvestorsRaw(data); saveLS("qimma_investors", data); break;
-              case "contracts": setContractsRaw(data); saveLS("qimma_contracts", data); break;
+              case "contracts": { const _c=_migrateMuqassa(_arr(data)); setContractsRaw(_c); saveLS("qimma_contracts", _c); break; }
               case "settings": setSettingsRaw(data); saveLS("qimma_settings", data); break;
               case "txlist": setInvTxListRaw(data); saveLS("qimma_txlist", data); break;
               case "loans": setLoansRaw(_arr(data)); saveLS("qimma_loans", _arr(data)); break;
