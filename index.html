@@ -2904,12 +2904,16 @@ function LoansPage({loans, setLoans}) {
   const MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
   const [form,setForm]=useState({name:"",amount:"",monthly:"",date:today,note:""});
   const [selLoan,setSelLoan]=useState(null);
+  const [addMore,setAddMore]=useState(null);
+  const [addMoreForm,setAddMoreForm]=useState({amount:"",date:today,note:""});
   const [payForm,setPayForm]=useState({amount:"",date:today,note:""});
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
 
+  const loanTotal = l => (l.amount||0) + ((l.additions||[]).reduce((s,a)=>s+a.amount,0));
+
   const save=()=>{
     if(!form.name||!form.amount){return;}
-    setLoans(p=>[...p,{id:Date.now(),...form,amount:parseFloat(form.amount),monthly:parseFloat(form.monthly)||0,payments:[]}]);
+    setLoans(p=>[...p,{id:Date.now(),...form,amount:parseFloat(form.amount),monthly:parseFloat(form.monthly)||0,payments:[],additions:[]}]);
     setForm({name:"",amount:"",monthly:"",date:today,note:""});
   };
 
@@ -2921,9 +2925,19 @@ function LoansPage({loans, setLoans}) {
     setSelLoan(null);
   };
 
+  const addMoreLoan=(loan)=>{
+    if(!addMoreForm.amount){return;}
+    const updated = {...loan, additions:[...(loan.additions||[]),{id:Date.now(),date:addMoreForm.date,amount:parseFloat(addMoreForm.amount),note:addMoreForm.note}]};
+    setLoans(p=>p.map(l=>l.id===loan.id?updated:l));
+    setAddMoreForm({amount:"",date:today,note:""});
+    setAddMore(null);
+  };
+
+  const delAddition = (lid,aid) => {if(window.confirm("حذف السلفة الإضافية؟"))setLoans(prev=>prev.map(l=>l.id===lid?{...l,additions:(l.additions||[]).filter(a=>a.id!==aid)}:l));};
+
   const totalOut = loans.reduce((s,l)=>{
     const paid = (l.payments||[]).reduce((ss,p)=>ss+p.amount,0);
-    return s + Math.max(0, l.amount - paid);
+    return s + Math.max(0, loanTotal(l) - paid);
   },0);
   const totalPaid = loans.reduce((s,l)=>(l.payments||[]).reduce((ss,p)=>ss+p.amount,0)+s,0);
 
@@ -2960,8 +2974,9 @@ function LoansPage({loans, setLoans}) {
           <div style={{...styles.panel,padding:40,textAlign:"center",color:"#1f2937"}}>لا توجد سلف مسجلة</div>
         ) : loans.map(l=>{
           const paid = (l.payments||[]).reduce((s,p)=>s+p.amount,0);
-          const remaining = Math.max(0, l.amount - paid);
-          const pct = l.amount>0 ? Math.min(100, Math.round(paid/l.amount*100)) : 0;
+          const total = loanTotal(l);
+          const remaining = Math.max(0, total - paid);
+          const pct = total>0 ? Math.min(100, Math.round(paid/total*100)) : 0;
           return (
             <div key={l.id} style={{...styles.panel,marginBottom:16}}>
               <div style={{padding:"14px 18px"}}>
@@ -2976,7 +2991,7 @@ function LoansPage({loans, setLoans}) {
                 </div>
                 {/* Progress */}
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginBottom:6}}>
-                  <span style={{color:"#1f2937"}}>المبلغ الكلي: <strong>{SAR(l.amount)}</strong></span>
+                  <span style={{color:"#1f2937"}}>المبلغ الكلي: <strong>{SAR(total)}</strong></span>
                   <span style={{color:C.green}}>مدفوع: <strong>{SAR(paid)}</strong></span>
                   <span style={{color:remaining>0?C.red:C.green}}>متبقي: <strong>{SAR(remaining)}</strong></span>
                 </div>
@@ -2984,6 +2999,23 @@ function LoansPage({loans, setLoans}) {
                   <div style={{background:C.green,borderRadius:99,height:8,width:pct+"%",transition:"width 0.3s"}}></div>
                 </div>
                 {l.monthly>0 && <div style={{fontSize:14,color:"#1f2937",marginBottom:10}}>القسط المقترح: {SAR(l.monthly)} / شهر</div>}
+                {/* السلف الإضافية */}
+                {(l.additions||[]).length>0 && (
+                  <div style={{marginBottom:12,background:"#fffbeb",borderRadius:10,padding:10,border:"1px solid #fde68a"}}>
+                    <div style={{fontSize:14,fontWeight:700,marginBottom:6,color:"#92400e"}}>📋 سلف إضافية:</div>
+                    <div style={{fontSize:12,color:"#6b7280",marginBottom:4}}>السلفة الأساسية: {SAR(l.amount)}</div>
+                    {(l.additions||[]).map((a,ai)=>(
+                      <div key={a.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:13,padding:"4px 0",borderBottom:"1px solid #fef3c7"}}>
+                        <span style={{color:"#92400e"}}>{ai+1}. {a.date}{a.note?" — "+a.note:""}</span>
+                        <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                          <span style={{fontWeight:700,color:"#c8922a"}}>+{SAR(a.amount)}</span>
+                          <button onClick={()=>delAddition(l.id,a.id)} style={{background:"none",border:"none",color:"#ef4444",fontSize:13,cursor:"pointer"}}>✕</button>
+                        </div>
+                      </div>
+                    ))}
+                    <div style={{fontSize:13,fontWeight:800,color:"#1f2937",marginTop:6,borderTop:"1px solid #fde68a",paddingTop:6}}>إجمالي السلف: {SAR(total)}</div>
+                  </div>
+                )}
                 {/* Payments history */}
                 {(l.payments||[]).length>0 && (
                   <div style={{marginBottom:12}}>
@@ -3002,6 +3034,30 @@ function LoansPage({loans, setLoans}) {
                         </div>
                       );
                     })}
+                  </div>
+                )}
+                {/* Add more loan form */}
+                {addMore===l.id && (
+                  <div style={{background:"#fffbeb",borderRadius:10,padding:12,marginBottom:10,border:"1px solid #fde68a"}}>
+                    <div style={{fontSize:14,fontWeight:700,marginBottom:8,color:"#92400e"}}>➕ سلفة إضافية لـ {l.name}</div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:10}}>
+                      <div>
+                        <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المبلغ</label>
+                        <input style={styles.input} type="number" placeholder="المبلغ" value={addMoreForm.amount} onChange={e=>setAddMoreForm(f=>({...f,amount:e.target.value}))}/>
+                      </div>
+                      <div>
+                        <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>التاريخ</label>
+                        <input style={styles.input} type="date" value={addMoreForm.date} onChange={e=>setAddMoreForm(f=>({...f,date:e.target.value}))}/>
+                      </div>
+                      <div>
+                        <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>ملاحظة</label>
+                        <input style={styles.input} type="text" placeholder="اختياري" value={addMoreForm.note} onChange={e=>setAddMoreForm(f=>({...f,note:e.target.value}))}/>
+                      </div>
+                    </div>
+                    <div style={{display:"flex",gap:8}}>
+                      <button style={styles.btn("#c8922a")} onClick={()=>addMoreLoan(l)}>💾 إضافة السلفة</button>
+                      <button style={styles.btn("#e5e7eb",C.ink)} onClick={()=>setAddMore(null)}>إلغاء</button>
+                    </div>
                   </div>
                 )}
                 {/* Add payment */}
@@ -3027,11 +3083,21 @@ function LoansPage({loans, setLoans}) {
                     </div>
                   </div>
                 ) : remaining>0 ? (
-                  <button style={styles.btn(C.teal)} onClick={()=>{setSelLoan(l.id);setPayForm({amount:l.monthly||"",date:today,note:""});}}>
-                    💰 تسجيل دفعة
-                  </button>
+                  <div style={{display:"flex",gap:8}}>
+                    <button style={styles.btn(C.teal)} onClick={()=>{setSelLoan(l.id);setAddMore(null);setPayForm({amount:l.monthly||"",date:today,note:""});}}>
+                      💰 تسجيل دفعة
+                    </button>
+                    <button style={styles.btn("#c8922a")} onClick={()=>{setAddMore(l.id);setSelLoan(null);setAddMoreForm({amount:"",date:today,note:""});}}>
+                      ➕ سلفة إضافية
+                    </button>
+                  </div>
                 ) : (
-                  <div style={{color:C.green,fontWeight:700,fontSize:15}}>✅ تم السداد الكامل</div>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <div style={{color:C.green,fontWeight:700,fontSize:15}}>✅ تم السداد الكامل</div>
+                    <button style={{...styles.btn("#c8922a"),fontSize:13}} onClick={()=>{setAddMore(l.id);setSelLoan(null);setAddMoreForm({amount:"",date:today,note:""});}}>
+                      ➕ سلفة إضافية
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
