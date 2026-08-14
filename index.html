@@ -2379,7 +2379,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                     <tr style={{background:bg,opacity:isOld?0.65:1}}>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.num||i+1}</td>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.date}</td>
-                    <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",...stickyCell}}><span onClick={()=>setCardModal(c)} style={{color:C.teal,cursor:"pointer",textDecoration:"underline"}}>{c.client}</span></td>
+                    <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",...stickyCell}}>{c.defaulter&&<span style={{marginLeft:4,fontSize:12}}>🔴</span>}<span onClick={()=>setCardModal(c)} style={{color:C.teal,cursor:"pointer",textDecoration:"underline"}}>{c.client}</span></td>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.idNum||"—"}</td>
                     <td style={styles.td}>{c.job||"—"}</td>
                     <td style={{...styles.td,color:C.gold,fontWeight:600,whiteSpace:"nowrap"}}>{c.gName||"—"}</td>
