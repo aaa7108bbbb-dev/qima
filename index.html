@@ -7744,7 +7744,7 @@ function PastClientsPage({toast, pastClients, setPastClients, contracts}){
     setEditId(null);
     toast("تم التحديث");
   };
-  const del = id => setPastClients(prev => _numberDupNames(_arr(prev).filter(c=>c.id!==id)));
+  const del = id => save(clients.filter(c=>c.id!==id));
   const clearAll = () => { if(window.confirm("حذف جميع الزبائن؟ لا يمكن التراجع.")){ save([]); toast("تم حذف الكل"); } };
 
   const sendWA = (phone) => {
@@ -10492,6 +10492,309 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
 
 
 // ─── Activity Log Page ───────────────────────────────────────
+// ═══════════ صفحة التطويرات ═══════════
+function UpgradesPage({contracts, investors, payments, activity, settings, toast, setPage}) {
+  const [tab, setTab] = React.useState("log");
+  const [logFilter, setLogFilter] = React.useState("all");
+  const [stmtSearch, setStmtSearch] = React.useState("");
+  const [stmtContract, setStmtContract] = React.useState(null);
+
+  const active = (contracts||[]).filter(c=>!c.deleted);
+  const pays = _arr(payments);
+  const logs = _arr(activity);
+
+  // ═══ 1. سجل التغييرات ═══
+  const actColor = a => {
+    if(!a||!a.action) return "#6b7280";
+    if(a.action.indexOf("حذف")>=0) return "#ef4444";
+    if(a.action==="إضافة"||a.action==="سداد"||a.action==="تحصيل") return "#22c55e";
+    if(a.action==="تعديل") return "#f59e0b";
+    if(a.action==="استرجاع") return "#0d9488";
+    return "#6b7280";
+  };
+  const filteredLogs = logFilter==="all" ? logs : logs.filter(a=>a.action&&a.action.indexOf(logFilter)>=0);
+
+  // ═══ 3. تنبيهات الأقساط ═══
+  const today = new Date();
+  const todayStr = today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
+  const alerts = [];
+  active.forEach(c => {
+    if(c.contractType==="migrated") return;
+    const cPays = pays.filter(p=>p.contractId===c.id);
+    const paid = cPays.reduce((s,p)=>s+(+p.amount||0),0);
+    const remaining = (+c.totalInst||0) - paid;
+    if(remaining <= 0) return;
+    const startDate = c.startDate || c.date;
+    if(!startDate) return;
+    const inst = +c.installment || 0;
+    if(inst<=0) return;
+    const paidCount = Math.floor(paid / inst);
+    const sd = new Date(startDate);
+    if(isNaN(sd)) return;
+    const nextDue = new Date(sd);
+    nextDue.setMonth(nextDue.getMonth() + paidCount);
+    const diffDays = Math.ceil((nextDue - today) / (1000*60*60*24));
+    if(diffDays >= -30 && diffDays <= 7) {
+      alerts.push({c, nextDue, diffDays, remaining, inst});
+    }
+  });
+  alerts.sort((a,b) => a.diffDays - b.diffDays);
+
+  // ═══ 4. تصنيف الزبائن الذكي ═══
+  const classify = () => {
+    let regular=0, sometimes=0, defaulter=0;
+    active.forEach(c => {
+      if(c.contractType==="migrated") return;
+      if(c.defaulter) { defaulter++; return; }
+      const cPays = pays.filter(p=>p.contractId===c.id);
+      const paid = cPays.reduce((s,p)=>s+(+p.amount||0),0);
+      const remaining = (+c.totalInst||0) - paid;
+      if(remaining <= 0) { regular++; return; }
+      const overdue = _overdue ? _overdue(c) : 0;
+      if(overdue >= 3) defaulter++;
+      else if(overdue >= 1) sometimes++;
+      else regular++;
+    });
+    return {regular, sometimes, defaulter, total: regular+sometimes+defaulter};
+  };
+  const cls = classify();
+  const clsTotal = cls.total || 1;
+
+  // ═══ 5. مراقبة الباك اب ═══
+  const fbConnected = typeof firebase !== "undefined" && firebase.apps && firebase.apps.length > 0;
+
+  // ═══ كشف حساب العميل ═══
+  const stmtResults = stmtSearch.trim().length >= 2 
+    ? active.filter(c => (c.client||"").includes(stmtSearch.trim())).slice(0,10)
+    : [];
+
+  const renderStatement = (c) => {
+    const cPays = pays.filter(p=>p.contractId===c.id).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+    const totalPaid = cPays.reduce((s,p)=>s+(+p.amount||0),0);
+    const remaining = Math.max(0, (+c.totalInst||0) - totalPaid);
+    const inv = (investors||[]).find(i=>String(i.id)===String(c.investorId));
+    return React.createElement("div",{style:{background:"#fff",borderRadius:14,padding:16,color:"#1f2937"}},
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,paddingBottom:10,borderBottom:"2px solid #f1f5f9"}},
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:16,fontWeight:800,color:"#1a1a2e"}},c.client),
+          React.createElement("div",{style:{fontSize:11,color:"#6b7280",marginTop:2}},c.phone||"")
+        ),
+        React.createElement("div",{style:{fontSize:11,color:"#6b7280",background:"#f1f5f9",padding:"3px 8px",borderRadius:6}},"عقد #"+(c.num||""))
+      ),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}},
+        React.createElement("div",{style:{background:"#f8fafc",borderRadius:8,padding:8,textAlign:"center"}},
+          React.createElement("div",{style:{fontSize:9,color:"#6b7280"}},"إجمالي العقد"),
+          React.createElement("div",{style:{fontSize:14,fontWeight:800,color:"#2563eb"}},SAR(c.totalInst||0))
+        ),
+        React.createElement("div",{style:{background:"#f8fafc",borderRadius:8,padding:8,textAlign:"center"}},
+          React.createElement("div",{style:{fontSize:9,color:"#6b7280"}},"المسدد"),
+          React.createElement("div",{style:{fontSize:14,fontWeight:800,color:"#059669"}},SAR(totalPaid))
+        ),
+        React.createElement("div",{style:{background:"#f8fafc",borderRadius:8,padding:8,textAlign:"center"}},
+          React.createElement("div",{style:{fontSize:9,color:"#6b7280"}},"المتبقي"),
+          React.createElement("div",{style:{fontSize:14,fontWeight:800,color:"#dc2626"}},SAR(remaining))
+        )
+      ),
+      cPays.length>0 && React.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:11}},
+        React.createElement("thead",null,
+          React.createElement("tr",{style:{background:"#1a1a2e"}},
+            React.createElement("th",{style:{padding:"6px 8px",color:"#fff",fontWeight:700,textAlign:"center"}},"#"),
+            React.createElement("th",{style:{padding:"6px 8px",color:"#fff",fontWeight:700,textAlign:"center"}},"التاريخ"),
+            React.createElement("th",{style:{padding:"6px 8px",color:"#fff",fontWeight:700,textAlign:"center"}},"المبلغ"),
+            React.createElement("th",{style:{padding:"6px 8px",color:"#fff",fontWeight:700,textAlign:"center"}},"المتبقي")
+          )
+        ),
+        React.createElement("tbody",null,
+          cPays.map((p,pi)=>{
+            const running = (+c.totalInst||0) - cPays.slice(0,pi+1).reduce((s,x)=>s+(+x.amount||0),0);
+            return React.createElement("tr",{key:p.id||pi,style:{background:pi%2===0?"#fff":"#f8fafc"}},
+              React.createElement("td",{style:{padding:"6px 8px",textAlign:"center"}},pi+1),
+              React.createElement("td",{style:{padding:"6px 8px",textAlign:"center"}},fmtDate(p.date)),
+              React.createElement("td",{style:{padding:"6px 8px",textAlign:"center",color:"#059669",fontWeight:700}},SAR(p.amount)),
+              React.createElement("td",{style:{padding:"6px 8px",textAlign:"center",color:Math.max(0,running)>0?"#dc2626":"#059669",fontWeight:700}},SAR(Math.max(0,running)))
+            );
+          })
+        )
+      ),
+      React.createElement("button",{onClick:()=>{
+        const msg = "كشف حساب — "+c.client+"\nعقد #"+(c.num||"")+"\nالإجمالي: "+SAR(c.totalInst||0)+"\nالمسدد: "+SAR(totalPaid)+"\nالمتبقي: "+SAR(remaining)+"\n\nالسدادات:\n"+cPays.map((p,i)=>(i+1)+". "+fmtDate(p.date)+" — "+SAR(p.amount)).join("\n")+"\n\nمؤسسة قمة الفرصة التجارية";
+        window.open("https://wa.me/"+(c.phone||"").replace(/^0/,"966")+"?text="+encodeURIComponent(msg));
+      },style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"#25d366",color:"#fff",border:"none",borderRadius:10,padding:10,fontSize:13,fontWeight:700,cursor:"pointer",width:"100%",marginTop:10,fontFamily:"IBM Plex Sans Arabic,Arial"}},"📤 إرسال للعميل عبر واتساب"),
+      React.createElement("button",{onClick:()=>setStmtContract(null),style:{background:"#f1f5f9",color:"#64748b",border:"none",borderRadius:10,padding:8,fontSize:12,fontWeight:700,cursor:"pointer",width:"100%",marginTop:6,fontFamily:"inherit"}},"← رجوع")
+    );
+  };
+
+  const tabs = [
+    {id:"log",label:"📜",name:"سجل التغييرات"},
+    {id:"stmt",label:"📄",name:"كشف العميل"},
+    {id:"alerts",label:"⏰",name:"التنبيهات"},
+    {id:"classify",label:"🤖",name:"التصنيف"},
+    {id:"backup",label:"🛡️",name:"الباك اب"},
+  ];
+
+  return React.createElement("div",{style:styles.main},
+    React.createElement("div",{style:{...styles.panel,paddingBottom:0}},
+      React.createElement("div",{style:{...styles.panelHdr,textAlign:"center"}},
+        React.createElement("h2",{style:{margin:0,fontSize:20,fontWeight:900,color:C.ink}},"🚀 التطويرات")
+      ),
+      // sub-tabs
+      React.createElement("div",{style:{display:"flex",overflowX:"auto",gap:4,padding:"8px 12px",borderBottom:"2px solid "+C.border}},
+        tabs.map(t=>React.createElement("button",{key:t.id,onClick:()=>setTab(t.id),style:{...styles.btn(tab===t.id?"#1a1a2e":"#f1f5f9",tab===t.id?"#fff":"#374151"),fontSize:12,padding:"7px 12px",whiteSpace:"nowrap",borderRadius:8,fontFamily:"inherit"}},t.label+" "+t.name))
+      )
+    ),
+
+    // ═══ TAB 1: سجل التغييرات ═══
+    tab==="log" && React.createElement("div",{style:{...styles.panel,marginTop:8}},
+      React.createElement("div",{style:{padding:"10px 14px",display:"flex",gap:6,flexWrap:"wrap",borderBottom:"1px solid "+C.border}},
+        ["all","سداد","تحصيل","حذف","تعديل","إضافة"].map(f=>
+          React.createElement("button",{key:f,onClick:()=>setLogFilter(f),style:{...styles.btn(logFilter===f?"#1a1a2e":"#e5e7eb",logFilter===f?"#fff":"#374151"),fontSize:11,padding:"5px 10px",fontFamily:"inherit"}},f==="all"?"الكل":f))
+      ),
+      React.createElement("div",{style:{padding:12,maxHeight:500,overflowY:"auto"}},
+        filteredLogs.length===0
+          ? React.createElement("div",{style:{textAlign:"center",padding:30,color:"#94a3b8"}},"لا توجد حركات مسجّلة")
+          : filteredLogs.slice(0,100).map(a=>
+              React.createElement("div",{key:a.id,style:{display:"flex",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9"}},
+                React.createElement("div",{style:{fontSize:10,color:"#64748b",minWidth:55,textAlign:"center",paddingTop:3}},
+                  (a.time||"").split(" ")[1]||"",
+                  React.createElement("br"),
+                  React.createElement("span",{style:{fontSize:8,color:"#94a3b8"}},(a.time||"").split(" ")[0]||"")
+                ),
+                React.createElement("div",{style:{flex:1}},
+                  React.createElement("div",{style:{fontSize:12,fontWeight:700,color:actColor(a)}},a.action+" — "+a.entity),
+                  a.detail && React.createElement("div",{style:{fontSize:11,color:"#64748b",marginTop:2}},a.detail)
+                )
+              )
+            )
+      )
+    ),
+
+    // ═══ TAB 2: كشف حساب العميل ═══
+    tab==="stmt" && React.createElement("div",{style:{...styles.panel,marginTop:8}},
+      React.createElement("div",{style:{padding:14}},
+        stmtContract
+          ? renderStatement(stmtContract)
+          : React.createElement(React.Fragment,null,
+              React.createElement("input",{style:{width:"100%",padding:"12px 14px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:14,fontFamily:"IBM Plex Sans Arabic,Arial",background:"#fff",boxSizing:"border-box",marginBottom:10},placeholder:"🔍 ابحث باسم العميل...",value:stmtSearch,onChange:e=>setStmtSearch(e.target.value)}),
+              stmtResults.map(c=>{
+                const cPaid = pays.filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
+                const rem = Math.max(0,(+c.totalInst||0)-cPaid);
+                return React.createElement("div",{key:c.id,onClick:()=>setStmtContract(c),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 14px",background:"#f8fafc",borderRadius:10,marginBottom:6,cursor:"pointer",border:"1px solid #e5e7eb"}},
+                  React.createElement("div",null,
+                    React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"#1a1a2e"}},c.client),
+                    React.createElement("div",{style:{fontSize:11,color:"#6b7280"}},"عقد #"+(c.num||"")+" — قسط "+SAR(c.installment||0))
+                  ),
+                  React.createElement("div",{style:{textAlign:"left"}},
+                    React.createElement("div",{style:{fontSize:13,fontWeight:800,color:rem>0?"#dc2626":"#059669"}},SAR(rem)),
+                    React.createElement("div",{style:{fontSize:9,color:"#94a3b8"}},"متبقي")
+                  )
+                );
+              }),
+              stmtSearch.trim().length>=2 && stmtResults.length===0 && React.createElement("div",{style:{textAlign:"center",padding:20,color:"#94a3b8"}},"لا توجد نتائج")
+            )
+      )
+    ),
+
+    // ═══ TAB 3: تنبيهات الأقساط ═══
+    tab==="alerts" && React.createElement("div",{style:{...styles.panel,marginTop:8}},
+      React.createElement("div",{style:{padding:14}},
+        React.createElement("div",{style:{fontSize:13,color:"#64748b",marginBottom:12,textAlign:"center"}},"أقساط مستحقة أو قريبة الاستحقاق (7 أيام)"),
+        alerts.length===0
+          ? React.createElement("div",{style:{textAlign:"center",padding:30,color:"#22c55e",fontWeight:700}},"✅ لا توجد أقساط مستحقة قريبة")
+          : alerts.slice(0,30).map((a,i)=>{
+              const dotColor = a.diffDays<=0?"#ef4444":a.diffDays<=2?"#f59e0b":"#22c55e";
+              const dayLabel = a.diffDays<0?"متأخر "+Math.abs(a.diffDays)+" يوم":a.diffDays===0?"اليوم!":"بعد "+a.diffDays+" أيام";
+              return React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#1e293b",borderRadius:10,marginBottom:8}},
+                React.createElement("div",{style:{width:8,height:8,borderRadius:"50%",background:dotColor,flexShrink:0}}),
+                React.createElement("div",{style:{flex:1}},
+                  React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"#fff"}},a.c.client),
+                  React.createElement("div",{style:{fontSize:10,color:"#94a3b8"}},"عقد "+(a.c.num||"")+" — قسط "+SAR(a.inst))
+                ),
+                React.createElement("div",{style:{fontSize:11,fontWeight:800,color:dotColor,minWidth:60,textAlign:"left"}},dayLabel)
+              );
+            }),
+        alerts.length>0 && React.createElement("button",{onClick:()=>{
+          const msg = "تذكير بموعد القسط\nمؤسسة قمة الفرصة التجارية\n\nنذكركم بموعد القسط المستحق. نأمل السداد في الوقت المحدد.\nشكراً لتعاملكم معنا 🙏";
+          alerts.filter(a=>a.diffDays<=1&&a.c.phone).forEach(a=>{
+            window.open("https://wa.me/"+(a.c.phone||"").replace(/^0/,"966")+"?text="+encodeURIComponent(msg),"_blank");
+          });
+          toast("📲 تم فتح واتساب للمستحقين");
+        },style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"#1e293b",border:"1.5px solid #c8922a",color:"#c8922a",borderRadius:10,padding:"10px 20px",fontSize:12,fontWeight:700,cursor:"pointer",width:"100%",marginTop:10,fontFamily:"inherit"}},"📲 إرسال تذكير واتساب للمستحقين اليوم")
+      )
+    ),
+
+    // ═══ TAB 4: تصنيف الزبائن الذكي ═══
+    tab==="classify" && React.createElement("div",{style:{...styles.panel,marginTop:8}},
+      React.createElement("div",{style:{padding:14}},
+        React.createElement("div",{style:{fontSize:13,color:"#64748b",marginBottom:12,textAlign:"center"}},"تصنيف تلقائي بناءً على حالة السداد"),
+        React.createElement("div",{style:{display:"flex",height:28,borderRadius:10,overflow:"hidden",margin:"10px 0"}},
+          cls.regular>0 && React.createElement("div",{style:{width:(cls.regular/clsTotal*100)+"%",background:"#059669",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}},Math.round(cls.regular/clsTotal*100)+"%"),
+          cls.sometimes>0 && React.createElement("div",{style:{width:(cls.sometimes/clsTotal*100)+"%",background:"#f59e0b",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}},Math.round(cls.sometimes/clsTotal*100)+"%"),
+          cls.defaulter>0 && React.createElement("div",{style:{width:(cls.defaulter/clsTotal*100)+"%",background:"#dc2626",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}},Math.round(cls.defaulter/clsTotal*100)+"%")
+        ),
+        React.createElement("div",{style:{display:"flex",gap:16,justifyContent:"center",margin:"12px 0",flexWrap:"wrap"}},
+          React.createElement("span",{style:{fontSize:12,color:"#059669",fontWeight:700}},"🟢 منتظم ("+cls.regular+")"),
+          React.createElement("span",{style:{fontSize:12,color:"#f59e0b",fontWeight:700}},"🟡 متأخر ("+cls.sometimes+")"),
+          React.createElement("span",{style:{fontSize:12,color:"#ef4444",fontWeight:700}},"🔴 متعثر ("+cls.defaulter+")")
+        ),
+        React.createElement("div",{style:{background:"#f8fafc",borderRadius:10,padding:14,marginTop:14,fontSize:12,color:"#475569",lineHeight:"2.2"}},
+          React.createElement("div",null,"🟢 ",React.createElement("strong",{style:{color:"#059669"}},"منتظم:")," عقد نشط بدون تعثر ولا تأخر كبير"),
+          React.createElement("div",null,"🟡 ",React.createElement("strong",{style:{color:"#f59e0b"}},"متأخر:")," عقد فيه تأخر 1-2 قسط"),
+          React.createElement("div",null,"🔴 ",React.createElement("strong",{style:{color:"#ef4444"}},"متعثر:")," معلّم كمتعثر أو تأخر 3+ أقساط")
+        )
+      )
+    ),
+
+    // ═══ TAB 5: مراقبة الباك اب ═══
+    tab==="backup" && React.createElement("div",{style:{...styles.panel,marginTop:8}},
+      React.createElement("div",{style:{padding:14}},
+        React.createElement("div",{style:{fontSize:13,color:"#64748b",marginBottom:12,textAlign:"center"}},"حالة النسخ الاحتياطي والاتصال"),
+        React.createElement("div",{style:{background:fbConnected?"#064e3b":"#450a0a",border:"1px solid "+(fbConnected?"#059669":"#dc2626"),borderRadius:10,padding:"12px 14px",display:"flex",alignItems:"center",gap:10,marginBottom:8}},
+          React.createElement("div",{style:{fontSize:18}},fbConnected?"✅":"❌"),
+          React.createElement("div",{style:{flex:1}},
+            React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"#fff"}},fbConnected?"Firebase متصل":"Firebase غير متصل!"),
+            React.createElement("div",{style:{fontSize:10,color:"#94a3b8"}},"قاعدة البيانات الرئيسية")
+          )
+        ),
+        React.createElement("div",{style:{background:"#064e3b",border:"1px solid #059669",borderRadius:10,padding:"12px 14px",display:"flex",alignItems:"center",gap:10,marginBottom:8}},
+          React.createElement("div",{style:{fontSize:18}},"✅"),
+          React.createElement("div",{style:{flex:1}},
+            React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"#fff"}},"Google Sheets"),
+            React.createElement("div",{style:{fontSize:10,color:"#94a3b8"}},"نسخة احتياطية ثانوية")
+          )
+        ),
+        React.createElement("div",{style:{background:"#064e3b",border:"1px solid #059669",borderRadius:10,padding:"12px 14px",display:"flex",alignItems:"center",gap:10,marginBottom:8}},
+          React.createElement("div",{style:{fontSize:18}},"✅"),
+          React.createElement("div",{style:{flex:1}},
+            React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"#fff"}},"التخزين المحلي (localStorage)"),
+            React.createElement("div",{style:{fontSize:10,color:"#94a3b8"}},"نسخة احتياطية على الجهاز")
+          )
+        ),
+        React.createElement("div",{style:{background:"#1e293b",borderRadius:10,padding:14,marginTop:14}},
+          React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"#c8922a",marginBottom:8}},"📊 إحصائيات البيانات"),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
+            React.createElement("div",{style:{background:"#0f172a",borderRadius:8,padding:10,textAlign:"center"}},
+              React.createElement("div",{style:{fontSize:9,color:"#94a3b8"}},"العقود النشطة"),
+              React.createElement("div",{style:{fontSize:18,fontWeight:800,color:"#22c55e"}},active.length)
+            ),
+            React.createElement("div",{style:{background:"#0f172a",borderRadius:8,padding:10,textAlign:"center"}},
+              React.createElement("div",{style:{fontSize:9,color:"#94a3b8"}},"إجمالي السدادات"),
+              React.createElement("div",{style:{fontSize:18,fontWeight:800,color:"#3b82f6"}},pays.length)
+            ),
+            React.createElement("div",{style:{background:"#0f172a",borderRadius:8,padding:10,textAlign:"center"}},
+              React.createElement("div",{style:{fontSize:9,color:"#94a3b8"}},"المستثمرين"),
+              React.createElement("div",{style:{fontSize:18,fontWeight:800,color:"#c8922a"}},(investors||[]).length)
+            ),
+            React.createElement("div",{style:{background:"#0f172a",borderRadius:8,padding:10,textAlign:"center"}},
+              React.createElement("div",{style:{fontSize:9,color:"#94a3b8"}},"سجل النشاط"),
+              React.createElement("div",{style:{fontSize:18,fontWeight:800,color:"#8b5cf6"}},logs.length)
+            )
+          )
+        )
+      )
+    )
+  );
+}
+
 function ActivityPage({activity, setActivity, toast, setPage}){
   const [filter,setFilter] = React.useState("all");
   const list = _arr(activity);
@@ -10558,6 +10861,7 @@ const NAV_ICONS = {
   cashflow:'<circle cx="12" cy="12" r="8.4"/><path d="M15.7 8.3 13.1 13.1 8.3 15.7l2.6-4.8Z"/>|<circle cx="12" cy="12" r="1.25"/>',
   qimaai:'<rect x="3.6" y="3.6" width="16.8" height="16.8" rx="4.6"/><path d="M12 7.4v2.4M12 14.2v2.4M7.4 12h2.4M14.2 12h2.4"/>|<circle cx="12" cy="12" r="1.6"/>',
   pastclients:'<rect x="3.4" y="5.2" width="17.2" height="13.6" rx="2.4"/><circle cx="9.2" cy="10.4" r="1.9"/><path d="M6.2 15.8c0-1.9 1.4-3 3-3s3 1.1 3 3M14.4 9.4h4.6M14.4 12.6h4.6"/>|<circle cx="18.6" cy="16.4" r="1.15"/>',
+  upgrades:'<path d="M12 4v16M12 4l-5 5M12 4l5 5"/><path d="M5 20h14"/>|<circle cx="12" cy="12" r="1.3"/>',
   settings:'<circle cx="12" cy="12" r="3.3"/><path d="M17.4 12h2.2M15.8 8.2l1.6-1.6M12 6.6V4.4M8.2 8.2 6.6 6.6M6.6 12H4.4M8.2 15.8 6.6 17.4M12 17.4v2.2M15.8 15.8l1.6 1.6"/>|<circle cx="12" cy="12" r="1.3"/>',
 };
 function NavIcon({id, on}){
@@ -10919,6 +11223,7 @@ function App() {
     {id:"portfolio",label:"📊",name:"المحفظة الشهرية",color:"#0d9488"},
     {id:"qimaai",label:"🤖",name:"قمة AI",color:"#6d28d9"},
     {id:"pastclients",label:"📇",name:"الزبائن",color:"#c8922a"},
+    {id:"upgrades",label:"🚀",name:"التطويرات",color:"#7c3aed"},
     {id:"settings",label:"⚙️",name:"الإعدادات",color:"#4b5563"},
   ];
   // ترتيب التبويبات حسب المحفوظ
@@ -11007,6 +11312,7 @@ function App() {
         {page==="search" && <SearchPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="qimaai" && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:999,background:"#f4f4f6",overflowY:"auto"}}><QimaAI contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct} goBack={()=>setPage("dashboard")}/></div>}
         {page==="pastclients" && <PastClientsPage toast={toast} pastClients={pastClients} setPastClients={setPastClients} contracts={contracts}/>}
+        {page==="upgrades" && <UpgradesPage contracts={activeContracts} investors={investors} payments={payments} activity={activity} settings={settings} toast={toast} setPage={setPage}/>}
         {page==="collect" && <CollectionPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={activeContracts}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);addPastClientFromContract(c);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
         {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>}/>}
