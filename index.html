@@ -10550,7 +10550,12 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
       const paid = cPays.reduce((s,p)=>s+(+p.amount||0),0);
       const remaining = (+c.totalInst||0) - paid;
       if(remaining <= 0) { regular++; return; }
-      const overdue = _overdue ? _overdue(c) : 0;
+      const inst = +c.installment || 1;
+      const expectedPaid = Math.floor(paid / inst);
+      const sd = new Date(c.startDate || c.date || "");
+      if(isNaN(sd)){ sometimes++; return; }
+      const monthsElapsed = Math.max(0, (today.getFullYear()-sd.getFullYear())*12 + (today.getMonth()-sd.getMonth()));
+      const overdue = Math.max(0, monthsElapsed - expectedPaid);
       if(overdue >= 3) defaulter++;
       else if(overdue >= 1) sometimes++;
       else regular++;
