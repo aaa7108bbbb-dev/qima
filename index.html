@@ -2379,7 +2379,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                     <tr style={{background:bg,opacity:isOld?0.65:1}}>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.num||i+1}</td>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.date}</td>
-                    <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",...stickyCell}}>{c.defaulter&&<span style={{marginLeft:4,fontSize:12}}>🔴</span>}<span onClick={()=>setCardModal(c)} style={{color:C.teal,cursor:"pointer",textDecoration:"underline"}}>{c.client}</span></td>
+                    <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",...stickyCell}}><span onClick={()=>setCardModal(c)} style={{color:C.teal,cursor:"pointer",textDecoration:"underline"}}>{c.client}</span></td>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.idNum||"—"}</td>
                     <td style={styles.td}>{c.job||"—"}</td>
                     <td style={{...styles.td,color:C.gold,fontWeight:600,whiteSpace:"nowrap"}}>{c.gName||"—"}</td>
@@ -7744,7 +7744,7 @@ function PastClientsPage({toast, pastClients, setPastClients, contracts}){
     setEditId(null);
     toast("تم التحديث");
   };
-  const del = id => save(clients.filter(c=>c.id!==id));
+  const del = id => setPastClients(prev => _numberDupNames(_arr(prev).filter(c=>c.id!==id)));
   const clearAll = () => { if(window.confirm("حذف جميع الزبائن؟ لا يمكن التراجع.")){ save([]); toast("تم حذف الكل"); } };
 
   const sendWA = (phone) => {
@@ -9927,42 +9927,34 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
               ),
 
               // سجل السدادات
-              hist.length>0 && React.createElement("div",{style:{background:"#fff",borderRadius:14,border:"1.5px solid #e2e8f0",overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.04)"}},
-                React.createElement("div",{style:{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",padding:"10px 16px",fontSize:14,fontWeight:800,color:"#fff",display:"flex",justifyContent:"space-between",alignItems:"center"}},
-                  React.createElement("span",null,"📋 السدادات ("+hist.length+")"),
-                  React.createElement("span",{style:{fontSize:12,color:"#34d399",fontWeight:700}},SAR(c.paid)+" من "+SAR(c.totalInst||0))
-                ),
-                React.createElement("table",{style:{width:"100%",borderCollapse:"collapse"}},
-                  React.createElement("thead",null,
-                    React.createElement("tr",{style:{background:"#f8fafc"}},
-                      React.createElement("th",{style:{padding:"8px 10px",fontSize:11,fontWeight:800,color:"#6b7280",textAlign:"center",borderBottom:"2px solid #e5e7eb"}},"#"),
-                      React.createElement("th",{style:{padding:"8px 10px",fontSize:11,fontWeight:800,color:"#6b7280",textAlign:"center",borderBottom:"2px solid #e5e7eb"}},"التاريخ"),
-                      React.createElement("th",{style:{padding:"8px 10px",fontSize:11,fontWeight:800,color:"#6b7280",textAlign:"center",borderBottom:"2px solid #e5e7eb"}},"المبلغ"),
-                      React.createElement("th",{style:{padding:"8px 10px",fontSize:11,fontWeight:800,color:"#6b7280",textAlign:"center",borderBottom:"2px solid #e5e7eb"}},"المتبقي"),
-                      React.createElement("th",{style:{padding:"8px 6px",fontSize:11,fontWeight:800,color:"#6b7280",textAlign:"center",borderBottom:"2px solid #e5e7eb"}},"")
+              hist.length>0 && React.createElement("div",{style:{background:"#fff",borderRadius:12,border:"1px solid #e5e7eb",overflow:"hidden"}},
+                React.createElement("div",{style:{background:"#f1f5f9",padding:"8px 14px",fontSize:13,fontWeight:800,color:"#374151"}},"📋 السدادات ("+hist.length+")"),
+                hist.map((p,pi)=>{
+                  const running=(c.totalInst||0)-hist.slice(0,pi+1).reduce((s,x)=>s+(+x.amount||0),0);
+                  return React.createElement("div",{key:p.id||pi,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 14px",borderBottom:pi<hist.length-1?"1px solid #f1f5f9":"none",fontSize:13}},
+                    React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+                      React.createElement("span",{style:{color:"#9ca3af",fontSize:11,fontWeight:700}},pi+1),
+                      React.createElement("span",{style:{color:"#6b7280"}},fmtDate(p.date))
+                    ),
+                    React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+                      React.createElement("span",{style:{color:"#22c55e",fontWeight:800}},SAR(p.amount)),
+                      React.createElement("span",{style:{color:"#d1d5db",fontSize:10}},"→"),
+                      React.createElement("span",{style:{color:"#ef4444",fontWeight:700,fontSize:12}},SAR(Math.max(0,running))),
+                      React.createElement("button",{onClick:e=>{e.stopPropagation();
+                        const v=window.prompt("تعديل مبلغ السداد:",p.amount);
+                        if(v===null) return; const n=parseFloat(v);
+                        if(isNaN(n)||n<=0){toast("⚠️ مبلغ غير صحيح","warn");return;}
+                        setPayments(arr=>arr.map(x=>x.id===p.id?{...x,amount:n}:x));
+                        toast("✅ تم تعديل السداد");
+                      },style:{background:"none",border:"none",cursor:"pointer",fontSize:12,padding:"2px"}},"✏️"),
+                      React.createElement("button",{onClick:e=>{e.stopPropagation();
+                        if(!window.confirm("حذف هذا السداد نهائياً؟")) return;
+                        setPayments(arr=>arr.filter(x=>x.id!==p.id));
+                        toast("🗑 حذف");
+                      },style:{background:"none",border:"none",cursor:"pointer",fontSize:12,padding:"2px"}},"🗑")
                     )
-                  ),
-                  React.createElement("tbody",null,
-                    hist.map((p,pi)=>{
-                      const running=(c.totalInst||0)-hist.slice(0,pi+1).reduce((s,x)=>s+(+x.amount||0),0);
-                      return React.createElement("tr",{key:p.id||pi,style:{background:pi%2===0?"#fff":"#f9fafb",borderBottom:"1px solid #f1f5f9"}},
-                        React.createElement("td",{style:{padding:"10px 10px",textAlign:"center",fontSize:13,fontWeight:800,color:"#94a3b8"}},pi+1),
-                        React.createElement("td",{style:{padding:"10px 10px",textAlign:"center",fontSize:13,fontWeight:600,color:"#475569"}},fmtDate(p.date)),
-                        React.createElement("td",{style:{padding:"10px 10px",textAlign:"center",fontSize:15,fontWeight:900,color:"#059669"}},SAR(p.amount)),
-                        React.createElement("td",{style:{padding:"10px 10px",textAlign:"center",fontSize:14,fontWeight:800,color:Math.max(0,running)>0?"#dc2626":"#059669"}},SAR(Math.max(0,running))),
-                        React.createElement("td",{style:{padding:"10px 6px",textAlign:"center"}},
-                          React.createElement("button",{onClick:e=>{e.stopPropagation();
-                            const v=window.prompt("تعديل مبلغ السداد:",p.amount);
-                            if(v===null) return; const n=parseFloat(v);
-                            if(isNaN(n)||n<0){toast("⚠️ مبلغ غير صحيح","warn");return;}
-                            setPayments(arr=>arr.map(x=>x.id===p.id?{...x,amount:n}:x));
-                            toast("✅ تم تعديل السداد");
-                          },style:{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:8,cursor:"pointer",fontSize:13,padding:"4px 10px",color:"#0284c7",fontWeight:700}},"✏️")
-                        )
-                      );
-                    })
-                  )
-                )
+                  );
+                })
               )
             )
           );
@@ -9974,7 +9966,6 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
 
 function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
   const [filterInv, setFilterInv] = React.useState("all");
-  const [odSearch, setOdSearch] = React.useState("");
   const active = (contracts||[]).filter(c => !c.deleted);
 
   const calcOverdue = (c) => {
@@ -10003,12 +9994,10 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
   const manualOnly = allRows.filter(x => x.c.defaulter && (!x.o || x.o.monthsBehind < 3));
   const rows = [...autoRows, ...manualOnly].sort((a,b)=>(b.o?b.o.monthsBehind:0)-(a.o?a.o.monthsBehind:0));
 
-  const odQ = odSearch.trim().toLowerCase();
   const grouped = {};
   rows.forEach(x => {
     const iid = String(x.c.investorId);
     if(filterInv!=="all" && iid!==filterInv) return;
-    if(odQ && !(x.c.client||"").toLowerCase().includes(odQ)) return;
     if(!grouped[iid]) grouped[iid]={inv:investors.find(i=>String(i.id)===iid), items:[]};
     grouped[iid].items.push(x);
   });
@@ -10054,13 +10043,10 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
               <div style={{fontSize:20,fontWeight:900,color:"#fff"}}>{NUM(totalRemaining)}</div>
             </div>
           </div>
-          <select style={{...styles.select,marginBottom:8}} value={filterInv} onChange={e=>setFilterInv(e.target.value)}>
+          <select style={{...styles.select,marginBottom:0}} value={filterInv} onChange={e=>setFilterInv(e.target.value)}>
             <option value="all">كل المستثمرين</option>
             {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
           </select>
-          <div style={{position:"relative"}}>
-            <input style={{width:"100%",padding:"10px 14px 10px 36px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:14,fontFamily:"IBM Plex Sans Arabic,Arial",background:"#fff",boxSizing:"border-box"}} placeholder="🔍 بحث بالاسم..." value={odSearch} onChange={e=>setOdSearch(e.target.value)}/>
-          </div>
         </div>
       </div>
 
