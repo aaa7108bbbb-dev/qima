@@ -2006,7 +2006,21 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                     <div style={{display:"flex",gap:8,alignItems:"center"}}>
                       <input type="number" style={{...styles.input,flex:1,fontWeight:700,fontSize:16,borderColor:C.teal,borderWidth:2,borderRadius:10,padding:"10px 14px"}} placeholder="المبلغ" value={amtVal}
                         onChange={e=>setCollectAmounts(p=>({...p,[c.id]:e.target.value}))}/>
-                      <button style={{...styles.btn(C.green),fontSize:16,fontWeight:800,padding:"12px 24px",whiteSpace:"nowrap",borderRadius:10,boxShadow:"0 2px 8px rgba(34,197,94,0.3)"}} onClick={()=>doCollect(c)}>💰 سدّد</button>
+                      <button style={{...styles.btn(C.green),fontSize:14,fontWeight:800,padding:"12px 18px",whiteSpace:"nowrap",borderRadius:10,boxShadow:"0 2px 8px rgba(34,197,94,0.3)"}} onClick={()=>doCollect(c)}>💰 سدّد</button>
+                      <button style={{...styles.btn("#7c3aed","#fff"),fontSize:13,fontWeight:800,padding:"12px 14px",whiteSpace:"nowrap",borderRadius:10,boxShadow:"0 2px 8px rgba(124,58,237,0.3)"}} onClick={()=>{
+                        const amt = parseFloat(collectAmounts[c.id]!=null?collectAmounts[c.id]:0)||0;
+                        if(amt<0){toast("⚠️ المبلغ غير صحيح","warn");return;}
+                        const confirmMsg = amt>0
+                          ? "سداد "+SAR(amt)+" وإنهاء عقد "+c.client+"؟\n\nالمتبقي الحالي: "+SAR(c.left)+"\nسيتم تسجيل "+SAR(amt)+" فقط وإقفال العقد."
+                          : "إنهاء عقد "+c.client+" بدون سداد إضافي؟\n\nالمتبقي الحالي: "+SAR(c.left)+"\nسيتم إقفال العقد مباشرة.";
+                        if(!window.confirm(confirmMsg)) return;
+                        if(amt>0){
+                          setPayments(p=>[...p,{id:Date.now()+Math.floor(Math.random()*1000),contractId:c.id,amount:amt,date:collectDate,note:"سداد وإنهاء"}]);
+                        }
+                        markDone(c.id);
+                        setCollectAmounts(p=>{const n={...p};delete n[c.id];return n;});
+                        toast("✅ "+c.client+" — تم السداد وإقفال العقد");
+                      }}>📋 سداد وإنهاء</button>
                     </div>
                   </div>
                   {(()=>{
