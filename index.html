@@ -3624,9 +3624,10 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
     if(!c) return;
     const d = new Date(p.date);
     const ym = fiscalYM(d);
-    if(!paysByMonth[ym]) paysByMonth[ym]={amount:0, count:0, date:ym+"-01"};
+    if(!paysByMonth[ym]) paysByMonth[ym]={amount:0, count:0, date:ym+"-01", details:[]};
     paysByMonth[ym].amount += p.amount;
     paysByMonth[ym].count  += 1;
+    paysByMonth[ym].details.push({client:c.client, phone:c.phone, amount:p.amount, date:p.date, contractNum:c.num||""});
   });
   const mNames=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
   const autoPayments = Object.entries(paysByMonth).map(([ym,v])=>{
@@ -3635,7 +3636,8 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
       id:"pay_"+ym, date:v.date, auto:true,
       type:"installments",
       amount:v.amount,
-      note:"أقساط "+mNames[parseInt(m)-1]+" "+y+" ("+v.count+" قسط)"
+      note:"أقساط "+mNames[parseInt(m)-1]+" "+y+" ("+v.count+" قسط)",
+      details:v.details
     };
   });
 
@@ -3665,6 +3667,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
   const totalDeposits = allTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
   const totalWithdraws = allTx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
   const [acctSearch,setAcctSearch] = useState("");
+  const [expandRow,setExpandRow] = useState(null);
   const filteredRows = acctSearch ? rows.filter(tx=>(tx.note||"").includes(acctSearch)||(tx.type||"").includes(acctSearch)||(tx.date||"").includes(acctSearch)) : rows;
 
   const subTabs = [
@@ -3982,8 +3985,34 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                       <span style={{...styles.badge("#141428","#c8922a")}}>{txType.label}</span>
                     </td>
                     <td style={styles.td}>
-                      <div>{tx.note||"—"}</div>
-                      
+                      <div style={{cursor:tx.details?"pointer":"default"}} onClick={()=>{if(tx.details)setExpandRow(expandRow===tx.id?null:tx.id)}}>
+                        {tx.note||"—"}
+                        {tx.details && <span style={{fontSize:10,color:C.gold,marginRight:6}}>{expandRow===tx.id?"▲ إخفاء":"▼ تفاصيل"}</span>}
+                      </div>
+                      {expandRow===tx.id && tx.details && (
+                        <div style={{marginTop:8,background:"#f0fdf4",borderRadius:8,overflow:"hidden",border:"1px solid #d1fae5"}}>
+                          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                            <thead>
+                              <tr style={{background:"#065f46"}}>
+                                <th style={{padding:"5px 8px",color:"#fff",fontWeight:700,textAlign:"center"}}>#</th>
+                                <th style={{padding:"5px 8px",color:"#fff",fontWeight:700,textAlign:"right"}}>الزبون</th>
+                                <th style={{padding:"5px 8px",color:"#fff",fontWeight:700,textAlign:"center"}}>التاريخ</th>
+                                <th style={{padding:"5px 8px",color:"#fff",fontWeight:700,textAlign:"center"}}>المبلغ</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {tx.details.sort((a,b)=>(b.amount||0)-(a.amount||0)).map((d,di)=>(
+                                <tr key={di} style={{background:di%2===0?"#fff":"#f0fdf4",borderBottom:"1px solid #e5e7eb"}}>
+                                  <td style={{padding:"6px 8px",textAlign:"center",color:"#94a3b8",fontSize:11}}>{di+1}</td>
+                                  <td style={{padding:"6px 8px",textAlign:"right",fontWeight:700,color:"#1a1a2e"}}>{d.client}</td>
+                                  <td style={{padding:"6px 8px",textAlign:"center",fontSize:11,color:"#475569"}}>{fmtDate(d.date)}</td>
+                                  <td style={{padding:"6px 8px",textAlign:"center",fontWeight:800,color:"#059669"}}>{SAR(d.amount)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
                     </td>
                     <td style={{...styles.td,color:C.green,fontWeight:isPos?700:400}}>
                       {isPos ? SAR(tx.amount) : "—"}
