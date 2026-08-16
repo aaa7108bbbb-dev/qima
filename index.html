@@ -9955,44 +9955,58 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
               ),
 
               // حقل السداد
-              React.createElement("div",{style:{display:"flex",gap:8,marginBottom:hist.length>0?14:0}},
+              React.createElement("div",{style:{display:"flex",gap:6,marginBottom:hist.length>0?14:0,flexWrap:"wrap"}},
                 React.createElement("input",{type:"number",placeholder:"المبلغ",value:amtVal,
                   onChange:e=>setColAmts(p=>({...p,[c.id]:e.target.value})),
                   onClick:e=>e.stopPropagation(),
-                  style:{...styles.input,flex:1,fontWeight:700,fontSize:16,borderColor:"#0d9488",borderWidth:2}}),
+                  style:{...styles.input,flex:1,minWidth:100,fontWeight:700,fontSize:16,borderColor:"#0d9488",borderWidth:2}}),
                 React.createElement("button",{onClick:e=>{e.stopPropagation();doCollect(c);},
-                  style:{...styles.btn("#0d9488","#fff"),fontSize:15,fontWeight:800,padding:"10px 20px",whiteSpace:"nowrap"}},"💰 سدّد")
+                  style:{...styles.btn("#0d9488","#fff"),fontSize:14,fontWeight:800,padding:"10px 16px",whiteSpace:"nowrap"}},"💰 سدّد"),
+                React.createElement("button",{onClick:e=>{e.stopPropagation();
+                  const amt=parseFloat(colAmts[c.id]||0)||0;
+                  if(amt<0){toast("⚠️ مبلغ غير صحيح","warn");return;}
+                  const msg=amt>0?"سداد "+SAR(amt)+" وإنهاء عقد "+c.client+"؟\n\nالمتبقي: "+SAR(c.left)+"\nسيتم تسجيل "+SAR(amt)+" فقط وإقفال العقد.":"إنهاء عقد "+c.client+" بدون سداد؟\n\nالمتبقي: "+SAR(c.left);
+                  if(!window.confirm(msg))return;
+                  if(amt>0){setPayments(p=>[...p,{id:Date.now()+Math.floor(Math.random()*1000),contractId:c.id,amount:amt,date:colDate,note:"سداد وإنهاء"}]);}
+                  markDone(c.id);setColAmts(p=>{const n={...p};delete n[c.id];return n;});
+                  toast("✅ "+c.client+" — تم السداد وإقفال العقد");
+                },style:{...styles.btn("#7c3aed","#fff"),fontSize:13,fontWeight:800,padding:"10px 12px",whiteSpace:"nowrap"}},"📋 سداد وإنهاء")
               ),
 
               // سجل السدادات
-              hist.length>0 && React.createElement("div",{style:{background:"#fff",borderRadius:12,border:"1px solid #e5e7eb",overflow:"hidden"}},
-                React.createElement("div",{style:{background:"#f1f5f9",padding:"8px 14px",fontSize:13,fontWeight:800,color:"#374151"}},"📋 السدادات ("+hist.length+")"),
-                hist.map((p,pi)=>{
-                  const running=(c.totalInst||0)-hist.slice(0,pi+1).reduce((s,x)=>s+(+x.amount||0),0);
-                  return React.createElement("div",{key:p.id||pi,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 14px",borderBottom:pi<hist.length-1?"1px solid #f1f5f9":"none",fontSize:13}},
-                    React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
-                      React.createElement("span",{style:{color:"#9ca3af",fontSize:11,fontWeight:700}},pi+1),
-                      React.createElement("span",{style:{color:"#6b7280"}},fmtDate(p.date))
-                    ),
-                    React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
-                      React.createElement("span",{style:{color:"#22c55e",fontWeight:800}},SAR(p.amount)),
-                      React.createElement("span",{style:{color:"#d1d5db",fontSize:10}},"→"),
-                      React.createElement("span",{style:{color:"#ef4444",fontWeight:700,fontSize:12}},SAR(Math.max(0,running))),
-                      React.createElement("button",{onClick:e=>{e.stopPropagation();
-                        const v=window.prompt("تعديل مبلغ السداد:",p.amount);
-                        if(v===null) return; const n=parseFloat(v);
-                        if(isNaN(n)||n<=0){toast("⚠️ مبلغ غير صحيح","warn");return;}
-                        setPayments(arr=>arr.map(x=>x.id===p.id?{...x,amount:n}:x));
-                        toast("✅ تم تعديل السداد");
-                      },style:{background:"none",border:"none",cursor:"pointer",fontSize:12,padding:"2px"}},"✏️"),
-                      React.createElement("button",{onClick:e=>{e.stopPropagation();
-                        if(!window.confirm("حذف هذا السداد نهائياً؟")) return;
-                        setPayments(arr=>arr.filter(x=>x.id!==p.id));
-                        toast("🗑 حذف");
-                      },style:{background:"none",border:"none",cursor:"pointer",fontSize:12,padding:"2px"}},"🗑")
+              hist.length>0 && React.createElement("div",{style:{background:"#fff",borderRadius:12,border:"3px solid #000",overflow:"hidden"}},
+                React.createElement("div",{style:{background:"#1a1a2e",padding:"10px 14px",fontSize:15,fontWeight:900,color:"#fff"}},"📋 السدادات ("+hist.length+")"),
+                React.createElement("table",{style:{width:"100%",borderCollapse:"collapse"}},
+                  React.createElement("thead",null,
+                    React.createElement("tr",{style:{background:"#f1f5f9"}},
+                      React.createElement("th",{style:{padding:"10px 6px",fontSize:14,fontWeight:900,color:"#000",textAlign:"center",border:"2px solid #000"}},"#"),
+                      React.createElement("th",{style:{padding:"10px 6px",fontSize:14,fontWeight:900,color:"#000",textAlign:"center",border:"2px solid #000"}},"التاريخ"),
+                      React.createElement("th",{style:{padding:"10px 6px",fontSize:14,fontWeight:900,color:"#000",textAlign:"center",border:"2px solid #000"}},"المبلغ"),
+                      React.createElement("th",{style:{padding:"10px 6px",fontSize:14,fontWeight:900,color:"#000",textAlign:"center",border:"2px solid #000"}},"المتبقي"),
+                      React.createElement("th",{style:{padding:"10px 4px",fontSize:14,fontWeight:900,color:"#000",textAlign:"center",border:"2px solid #000"}},"")
                     )
-                  );
-                })
+                  ),
+                  React.createElement("tbody",null,
+                    hist.map((p,pi)=>{
+                      const running=(c.totalInst||0)-hist.slice(0,pi+1).reduce((s,x)=>s+(+x.amount||0),0);
+                      return React.createElement("tr",{key:p.id||pi,style:{background:pi%2===0?"#fff":"#f8fafc"}},
+                        React.createElement("td",{style:{padding:"10px 6px",textAlign:"center",fontWeight:900,fontSize:14,color:"#000",border:"2px solid #000"}},pi+1),
+                        React.createElement("td",{style:{padding:"10px 6px",textAlign:"center",fontWeight:900,fontSize:14,color:"#000",border:"2px solid #000"}},fmtDate(p.date)),
+                        React.createElement("td",{style:{padding:"10px 6px",textAlign:"center",fontWeight:900,fontSize:15,color:"#059669",border:"2px solid #000"}},SAR(p.amount)),
+                        React.createElement("td",{style:{padding:"10px 6px",textAlign:"center",fontWeight:900,fontSize:15,color:Math.max(0,running)>0?"#dc2626":"#059669",border:"2px solid #000"}},SAR(Math.max(0,running))),
+                        React.createElement("td",{style:{padding:"10px 4px",textAlign:"center",border:"2px solid #000"}},
+                          React.createElement("button",{onClick:e=>{e.stopPropagation();
+                            const v=window.prompt("تعديل مبلغ السداد:",p.amount);
+                            if(v===null) return; const n=parseFloat(v);
+                            if(isNaN(n)||n<0){toast("⚠️ مبلغ غير صحيح","warn");return;}
+                            setPayments(arr=>arr.map(x=>x.id===p.id?{...x,amount:n}:x));
+                            toast("✅ تم تعديل السداد");
+                          },style:{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:8,cursor:"pointer",fontSize:13,padding:"4px 10px",color:"#0284c7",fontWeight:700}},"✏️")
+                        )
+                      );
+                    })
+                  )
+                )
               )
             )
           );
