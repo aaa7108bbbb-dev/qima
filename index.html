@@ -1532,10 +1532,10 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         const gName = cleanInv(grp[0]);
         const pb = idx>0 ? ' class="page-break"' : '';
         if(reportMode==="brief"){
-          let rows = grp.map(c=>`<tr><td>${c.client||""}</td><td>${c.cPhone||""}</td><td>${cNum(c)}</td><td>${NUM(c.instAmt||0)}</td><td style="width:100px"></td></tr>`).join("");
+          let rows = grp.map((c,i)=>`<tr><td>${i+1}</td><td>${c.client||""}</td><td>${c.cPhone||""}</td><td>${cNum(c)}</td><td>${NUM(c.instAmt||0)}</td><td style="width:100px"></td></tr>`).join("");
           const tot = grp.reduce((s,c)=>s+(c.instAmt||0),0);
-          rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="3">الإجمالي</td><td>${NUM(tot)}</td><td></td></tr>`;
-          content += `<div${pb}><h2>${gName} — (${grp.length} عقد)</h2><table><thead><tr><th>اسم الزبون</th><th>رقم الجوال</th><th>رقم العقد</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+          rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="4">الإجمالي</td><td>${NUM(tot)}</td><td></td></tr>`;
+          content += `<div${pb}><h2>${gName} — (${grp.length} عقد)</h2><table><thead><tr><th>#</th><th>اسم الزبون</th><th>رقم الجوال</th><th>رقم العقد</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${rows}</tbody></table></div>`;
         } else {
           let rows = grp.map((c,i)=>{
             const paid=_getPaid(payments,c.id); const left=Math.max(0,(c.totalInst||0)-paid);
@@ -1549,10 +1549,10 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     } else {
       // مستثمر فردي
       if(reportMode==="brief"){
-        let rows = list.map(c=>`<tr><td>${c.client||""}</td><td>${c.cPhone||""}</td><td>${cNum(c)}</td><td>${NUM(c.instAmt||0)}</td><td style="width:100px"></td></tr>`).join("");
+        let rows = list.map((c,i)=>`<tr><td>${i+1}</td><td>${c.client||""}</td><td>${c.cPhone||""}</td><td>${cNum(c)}</td><td>${NUM(c.instAmt||0)}</td><td style="width:100px"></td></tr>`).join("");
         const tot = list.reduce((s,c)=>s+(c.instAmt||0),0);
-        rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="3">الإجمالي</td><td>${NUM(tot)}</td><td></td></tr>`;
-        content = `<h2>كشف المستثمر — ${invName} (مختصر)</h2><table><thead><tr><th>اسم الزبون</th><th>رقم الجوال</th><th>رقم العقد</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${rows}</tbody></table>`;
+        rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="4">الإجمالي</td><td>${NUM(tot)}</td><td></td></tr>`;
+        content = `<h2>كشف المستثمر — ${invName} (مختصر)</h2><table><thead><tr><th>#</th><th>اسم الزبون</th><th>رقم الجوال</th><th>رقم العقد</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${rows}</tbody></table>`;
       } else {
         let rows = list.map((c,i)=>{
           const paid=_getPaid(payments,c.id); const left=Math.max(0,(c.totalInst||0)-paid);
@@ -2030,22 +2030,22 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                     const rows=hist.map((p,idx)=>{running-=p.amount;return {...p,remaining:Math.max(0,running),idx};});
                     return (
                       <div style={{marginTop:0,borderTop:"3px solid "+C.border,padding:"12px 16px"}}>
-                        <div style={{fontSize:15,fontWeight:900,color:C.ink,marginBottom:10}}>📋 السدادات السابقة ({hist.length})</div>
-                        <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
-                          <thead><tr style={{background:"#f1f5f9"}}>
-                            <th style={{padding:"8px 6px",fontWeight:800,borderBottom:"3px solid #94a3b8",textAlign:"center"}}>#</th>
-                            <th style={{padding:"8px 6px",fontWeight:800,borderBottom:"3px solid #94a3b8",textAlign:"center"}}>التاريخ</th>
-                            <th style={{padding:"8px 6px",fontWeight:800,borderBottom:"3px solid #94a3b8",textAlign:"center"}}>المبلغ</th>
-                            <th style={{padding:"8px 6px",fontWeight:800,borderBottom:"3px solid #94a3b8",textAlign:"center"}}>المتبقي</th>
-                            <th style={{padding:"8px 6px",fontWeight:800,borderBottom:"3px solid #94a3b8",textAlign:"center"}}></th>
+                        <div style={{fontSize:16,fontWeight:900,color:C.ink,marginBottom:10}}>📋 السدادات السابقة ({hist.length})</div>
+                        <table style={{width:"100%",borderCollapse:"collapse",border:"3px solid #000"}}>
+                          <thead><tr style={{background:"#1a1a2e"}}>
+                            <th style={{padding:"10px 8px",fontWeight:900,fontSize:15,color:"#fff",textAlign:"center",border:"2px solid #000"}}>#</th>
+                            <th style={{padding:"10px 8px",fontWeight:900,fontSize:15,color:"#fff",textAlign:"center",border:"2px solid #000"}}>التاريخ</th>
+                            <th style={{padding:"10px 8px",fontWeight:900,fontSize:15,color:"#fff",textAlign:"center",border:"2px solid #000"}}>المبلغ</th>
+                            <th style={{padding:"10px 8px",fontWeight:900,fontSize:15,color:"#fff",textAlign:"center",border:"2px solid #000"}}>المتبقي</th>
+                            <th style={{padding:"10px 8px",fontWeight:900,fontSize:15,color:"#fff",textAlign:"center",border:"2px solid #000"}}></th>
                           </tr></thead>
                           <tbody>{rows.map(p=>(
-                            <tr key={p.id||p.idx} style={{borderBottom:"2px solid #e2e8f0"}}>
-                              <td style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>{p.idx+1}</td>
-                              <td style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>{fmtDate(p.date)}</td>
-                              <td style={{padding:"8px 6px",textAlign:"center",fontWeight:800,color:C.green}}>{SAR(p.amount)}</td>
-                              <td style={{padding:"8px 6px",textAlign:"center",fontWeight:800,color:C.red}}>{SAR(p.remaining)}</td>
-                              <td style={{padding:"8px 4px",textAlign:"center"}}>
+                            <tr key={p.id||p.idx} style={{background:p.idx%2===0?"#fff":"#f8fafc"}}>
+                              <td style={{padding:"10px 8px",textAlign:"center",fontWeight:900,fontSize:15,color:"#000",border:"2px solid #000"}}>{p.idx+1}</td>
+                              <td style={{padding:"10px 8px",textAlign:"center",fontWeight:900,fontSize:15,color:"#000",border:"2px solid #000"}}>{fmtDate(p.date)}</td>
+                              <td style={{padding:"10px 8px",textAlign:"center",fontWeight:900,fontSize:16,color:"#059669",border:"2px solid #000"}}>{SAR(p.amount)}</td>
+                              <td style={{padding:"10px 8px",textAlign:"center",fontWeight:900,fontSize:16,color:p.remaining>0?"#dc2626":"#059669",border:"2px solid #000"}}>{SAR(p.remaining)}</td>
+                              <td style={{padding:"10px 4px",textAlign:"center",border:"2px solid #000"}}>
                                 <span style={{display:"flex",gap:4,justifyContent:"center"}}>
                                   <button style={{...styles.btn("#e5e7eb",C.ink),fontSize:13,padding:"6px 12px",fontWeight:700}} onClick={()=>{
                                     const v=window.prompt("تعديل مبلغ السداد:",p.amount);
@@ -2054,12 +2054,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                                     if(isNaN(n)||n<=0){toast("⚠️ مبلغ غير صحيح","warn");return;}
                                     setPayments(arr=>arr.map(x=>x.id===p.id?{...x,amount:n}:x));
                                     toast("✅ تم تعديل السداد");
-                                  }}>✏️ تعديل</button>
-                                  <button style={{...styles.btn(C.redLt,C.red),fontSize:13,padding:"6px 12px",fontWeight:700}} onClick={()=>{
-                                    if(!window.confirm("حذف هذا السداد نهائياً؟")) return;
-                                    setPayments(arr=>arr.filter(x=>x.id!==p.id));
-                                    toast("🗑 حذف");
-                                  }}>🗑</button>
+                                  }}>✏️</button>
                                 </span>
                               </td>
                             </tr>
