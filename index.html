@@ -11232,11 +11232,6 @@ function App() {
   };
   const setContracts = v => { const d=typeof v==="function"?v(contracts):v; setContractsRaw(d); saveLS("qimma_contracts",d); gsWrite("contracts",d); };
   const activeContracts = contracts.filter(c=>!c.deleted);
-  const hiddenInvIds = investors.filter(i=>i.hidden).map(i=>i.id);
-  const hiddenContractIds = contracts.filter(c=>hiddenInvIds.includes(c.investorId)).map(c=>c.id);
-  const publicContracts = activeContracts.filter(c=>!hiddenInvIds.includes(c.investorId));
-  const publicInvestors = investors.filter(i=>!i.hidden);
-  const publicPayments = payments.filter(p=>!hiddenContractIds.includes(p.contractId));
   const setSettings  = v => { const d=typeof v==="function"?v(settings):v;  setSettingsRaw(d);  saveLS("qimma_settings",d); gsWrite("settings",d); };
   const [invTxList,setInvTxListRaw]=useState(()=>loadLS("qimma_txlist",{}));
   const setInvTxList = v => { const d=typeof v==="function"?v(invTxList):v; setInvTxListRaw(d); saveLS("qimma_txlist",d); gsWrite("txlist",d); };
@@ -11307,6 +11302,13 @@ function App() {
   const markDone = (id) => { setDoneIds(prev=>[...prev,id]); };
 
   const toast=(msg,type="success")=>{setToastMsg(msg);setToastType(type);setTimeout(()=>setToastMsg(null),3000);};
+
+  // ═══ فلتر المستثمرين الخفيين ═══
+  var hiddenInvIds = investors.filter(function(i){return i.hidden;}).map(function(i){return i.id;});
+  var hiddenContractIds = contracts.filter(function(c){return hiddenInvIds.includes(c.investorId);}).map(function(c){return c.id;});
+  var publicContracts = activeContracts.filter(function(c){return !hiddenInvIds.includes(c.investorId);});
+  var publicInvestors = investors.filter(function(i){return !i.hidden;});
+  var publicPayments = payments.filter(function(p){return !hiddenContractIds.includes(p.contractId);});
 
   // ═══ انتظار جاهزية Firebase قبل أول قراءة ═══
   // Firebase يُحمَّل من الشبكة بشكل غير متزامن. بدون هذا الانتظار تبدأ القراءة
