@@ -2420,48 +2420,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       {/* Deductions Modal */}
 
 
-      {/* Early Settlement Modal */}
-      <Modal open={!!earlyModal} onClose={()=>setEarlyModal(null)} title={"⚡ سداد مبكر — "+(earlyModal?.client||"")} titleBg="#7c3aed" wide>
-        {earlyModal && (()=>{
-          const c = earlyModal;
-          const e = calcEarly(c);
-          const rowS = (label,val,color,bold)=>(
-            <div style={{display:"flex",justifyContent:"space-between",padding:"9px 4px",borderBottom:"1px solid "+C.border,fontSize:15}}>
-              <span style={{fontWeight:bold?800:500,color:"#333"}}>{label}</span>
-              <span style={{fontWeight:800,color:color||C.ink}}>{SAR(val)}</span>
-            </div>
-          );
-          return (
-            <div>
-              <div style={{background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:10,padding:"12px 14px",marginBottom:14,fontSize:14,lineHeight:1.9,color:"#4c1d95"}}>
-                الشهور المنقضية: <b>{e.elapsed}</b> من <b>{e.totalMonths}</b> · نسبة المستثمر المطبّقة: <b>{e.pct.toFixed(1)}%</b> من الربح الكامل
-              </div>
-              {rowS("الربح الكامل للعقد", e.profitFull, C.ink)}
-              {rowS("حصة المستثمر ("+e.pct.toFixed(1)+"%)", e.invShare, "#7c3aed", true)}
-              {rowS("حصة المحاسب (10% ثابت)", e.accShare, C.teal)}
-              {rowS("حصة المدير (10% ثابت)", e.mgrShare, C.gold)}
-              {rowS("الربح المطبّق (بعد التخفيض)", e.profitApplied, C.ink, true)}
-              {rowS("المدفوع سابقاً", e.paidBefore, C.green)}
-              <div style={{background:"#ecfdf5",border:"1px solid #a7f3d0",borderRadius:10,padding:"10px 14px",margin:"12px 0",display:"flex",justifyContent:"space-between",fontSize:15}}>
-                <span style={{fontWeight:700,color:"#065f46"}}>💰 توفير الزبون</span>
-                <span style={{fontWeight:900,color:"#059669"}}>{SAR(e.saving)}</span>
-              </div>
-              <div style={{background:"#1e2235",borderRadius:12,padding:"16px",textAlign:"center",marginBottom:16}}>
-                <div style={{color:"#cbd5e1",fontSize:14,marginBottom:4}}>المبلغ المطلوب للسداد المبكر</div>
-                <div style={{color:"#fff",fontSize:30,fontWeight:900}}>{SAR(e.earlyDue)}</div>
-              </div>
-              <button style={{...styles.btn("#7c3aed","#fff"),width:"100%",justifyContent:"center",fontSize:17,padding:"14px"}}
-                onClick={()=>{
-                  if(!window.confirm("تأكيد السداد المبكر بمبلغ "+SAR(e.earlyDue)+"؟ سيُسجّل السداد ويُقفل العقد كمنتهي.")) return;
-                  setPayments(p=>[...p,{id:Date.now(),contractId:c.id,amount:e.earlyDue,date:todayLocal(),note:"سداد مبكر — تصفية ("+e.pct.toFixed(1)+"% للمستثمر)"}]);
-                  markDone(c.id);
-                  setEarlyModal(null);
-                  toast("⚡ تم السداد المبكر وإقفال العقد");
-                }}>✅ تأكيد السداد المبكر وإقفال العقد</button>
-            </div>
-          );
-        })()}
-      </Modal>
+
 
       {/* Contract Card Modal (بطاقة العقد داخل التطبيق) */}
       <Modal open={!!cardModal} onClose={()=>setCardModal(null)} title={"👤 "+(cardModal?.client||"")+" — عقد #"+(cardModal?.num||"")} titleBg={C.ink} wide>
@@ -2517,7 +2476,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                 {c.goods&&<div><b>السلعة:</b> {c.goods}</div>}
               </div>
               <button style={{...styles.btn(C.green,"#fff"),width:"100%",justifyContent:"center",fontSize:16,padding:"12px",marginBottom:10}} onClick={()=>{setCardModal(null);setPayModal(c);setPayAmount("");setPayNote("");}}>💵 تسجيل سداد جديد</button>
-              <button style={{...styles.btn("#7c3aed","#fff"),width:"100%",justifyContent:"center",fontSize:16,padding:"12px",marginBottom:16}} onClick={()=>{setCardModal(null);setEarlyModal(c);}}>⚡ سداد مبكر (تصفية العقد)</button>
+
               <h3 style={{color:C.ink,fontWeight:900,marginBottom:10,fontSize:16}}>📋 السدادات السابقة ({list.length})</h3>
               <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
                 <thead><tr>{["#","التاريخ","المبلغ","ملاحظة"].map(h=><th key={h} style={styles.th}>{h}</th>)}</tr></thead>
@@ -3612,7 +3571,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
 
   // Auto-transactions from contracts
   const myContracts = contracts.filter(c=>c.investorId===selInv);
-  const autoTx = myContracts.filter(c=>!c.isOldContract && c.contractType!=="migrated").map(c=>{
+  const autoTx = myContracts.filter(c=>!c.isOldContract && c.contractType!=="migrated" && !c.excludeFromStatement).map(c=>{
     const r = calcC(c, settings);
     // ينخصم: قيمة العقد النقدية + عمولة المحاسبين + نصيب المؤسسة + الرسوم الإدارية
     const deduct = c.amount + r.acc + r.inst + r.admin;
@@ -3633,19 +3592,19 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
     if(!c) return;
     const d = new Date(p.date);
     const ym = fiscalYM(d);
-    if(!paysByMonth[ym]) paysByMonth[ym]={amount:0, count:0, date:ym+"-01", details:[]};
+    if(!paysByMonth[ym]) paysByMonth[ym]={amount:0, count:0, date:p.date, details:[]};
+    if(p.date > paysByMonth[ym].date) paysByMonth[ym].date = p.date;
     paysByMonth[ym].amount += p.amount;
     paysByMonth[ym].count  += 1;
-    paysByMonth[ym].details.push({client:c.client, phone:c.phone, amount:p.amount, date:p.date, contractNum:c.num||""});
+    paysByMonth[ym].details.push({client:c.client, phone:c.phone, amount:p.amount, date:p.date, contractNum:c.num||"", contractId:p.contractId, payId:p.id});
   });
-  const mNames=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
   const autoPayments = Object.entries(paysByMonth).map(([ym,v])=>{
     const [y,m]=ym.split("-");
     return {
       id:"pay_"+ym, date:v.date, auto:true,
       type:"installments",
       amount:v.amount,
-      note:"أقساط "+mNames[parseInt(m)-1]+" "+y+" ("+v.count+" قسط)",
+      note:"أقساط شهر "+parseInt(m)+" ("+v.count+" قسط)",
       details:v.details
     };
   });
@@ -4037,7 +3996,27 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                         <button style={{...styles.btn(C.red),fontSize:13,padding:"3px 8px"}}
                           onClick={()=>delTx(tx.id)}>🗑️</button>
                       )}
-                      {tx.auto && <span style={{fontSize:13,color:"#1f2937"}}>تلقائي</span>}
+                      {tx.auto && (
+                        <div style={{display:"flex",gap:4,flexWrap:"wrap",justifyContent:"center"}}>
+                          <button style={{...styles.btn(C.teal),fontSize:11,padding:"3px 7px"}} onClick={()=>{
+                            if(tx.type==="installments"){ setExpandRow(expandRow===tx.id?null:tx.id); }
+                            else if(tx.type==="contract"){ const cc=contracts.find(x=>"auto_"+x.id===tx.id); if(cc) setCardModal(cc); }
+                          }}>✏️</button>
+                          <button style={{...styles.btn(C.red),fontSize:11,padding:"3px 7px"}} onClick={()=>{
+                            if(tx.type==="installments"){
+                              if(!window.confirm("حذف جميع سدادات هذا الشهر ("+tx.details.length+" سداد) من كشف المستثمر؟")) return;
+                              const payIds = tx.details.map(d=>d.payId).filter(Boolean);
+                              setPayments(prev=>prev.filter(p=>!payIds.includes(p.id)));
+                              toast("🗑️ تم حذف "+payIds.length+" سداد");
+                            } else if(tx.type==="contract"){
+                              if(!window.confirm("حذف هذا العقد من كشف المستثمر؟")) return;
+                              const cId = tx.id.replace("auto_","");
+                              setContracts(prev=>prev.map(c=>String(c.id)===String(cId)?{...c,excludeFromStatement:true}:c));
+                              toast("🗑️ تم استثناء العقد من الكشف");
+                            }
+                          }}>🗑️</button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
@@ -5923,6 +5902,60 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
                   )}
                 </div>);
               })}
+              {/* ═══ اللي ما سددوا ═══ */}
+              {isDone && (()=>{
+                const unpaidRows = targetRows.filter(r=>!r.isPaid);
+                const unpaidAmount = unpaidRows.reduce((s,r)=>s+r.due,0);
+                if(unpaidRows.length===0) return null;
+                return (
+                  <div>
+                    <div style={{background:"linear-gradient(140deg,#ef4444,#b91c1c)",padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <div>
+                        <div style={{fontSize:15,fontWeight:800,color:"#fff"}}>🚫 اللي ما سددوا</div>
+                        <div style={{fontSize:12,color:"rgba(255,255,255,.85)",marginTop:3}}>{unpaidRows.length} عميل · {SARf(unpaidAmount)} ﷼</div>
+                      </div>
+                      <button onClick={(e)=>{
+                        e.stopPropagation();
+                        const fmt=v=>(v||0).toLocaleString("en-US",{maximumFractionDigits:0});
+                        let html="<html dir='rtl'><head><meta charset='utf-8'><title>اللي ما سددوا</title><style>*{font-family:Arial}body{padding:20px;color:#000}h2{text-align:center;margin-bottom:16px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #000;padding:8px 10px;text-align:right;font-weight:600}th{font-weight:900;border-bottom:2px solid #000}@media print{button{display:none!important}}</style></head><body>";
+                        html+="<h2>🚫 اللي ما سددوا — دورة "+cycleLabel+"</h2>";
+                        html+="<table><thead><tr><th>#</th><th>العميل</th><th>المستثمر</th><th>القسط</th><th>رقم العقد</th></tr></thead><tbody>";
+                        unpaidRows.forEach((r,i)=>{
+                          const c2=r.c;
+                          const inv2=investors.find(x=>String(x.id)===String(c2.investorId));
+                          html+="<tr><td>"+(i+1)+"</td><td>"+c2.client+"</td><td>"+(inv2?invLabel(inv2):"—")+"</td><td>"+fmt(r.due)+"</td><td>#"+(c2.num||"—")+"</td></tr>";
+                        });
+                        html+="</tbody></table>";
+                        html+="<div style='text-align:center;margin-top:16px;font-weight:700'>الإجمالي: "+fmt(unpaidAmount)+" ﷼ · "+unpaidRows.length+" عميل</div>";
+                        html+="</body></html>";
+                        const w=window.open("","_blank");
+                        w.document.write(html);
+                        w.document.close();
+                        setTimeout(()=>w.print(),400);
+                      }} style={{background:"rgba(255,255,255,.2)",border:"1px solid rgba(255,255,255,.4)",borderRadius:9,padding:"7px 14px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🖨️ طباعة</button>
+                    </div>
+                    {unpaidRows.map((r,i)=>{
+                      const c2=r.c, inv2=investors.find(x=>String(x.id)===String(c2.investorId));
+                      return (
+                        <div key={c2.id} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 16px",
+                          borderBottom:"1px solid #fecaca",background:i%2===0?"#fef2f2":"#fff"}}>
+                          <div style={{width:26,height:26,borderRadius:8,flexShrink:0,background:"#fee2e2",
+                            color:"#b91c1c",fontSize:12,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{i+1}</div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontSize:14,fontWeight:700,color:C.ink,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{c2.client}</div>
+                            <div style={{fontSize:11,color:"#64748b",marginTop:2}}>{inv2?invLabel(inv2):"—"} · #{c2.num}</div>
+                          </div>
+                          <div style={{textAlign:"left",flexShrink:0}}>
+                            <div style={{fontSize:15,fontWeight:800,color:"#b91c1c"}}>{SARf(r.due)}</div>
+                            <span style={{fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:8,marginTop:3,display:"inline-block",
+                              background:"#fee2e2",color:"#b91c1c"}}>لم يسدد</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>);
