@@ -3549,7 +3549,7 @@ function FundsPanel({investors, contracts, settings, setInvestors, toast}){
   );
 }
 
-function AccountsPage({contracts, investors, setInvestors, settings, txList, setTxList, loans, setLoans, zakatTx, setZakatTx, pending, setPending, payments, toast, goBack}) {
+function AccountsPage({contracts, investors, setInvestors, settings, txList, setTxList, loans, setLoans, zakatTx, setZakatTx, pending, setPending, payments, setPayments, setContracts, toast, goBack}) {
   const [subTab, setSubTab] = useState("inv");
   const [selInv, setSelInv] = useState(investors[0]?.id||null);
   const [invSubTab, setInvSubTab] = useState("inv");
@@ -3966,6 +3966,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                                 <th style={{padding:"5px 8px",color:"#fff",fontWeight:700,textAlign:"right"}}>الزبون</th>
                                 <th style={{padding:"5px 8px",color:"#fff",fontWeight:700,textAlign:"center"}}>التاريخ</th>
                                 <th style={{padding:"5px 8px",color:"#fff",fontWeight:700,textAlign:"center"}}>المبلغ</th>
+                                <th style={{padding:"5px 8px",color:"#fff",fontWeight:700,textAlign:"center"}}></th>
                               </tr>
                             </thead>
                             <tbody>
@@ -3975,6 +3976,13 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                                   <td style={{padding:"6px 8px",textAlign:"right",fontWeight:700,color:"#1a1a2e"}}>{d.client}</td>
                                   <td style={{padding:"6px 8px",textAlign:"center",fontSize:11,color:"#475569"}}>{fmtDate(d.date)}</td>
                                   <td style={{padding:"6px 8px",textAlign:"center",fontWeight:800,color:"#059669"}}>{SAR(d.amount)}</td>
+                                  <td style={{padding:"4px 6px",textAlign:"center"}}>
+                                    <button style={{background:"#fee2e2",border:"1px solid #fca5a5",borderRadius:6,padding:"3px 7px",fontSize:11,cursor:"pointer",color:"#b91c1c",fontWeight:700}} onClick={()=>{
+                                      if(!window.confirm("حذف سداد "+d.client+" — "+SAR(d.amount)+"؟")) return;
+                                      setPayments(prev=>prev.filter(p=>String(p.id)!==String(d.payId)));
+                                      toast("🗑️ تم حذف السداد");
+                                    }}>🗑️</button>
+                                  </td>
                                 </tr>
                               ))}
                             </tbody>
@@ -4000,13 +4008,13 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                         <div style={{display:"flex",gap:4,flexWrap:"wrap",justifyContent:"center"}}>
                           <button style={{...styles.btn(C.teal),fontSize:11,padding:"3px 7px"}} onClick={()=>{
                             if(tx.type==="installments"){ setExpandRow(expandRow===tx.id?null:tx.id); }
-                            else if(tx.type==="contract"){ const cc=contracts.find(x=>"auto_"+x.id===tx.id); if(cc) setCardModal(cc); }
+                            else if(tx.type==="contract"){ goBack(); }
                           }}>✏️</button>
                           <button style={{...styles.btn(C.red),fontSize:11,padding:"3px 7px"}} onClick={()=>{
                             if(tx.type==="installments"){
                               if(!window.confirm("حذف جميع سدادات هذا الشهر ("+tx.details.length+" سداد) من كشف المستثمر؟")) return;
-                              const payIds = tx.details.map(d=>d.payId).filter(Boolean);
-                              setPayments(prev=>prev.filter(p=>!payIds.includes(p.id)));
+                              const payIds = tx.details.map(d=>String(d.payId)).filter(Boolean);
+                              setPayments(prev=>prev.filter(p=>!payIds.includes(String(p.id))));
                               toast("🗑️ تم حذف "+payIds.length+" سداد");
                             } else if(tx.type==="contract"){
                               if(!window.confirm("حذف هذا العقد من كشف المستثمر؟")) return;
@@ -11406,7 +11414,7 @@ function App() {
         {page==="collect" && <CollectionPage contracts={contracts} investors={investors} settings={settings} payments={payments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={activeContracts}/>}
         {page==="contracts" && <ContractsPage contracts={contracts} investors={investors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={payments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);addPastClientFromContract(c);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
         {page==="portfolio" && <MonthlyPortfolio contracts={activeContracts} investors={investors} settings={settings} payments={payments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={activeContracts} investors={investors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={payments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={contracts} investors={investors} payments={payments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={activeContracts} investors={investors} settings={settings} payments={payments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>}/>}
-        {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} toast={toast} goBack={()=>setPage("contracts")}/>}
+        {page==="accounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} setPayments={setPayments} setContracts={setContracts} toast={toast} goBack={()=>setPage("contracts")}/>}
         {page==="goods" && <GoodsPage investors={investors} contracts={activeContracts} toast={toast} gsWrite={gsWrite} goBack={()=>setPage("contracts")}/>}
         {/* البوصلة المالية انتقلت لتبويب داخل المحفظة الشهرية */}
         {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast} setPage={setPage}/>}
