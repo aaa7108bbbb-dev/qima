@@ -10090,7 +10090,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
           return React.createElement("div",{key:c.id},
             React.createElement("div",{onClick:()=>toggle(c.id),style:{display:"grid",gridTemplateColumns:"28px 38px 1fr 90px 60px 30px",padding:"10px 8px",alignItems:"center",cursor:"pointer",borderBottom:"1px solid #f1f5f9",background:ci%2===0?"#fff":"#fafbfc",gap:2}},
               React.createElement("div",{style:{textAlign:"center",fontSize:13,fontWeight:800,color:"#1f2937"}},(ci+1)),
-              React.createElement("div",{style:{textAlign:"center",fontSize:12,fontWeight:800,color:"#1f2937"}},c.num||"—"),
+              React.createElement("div",{style:{textAlign:"center",fontSize:12,fontWeight:800,color:"#1f2937"}},(function(){if(c.num) return c.num; if(c.contractType==="migrated"){var m=String(c.note||"").match(/(\d+)/); if(m) return m[1];} return "—";}())),
               React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
                 React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:dotClr,flexShrink:0}}),
                 React.createElement("span",{style:{fontWeight:700,fontSize:14,color:"#1f2937",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},c.client)
