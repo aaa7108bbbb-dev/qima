@@ -3311,7 +3311,7 @@ function DeductionsSheet({contracts, investors, payments}){
   const printSheet=()=>{
     const fmt=n=>Math.round(+(n||0)).toLocaleString("en-US");
     const isCheck = payF.has("شيكات")||payF.has("المقاصة");
-    const cNum = c => { if(c.contractType==="migrated"){ if(c.oldNum) return c.oldNum; const m=String(c.note||"").match(/عقد\s*(\d+)/); return m?m[1]:"—"; } return c.num||"—"; };
+    const cNum = c => { if(c.contractType==="migrated"){ if(c.num) return c.num; if(c.oldNum) return c.oldNum; const m=String(c.note||"").match(/(\d+)/); return m?m[1]:"—"; } return c.num||"—"; };
     const cleanInv = name => { const m=String(name||"").match(/(\d+)/); return m?"فرصة "+m[1]:name||"—"; };
     // ترتيب موحد للطباعة
     const _dispBankP = x => {
