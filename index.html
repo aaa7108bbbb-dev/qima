@@ -3604,7 +3604,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
       id:"pay_"+ym, date:v.date, auto:true,
       type:"installments",
       amount:v.amount,
-      note:"أقساط شهر "+parseInt(m)+" ("+v.count+" قسط)",
+      note:"أقساط "+v.date.replace(/-/g,"/")+" ("+v.count+" قسط)",
       details:v.details
     };
   });
@@ -3636,6 +3636,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
   const totalWithdraws = allTx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
   const [acctSearch,setAcctSearch] = useState("");
   const [expandRow,setExpandRow] = useState(null);
+  const [editPay,setEditPay] = useState(null); // {payId, amount}
   const filteredRows = acctSearch ? rows.filter(tx=>(tx.note||"").includes(acctSearch)||(tx.type||"").includes(acctSearch)||(tx.date||"").includes(acctSearch)) : rows;
 
   const subTabs = [
@@ -3970,21 +3971,41 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                               </tr>
                             </thead>
                             <tbody>
-                              {tx.details.sort((a,b)=>(b.amount||0)-(a.amount||0)).map((d,di)=>(
+                              {tx.details.sort((a,b)=>(b.amount||0)-(a.amount||0)).map((d,di)=>{
+                                const isEditing = editPay && String(editPay.payId)===String(d.payId);
+                                return (
                                 <tr key={di} style={{background:di%2===0?"#fff":"#f0fdf4",borderBottom:"1px solid #e5e7eb"}}>
                                   <td style={{padding:"6px 8px",textAlign:"center",color:"#94a3b8",fontSize:11}}>{di+1}</td>
                                   <td style={{padding:"6px 8px",textAlign:"right",fontWeight:700,color:"#1a1a2e"}}>{d.client}</td>
                                   <td style={{padding:"6px 8px",textAlign:"center",fontSize:11,color:"#475569"}}>{fmtDate(d.date)}</td>
-                                  <td style={{padding:"6px 8px",textAlign:"center",fontWeight:800,color:"#059669"}}>{SAR(d.amount)}</td>
-                                  <td style={{padding:"4px 6px",textAlign:"center"}}>
-                                    <button style={{background:"#fee2e2",border:"1px solid #fca5a5",borderRadius:6,padding:"3px 7px",fontSize:11,cursor:"pointer",color:"#b91c1c",fontWeight:700}} onClick={()=>{
-                                      if(!window.confirm("حذف سداد "+d.client+" — "+SAR(d.amount)+"؟")) return;
-                                      setPayments(prev=>prev.filter(p=>String(p.id)!==String(d.payId)));
-                                      toast("🗑️ تم حذف السداد");
-                                    }}>🗑️</button>
+                                  <td style={{padding:"6px 8px",textAlign:"center",fontWeight:800,color:"#059669"}}>
+                                    {isEditing ? (
+                                      <div style={{display:"flex",alignItems:"center",gap:3}}>
+                                        <input type="number" style={{width:65,padding:"4px 5px",border:"2px solid #0d9488",borderRadius:6,fontSize:12,fontWeight:800,textAlign:"center",fontFamily:"inherit"}}
+                                          value={editPay.amount} onChange={e=>setEditPay(p=>({...p,amount:e.target.value}))} autoFocus/>
+                                        <button style={{background:"#059669",color:"#fff",border:"none",borderRadius:5,padding:"3px 6px",fontSize:11,fontWeight:700,cursor:"pointer"}} onClick={()=>{
+                                          var newAmt=parseFloat(editPay.amount);
+                                          if(isNaN(newAmt)||newAmt<=0){toast("❌ أدخل مبلغ صحيح");return;}
+                                          setPayments(function(prev){return prev.map(function(p){return String(p.id)===String(d.payId)?Object.assign({},p,{amount:newAmt}):p;});});
+                                          setEditPay(null);
+                                          toast("✅ تم تعديل المبلغ");
+                                        }}>✓</button>
+                                        <button style={{background:"#e5e7eb",color:"#333",border:"none",borderRadius:5,padding:"3px 6px",fontSize:11,fontWeight:700,cursor:"pointer"}} onClick={()=>setEditPay(null)}>✕</button>
+                                      </div>
+                                    ) : SAR(d.amount)}
                                   </td>
-                                </tr>
-                              ))}
+                                  <td style={{padding:"4px 6px",textAlign:"center"}}>
+                                    <div style={{display:"flex",gap:3,justifyContent:"center"}}>
+                                      {!isEditing && <button style={{background:"#e0f2fe",border:"1px solid #7dd3fc",borderRadius:6,padding:"3px 6px",fontSize:11,cursor:"pointer",color:"#0369a1",fontWeight:700}} onClick={()=>setEditPay({payId:d.payId,amount:d.amount})}>✏️</button>}
+                                      <button style={{background:"#fee2e2",border:"1px solid #fca5a5",borderRadius:6,padding:"3px 6px",fontSize:11,cursor:"pointer",color:"#b91c1c",fontWeight:700}} onClick={()=>{
+                                        if(!window.confirm("حذف سداد "+d.client+" — "+SAR(d.amount)+"؟")) return;
+                                        setPayments(function(prev){return prev.filter(function(p){return String(p.id)!==String(d.payId);});});
+                                        toast("🗑️ تم حذف السداد");
+                                      }}>🗑️</button>
+                                    </div>
+                                  </td>
+                                </tr>);
+                              })}
                             </tbody>
                           </table>
                         </div>
