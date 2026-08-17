@@ -4026,14 +4026,15 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                       </div>
                       {expandRow===tx.id && tx.details && (
                         <div style={{marginTop:8,background:"#f0fdf4",borderRadius:8,overflow:"hidden",border:"1px solid #d1fae5"}}>
-                          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                          <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
                             <thead>
                               <tr style={{background:"#065f46"}}>
-                                <th style={{padding:"5px 8px",color:"#fff",fontWeight:700,textAlign:"center"}}>#</th>
-                                <th style={{padding:"5px 8px",color:"#fff",fontWeight:700,textAlign:"right"}}>الزبون</th>
-                                <th style={{padding:"5px 8px",color:"#fff",fontWeight:700,textAlign:"center"}}>التاريخ</th>
-                                <th style={{padding:"5px 8px",color:"#fff",fontWeight:700,textAlign:"center"}}>المبلغ</th>
-                                <th style={{padding:"5px 8px",color:"#fff",fontWeight:700,textAlign:"center"}}></th>
+                                <th style={{padding:"4px 6px",color:"#fff",fontWeight:700,textAlign:"center"}}>#</th>
+                                <th style={{padding:"4px 6px",color:"#fff",fontWeight:700,textAlign:"center"}}>العقد</th>
+                                <th style={{padding:"4px 6px",color:"#fff",fontWeight:700,textAlign:"right"}}>الاسم</th>
+                                <th style={{padding:"4px 6px",color:"#fff",fontWeight:700,textAlign:"center"}}>الجوال</th>
+                                <th style={{padding:"4px 6px",color:"#fff",fontWeight:700,textAlign:"center"}}>المبلغ</th>
+                                <th style={{padding:"4px 6px",color:"#fff",fontWeight:700,textAlign:"center"}}></th>
                               </tr>
                             </thead>
                             <tbody>
@@ -4041,9 +4042,10 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                                 const isEditing = editPay && String(editPay.payId)===String(d.payId);
                                 return (
                                 <tr key={di} style={{background:di%2===0?"#fff":"#f0fdf4",borderBottom:"1px solid #e5e7eb"}}>
-                                  <td style={{padding:"6px 8px",textAlign:"center",color:"#94a3b8",fontSize:11}}>{di+1}</td>
-                                  <td style={{padding:"6px 8px",textAlign:"right",fontWeight:700,color:"#1a1a2e"}}>{d.client}</td>
-                                  <td style={{padding:"6px 8px",textAlign:"center",fontSize:11,color:"#475569"}}>{fmtDate(d.date)}</td>
+                                  <td style={{padding:"5px 6px",textAlign:"center",color:"#94a3b8",fontSize:10}}>{di+1}</td>
+                                  <td style={{padding:"5px 6px",textAlign:"center",fontSize:10,color:"#6b7280"}}>#{d.contractNum||"—"}</td>
+                                  <td style={{padding:"5px 6px",textAlign:"right",fontWeight:700,color:"#1a1a2e",fontSize:11}}>{d.client}</td>
+                                  <td style={{padding:"5px 6px",textAlign:"center",fontSize:10,color:"#6b7280",direction:"ltr"}}>{d.phone||"—"}</td>
                                   <td style={{padding:"6px 8px",textAlign:"center",fontWeight:800,color:"#059669"}}>
                                     {isEditing ? (
                                       <div style={{display:"flex",alignItems:"center",gap:3}}>
@@ -5870,6 +5872,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
     const rem=Math.max(0,total-paid);
     if(rem<=0) return null;
     if(c.contractType==="defer") return null; // المؤجل ما له قسط شهري
+    if(c.status==="done"||c.done||(doneIds||[]).includes(c.id)) return null; // العقود المنتهية
     const due=Math.min(inst,rem);
     // هل سُدّد ضمن الدورة الحالية؟
     const paidInCycle=(payments||[]).filter(p=>p.contractId===c.id && p.date && (!cycleStart || p.date>=cycleStart))
@@ -9876,7 +9879,7 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
 // ══════════════════════════════════════════════════════════════
 // ⚡ صفحة التحصيل — تصميم أبيض + بطاقات مستثمرين + مؤشر دائري
 // ══════════════════════════════════════════════════════════════
-function CollectionPage({contracts, investors, settings, payments, setPayments, toast, logAct, doneIds, markDone, setContracts, activeContracts, initialMode}) {
+function CollectionPage({contracts, investors, settings, payments, setPayments, toast, logAct, doneIds, markDone, setContracts, activeContracts, initialMode, goBack}) {
   const [colDate, setColDate] = useState(todayLocal());
   const [selInv, setSelInv] = useState(null); // المستثمر المختار (null = شاشة الاختيار)
   const [viewMode, setViewMode] = useState(initialMode||"collect"); // collect = التحصيل | overdue = المتعثرون
@@ -9981,6 +9984,10 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
   if(!selInv){
     return (
       React.createElement("div",{style:{minHeight:"80vh"}},
+        goBack && React.createElement("button",{onClick:goBack,style:{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"1px solid rgba(200,146,42,0.3)",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16}},
+          React.createElement("svg",{width:18,height:18,viewBox:"0 0 24 24",fill:"none",stroke:"#e0b85c",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:"M15 18l-6-6 6-6"})),
+          "رجوع"
+        ),
         React.createElement(Header,{title:viewMode==="overdue"?"المتعثرون":"التحصيل"}),
         // ── تبويبا الحالة: التحصيل / المتعثرون (hidden when initialMode provided) ──
         !initialMode && React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}},
@@ -10062,7 +10069,8 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
       // ─── جدول العملاء ───
       selRows.length>0 && React.createElement("div",{style:{background:"#fff",borderRadius:16,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}},
         // رأس الجدول
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 70px 70px 50px",padding:"10px 14px",background:"#f8fafc",borderBottom:"2px solid #e5e7eb",fontSize:12,fontWeight:800,color:"#6b7280"}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"30px 1fr 70px 70px 50px",padding:"10px 14px",background:"#f8fafc",borderBottom:"2px solid #e5e7eb",fontSize:12,fontWeight:800,color:"#6b7280"}},
+          React.createElement("span",{style:{textAlign:"center"}},"#"),
           React.createElement("span",null,"الزبون"),
           React.createElement("span",{style:{textAlign:"center"}},"القسط"),
           React.createElement("span",{style:{textAlign:"center"}},"الحالة"),
@@ -10080,12 +10088,14 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
 
           return React.createElement("div",{key:c.id},
             // الصف الرئيسي
-            React.createElement("div",{onClick:()=>toggle(c.id),style:{display:"grid",gridTemplateColumns:"1fr 70px 70px 50px",padding:"12px 14px",alignItems:"center",cursor:"pointer",borderBottom:"1px solid #f1f5f9",background:ci%2===0?"#fff":"#fafbfc"}},
+            React.createElement("div",{onClick:()=>toggle(c.id),style:{display:"grid",gridTemplateColumns:"30px 1fr 70px 70px 50px",padding:"12px 14px",alignItems:"center",cursor:"pointer",borderBottom:"1px solid #f1f5f9",background:ci%2===0?"#fff":"#fafbfc"}},
+              // التسلسل
+              React.createElement("div",{style:{textAlign:"center",fontSize:11,fontWeight:700,color:"#94a3b8"}},(ci+1)),
               // الزبون
               React.createElement("div",null,
                 React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
                   React.createElement("span",{style:{width:10,height:10,borderRadius:"50%",background:dotClr,flexShrink:0}}),
-                  React.createElement("span",{style:{fontWeight:700,fontSize:"clamp(14px,1.6vw,20px)",color:"#1f2937"}},c.client)
+                  React.createElement("span",{style:{fontWeight:700,fontSize:"clamp(13px,1.5vw,18px)",color:"#1f2937"}},"#"+(c.num||"")+" "+c.client)
                 ),
                 React.createElement("div",{style:{fontSize:11,color:"#9ca3af",marginRight:16}},c.cPhone||"")
               ),
@@ -11545,8 +11555,8 @@ function App() {
         {page==="qimaai" && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:999,background:"#f4f4f6",overflowY:"auto"}}><QimaAI contracts={contracts} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct} goBack={()=>setPage("dashboard")}/></div>}
         {page==="pastclients" && <PastClientsPage toast={toast} pastClients={pastClients} setPastClients={setPastClients} contracts={contracts}/>}
         {page==="upgrades" && <UpgradesPage contracts={publicContracts} investors={publicInvestors} payments={publicPayments} activity={activity} settings={settings} toast={toast} setPage={setPage}/>}
-        {page==="collect" && <CollectionPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="collect"/>}
-        {page==="overdue" && <CollectionPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="overdue"/>}
+        {page==="collect" && <CollectionPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="collect" goBack={()=>setPage("contracts")}/>}
+        {page==="overdue" && <CollectionPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="overdue" goBack={()=>setPage("contracts")}/>}
         {page==="contracts" && <ContractsPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={publicPayments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);addPastClientFromContract(c);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
         {page==="portfolio" && <MonthlyPortfolio contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={publicContracts} investors={publicInvestors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={publicPayments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>}/>}
         {page==="accounts" && <AccountsPage contracts={privateAccMode?activeContracts:publicContracts} investors={privateAccMode?investors:publicInvestors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={privateAccMode?payments:publicPayments} setPayments={setPayments} setContracts={setContracts} toast={toast} goBack={()=>{setPage(privateAccMode?"dashboard":"contracts");setPrivateAccMode(false);}} privateAccMode={privateAccMode} initialSubTab="inv"/>}
