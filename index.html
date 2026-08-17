@@ -3671,10 +3671,10 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
           رجوع
         </button>
       )}
-      <div style={{fontSize:19,fontWeight:800,marginBottom:16}}>{privateAccMode?"🔐 الحسابات الخاصة":"💰 الحسابات"}</div>
+      <div style={{fontSize:19,fontWeight:800,marginBottom:16}}>{privateAccMode?"🔐 الحسابات الخاصة":(initialSubTab==="list"?"👥 المستثمرون":"💰 الحسابات")}</div>
 
-      {/* Sub tabs */}
-      <div style={{display:"flex",gap:0,marginBottom:20,background:"#141428",borderRadius:10,overflow:"hidden",border:"2px solid #c8922a",width:"fit-content",position:"sticky",top:0,zIndex:20}}>
+      {/* Sub tabs - only show in privateAccMode */}
+      {privateAccMode && <div style={{display:"flex",gap:0,marginBottom:20,background:"#141428",borderRadius:10,overflow:"hidden",border:"2px solid #c8922a",width:"fit-content",position:"sticky",top:0,zIndex:20}}>
         {subTabs.map(t=>(
           <button key={t.key} onClick={()=>setSubTab(t.key)}
             style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:800,padding:"10px 16px",border:"none",
@@ -3683,7 +3683,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
             {t.label}
           </button>
         ))}
-      </div>
+      </div>}
 
       {/* Commissions sub-page */}
       {subTab==="list" && <InvestorsPage investors={privateAccMode?visibleInvestors:investors} contracts={contracts} settings={settings} payments={payments} txList={txList} onAdd={inv=>{if(privateAccMode){inv.hidden=true;}setInvestors(p=>[...p,inv]);}} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} setInvestors={setInvestors} toast={toast}/>}
@@ -9981,9 +9981,9 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
   if(!selInv){
     return (
       React.createElement("div",{style:{minHeight:"80vh"}},
-        React.createElement(Header,{title:"التحصيل"}),
-        // ── تبويبا الحالة: التحصيل / المتعثرون ──
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}},
+        React.createElement(Header,{title:viewMode==="overdue"?"المتعثرون":"التحصيل"}),
+        // ── تبويبا الحالة: التحصيل / المتعثرون (hidden when initialMode provided) ──
+        !initialMode && React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}},
           React.createElement("button",{onClick:()=>setViewMode("collect"),
             style:{padding:"13px",borderRadius:13,border:viewMode==="collect"?"none":"2px solid #e6eaf0",
               background:viewMode==="collect"?"linear-gradient(135deg,#1a1a2e,#0f3460)":"#fff",
