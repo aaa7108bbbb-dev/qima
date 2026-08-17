@@ -4172,7 +4172,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
       const base = _do.__base && typeof _do.__base==="object" ? _do.__base : null;
       const baseAmount = base ? (+base.amount||0) : 0;
       const baseDate = base ? base.date : "0000-00-00";
-      const net = (daily||[]).filter(d=>d.date >= baseDate)
+      const net = (daily||[]).filter(d=>d.date >= baseDate && d.channel!=="transfer")
         .reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
       return baseAmount + net;
     }
@@ -5765,7 +5765,7 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
   );
 }
 
-function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dailyOpen,setDailyOpen,toast,setPage,payments,zakatTx,setZakatTx,loans,setLoans,setPrivateAccMode}) {
+function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dailyOpen,setDailyOpen,toast,setPage,payments,zakatTx,setZakatTx,loans,setLoans,setPrivateAccMode,doneIds}) {
   const [detail,setDetail] = useState(null); // {title, color, rows, mode}
   // Period: starts 21st of month, ends 20th of next month
   const getPeriod = (dateStr) => fiscalYM(dateStr);
@@ -11550,7 +11550,7 @@ function App() {
 
       <div style={styles.main}>
         {/* المتعثرون انتقلت لتبويب داخل التحصيل */}
-        {page==="dashboard" && <Dashboard contracts={publicContracts} investors={publicInvestors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={publicPayments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} setPrivateAccMode={setPrivateAccMode}/>}
+        {page==="dashboard" && <Dashboard contracts={publicContracts} investors={publicInvestors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={publicPayments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} setPrivateAccMode={setPrivateAccMode} doneIds={doneIds}/>}
         {page==="search" && <SearchPage contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="qimaai" && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:999,background:"#f4f4f6",overflowY:"auto"}}><QimaAI contracts={contracts} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct} goBack={()=>setPage("dashboard")}/></div>}
         {page==="pastclients" && <PastClientsPage toast={toast} pastClients={pastClients} setPastClients={setPastClients} contracts={contracts}/>}
