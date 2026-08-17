@@ -3553,7 +3553,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
   const specialNames = ["1","2","4","7","8","9","11"];
   const isSpecial = function(inv){ var nm=(inv.name||"").trim(); return specialNames.some(function(n){return nm.endsWith(" "+n);}); };
   const visibleInvestors = privateAccMode ? investors.filter(function(inv){return isSpecial(inv) || inv.hidden;}) : investors;
-  const [subTab, setSubTab] = useState(privateAccMode ? "inv" : "inv");
+  const [subTab, setSubTab] = useState(privateAccMode ? "list" : "inv");
   const [selInv, setSelInv] = useState(privateAccMode ? (visibleInvestors[0]?.id||null) : (investors[0]?.id||null));
   const [invSubTab, setInvSubTab] = useState("inv");
   const [form, setForm] = useState({type:"deposit", amount:"", note:"", date:todayLocal()});
@@ -3643,7 +3643,8 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
   const filteredRows = acctSearch ? rows.filter(tx=>(tx.note||"").includes(acctSearch)||(tx.type||"").includes(acctSearch)||(tx.date||"").includes(acctSearch)) : rows;
 
   const subTabs = privateAccMode ? [
-    {key:"inv",   label:"💰 الحسابات الخاصة"},
+    {key:"list",  label:"👥 المستثمرون"},
+    {key:"inv",   label:"💰 كشف الحساب"},
   ] : [
     {key:"list",  label:"👥 المستثمرون"},
     {key:"inv",   label:"💰 حسابات المستثمرين"},
@@ -3660,7 +3661,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
       <div style={{fontSize:19,fontWeight:800,marginBottom:16}}>{privateAccMode?"🔐 الحسابات الخاصة":"💰 الحسابات"}</div>
 
       {/* Sub tabs */}
-      {!privateAccMode && <div style={{display:"flex",gap:0,marginBottom:20,background:"#141428",borderRadius:10,overflow:"hidden",border:"2px solid #c8922a",width:"fit-content",position:"sticky",top:0,zIndex:20}}>
+      <div style={{display:"flex",gap:0,marginBottom:20,background:"#141428",borderRadius:10,overflow:"hidden",border:"2px solid #c8922a",width:"fit-content",position:"sticky",top:0,zIndex:20}}>
         {subTabs.map(t=>(
           <button key={t.key} onClick={()=>setSubTab(t.key)}
             style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:800,padding:"10px 16px",border:"none",
@@ -3669,10 +3670,10 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
             {t.label}
           </button>
         ))}
-      </div>}
+      </div>
 
       {/* Commissions sub-page */}
-      {subTab==="list" && !privateAccMode && <InvestorsPage investors={investors} contracts={contracts} settings={settings} payments={payments} txList={txList} onAdd={inv=>setInvestors(p=>[...p,inv])} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} setInvestors={setInvestors} toast={toast}/>}
+      {subTab==="list" && <InvestorsPage investors={privateAccMode?visibleInvestors:investors} contracts={contracts} settings={settings} payments={payments} txList={txList} onAdd={inv=>{if(privateAccMode){inv.hidden=true;}setInvestors(p=>[...p,inv]);}} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} setInvestors={setInvestors} toast={toast}/>}
 
       {/* حسابات خاصة */}
       {subTab==="special" && (()=>{
