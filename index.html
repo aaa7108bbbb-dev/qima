@@ -3357,12 +3357,12 @@ function DeductionsSheet({contracts, investors, payments}){
     const colCount = hasChecks ? 9 : 8;
     const win=window.open("","_blank");
     win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>كشف الاستقطاعات</title>
-    <style>body{font-family:Arial;padding:22px;color:#000}.header{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:14px}.org{font-size:17px;font-weight:900}.sub{font-size:12px}.title{text-align:center;font-size:19px;font-weight:900;border:2px solid #000;padding:10px;margin-bottom:14px}table{width:100%;border-collapse:collapse;font-size:14px;border:2px solid #000}th,td{border:1px solid #000;padding:7px 10px;text-align:right;white-space:nowrap}th{font-weight:900;border-bottom:2px solid #000;font-size:13px}td.amt{font-weight:bold;text-align:left}.foot{text-align:center;color:#444;font-size:11px;margin-top:16px;border-top:1px solid #000;padding-top:8px}@media print{button{display:none}}</style>
+    <style>body{font-family:Arial;padding:8px 6px;color:#000;margin:0}.header{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px}.org{font-size:15px;font-weight:900}.sub{font-size:11px}.title{text-align:center;font-size:17px;font-weight:900;border:2px solid #000;padding:8px;margin-bottom:10px}table{width:100%;border-collapse:collapse;font-size:12px;border:2px solid #000;table-layout:fixed}th,td{border:1px solid #000;padding:5px 4px;text-align:right;overflow:hidden;text-overflow:ellipsis;word-wrap:break-word;white-space:normal}th{font-weight:900;border-bottom:2px solid #000;font-size:11px}td.amt{font-weight:bold;text-align:left}.foot{text-align:center;color:#444;font-size:10px;margin-top:10px;border-top:1px solid #000;padding-top:6px}@media print{button{display:none!important}@page{size:A4;margin:5mm}}</style>
     </head><body>
     <div class="header"><div><div class="org">مؤسسة قمة الفرصة التجارية</div><div class="sub">بريدة - شارع الثلاثين</div><div class="sub">ج: 0555171283  ت: 0163839323</div></div>
     <div style="text-align:left"><div class="sub">كشف الاستقطاعات</div><div class="sub">التاريخ: ${(()=>{const d=new Date();return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0");})()}</div></div></div>
     <div class="title">${titleLabel}</div>
-    <table style="width:auto"><thead><tr><th>#</th><th>اسم الزبون</th><th>رقم الجوال</th><th>رقم العقد</th>${hasChecks?`<th>رقم الشيك</th>`:""}<th>البنك</th><th>المستثمر</th><th>القسط</th><th style="min-width:120px">ملاحظات</th></tr></thead>
+    <table><thead><tr><th>#</th><th>اسم الزبون</th><th>رقم الجوال</th><th>رقم العقد</th>${hasChecks?`<th>رقم الشيك</th>`:""}<th>البنك</th><th>المستثمر</th><th>القسط</th><th>ملاحظات</th></tr></thead>
     <tbody>${body||`<tr><td colspan="${colCount}" style="text-align:center;color:#666">لا يوجد بيانات</td></tr>`}
     <tr style="font-weight:900;border-top:2px solid #000"><td colspan="${colCount-2}">الإجمالي</td><td class="amt">${fmt(totalInst)}</td><td></td></tr></tbody></table>
     <div class="foot">طُبع بتاريخ ${new Date().toLocaleString("en-US")}</div>
@@ -10069,11 +10069,12 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
       // ─── جدول العملاء ───
       selRows.length>0 && React.createElement("div",{style:{background:"#fff",borderRadius:16,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}},
         // رأس الجدول
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"30px 1fr 70px 70px 50px",padding:"10px 14px",background:"#f8fafc",borderBottom:"2px solid #e5e7eb",fontSize:12,fontWeight:800,color:"#6b7280"}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"35px 45px 1fr 80px 65px 50px",padding:"10px 10px",background:"#f8fafc",borderBottom:"2px solid #e5e7eb",fontSize:12,fontWeight:800,color:"#6b7280",gap:4}},
           React.createElement("span",{style:{textAlign:"center"}},"#"),
-          React.createElement("span",null,"الزبون"),
+          React.createElement("span",{style:{textAlign:"center"}},"العقد"),
+          React.createElement("span",null,"الاسم"),
+          React.createElement("span",{style:{textAlign:"center"}},"الجوال"),
           React.createElement("span",{style:{textAlign:"center"}},"القسط"),
-          React.createElement("span",{style:{textAlign:"center"}},"الحالة"),
           React.createElement("span",null,"")
         ),
 
@@ -10088,25 +10089,22 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
 
           return React.createElement("div",{key:c.id},
             // الصف الرئيسي
-            React.createElement("div",{onClick:()=>toggle(c.id),style:{display:"grid",gridTemplateColumns:"30px 1fr 70px 70px 50px",padding:"12px 14px",alignItems:"center",cursor:"pointer",borderBottom:"1px solid #f1f5f9",background:ci%2===0?"#fff":"#fafbfc"}},
+            React.createElement("div",{onClick:()=>toggle(c.id),style:{display:"grid",gridTemplateColumns:"35px 45px 1fr 80px 65px 50px",padding:"12px 10px",alignItems:"center",cursor:"pointer",borderBottom:"1px solid #f1f5f9",background:ci%2===0?"#fff":"#fafbfc",gap:4}},
               // التسلسل
-              React.createElement("div",{style:{textAlign:"center",fontSize:11,fontWeight:700,color:"#94a3b8"}},(ci+1)),
-              // الزبون
+              React.createElement("div",{style:{textAlign:"center",fontSize:14,fontWeight:800,color:"#1f2937"}},(ci+1)),
+              // رقم العقد
+              React.createElement("div",{style:{textAlign:"center",fontSize:13,fontWeight:800,color:"#1f2937"}},c.num||"—"),
+              // الاسم + نقطة الحالة
               React.createElement("div",null,
-                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
-                  React.createElement("span",{style:{width:10,height:10,borderRadius:"50%",background:dotClr,flexShrink:0}}),
-                  React.createElement("span",{style:{fontWeight:700,fontSize:"clamp(13px,1.5vw,18px)",color:"#1f2937"}},"#"+(c.num||"")+" "+c.client)
-                ),
-                React.createElement("div",{style:{fontSize:11,color:"#9ca3af",marginRight:16}},c.cPhone||"")
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5}},
+                  React.createElement("span",{style:{width:9,height:9,borderRadius:"50%",background:dotClr,flexShrink:0}}),
+                  React.createElement("span",{style:{fontWeight:700,fontSize:"clamp(13px,1.4vw,17px)",color:"#1f2937"}},c.client)
+                )
               ),
+              // رقم الجوال
+              React.createElement("div",{style:{textAlign:"center",fontSize:11,color:"#6b7280",direction:"ltr"}},c.cPhone||"—"),
               // القسط
-              React.createElement("div",{style:{textAlign:"center",fontWeight:800,fontSize:14,color:"#374151"}},SAR(c.instAmt||0)),
-              // الحالة
-              React.createElement("div",{style:{textAlign:"center"}},
-                c.lateAmt>0
-                  ? React.createElement("span",{style:{background:"#fef2f2",color:"#dc2626",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:800}},"متأخر")
-                  : React.createElement("span",{style:{background:"#f0fdf4",color:"#16a34a",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:800}},"منتظم")
-              ),
+              React.createElement("div",{style:{textAlign:"center",fontWeight:800,fontSize:13,color:"#374151"}},SAR(c.instAmt||0)),
               // سهم
               React.createElement("div",{style:{textAlign:"center",color:"#9ca3af",fontSize:14,transition:"transform 0.2s",transform:isExp?"rotate(180deg)":"",display:"inline-block"}},"▾")
             ),
