@@ -9910,9 +9910,16 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
     })
     .filter(c=>c.left>0);
 
-  // إحصائيات اليوم
+  // حساب بداية ونهاية الدورة الحالية (21 ← 20)
+  const _today = new Date();
+  const _cycleFrom = _today.getDate() >= 21
+    ? new Date(_today.getFullYear(), _today.getMonth(), 21)
+    : new Date(_today.getFullYear(), _today.getMonth()-1, 21);
+  const _cycleFromStr = _cycleFrom.getFullYear()+"-"+String(_cycleFrom.getMonth()+1).padStart(2,"0")+"-21";
+
+  // إحصائيات الدورة (محصّل الشهر)
   const dayPays=(payments||[]).filter(p=>{
-    if(p.date!==colDate) return false;
+    if(!p.date || p.date < _cycleFromStr) return false;
     if(selInv){
       const con=activeContracts.find(c=>c.id===p.contractId);
       return con && String(con.investorId)===String(selInv);
@@ -9977,7 +9984,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
     React.createElement("div",{style:{background:"linear-gradient(135deg,#0f1923,#1a2744)",borderRadius:16,padding:"16px 18px",marginBottom:16,color:"#fff"}},
       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
         React.createElement("div",{style:{fontSize:11,color:"rgba(255,255,255,0.5)"}},"\u0642\u0645\u0629 \u0627\u0644\u0641\u0631\u0635\u0629"),
-        React.createElement("div",{style:{fontSize:11,color:"rgba(255,255,255,0.5)"}},"محصّل اليوم")
+        React.createElement("div",{style:{fontSize:11,color:"rgba(255,255,255,0.5)"}},"محصّل الشهر")
       ),
       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
         React.createElement("div",{style:{fontSize:20,fontWeight:900}},title),
