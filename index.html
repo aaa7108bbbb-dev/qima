@@ -2075,24 +2075,36 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   return (
     <div>
       {/* ═══ Action Buttons — Premium Grid ═══ */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
-        <button onClick={()=>setShowNew(true)} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 12px",fontSize:15.5,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-          <svg width="18" height="18" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 8.4v7.2M8.4 12h7.2"/></g></svg>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10,marginBottom:10}}>
+        <button onClick={()=>setShowNew(true)} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 8.4v7.2M8.4 12h7.2"/></g></svg>
           عقد جديد
         </button>
-        <button onClick={()=>setPage("accounts")} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 12px",fontSize:15.5,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-          <svg width="18" height="18" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g><circle cx="16.9" cy="15.1" r="1.4" fill="#e0b85c"/></svg>
+        <button onClick={()=>setPage("accounts")} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g><circle cx="16.9" cy="15.1" r="1.4" fill="#e0b85c"/></svg>
           الحسابات
         </button>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-        <button onClick={()=>setPage("goods")} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 12px",fontSize:15.5,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-          <svg width="18" height="18" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.6 7.6h16.8v12H3.6Z"/><path d="M3.6 11.6h16.8M12 7.6v12"/></g></svg>
+        <button onClick={()=>setPage("goods")} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.6 7.6h16.8v12H3.6Z"/><path d="M3.6 11.6h16.8M12 7.6v12"/></g></svg>
           البضاعة
         </button>
-        <button onClick={()=>setShowDeduct(true)} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 12px",fontSize:15.5,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-          <svg width="18" height="18" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg>
+        <button onClick={()=>setPage("collect")} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></g></svg>
+          التحصيل
+        </button>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
+        <button onClick={()=>setShowDeduct(true)} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2v6h6M18 22v-6h-6"/><path d="M21 11.5A8.5 8.5 0 0 0 6.7 4.4L2 8M3 12.5a8.5 8.5 0 0 0 14.3 7.1L22 16"/></g></svg>
           الطباعة
+        </button>
+        <button onClick={()=>setPage("investorsList")} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></g></svg>
+          المستثمرون
+        </button>
+        <button onClick={()=>setPage("overdue")} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></g></svg>
+          المتعثرون
         </button>
       </div>
 
@@ -3549,13 +3561,14 @@ function FundsPanel({investors, contracts, settings, setInvestors, toast}){
   );
 }
 
-function AccountsPage({contracts, investors, setInvestors, settings, txList, setTxList, loans, setLoans, zakatTx, setZakatTx, pending, setPending, payments, setPayments, setContracts, toast, goBack, privateAccMode}) {
+function AccountsPage({contracts, investors, setInvestors, settings, txList, setTxList, loans, setLoans, zakatTx, setZakatTx, pending, setPending, payments, setPayments, setContracts, toast, goBack, privateAccMode, initialSubTab}) {
   const specialNames = ["1","2","4","7","8","9","11"];
   const isSpecial = function(inv){ var nm=(inv.name||"").trim(); return specialNames.some(function(n){return nm.endsWith(" "+n);}); };
   const visibleInvestors = privateAccMode ? investors.filter(function(inv){return isSpecial(inv) || inv.hidden;}) : investors;
-  const [subTab, setSubTab] = useState(privateAccMode ? "list" : "inv");
+  const [subTab, setSubTab] = useState(initialSubTab || (privateAccMode ? "list" : "inv"));
   const [selInv, setSelInv] = useState(privateAccMode ? (visibleInvestors[0]?.id||null) : (investors[0]?.id||null));
   const [invSubTab, setInvSubTab] = useState("inv");
+  const [newContract, setNewContract] = useState(null); // null or {client,phone,amount,totalInst,instAmt,firstInst,goods}
   const [form, setForm] = useState({type:"deposit", amount:"", note:"", date:todayLocal()});
   const set = (k,v) => {
     setForm(f=>({...f,[k]:v}));
@@ -3643,11 +3656,11 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
   const filteredRows = acctSearch ? rows.filter(tx=>(tx.note||"").includes(acctSearch)||(tx.type||"").includes(acctSearch)||(tx.date||"").includes(acctSearch)) : rows;
 
   const subTabs = privateAccMode ? [
-    {key:"list",  label:"👥 المستثمرون"},
-    {key:"inv",   label:"💰 كشف الحساب"},
+    {key:"list",  label:"المستثمرون"},
+    {key:"inv",   label:"كشف الحساب"},
   ] : [
-    {key:"list",  label:"👥 المستثمرون"},
-    {key:"inv",   label:"💰 حسابات المستثمرين"},
+    {key:"list",  label:"المستثمرون"},
+    {key:"inv",   label:"الحسابات"},
   ];
 
   return (
@@ -3891,9 +3904,49 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
           setInvestors(function(prev){return prev.concat([newInv]);});
           setSelInv(newInv.id);
           toast("✅ تم إضافة مستثمر خفي: "+name.trim());
-        }}>➕ إضافة مستثمر خفي</button>}
+        }}>➕ مستثمر</button>}
+        {privateAccMode && <button style={{background:"linear-gradient(135deg,#065f46,#059669)",color:"#fff",border:"none",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} onClick={()=>{
+          setNewContract({client:"",phone:"",idNum:"",amount:"",totalInst:"",instAmt:"",firstInst:"",goods:"",investorId:selInv});
+        }}>📄 عقد جديد</button>}
         {invSubTab==="inv" && inv && null}
       </div>
+
+      {/* مودال إضافة عقد للمستثمر الخفي */}
+      {newContract && (
+        <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setNewContract(null)}>
+          <div onClick={function(e){e.stopPropagation();}} style={{background:"#fff",borderRadius:16,padding:"22px 18px",maxWidth:420,width:"100%",maxHeight:"90vh",overflowY:"auto",boxShadow:"0 8px 32px rgba(0,0,0,.3)"}}>
+            <div style={{fontSize:17,fontWeight:800,color:"#1a1a2e",marginBottom:14,textAlign:"center"}}>📄 عقد جديد — {inv?invLabel(inv):""}</div>
+            {[["اسم العميل","client","text"],["رقم الجوال","phone","tel"],["رقم الهوية","idNum","text"],["سعر البضاعة","amount","number"],["الإجمالي بالأقساط","totalInst","number"],["مبلغ القسط","instAmt","number"],["تاريخ أول قسط","firstInst","date"],["السلعة","goods","text"]].map(function(f){
+              return (
+                <div key={f[1]} style={{marginBottom:10}}>
+                  <label style={{fontSize:13,fontWeight:700,color:"#374151",display:"block",marginBottom:4}}>{f[0]}</label>
+                  <input type={f[2]} value={newContract[f[1]]||""} onChange={function(e){setNewContract(function(p){var u={};for(var k in p)u[k]=p[k];u[f[1]]=e.target.value;return u;});}}
+                    style={{width:"100%",padding:"10px 12px",border:"2px solid #d1d5db",borderRadius:10,fontSize:14,fontWeight:600,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
+                </div>
+              );
+            })}
+            <div style={{display:"flex",gap:8,marginTop:14}}>
+              <button style={{flex:1,padding:"12px",fontSize:15,fontWeight:800,background:"#059669",color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontFamily:"inherit"}} onClick={function(){
+                var nc=newContract;
+                if(!nc.client||!nc.totalInst||!nc.instAmt){toast("❌ أدخل الاسم والإجمالي والقسط");return;}
+                var maxNum=contracts.reduce(function(mx,c){return Math.max(mx,+c.num||0);},0);
+                var c={id:Date.now(),num:maxNum+1,client:nc.client.trim(),phone:nc.phone||"",idNum:nc.idNum||"",
+                  investorId:nc.investorId||selInv,amount:parseFloat(nc.amount)||0,totalInst:parseFloat(nc.totalInst)||0,
+                  instAmt:parseFloat(nc.instAmt)||0,firstInst:nc.firstInst||todayLocal(),
+                  lastInst:"",date:todayLocal(),contractType:"monthly",payMethod:"cash",goods:nc.goods||"",
+                  job:"",guarantor:"",guarantorPhone:""};
+                var months=c.instAmt>0?Math.ceil(c.totalInst/c.instAmt):12;
+                var fd=new Date(c.firstInst);fd.setMonth(fd.getMonth()+months-1);
+                c.lastInst=fd.getFullYear()+"-"+String(fd.getMonth()+1).padStart(2,"0")+"-"+String(fd.getDate()).padStart(2,"0");
+                setContracts(function(prev){return prev.concat([c]);});
+                setNewContract(null);
+                toast("✅ تم إضافة العقد #"+c.num+" — "+c.client);
+              }}>✅ حفظ العقد</button>
+              <button style={{padding:"12px 18px",fontSize:15,fontWeight:700,background:"transparent",color:"#6b7280",border:"1px solid #d1d5db",borderRadius:10,cursor:"pointer",fontFamily:"inherit"}} onClick={function(){setNewContract(null);}}>إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add transaction */}
       <div style={{...styles.panel,marginBottom:16}}>
@@ -9823,10 +9876,10 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
 // ══════════════════════════════════════════════════════════════
 // ⚡ صفحة التحصيل — تصميم أبيض + بطاقات مستثمرين + مؤشر دائري
 // ══════════════════════════════════════════════════════════════
-function CollectionPage({contracts, investors, settings, payments, setPayments, toast, logAct, doneIds, markDone, setContracts, activeContracts}) {
+function CollectionPage({contracts, investors, settings, payments, setPayments, toast, logAct, doneIds, markDone, setContracts, activeContracts, initialMode}) {
   const [colDate, setColDate] = useState(todayLocal());
   const [selInv, setSelInv] = useState(null); // المستثمر المختار (null = شاشة الاختيار)
-  const [viewMode, setViewMode] = useState("collect"); // collect = التحصيل | overdue = المتعثرون
+  const [viewMode, setViewMode] = useState(initialMode||"collect"); // collect = التحصيل | overdue = المتعثرون
   const [colSearch, setColSearch] = useState("");
   const [colAmts, setColAmts] = useState({});
   const [expanded, setExpanded] = useState({});
@@ -11399,7 +11452,6 @@ function App() {
   const TABS=[
     {id:"dashboard",label:"🏠",name:"الرئيسية",color:"#1e3a5f"},
     {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
-    {id:"collect",label:"⚡",name:"التحصيل",color:"#0d9488"},
     {id:"portfolio",label:"📊",name:"المحفظة الشهرية",color:"#0d9488"},
     {id:"qimaai",label:"🤖",name:"قمة AI",color:"#6d28d9"},
     {id:"pastclients",label:"📇",name:"الزبائن",color:"#c8922a"},
@@ -11493,10 +11545,12 @@ function App() {
         {page==="qimaai" && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:999,background:"#f4f4f6",overflowY:"auto"}}><QimaAI contracts={contracts} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct} goBack={()=>setPage("dashboard")}/></div>}
         {page==="pastclients" && <PastClientsPage toast={toast} pastClients={pastClients} setPastClients={setPastClients} contracts={contracts}/>}
         {page==="upgrades" && <UpgradesPage contracts={publicContracts} investors={publicInvestors} payments={publicPayments} activity={activity} settings={settings} toast={toast} setPage={setPage}/>}
-        {page==="collect" && <CollectionPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts}/>}
+        {page==="collect" && <CollectionPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="collect"/>}
+        {page==="overdue" && <CollectionPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="overdue"/>}
         {page==="contracts" && <ContractsPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={publicPayments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);addPastClientFromContract(c);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
         {page==="portfolio" && <MonthlyPortfolio contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={publicContracts} investors={publicInvestors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={publicPayments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>}/>}
-        {page==="accounts" && <AccountsPage contracts={privateAccMode?activeContracts:publicContracts} investors={privateAccMode?investors:publicInvestors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={privateAccMode?payments:publicPayments} setPayments={setPayments} setContracts={setContracts} toast={toast} goBack={()=>{setPage(privateAccMode?"dashboard":"contracts");setPrivateAccMode(false);}} privateAccMode={privateAccMode}/>}
+        {page==="accounts" && <AccountsPage contracts={privateAccMode?activeContracts:publicContracts} investors={privateAccMode?investors:publicInvestors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={privateAccMode?payments:publicPayments} setPayments={setPayments} setContracts={setContracts} toast={toast} goBack={()=>{setPage(privateAccMode?"dashboard":"contracts");setPrivateAccMode(false);}} privateAccMode={privateAccMode} initialSubTab="inv"/>}
+        {page==="investorsList" && <AccountsPage contracts={publicContracts} investors={publicInvestors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={publicPayments} setPayments={setPayments} setContracts={setContracts} toast={toast} goBack={()=>setPage("contracts")} privateAccMode={false} initialSubTab="list"/>}
         {page==="goods" && <GoodsPage investors={publicInvestors} contracts={publicContracts} toast={toast} gsWrite={gsWrite} goBack={()=>setPage("contracts")}/>}
         {/* البوصلة المالية انتقلت لتبويب داخل المحفظة الشهرية */}
         {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast} setPage={setPage}/>}
