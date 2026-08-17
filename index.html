@@ -5860,6 +5860,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
   // تواريخ الدورة للعرض: من بداية الدورة إلى نفس اليوم الشهر القادم
   const cycleFrom = cycleStart ? new Date(cycleStart) : new Date(today.getFullYear(), today.getMonth(), 21);
   const cycleTo = new Date(cycleFrom.getFullYear(), cycleFrom.getMonth()+1, cycleFrom.getDate());
+  const cycleToStr = cycleTo.getFullYear()+"-"+String(cycleTo.getMonth()+1).padStart(2,"0")+"-"+String(cycleTo.getDate()).padStart(2,"0");
   const arMonths=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
   const fmtCycle = d => d.getDate()+" "+arMonths[d.getMonth()];
   const cycleLabel = fmtCycle(cycleFrom)+" ← "+fmtCycle(cycleTo);
@@ -5873,7 +5874,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
     if(rem<=0) return null;
     if(c.contractType==="defer") return null; // المؤجل ما له قسط شهري
     if(c.status==="done"||c.done||(doneIds||[]).includes(c.id)) return null; // العقود المنتهية
-    if(c.firstInst && c.firstInst > cycleTo) return null; // ما حل قسطه بعد
+    if(c.firstInst && c.firstInst > cycleToStr) return null; // ما حل قسطه بعد
     const due=Math.min(inst,rem);
     // هل سُدّد ضمن الدورة الحالية؟
     const paidInCycle=(payments||[]).filter(p=>p.contractId===c.id && p.date && (!cycleStart || p.date>=cycleStart))
@@ -9910,7 +9911,14 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
     .filter(c=>c.left>0);
 
   // إحصائيات اليوم
-  const dayPays=(payments||[]).filter(p=>p.date===colDate);
+  const dayPays=(payments||[]).filter(p=>{
+    if(p.date!==colDate) return false;
+    if(selInv){
+      const con=activeContracts.find(c=>c.id===p.contractId);
+      return con && String(con.investorId)===String(selInv);
+    }
+    return true;
+  });
   const cntToday=new Set(dayPays.map(p=>p.contractId)).size;
   const sumToday=dayPays.reduce((s,p)=>s+(+p.amount||0),0);
 
