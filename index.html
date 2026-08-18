@@ -10008,7 +10008,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
           React.createElement("svg",{width:18,height:18,viewBox:"0 0 24 24",fill:"none",stroke:"#e0b85c",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:"M15 18l-6-6 6-6"})),
           "رجوع"
         ),
-        React.createElement(Header,{title:viewMode==="overdue"?"المتعثرون":"التحصيل"}),
+        viewMode!=="overdue" && React.createElement(Header,{title:"التحصيل"}),
         // ── تبويبا الحالة: التحصيل / المتعثرون (hidden when initialMode provided) ──
         !initialMode && React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}},
           React.createElement("button",{onClick:()=>setViewMode("collect"),
@@ -10923,10 +10923,12 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
               stmtResults.map(c=>{
                 const cPaid = pays.filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
                 const rem = Math.max(0,(+c.totalInst||0)-cPaid);
+                const _cNum = (function(){ if(c.contractType==="migrated"){ if(c.num) return c.num; if(c.oldNum) return c.oldNum; var m=String(c.note||"").match(/(\d+)/); return m?m[1]:"—"; } return c.num||"—"; }());
                 return React.createElement("div",{key:c.id,onClick:()=>setStmtContract(c),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 14px",background:"#f8fafc",borderRadius:10,marginBottom:6,cursor:"pointer",border:"1px solid #e5e7eb"}},
                   React.createElement("div",null,
                     React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"#1a1a2e"}},c.client),
-                    React.createElement("div",{style:{fontSize:11,color:"#6b7280"}},"عقد #"+(c.num||"")+" — قسط "+SAR(c.installment||0))
+                    React.createElement("div",{style:{fontSize:12,color:"#1a1a2e",fontWeight:800,marginTop:3}},"عقد #"+_cNum+" — قسط "+SAR(c.instAmt||c.installment||0)),
+                    c.date && React.createElement("div",{style:{fontSize:10,color:"#6b7280",marginTop:2}},"📅 تاريخ العقد: "+c.date)
                   ),
                   React.createElement("div",{style:{textAlign:"left"}},
                     React.createElement("div",{style:{fontSize:13,fontWeight:800,color:rem>0?"#dc2626":"#059669"}},SAR(rem)),
