@@ -2142,21 +2142,21 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               const cNum=c=>{if(c.contractType==="migrated"){if(c.num)return c.num;if(c.oldNum)return c.oldNum;var m=String(c.note||"").match(/(\d+)/);return m?m[1]:"—";}return c.num||"—";};
               const invName=invSearch==="__all__"?"كل المستثمرين":invSearch;
               const isBrief=reportMode==="brief";
-              let rows="";
+              let tRows="";
               if(isBrief){
-                rows=invReportContracts.map((c,i)=>"<tr><td>"+(i+1)+"</td><td>"+cNum(c)+"</td><td>"+(c.client||"")+"</td><td>"+NUM(c.instAmt||0)+"</td><td>"+NUM(Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)))+"</td></tr>").join("");
-                const tI=invReportContracts.reduce((s,c)=>s+(c.instAmt||0),0);
-                const tL=invReportContracts.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
-                rows+="<tr style='background:#fffbf0;font-weight:900'><td colspan='3'>الإجمالي</td><td>"+NUM(tI)+"</td><td>"+NUM(tL)+"</td></tr>";
+                tRows=invReportContracts.map((c,i)=>"<tr><td>"+(i+1)+"</td><td>"+cNum(c)+"</td><td>"+(c.client||"")+"</td><td>"+NUM(c.instAmt||0)+"</td><td>"+NUM(Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)))+"</td></tr>").join("");
+                var tI=invReportContracts.reduce((s,c)=>s+(c.instAmt||0),0);
+                var tL=invReportContracts.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
+                tRows+="<tr style='background:#fffbf0;font-weight:900'><td colspan='3'>الإجمالي</td><td>"+NUM(tI)+"</td><td>"+NUM(tL)+"</td></tr>";
               } else {
-                rows=invReportContracts.map((c,i)=>{const paid=_getPaid(payments,c.id);const left=Math.max(0,(c.totalInst||0)-paid);return "<tr><td>"+(i+1)+"</td><td>"+cNum(c)+"</td><td>"+(c.client||"")+"</td><td>"+NUM(c.amount||0)+"</td><td>"+NUM(c.totalInst||0)+"</td><td>"+NUM(c.instAmt||0)+"</td><td style='color:#15803d'>"+NUM(paid)+"</td><td style='color:#dc2626'>"+NUM(left)+"</td></tr>";}).join("");
-                const tA=invReportContracts.reduce((s,c)=>s+(c.amount||0),0),tT=invReportContracts.reduce((s,c)=>s+(c.totalInst||0),0),tI=invReportContracts.reduce((s,c)=>s+(c.instAmt||0),0),tP=invReportContracts.reduce((s,c)=>s+_getPaid(payments,c.id),0),tL=invReportContracts.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
-                rows+="<tr style='background:#fffbf0;font-weight:900'><td colspan='3'>الإجمالي</td><td>"+NUM(tA)+"</td><td>"+NUM(tT)+"</td><td>"+NUM(tI)+"</td><td style='color:#15803d'>"+NUM(tP)+"</td><td style='color:#dc2626'>"+NUM(tL)+"</td></tr>";
+                tRows=invReportContracts.map((c,i)=>{var paid=_getPaid(payments,c.id);var left=Math.max(0,(c.totalInst||0)-paid);return "<tr><td>"+(i+1)+"</td><td>"+cNum(c)+"</td><td>"+(c.client||"")+"</td><td>"+NUM(c.amount||0)+"</td><td>"+NUM(c.totalInst||0)+"</td><td>"+NUM(c.instAmt||0)+"</td><td style='color:#15803d'>"+NUM(paid)+"</td><td style='color:#dc2626'>"+NUM(left)+"</td></tr>";}).join("");
+                var tA=invReportContracts.reduce((s,c)=>s+(c.amount||0),0),tT=invReportContracts.reduce((s,c)=>s+(c.totalInst||0),0);tI=invReportContracts.reduce((s,c)=>s+(c.instAmt||0),0);var tP=invReportContracts.reduce((s,c)=>s+_getPaid(payments,c.id),0);tL=invReportContracts.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
+                tRows+="<tr style='background:#fffbf0;font-weight:900'><td colspan='3'>الإجمالي</td><td>"+NUM(tA)+"</td><td>"+NUM(tT)+"</td><td>"+NUM(tI)+"</td><td style='color:#15803d'>"+NUM(tP)+"</td><td style='color:#dc2626'>"+NUM(tL)+"</td></tr>";
               }
-              const headers=isBrief?"<th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>القسط</th><th>المتبقي</th>":"<th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>المحصّل</th><th>المتبقي</th>";
-              const modeLabel=isBrief?"مختصر":"مفصل";
-              const w=window.open("","_blank");
-              w.document.write("<!DOCTYPE html><html dir='rtl' lang='ar'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>كشف المستثمر — "+invName+"</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box}body{padding:12px;color:#000;margin:0;background:#f8f9fa}h2{font-size:17px;text-align:center;margin:0 0 12px;font-weight:900}table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:2px solid #000}th,td{border:1px solid #000;padding:6px 5px;text-align:center;font-weight:700}th{font-weight:900;border-bottom:2px solid #000;font-size:12px;background:#fff}.btns{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}.btn{flex:1;padding:14px;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;min-width:100px;text-align:center}.btn-share{background:#25d366;color:#fff}.btn-print{background:#1a1a2e;color:#e0b85c}.btn-close{background:#dc2626;color:#fff}@media print{.noprint{display:none!important}}</style></head><body><div class='noprint btns'><button class='btn btn-share' onclick='shareReport()'>📤 مشاركة واتساب</button><button class='btn btn-print' onclick='window.print()'>🖨️ طباعة</button><button class='btn btn-close' onclick='window.close()'>✕ إغلاق</button></div><h2>كشف المستثمر — "+invName+" ("+modeLabel+")</h2><table><thead><tr>"+headers+"</tr></thead><tbody>"+rows+"</tbody></table><script>function shareReport(){var tbl=document.querySelector('table');var canvas=document.createElement('canvas');var ctx;try{var r=tbl.getBoundingClientRect();canvas.width=r.width*2;canvas.height=r.height*2;ctx=canvas.getContext('2d');ctx.scale(2,2);ctx.fillStyle='#fff';ctx.fillRect(0,0,r.width,r.height);}catch(e){}var svg='<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"'+tbl.offsetWidth+'\" height=\"'+(tbl.offsetHeight+40)+'\">'+'<foreignObject width=\"100%\" height=\"100%\">'+'<div xmlns=\"http://www.w3.org/1999/xhtml\" dir=\"rtl\" style=\"font-family:Arial;background:#fff\">'+tbl.outerHTML+'</div></foreignObject></svg>';var blob=new Blob([svg],{type:'image/svg+xml'});var url=URL.createObjectURL(blob);if(navigator.share){navigator.share({title:'كشف المستثمر — "+invName+"',text:'كشف المستثمر — "+invName+"',url:location.href}).catch(function(){});} else {alert('استخدم زر المشاركة في المتصفح لإرسال الصفحة عبر واتساب');}}</script></body></html>");
+              var hdrs=isBrief?"<th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>القسط</th><th>المتبقي</th>":"<th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>المحصّل</th><th>المتبقي</th>";
+              var ml=isBrief?"مختصر":"مفصل";
+              var w=window.open("","_blank");
+              w.document.write("<!DOCTYPE html><html dir='rtl' lang='ar'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>كشف "+invName+"</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box}body{padding:12px;color:#000;margin:0;background:#f8f9fa}h2{font-size:17px;text-align:center;margin:0 0 12px;font-weight:900}table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:2px solid #000}th,td{border:1px solid #000;padding:6px 5px;text-align:center;font-weight:700}th{font-weight:900;border-bottom:2px solid #000;font-size:12px;background:#fff}.btns{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}.btn{flex:1;padding:14px;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;min-width:80px;text-align:center}@media print{.noprint{display:none!important}}</style></head><body><div class='noprint btns'><button class='btn' style='background:#25d366;color:#fff' onclick='doShare()'>📤 مشاركة</button><button class='btn' style='background:#1a1a2e;color:#e0b85c' onclick='window.print()'>🖨️ طباعة</button><button class='btn' style='background:#dc2626;color:#fff' onclick='window.close()'>✕</button></div><h2>كشف المستثمر — "+invName+" ("+ml+")</h2><table><thead><tr>"+hdrs+"</tr></thead><tbody>"+tRows+"</tbody></table><scr"+"ipt>function doShare(){if(navigator.share){navigator.share({title:'كشف "+invName+"',url:location.href});}else{alert('استخدم زر المشاركة بالمتصفح');}}</scr"+"ipt></body></html>");
               w.document.close();
             }}>
               <svg width="15" height="15" viewBox="0 0 24 24"><g fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></g></svg>
@@ -3524,7 +3524,7 @@ function FundsPanel({investors, contracts, settings, setInvestors, toast}){
   );
 }
 
-function AccountsPage({contracts, investors, setInvestors, settings, txList, setTxList, loans, setLoans, zakatTx, setZakatTx, pending, setPending, payments, setPayments, setContracts, toast, goBack, privateAccMode, initialSubTab}) {
+function AccountsPage({contracts, investors, setInvestors, settings, txList, setTxList, loans, setLoans, zakatTx, setZakatTx, pending, setPending, payments, setPayments, setContracts, toast, goBack, privateAccMode, initialSubTab, gsWrite}) {
   const specialNames = ["1","2","4","7","8","9","11"];
   const isSpecial = function(inv){ var nm=(inv.name||"").trim(); return specialNames.some(function(n){return nm.endsWith(" "+n);}); };
   const visibleInvestors = privateAccMode ? investors.filter(function(inv){return isSpecial(inv) || inv.hidden;}) : investors;
@@ -3616,6 +3616,11 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
   const [acctSearch,setAcctSearch] = useState("");
   const [expandRow,setExpandRow] = useState(null);
   const [editPay,setEditPay] = useState(null); // {payId, amount}
+  const [editNoteId,setEditNoteId] = useState(null);
+  const [editNoteVal,setEditNoteVal] = useState("");
+  const [noteOv,setNoteOv] = useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_note_ov")||"{}");}catch{return{};}});
+  const saveNoteOv = (txId,val) => { const n={...noteOv,[selInv+"_"+txId]:val}; setNoteOv(n); try{localStorage.setItem("qimma_note_ov",JSON.stringify(n));}catch(e){} if(gsWrite) gsWrite("note_ov",n); setEditNoteId(null); };
+  const getNoteOv = (txId) => noteOv[selInv+"_"+txId];
   const filteredRows = acctSearch ? rows.filter(tx=>(tx.note||"").includes(acctSearch)||(tx.type||"").includes(acctSearch)||(tx.date||"").includes(acctSearch)) : rows;
 
   const subTabs = privateAccMode ? [
@@ -3982,9 +3987,22 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                       <span style={{...styles.badge("#141428","#c8922a")}}>{txType.label}</span>
                     </td>
                     <td style={styles.td}>
-                      <div style={{cursor:tx.details?"pointer":"default"}} onClick={()=>{if(tx.details)setExpandRow(expandRow===tx.id?null:tx.id)}}>
-                        {tx.note||"—"}
-                        {tx.details && <span style={{fontSize:10,color:C.gold,marginRight:6}}>{expandRow===tx.id?"▲ إخفاء":"▼ تفاصيل"}</span>}
+                      <div style={{cursor:tx.details?"pointer":"default"}} onClick={()=>{if(tx.details && editNoteId!==tx.id)setExpandRow(expandRow===tx.id?null:tx.id)}}>
+                        {editNoteId===tx.id ? (
+                          <div style={{display:"flex",alignItems:"center",gap:4}} onClick={e=>e.stopPropagation()}>
+                            <input type="text" value={editNoteVal} onChange={e=>setEditNoteVal(e.target.value)} autoFocus
+                              style={{flex:1,padding:"4px 8px",border:"2px solid #c8922a",borderRadius:6,fontSize:12,fontWeight:700,fontFamily:"inherit",outline:"none"}}
+                              onKeyDown={e=>{if(e.key==="Enter"){saveNoteOv(tx.id,editNoteVal);toast("✅ تم تعديل العنوان");}}}/>
+                            <button style={{background:"#059669",color:"#fff",border:"none",borderRadius:5,padding:"3px 8px",fontSize:12,fontWeight:700,cursor:"pointer"}} onClick={()=>{saveNoteOv(tx.id,editNoteVal);toast("✅ تم تعديل العنوان");}}>✓</button>
+                            <button style={{background:"#e5e7eb",color:"#333",border:"none",borderRadius:5,padding:"3px 8px",fontSize:12,fontWeight:700,cursor:"pointer"}} onClick={()=>setEditNoteId(null)}>✕</button>
+                          </div>
+                        ) : (
+                          <>
+                            {getNoteOv(tx.id)||tx.note||"—"}
+                            {tx.details && <span style={{fontSize:10,color:C.gold,marginRight:6}}>{expandRow===tx.id?"▲ إخفاء":"▼ تفاصيل"}</span>}
+                            {tx.auto && <span style={{fontSize:10,color:"#94a3b8",marginRight:4,cursor:"pointer"}} onClick={e=>{e.stopPropagation();setEditNoteId(tx.id);setEditNoteVal(getNoteOv(tx.id)||tx.note||"");}}>✏️</span>}
+                          </>
+                        )}
                       </div>
                       {expandRow===tx.id && tx.details && (
                         <div style={{marginTop:8,background:"#f0fdf4",borderRadius:8,overflow:"hidden",border:"1px solid #d1fae5"}}>
@@ -11172,7 +11190,7 @@ function App() {
     "qimma_pending":"pending", "qimma_payments":"payments", "qimma_goods3":"goods3",
     "qimma_jard_ov":"jard_ov", "qimma_daily":"daily", "qimma_daily_open":"daily_open",
     "qimma_activity":"activity", "qimma_monthclose":"monthclose", "qimma_price_ov":"price_ov", "qimma_banktx":"banktx",
-    "qimma_pvt_loans":"pvt_loans"
+    "qimma_pvt_loans":"pvt_loans", "qimma_note_ov":"note_ov"
   };
   const exportBackup = () => {
     try {
@@ -11366,12 +11384,12 @@ function App() {
     (async ()=>{
       setSyncStatus("loading");
       await waitForFirebase();
-      const [inv, con, set, tx, ln, zk, pd, pay, gd, jov, dly, dlyo, act, mcl, pov, btx, dids, pcl] = await Promise.all([
+      const [inv, con, set, tx, ln, zk, pd, pay, gd, jov, dly, dlyo, act, mcl, pov, btx, dids, pcl, nov] = await Promise.all([
         gsRead("investors"), gsRead("contracts"), gsRead("settings"),
         gsRead("txlist"), gsRead("loans"), gsRead("zakat"),
         gsRead("pending"), gsRead("payments"), gsRead("goods3"), gsRead("jard_ov"),
         gsRead("daily"), gsRead("daily_open"), gsRead("activity"), gsRead("monthclose"), gsRead("price_ov"), gsRead("banktx"),
-        gsRead("doneIds"), gsRead("pastClients")
+        gsRead("doneIds"), gsRead("pastClients"), gsRead("note_ov")
       ]);
       if (inv) { setInvestorsRaw(inv); saveLS("qimma_investors", inv); }
       if (con) { setContractsRaw(con); saveLS("qimma_contracts", con); }
@@ -11391,6 +11409,7 @@ function App() {
       if (btx) { setBankTxRaw(_arr(btx)); saveLS("qimma_banktx", JSON.stringify(_arr(btx))); }
       if (dids) { setDoneIdsRaw(_arr(dids)); localStorage.setItem("qimma_done", JSON.stringify(_arr(dids))); }
       if (pcl) { setPastClientsRaw(_arr(pcl)); saveLS("qimma_past_clients", _arr(pcl)); }
+      if (nov) { localStorage.setItem("qimma_note_ov", JSON.stringify(nov)); }
       setSyncStatus("idle");
 
       // ═══ مزامنة لحظية: Firestore onSnapshot ═══
@@ -11424,6 +11443,7 @@ function App() {
               case "pastClients": setPastClientsRaw(_arr(data)); saveLS("qimma_past_clients", _arr(data)); break;
               case "goods3": localStorage.setItem("qimma_goods3", JSON.stringify(data)); break;
               case "price_ov": localStorage.setItem("qimma_price_ov", JSON.stringify(data)); break;
+              case "note_ov": localStorage.setItem("qimma_note_ov", JSON.stringify(data)); break;
               case "jard_ov": localStorage.setItem("qimma_jard_ov", JSON.stringify(data)); break;
             }
           });
@@ -11533,8 +11553,8 @@ function App() {
         {page==="overdue" && <CollectionPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="overdue" goBack={()=>setPage("contracts")}/>}
         {page==="contracts" && <ContractsPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={publicPayments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);addPastClientFromContract(c);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
         {page==="portfolio" && <MonthlyPortfolio contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={publicContracts} investors={publicInvestors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={publicPayments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>}/>}
-        {page==="accounts" && <AccountsPage contracts={privateAccMode?activeContracts:publicContracts} investors={privateAccMode?investors:publicInvestors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={privateAccMode?payments:publicPayments} setPayments={setPayments} setContracts={setContracts} toast={toast} goBack={()=>{setPage(privateAccMode?"dashboard":"contracts");setPrivateAccMode(false);}} privateAccMode={privateAccMode} initialSubTab="inv"/>}
-        {page==="investorsList" && <AccountsPage contracts={publicContracts} investors={publicInvestors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={publicPayments} setPayments={setPayments} setContracts={setContracts} toast={toast} goBack={()=>setPage("contracts")} privateAccMode={false} initialSubTab="list"/>}
+        {page==="accounts" && <AccountsPage contracts={privateAccMode?activeContracts:publicContracts} investors={privateAccMode?investors:publicInvestors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={privateAccMode?payments:publicPayments} setPayments={setPayments} setContracts={setContracts} toast={toast} goBack={()=>{setPage(privateAccMode?"dashboard":"contracts");setPrivateAccMode(false);}} privateAccMode={privateAccMode} initialSubTab="inv" gsWrite={gsWrite}/>}
+        {page==="investorsList" && <AccountsPage contracts={publicContracts} investors={publicInvestors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={publicPayments} setPayments={setPayments} setContracts={setContracts} toast={toast} goBack={()=>setPage("contracts")} privateAccMode={false} initialSubTab="list" gsWrite={gsWrite}/>}
         {page==="goods" && <GoodsPage investors={publicInvestors} contracts={publicContracts} toast={toast} gsWrite={gsWrite} goBack={()=>setPage("contracts")}/>}
         {/* البوصلة المالية انتقلت لتبويب داخل المحفظة الشهرية */}
         {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast} setPage={setPage}/>}
