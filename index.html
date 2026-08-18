@@ -4274,10 +4274,10 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
   const farq = totalSalib - totalMojab;
 
   const thS = {...styles.th, padding:"10px 14px"};
-  const tdS = {...styles.td, padding:"9px 12px", verticalAlign:"middle"};
-  const inpS = (color)=>({...styles.input,width:"100%",maxWidth:130,textAlign:"center",borderColor:color,color,fontWeight:700,padding:"6px 8px",fontSize:15});
-  // مربع للعرض فقط (شكل جمالي مثل المربعات بدون إمكانية الكتابة)
-  const boxRO = (color)=>({display:"inline-block",width:"100%",maxWidth:130,textAlign:"center",border:"1.5px solid "+color,borderRadius:8,color,fontWeight:800,padding:"7px 8px",fontSize:15,background:"#fafafa"});
+  const tdS = {...styles.td, padding:"9px 8px", verticalAlign:"middle"};
+  const inpS = (color)=>({width:"100%",maxWidth:160,textAlign:"center",borderColor:color,color,fontWeight:800,padding:"12px 10px",fontSize:18,borderRadius:10,border:"2px solid "+color,outline:"none",fontFamily:"IBM Plex Sans Arabic,Arial",boxSizing:"border-box",background:"#fff",appearance:"none",MozAppearance:"textfield",WebkitAppearance:"none"});
+  // مربع للعرض فقط
+  const boxRO = (color)=>({display:"inline-block",width:"100%",maxWidth:160,textAlign:"center",border:"2px solid "+color,borderRadius:10,color,fontWeight:800,padding:"12px 10px",fontSize:18,background:"#fafafa"});
 
   const Row = ({name,mojab,salib,onMojab,onSalib,auto,isInv,hint,i,autoSalib,hideMojab}) => (
     <tr style={{background:i%2===0?C.white:C.gray}}>
