@@ -9910,19 +9910,23 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
     })
     .filter(c=>c.left>0);
 
-  // حساب بداية ونهاية الدورة الحالية (21 ← 20)
-  const _today = new Date();
-  const _cycleFrom = _today.getDate() >= 21
-    ? new Date(_today.getFullYear(), _today.getMonth(), 21)
-    : new Date(_today.getFullYear(), _today.getMonth()-1, 21);
-  const _cycleFromStr = _cycleFrom.getFullYear()+"-"+String(_cycleFrom.getMonth()+1).padStart(2,"0")+"-21";
+  // حساب بداية الدورة الحالية (21 ← 20)
+  var _td = new Date();
+  var _cyStart;
+  if(_td.getDate() >= 21){
+    _cyStart = _td.getFullYear()+"-"+String(_td.getMonth()+1).padStart(2,"0")+"-21";
+  } else {
+    var _pm = new Date(_td.getFullYear(), _td.getMonth()-1, 21);
+    _cyStart = _pm.getFullYear()+"-"+String(_pm.getMonth()+1).padStart(2,"0")+"-21";
+  }
 
   // إحصائيات الدورة (محصّل الشهر)
-  const dayPays=(payments||[]).filter(p=>{
-    if(!p.date || p.date < _cycleFromStr) return false;
+  var _invMap = {};
+  contracts.forEach(function(c){ _invMap[c.id] = c.investorId; });
+  const dayPays=(payments||[]).filter(function(p){
+    if(!p.date || p.date < _cyStart) return false;
     if(selInv){
-      const con=activeContracts.find(c=>c.id===p.contractId);
-      return con && String(con.investorId)===String(selInv);
+      return String(_invMap[p.contractId]||"") === String(selInv);
     }
     return true;
   });
