@@ -4068,18 +4068,18 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                     <td style={{...styles.td,fontWeight:800,color:tx.balance>=0?C.teal:C.red}}>
                       {SAR(tx.balance)}
                     </td>
-                    <td style={styles.td}>
+                    <td style={{...styles.td,whiteSpace:"nowrap"}}>
                       {!tx.auto && (
-                        <button style={{...styles.btn(C.red),fontSize:13,padding:"3px 8px"}}
-                          onClick={()=>delTx(tx.id)}>🗑️</button>
+                        <button style={{background:"#fee2e2",color:"#dc2626",border:"1px solid #fca5a5",borderRadius:6,padding:"5px 12px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}
+                          onClick={()=>delTx(tx.id)}>حذف</button>
                       )}
                       {tx.auto && (
-                        <div style={{display:"flex",gap:4,flexWrap:"wrap",justifyContent:"center"}}>
-                          <button style={{...styles.btn(C.teal),fontSize:11,padding:"3px 7px"}} onClick={()=>{
+                        <div style={{display:"flex",gap:4,justifyContent:"center"}}>
+                          <button style={{background:"#e0f2fe",color:"#0369a1",border:"1px solid #7dd3fc",borderRadius:6,padding:"5px 12px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>{
                             if(tx.type==="installments"){ setExpandRow(expandRow===tx.id?null:tx.id); }
                             else if(tx.type==="contract"){ goBack(); }
-                          }}>✏️</button>
-                          <button style={{...styles.btn(C.red),fontSize:11,padding:"3px 7px"}} onClick={()=>{
+                          }}>تعديل</button>
+                          <button style={{background:"#fee2e2",color:"#dc2626",border:"1px solid #fca5a5",borderRadius:6,padding:"5px 12px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>{
                             if(tx.type==="installments"){
                               if(!window.confirm("حذف جميع سدادات هذا الشهر ("+tx.details.length+" سداد) من كشف المستثمر؟")) return;
                               const payIds = tx.details.map(d=>String(d.payId)).filter(Boolean);
@@ -4091,7 +4091,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                               setContracts(prev=>prev.map(c=>String(c.id)===String(cId)?{...c,excludeFromStatement:true}:c));
                               toast("🗑️ تم استثناء العقد من الكشف");
                             }
-                          }}>🗑️</button>
+                          }}>حذف</button>
                         </div>
                       )}
                     </td>
