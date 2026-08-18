@@ -4069,31 +4069,30 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                       {SAR(tx.balance)}
                     </td>
                     <td style={{...styles.td,whiteSpace:"nowrap"}}>
-                      {!tx.auto && (
-                        <button style={{background:"#fee2e2",color:"#dc2626",border:"1px solid #fca5a5",borderRadius:6,padding:"5px 12px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}
-                          onClick={()=>delTx(tx.id)}>حذف</button>
-                      )}
-                      {tx.auto && (
-                        <div style={{display:"flex",gap:4,justifyContent:"center"}}>
-                          <button style={{background:"#e0f2fe",color:"#0369a1",border:"1px solid #7dd3fc",borderRadius:6,padding:"5px 12px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>{
+                      <div style={{display:"flex",gap:4,justifyContent:"center"}}>
+                        {tx.auto ? (
+                          <button style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"1px solid rgba(200,146,42,0.3)",borderRadius:6,padding:"5px 14px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>{
                             if(tx.type==="installments"){ setExpandRow(expandRow===tx.id?null:tx.id); }
                             else if(tx.type==="contract"){ goBack(); }
                           }}>تعديل</button>
-                          <button style={{background:"#fee2e2",color:"#dc2626",border:"1px solid #fca5a5",borderRadius:6,padding:"5px 12px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>{
-                            if(tx.type==="installments"){
-                              if(!window.confirm("حذف جميع سدادات هذا الشهر ("+tx.details.length+" سداد) من كشف المستثمر؟")) return;
-                              const payIds = tx.details.map(d=>String(d.payId)).filter(Boolean);
-                              setPayments(prev=>prev.filter(p=>!payIds.includes(String(p.id))));
-                              toast("🗑️ تم حذف "+payIds.length+" سداد");
-                            } else if(tx.type==="contract"){
-                              if(!window.confirm("حذف هذا العقد من كشف المستثمر؟")) return;
-                              const cId = tx.id.replace("auto_","");
-                              setContracts(prev=>prev.map(c=>String(c.id)===String(cId)?{...c,excludeFromStatement:true}:c));
-                              toast("🗑️ تم استثناء العقد من الكشف");
-                            }
-                          }}>حذف</button>
-                        </div>
-                      )}
+                        ) : (
+                          <button style={{background:"#1a1a2e",color:"rgba(224,184,92,0.35)",border:"1px solid rgba(200,146,42,0.1)",borderRadius:6,padding:"5px 14px",fontSize:11,fontWeight:800,fontFamily:"IBM Plex Sans Arabic,Arial",cursor:"default"}}>تعديل</button>
+                        )}
+                        <button style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"1px solid rgba(200,146,42,0.3)",borderRadius:6,padding:"5px 14px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>{
+                          if(!tx.auto){ delTx(tx.id); return; }
+                          if(tx.type==="installments"){
+                            if(!window.confirm("حذف جميع سدادات هذا الشهر ("+tx.details.length+" سداد) من كشف المستثمر؟")) return;
+                            const payIds = tx.details.map(d=>String(d.payId)).filter(Boolean);
+                            setPayments(prev=>prev.filter(p=>!payIds.includes(String(p.id))));
+                            toast("🗑️ تم حذف "+payIds.length+" سداد");
+                          } else if(tx.type==="contract"){
+                            if(!window.confirm("حذف هذا العقد من كشف المستثمر؟")) return;
+                            const cId = tx.id.replace("auto_","");
+                            setContracts(prev=>prev.map(c=>String(c.id)===String(cId)?{...c,excludeFromStatement:true}:c));
+                            toast("🗑️ تم استثناء العقد من الكشف");
+                          }
+                        }}>حذف</button>
+                      </div>
                     </td>
                   </tr>
                 );
