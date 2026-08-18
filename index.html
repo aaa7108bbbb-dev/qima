@@ -1666,6 +1666,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   const [invSearch,setInvSearch] = useState("");
   const [reportMode,setReportMode] = useState("detailed"); // detailed or brief
   const [payFilter,setPayFilter] = useState(""); // "" | نقدي | تحويل | صرافة | شيكات | شيكات:الراجحي etc
+  const [showInvFilters,setShowInvFilters] = useState(false); // إظهار/إخفاء فلاتر كشف المستثمر
   const _matchInv = c => !filterInv || String(c.investorId)===String(filterInv);
   const allFiltered = contracts.filter(c=>!c.deleted && _matchInv(c) && (c.client.includes(search)||(investors.find(i=>String(i.id)===String(c.investorId))?.name||"").includes(search)));
   const deletedList = contracts.filter(c=>c.deleted && _matchInv(c) && (c.client.includes(search)||(investors.find(i=>String(i.id)===String(c.investorId))?.name||"").includes(search)));
@@ -2129,13 +2130,37 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               <svg width="14" height="14" viewBox="0 0 24 24"><g fill="none" stroke={reportMode==="brief"?"#e0b85c":"#94a3b8"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6.2 3.2h7.4l4.2 4.2V20.8H6.2Z"/><path d="M13.6 3.2v4.2h4.2M9.2 12.4h5.6M9.2 15.8h3.8"/></g></svg>مختصر</button>
           </div>
           {invSearch && invReportContracts.length>0 && (
+            <>
+            <button style={{width:40,height:40,borderRadius:10,border:showInvFilters?"2px solid #c8922a":"1px solid #e2e8f0",background:showInvFilters?"#fffbf0":"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}} onClick={()=>setShowInvFilters(!showInvFilters)}>
+              <svg width="18" height="18" viewBox="0 0 24 24"><g fill="none" stroke={showInvFilters?"#c8922a":"#64748b"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M7 12h10M10 18h4"/></g></svg>
+            </button>
             <button style={{padding:"8px 14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#c8922a,#a87520)",color:"#fff",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center"}} onClick={()=>printInvReport()}>
               <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9V4h10v5M6 18H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1M7 15h10v5H7Z"/></g></svg>
             </button>
+            <button style={{padding:"8px 14px",borderRadius:10,border:"none",background:"#25d366",color:"#fff",fontWeight:800,fontSize:12,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:4}} onClick={()=>{
+              const NUM=n=>Math.round(+(n||0)).toLocaleString("en-US");
+              const cNum=c=>{if(c.contractType==="migrated"){if(c.num)return c.num;if(c.oldNum)return c.oldNum;var m=String(c.note||"").match(/(\d+)/);return m?m[1]:"—";}return c.num||"—";};
+              const invName=invSearch==="__all__"?"كل المستثمرين":invSearch;
+              let msg="*كشف المستثمر — "+invName+"*\n";
+              msg+="📅 "+todayLocal()+"\n";
+              msg+="العقود: "+invReportContracts.length+"\n\n";
+              invReportContracts.forEach((c,i)=>{
+                const paid=_getPaid(payments,c.id);const left=Math.max(0,(c.totalInst||0)-paid);
+                msg+=(i+1)+". "+c.client+" | عقد#"+cNum(c)+" | قسط:"+NUM(c.instAmt||0)+" | متبقي:"+NUM(left)+"\n";
+              });
+              const tI=invReportContracts.reduce((s,c)=>s+(c.instAmt||0),0);
+              const tL=invReportContracts.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
+              msg+="\n*الإجمالي:* أقساط: "+NUM(tI)+" | متبقي: "+NUM(tL);
+              window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+            }}>
+              <svg width="15" height="15" viewBox="0 0 24 24"><g fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></g></svg>
+              تصدير
+            </button>
+            </>
           )}
         </div>
-        {/* فلتر نوع السداد */}
-        {invSearch && (
+        {/* فلتر نوع السداد — مخفي */}
+        {invSearch && showInvFilters && (
           <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:12}}>
             {[{v:"",l:"الكل"},{v:"نقدي",l:"نقدي"},{v:"تحويل",l:"تحويل"},{v:"صرافة",l:"صرافة"},{v:"شيكات",l:"شيكات"},{v:"المقاصة",l:"المقاصة"},{v:"استقطاع",l:"استقطاع"}].map(f=>(
               <button key={f.v} onClick={()=>setPayFilter(payFilter===f.v && f.v?"":f.v)}
