@@ -4268,8 +4268,8 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
   });
   otherRows.forEach(r=>{
     const v = getVal(r.key)||0;
-    // الأصول (كاش/بنك/بضاعة/سلف) دائماً "لي عنده"
-    totalSalib+=Math.abs(v);
+    // الأصول (كاش/بنك/بضاعة/سلف): لو موجبة = "لي عنده"، لو سالبة = "له عندي"
+    if(v>=0) totalSalib+=v; else totalMojab+=Math.abs(v);
   });
   const farq = totalSalib - totalMojab;
 
@@ -4408,9 +4408,9 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
                 }
                 if(row.key==="cards"){
                   return <Row key={row.key} i={i} name={row.name} hint={row.hint}
-                    mojab={""} salib={Math.abs(v)}
+                    mojab={v<0?Math.abs(v):""} salib={v>=0?v:""}
                     onMojab={()=>{}} onSalib={()=>{}}
-                    autoSalib={true} hideMojab={true}/>;
+                    auto={true}/>;
                 }
                 return <Row key={row.key} i={i} name={row.name} hint={row.hint}
                   mojab={v>=0?v:""}
