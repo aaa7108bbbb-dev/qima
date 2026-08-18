@@ -1532,35 +1532,35 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         const gName = cleanInv(grp[0]);
         const pb = idx>0 ? ' class="page-break"' : '';
         if(reportMode==="brief"){
-          let rows = grp.map((c,i)=>`<tr><td>${i+1}</td><td>${c.client||""}</td><td>${c.cPhone||""}</td><td>${cNum(c)}</td><td>${NUM(c.instAmt||0)}</td><td style="width:100px"></td></tr>`).join("");
+          let rows = grp.map((c,i)=>`<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${c.cPhone||""}</td><td>${NUM(c.instAmt||0)}</td><td style="width:100px"></td></tr>`).join("");
           const tot = grp.reduce((s,c)=>s+(c.instAmt||0),0);
           rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="4">الإجمالي</td><td>${NUM(tot)}</td><td></td></tr>`;
-          content += `<div${pb}><h2>${gName} — (${grp.length} عقد)</h2><table><thead><tr><th>#</th><th>اسم الزبون</th><th>رقم الجوال</th><th>رقم العقد</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+          content += `<div${pb}><h2>${gName} — (${grp.length} عقد)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${rows}</tbody></table></div>`;
         } else {
           let rows = grp.map((c,i)=>{
             const paid=_getPaid(payments,c.id); const left=Math.max(0,(c.totalInst||0)-paid);
-            return `<tr><td>${i+1}</td><td>${c.client||""}</td><td>${cNum(c)}</td><td>${NUM(c.amount||0)}</td><td>${NUM(c.totalInst||0)}</td><td>${NUM(c.instAmt||0)}</td><td style="color:#15803d">${NUM(paid)}</td><td style="color:#dc2626">${NUM(left)}</td></tr>`;
+            return `<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${NUM(c.amount||0)}</td><td>${NUM(c.totalInst||0)}</td><td>${NUM(c.instAmt||0)}</td><td style="color:#15803d">${NUM(paid)}</td><td style="color:#dc2626">${NUM(left)}</td></tr>`;
           }).join("");
           const tA=grp.reduce((s,c)=>s+(c.amount||0),0), tT=grp.reduce((s,c)=>s+(c.totalInst||0),0), tI=grp.reduce((s,c)=>s+(c.instAmt||0),0), tP=grp.reduce((s,c)=>s+_getPaid(payments,c.id),0), tL=grp.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
           rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="3">الإجمالي</td><td>${NUM(tA)}</td><td>${NUM(tT)}</td><td>${NUM(tI)}</td><td style="color:#15803d">${NUM(tP)}</td><td style="color:#dc2626">${NUM(tL)}</td></tr>`;
-          content += `<div${pb}><h2>${gName} — (${grp.length} عقد)</h2><table><thead><tr><th>#</th><th>اسم الزبون</th><th>رقم العقد</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>المحصّل</th><th>المتبقي</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+          content += `<div${pb}><h2>${gName} — (${grp.length} عقد)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>المحصّل</th><th>المتبقي</th></tr></thead><tbody>${rows}</tbody></table></div>`;
         }
       });
     } else {
       // مستثمر فردي
       if(reportMode==="brief"){
-        let rows = list.map((c,i)=>`<tr><td>${i+1}</td><td>${c.client||""}</td><td>${c.cPhone||""}</td><td>${cNum(c)}</td><td>${NUM(c.instAmt||0)}</td><td style="width:100px"></td></tr>`).join("");
+        let rows = list.map((c,i)=>`<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${c.cPhone||""}</td><td>${NUM(c.instAmt||0)}</td><td style="width:100px"></td></tr>`).join("");
         const tot = list.reduce((s,c)=>s+(c.instAmt||0),0);
         rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="4">الإجمالي</td><td>${NUM(tot)}</td><td></td></tr>`;
-        content = `<h2>كشف المستثمر — ${invName} (مختصر)</h2><table><thead><tr><th>#</th><th>اسم الزبون</th><th>رقم الجوال</th><th>رقم العقد</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${rows}</tbody></table>`;
+        content = `<h2>كشف المستثمر — ${invName} (مختصر)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${rows}</tbody></table>`;
       } else {
         let rows = list.map((c,i)=>{
           const paid=_getPaid(payments,c.id); const left=Math.max(0,(c.totalInst||0)-paid);
-          return `<tr><td>${i+1}</td><td>${c.client||""}</td><td>${cNum(c)}</td><td>${NUM(c.amount||0)}</td><td>${NUM(c.totalInst||0)}</td><td>${NUM(c.instAmt||0)}</td><td style="color:#15803d">${NUM(paid)}</td><td style="color:#dc2626">${NUM(left)}</td></tr>`;
+          return `<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${NUM(c.amount||0)}</td><td>${NUM(c.totalInst||0)}</td><td>${NUM(c.instAmt||0)}</td><td style="color:#15803d">${NUM(paid)}</td><td style="color:#dc2626">${NUM(left)}</td></tr>`;
         }).join("");
         const tA=list.reduce((s,c)=>s+(c.amount||0),0), tT=list.reduce((s,c)=>s+(c.totalInst||0),0), tI=list.reduce((s,c)=>s+(c.instAmt||0),0), tP=list.reduce((s,c)=>s+_getPaid(payments,c.id),0), tL=list.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
         rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="3">الإجمالي</td><td>${NUM(tA)}</td><td>${NUM(tT)}</td><td>${NUM(tI)}</td><td style="color:#15803d">${NUM(tP)}</td><td style="color:#dc2626">${NUM(tL)}</td></tr>`;
-        content = `<h2>كشف المستثمر — ${invName} (مفصل)</h2><table><thead><tr><th>#</th><th>اسم الزبون</th><th>رقم العقد</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>المحصّل</th><th>المتبقي</th></tr></thead><tbody>${rows}</tbody></table>`;
+        content = `<h2>كشف المستثمر — ${invName} (مفصل)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>المحصّل</th><th>المتبقي</th></tr></thead><tbody>${rows}</tbody></table>`;
       }
     }
     const w = window.open("","_blank");
@@ -2258,80 +2258,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         <div style={{width:4,height:24,borderRadius:2,background:"linear-gradient(180deg,#c8922a,#a87520)"}}/>
         <span style={{fontSize:19,fontWeight:900,color:"#1a1a2e"}}>العقود</span>
         <span style={{fontSize:13,color:"#94a3b8",fontWeight:600}}>{sortedFiltered.length} عقد</span>
-        <button onClick={exportExcel} style={{marginRight:"auto",padding:"6px 14px",borderRadius:8,border:"1.5px solid #e2e8f0",background:"#fff",color:"#64748b",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
-          <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#16a34a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6.2 3.2h7.4l4.2 4.2V20.8H6.2Z"/><path d="M13.6 3.2v4.2h4.2M9 12l4 5M13 12l-4 5"/></g></svg>
-          Excel</button>
-        <button onClick={exportContacts} style={{padding:"6px 14px",borderRadius:8,border:"1.5px solid #c8922a",background:"#fffbf0",color:"#c8922a",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
-          📱 جهات الاتصال</button>
-        <button onClick={()=>setWaCampaign(true)} style={{padding:"6px 14px",borderRadius:8,border:"1.5px solid #25d366",background:"#f0fdf4",color:"#16a34a",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
-          💬 حملة واتساب</button>
       </div>
 
-      {/* مودال حملة واتساب */}
-      {waCampaign && (
-        <Modal wide onClose={()=>setWaCampaign(false)}>
-          <div style={{padding:20}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-              <div style={{fontSize:19,fontWeight:800,color:"#1a1a2e"}}>💬 حملة واتساب</div>
-              <button onClick={()=>setWaCampaign(false)} style={{padding:"6px 12px",borderRadius:8,border:"1px solid #e2e8f0",background:"#fff",color:"#6b7280",fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>✕ إغلاق</button>
-            </div>
-
-            {/* رفع الملف */}
-            <div style={{background:"#f8fafc",borderRadius:12,padding:16,marginBottom:16,border:"1px solid #e2e8f0"}}>
-              <div style={{fontSize:14,fontWeight:700,color:"#1f2937",marginBottom:8}}>1. ارفع ملف الزبائن (CSV أو Excel)</div>
-              <div style={{fontSize:12,color:"#6b7280",marginBottom:10}}>الملف لازم يكون فيه عمودين: الاسم والجوال</div>
-              <input ref={waFileRef} type="file" accept=".csv,.txt,.xls,.xlsx" onChange={e=>{if(e.target.files[0])parseWaFile(e.target.files[0]);}} style={{display:"none"}}/>
-              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                <button onClick={()=>waFileRef.current?.click()} style={{padding:"10px 20px",borderRadius:10,border:"none",background:"#c8922a",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>📂 اختار ملف</button>
-                <button onClick={()=>{
-                  const seen=new Set(); const list=[];
-                  contracts.filter(c=>!c.deleted).forEach(c=>{
-                    const phone=(c.cPhone||c.phone||"").replace(/\s|-/g,"");
-                    if(!phone||phone.length<9||seen.has(phone))return; seen.add(phone);
-                    let p=phone; if(p.startsWith("05"))p="966"+p.slice(1); else if(p.startsWith("5")&&p.length===9)p="966"+p;
-                    list.push({name:c.client||"",phone:p});
-                  });
-                  setWaContacts(list); setWaSent(new Set());
-                  toast("✅ تم تحميل "+list.length+" زبون من النظام");
-                }} style={{padding:"10px 20px",borderRadius:10,border:"1.5px solid #c8922a",background:"#fffbf0",color:"#c8922a",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>📋 زبائن النظام الحاليين</button>
-              </div>
-              {waContacts.length>0 && <div style={{marginTop:8,fontSize:13,fontWeight:700,color:"#16a34a"}}>✅ {waContacts.length} جهة اتصال جاهزة · تم الإرسال: {waSent.size}</div>}
-            </div>
-
-            {/* الرسالة */}
-            <div style={{background:"#f8fafc",borderRadius:12,padding:16,marginBottom:16,border:"1px solid #e2e8f0"}}>
-              <div style={{fontSize:14,fontWeight:700,color:"#1f2937",marginBottom:8}}>2. الرسالة <span style={{fontSize:11,color:"#94a3b8",fontWeight:400}}>({"{name}"} = اسم الزبون)</span></div>
-              <textarea value={waMsg} onChange={e=>setWaMsg(e.target.value)} style={{width:"100%",minHeight:100,padding:12,borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:14,fontFamily:"inherit",outline:"none",resize:"vertical",boxSizing:"border-box",lineHeight:1.8}}/>
-            </div>
-
-            {/* قائمة الزبائن */}
-            {waContacts.length>0 && (
-              <div>
-                <div style={{display:"flex",gap:8,marginBottom:10,alignItems:"center"}}>
-                  <div style={{fontSize:14,fontWeight:700,color:"#1f2937"}}>3. أرسل</div>
-                  <input placeholder="بحث بالاسم أو الرقم..." value={waSearch} onChange={e=>setWaSearch(e.target.value)}
-                    style={{flex:1,padding:"8px 12px",borderRadius:8,border:"1px solid #e2e8f0",fontSize:13,fontFamily:"inherit",outline:"none"}}/>
-                </div>
-                <div style={{maxHeight:400,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:12}}>
-                  {waContacts.filter(c=>!waSearch||c.name.includes(waSearch)||c.phone.includes(waSearch)).map((c,i)=>(
-                    <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",borderBottom:"1px solid #f1f5f9",background:waSent.has(c.phone)?"#f0fdf4":"#fff"}}>
-                      <div>
-                        <div style={{fontWeight:700,fontSize:14,color:"#1f2937"}}>{c.name}</div>
-                        <div style={{fontSize:12,color:"#6b7280",fontFamily:"monospace"}}>{c.phone}</div>
-                      </div>
-                      <button onClick={()=>sendWa(c)} style={{padding:"8px 16px",borderRadius:8,border:"none",
-                        background:waSent.has(c.phone)?"#dcfce7":"#25d366",color:waSent.has(c.phone)?"#16a34a":"#fff",
-                        fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                        {waSent.has(c.phone)?"✓ تم":"💬 أرسل"}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </Modal>
-      )}
       <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
         <div style={{flex:1,minWidth:140,position:"relative"}}>
           <input style={{width:"100%",padding:"12px 14px 12px 36px",borderRadius:12,border:"1.5px solid #e2e8f0",fontSize:15,fontFamily:"IBM Plex Sans Arabic,Arial",background:"#fff",boxSizing:"border-box"}} placeholder="بحث بالاسم..." value={search} onChange={e=>setSearch(e.target.value)}/>
@@ -2345,27 +2273,26 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         </select>
         {filterInv && <button style={{padding:"8px 12px",borderRadius:10,border:"none",background:"#fee2e2",color:"#dc2626",fontWeight:800,fontSize:14,cursor:"pointer"}} onClick={()=>setFilterInv("")}>✕</button>}
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:7,marginBottom:16}}>
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:13,fontWeight:700,color:"#4a5568",marginBottom:8}}>اختار نوع العقود:</div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
         {[
-          {id:"active",label:"مستمرة",count:activeCount,icon:'<path d="M6.2 3.2h7.4l4.2 4.2V20.8H6.2Z"/><path d="M13.6 3.2v4.2h4.2M9.2 12.4h5.6M9.2 15.8h3.8"/>',dot:'<circle cx="15.6" cy="17.6" r="1.3"/>'},
-          {id:"done",label:"منتهية",count:completedCount,icon:'<circle cx="12" cy="12" r="8.4"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/>',dot:''},
-          {id:"defer",label:"المؤجل",count:deferCount,icon:'<circle cx="12" cy="12" r="8.4"/><path d="M12 7.5V12l3 2"/>',dot:''},
-          {id:"deleted",label:"محذوفة",count:deletedCount,icon:'<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',dot:''}
+          {id:"active",label:"مستمرة",count:activeCount},
+          {id:"done",label:"منتهية",count:completedCount},
+          {id:"defer",label:"المؤجل",count:deferCount},
+          {id:"deleted",label:"محذوفة",count:deletedCount}
         ].map(t=>{
           const on = statusTab===t.id;
           return (
-          <button key={t.id} onClick={()=>setStatusTab(t.id)} style={{padding:"12px 6px",borderRadius:12,
-            border:on?"1.5px solid #c8922a":"1.5px solid #e6eaf0",
-            background:on?"linear-gradient(150deg,#fefbf3,#fef7e8)":"#fff",
-            cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",textAlign:"center",transition:"all 0.15s"}}>
-            <div style={{width:30,height:30,borderRadius:9,margin:"0 auto 6px",display:"flex",alignItems:"center",justifyContent:"center",
-              background:on?"#fff":"#f6f8fb",border:on?"1px solid #f0e0c0":"1px solid transparent"}}>
-              <svg width="17" height="17" viewBox="0 0 24 24"><g fill="none" stroke={on?"#c8922a":"#8b93a7"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{__html:t.icon}}/><g fill={on?"#a87520":"#6b7488"} dangerouslySetInnerHTML={{__html:t.dot}}/></svg>
-            </div>
-            <div style={{fontSize:12.5,fontWeight:700,color:on?"#92600a":"#64748b"}}>{t.label}</div>
-            <div style={{fontSize:16,fontWeight:900,marginTop:2,color:on?"#1a1a2e":"#334155"}}>({t.count})</div>
+          <button key={t.id} onClick={()=>setStatusTab(t.id)} style={{padding:"10px 20px",borderRadius:10,
+            border:on?"2px solid #c8922a":"1.5px solid #e2e8f0",
+            background:on?"#fffbf0":"#fff",
+            cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6,transition:"all 0.15s"}}>
+            <span style={{fontSize:15,fontWeight:900,color:on?"#1a1a2e":"#1f2937"}}>{t.label}</span>
+            <span style={{fontSize:14,fontWeight:800,color:on?"#c8922a":"#94a3b8"}}>({t.count})</span>
           </button>
         );})}
+        </div>
       </div>
       <div style={{background:"rgba(255,255,255,0.92)",backdropFilter:"blur(12px)",borderRadius:18,border:"1px solid rgba(200,146,42,0.1)",boxShadow:"0 4px 24px rgba(0,0,0,0.04)",overflow:"hidden"}}>
         <div style={{overflowX:"auto",maxHeight:"75vh",overflowY:"auto",position:"relative"}}>
@@ -3220,7 +3147,7 @@ function DeductionsSheet({contracts, investors, payments}){
   const [bankF,setBankF]=useState(""); // فلتر البنك (للشيكات والاستقطاع)
   const [sortBy,setSortBy]=useState(""); // ترتيب الكشف: "" | inv | bank
   const [dayF,setDayF]=useState(""); // فلتر يوم الاستحقاق
-  const [showFilters,setShowFilters]=useState(false); // إظهار/إخفاء فلاتر العقود
+  const [showFilters,setShowFilters]=useState(false); // إظهار/إخفاء كل الفلاتر
   const [statusF,setStatusF]=useState(new Set(["شهري","مستمر"])); // فلتر حالة العقد — مخفي
   const [showStatusF,setShowStatusF]=useState(false); // إظهار/إخفاء فلتر الحالة
   const getDueDay=c=>{if(!c.firstInst)return""; return String(new Date(c.firstInst).getDate());};
@@ -3353,7 +3280,7 @@ function DeductionsSheet({contracts, investors, payments}){
       const isRowDeduct = c.payType==="deduction"||pm==="استقطاع";
       const bankVal = isRowDeduct ? "استقطاع" : isRowCheck ? (_bankOf(c)||"—") : pm;
       const checkCol = hasChecks ? `<td>${isRowCheck?"":""}</td>` : "";
-      return `<tr><td>${i+1}</td><td>${c.client}</td><td>${c.cPhone||"—"}</td><td>${cNum(c)}</td>${checkCol}<td>${bankVal}</td><td>${cleanInv(c.invName)}</td><td class="amt">${fmt(c.instAmt)}</td><td></td></tr>`;
+      return `<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client}</td><td>${c.cPhone||"—"}</td>${checkCol}<td>${bankVal}</td><td>${cleanInv(c.invName)}</td><td class="amt">${fmt(c.instAmt)}</td><td></td></tr>`;
     }).join("");
     const colCount = hasChecks ? 9 : 8;
     const win=window.open("","_blank");
@@ -3363,7 +3290,7 @@ function DeductionsSheet({contracts, investors, payments}){
     <div class="header"><div><div class="org">مؤسسة قمة الفرصة التجارية</div><div class="sub">بريدة - شارع الثلاثين</div><div class="sub">ج: 0555171283  ت: 0163839323</div></div>
     <div style="text-align:left"><div class="sub">كشف الاستقطاعات</div><div class="sub">التاريخ: ${(()=>{const d=new Date();return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0");})()}</div></div></div>
     <div class="title">${titleLabel}</div>
-    <table><thead><tr><th>#</th><th>اسم الزبون</th><th>رقم الجوال</th><th>رقم العقد</th>${hasChecks?`<th>رقم الشيك</th>`:""}<th>البنك</th><th>المستثمر</th><th>القسط</th><th>ملاحظات</th></tr></thead>
+    <table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th>${hasChecks?`<th>رقم الشيك</th>`:""}<th>البنك</th><th>المستثمر</th><th>القسط</th><th>ملاحظات</th></tr></thead>
     <tbody>${body||`<tr><td colspan="${colCount}" style="text-align:center;color:#666">لا يوجد بيانات</td></tr>`}
     <tr style="font-weight:900;border-top:2px solid #000"><td colspan="${colCount-2}">الإجمالي</td><td class="amt">${fmt(totalInst)}</td><td></td></tr></tbody></table>
     <div class="foot">طُبع بتاريخ ${new Date().toLocaleString("en-US")}</div>
@@ -3378,49 +3305,39 @@ function DeductionsSheet({contracts, investors, payments}){
         <div style={{fontSize:18,fontWeight:800,display:"flex",alignItems:"center",gap:8}}>
           <svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg>
           {payLabel} ({dRows.length})</div>
-        <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-          <span style={{fontSize:13,fontWeight:700,color:"#4a5568"}}>ترتيب الكشف:</span>
-          <select value={sortBy} onChange={e=>setSortBy(e.target.value)}
-            style={{padding:"8px 12px",borderRadius:8,border:sortBy?"2px solid #c8922a":"1px solid #e2e8f0",fontSize:14,fontWeight:700,
-              fontFamily:"IBM Plex Sans Arabic,Arial",cursor:"pointer",background:sortBy?"#fffbf0":"#fff",color:sortBy?"#c8922a":"#4a5568",outline:"none"}}>
-            <option value="">بدون ترتيب</option>
-            <option value="inv">حسب المستثمر</option>
-            <option value="bank">حسب البنك</option>
-          </select>
-          <button onClick={()=>setShowStatusF(!showStatusF)} style={{width:32,height:32,borderRadius:8,border:showStatusF||statusF.size!==2||!statusF.has("شهري")||!statusF.has("مستمر")?"2px solid #c8922a":"1px solid #e2e8f0",background:showStatusF?"#fffbf0":"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>
-            <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke={showStatusF||statusF.size!==2||!statusF.has("شهري")||!statusF.has("مستمر")?"#c8922a":"#94a3b8"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M7 12h10M10 18h4"/></g></svg>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <button onClick={()=>setShowFilters(!showFilters)}
+            style={{width:40,height:40,borderRadius:10,border:showFilters?"2px solid #c8922a":"1px solid #e2e8f0",background:showFilters?"#fffbf0":"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>
+            <svg width="18" height="18" viewBox="0 0 24 24"><g fill="none" stroke={showFilters?"#c8922a":"#64748b"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M7 12h10M10 18h4"/></g></svg>
           </button>
           <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px",display:"inline-flex",alignItems:"center",gap:6}} onClick={printSheet}>
             <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9V4h10v5M6 18H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1M7 15h10v5H7Z"/></g></svg>
             طباعة الكشف</button>
         </div>
       </div>
-      {/* فلتر حالة العقد — مخفي */}
-      {showStatusF && (
-        <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8,alignItems:"center"}}>
-          {["شهري","مستمر","مؤجل","منتهي"].map(s=>(
-            <button key={s} onClick={()=>toggleStatus(s)}
-              style={{padding:"6px 14px",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
-                border:statusF.has(s)?"2px solid #c8922a":"1px solid #e2e8f0",
-                background:statusF.has(s)?"#fffbf0":"#fff",
-                color:statusF.has(s)?"#c8922a":"#64748b"}}>{s}</button>
-          ))}
-        </div>
-      )}
-      {/* زر إظهار/إخفاء الفلاتر */}
-      <div style={{textAlign:"center",marginBottom:showFilters?10:14}}>
-        <button onClick={()=>setShowFilters(!showFilters)}
-          style={{padding:"6px 18px",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
-            border:showFilters?"2px solid #c8922a":"1px solid #e2e8f0",
-            background:showFilters?"#fffbf0":"#fff",
-            color:showFilters?"#c8922a":"#64748b",display:"inline-flex",alignItems:"center",gap:6}}>
-          <svg width="14" height="14" viewBox="0 0 24 24"><g fill="none" stroke={showFilters?"#c8922a":"#94a3b8"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M7 12h10M10 18h4"/></g></svg>
-          {showFilters?"إخفاء الفلاتر ▲":"فلترة ▼"}
-        </button>
-      </div>
-      {/* فلاتر السداد + البنك + يوم الاستحقاق — مخفية افتراضياً */}
+      {/* كل الفلاتر مخفية */}
       {showFilters && <>
-      {/* فلتر نوع السداد — اختيار متعدد */}
+      <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:8}}>
+        <span style={{fontSize:13,fontWeight:700,color:"#4a5568"}}>ترتيب الكشف:</span>
+        <select value={sortBy} onChange={e=>setSortBy(e.target.value)}
+          style={{padding:"8px 12px",borderRadius:8,border:sortBy?"2px solid #c8922a":"1px solid #e2e8f0",fontSize:14,fontWeight:700,
+            fontFamily:"IBM Plex Sans Arabic,Arial",cursor:"pointer",background:sortBy?"#fffbf0":"#fff",color:sortBy?"#c8922a":"#4a5568",outline:"none"}}>
+          <option value="">بدون ترتيب</option>
+          <option value="inv">حسب المستثمر</option>
+          <option value="bank">حسب البنك</option>
+        </select>
+      </div>
+      {/* فلتر حالة العقد */}
+      <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8,alignItems:"center"}}>
+        {["شهري","مستمر","مؤجل","منتهي"].map(s=>(
+          <button key={s} onClick={()=>toggleStatus(s)}
+            style={{padding:"6px 14px",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
+              border:statusF.has(s)?"2px solid #c8922a":"1px solid #e2e8f0",
+              background:statusF.has(s)?"#fffbf0":"#fff",
+              color:statusF.has(s)?"#c8922a":"#64748b"}}>{s}</button>
+        ))}
+      </div>
+      {/* فلتر نوع السداد */}
       <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
         {["استقطاع","شيكات","المقاصة","نقدي","تحويل","صرافة","الكل"].map(f=>(
           <button key={f} onClick={()=>togglePay(f)}
@@ -3430,7 +3347,7 @@ function DeductionsSheet({contracts, investors, payments}){
               color:payF.has(f)?"#c8922a":"#64748b"}}>{f}</button>
         ))}
       </div>
-      {/* فلتر البنك — يظهر مع الشيكات والاستقطاع */}
+      {/* فلتر البنك */}
       {showBanks && (
         <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8,alignItems:"center"}}>
           <span style={{fontSize:13,fontWeight:700,color:"#4a5568"}}>البنك:</span>
@@ -3686,8 +3603,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
           رجوع
         </button>
       )}
-      <div style={{fontSize:19,fontWeight:800,marginBottom:16}}>{privateAccMode?"🔐 الحسابات الخاصة":(initialSubTab==="list"?"👥 المستثمرون":"💰 الحسابات")}</div>
-
+      
       {/* Sub tabs - only show in privateAccMode */}
       {privateAccMode && <div style={{display:"flex",gap:0,marginBottom:20,background:"#141428",borderRadius:10,overflow:"hidden",border:"2px solid #c8922a",width:"fit-content",position:"sticky",top:0,zIndex:20}}>
         {subTabs.map(t=>(
@@ -6873,7 +6789,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
   return (
     <div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
-        <div style={{fontSize:19,fontWeight:800}}>👥 المستثمرون</div>
+        <div></div>
         <button style={styles.btn(C.teal)} onClick={()=>setShow(s=>!s)}>➕ إضافة مستثمر</button>
       </div>
       {show && (
@@ -8268,7 +8184,7 @@ function GoodsPage({investors, contracts, toast, gsWrite, goBack}) {
       )}
       {/* Header */}
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}}>
-        <div style={{fontSize:19,fontWeight:800}}>📦 البضاعة</div>
+        <div></div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
 
           <button style={styles.btn(C.teal)} onClick={()=>setShowAdd(s=>!s)}>➕ إضافة دعم</button>
