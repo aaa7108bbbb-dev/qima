@@ -3220,6 +3220,7 @@ function DeductionsSheet({contracts, investors, payments}){
   const [bankF,setBankF]=useState(""); // فلتر البنك (للشيكات والاستقطاع)
   const [sortBy,setSortBy]=useState(""); // ترتيب الكشف: "" | inv | bank
   const [dayF,setDayF]=useState(""); // فلتر يوم الاستحقاق
+  const [showFilters,setShowFilters]=useState(false); // إظهار/إخفاء فلاتر العقود
   const [statusF,setStatusF]=useState(new Set(["شهري","مستمر"])); // فلتر حالة العقد — مخفي
   const [showStatusF,setShowStatusF]=useState(false); // إظهار/إخفاء فلتر الحالة
   const getDueDay=c=>{if(!c.firstInst)return""; return String(new Date(c.firstInst).getDate());};
@@ -3406,6 +3407,19 @@ function DeductionsSheet({contracts, investors, payments}){
           ))}
         </div>
       )}
+      {/* زر إظهار/إخفاء الفلاتر */}
+      <div style={{textAlign:"center",marginBottom:showFilters?10:14}}>
+        <button onClick={()=>setShowFilters(!showFilters)}
+          style={{padding:"6px 18px",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
+            border:showFilters?"2px solid #c8922a":"1px solid #e2e8f0",
+            background:showFilters?"#fffbf0":"#fff",
+            color:showFilters?"#c8922a":"#64748b",display:"inline-flex",alignItems:"center",gap:6}}>
+          <svg width="14" height="14" viewBox="0 0 24 24"><g fill="none" stroke={showFilters?"#c8922a":"#94a3b8"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M7 12h10M10 18h4"/></g></svg>
+          {showFilters?"إخفاء الفلاتر ▲":"فلترة ▼"}
+        </button>
+      </div>
+      {/* فلاتر السداد + البنك + يوم الاستحقاق — مخفية افتراضياً */}
+      {showFilters && <>
       {/* فلتر نوع السداد — اختيار متعدد */}
       <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
         {["استقطاع","شيكات","المقاصة","نقدي","تحويل","صرافة","الكل"].map(f=>(
@@ -3459,6 +3473,7 @@ function DeductionsSheet({contracts, investors, payments}){
           {dayF && <span style={{fontSize:12,color:"#c8922a",fontWeight:700}}>{dRows.length} عقد</span>}
         </div>);
       })()}
+      </>}
       {dRows.length===0 ? (
         <div style={{...styles.card,textAlign:"center",color:"#1f2937",padding:30}}>لا يوجد زبائن استقطاع</div>
       ) : (
