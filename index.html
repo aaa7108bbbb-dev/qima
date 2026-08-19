@@ -10732,13 +10732,14 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
 
 // ─── Activity Log Page ───────────────────────────────────────
 // ═══════════ صفحة التطويرات ═══════════
-function UpgradesPage({contracts, investors, payments, activity, settings, toast, setPage}) {
+function UpgradesPage({contracts, investors, payments, activity, settings, toast, setPage, doneIds}) {
   const [tab, setTab] = React.useState("log");
   const [logFilter, setLogFilter] = React.useState("all");
   const [stmtSearch, setStmtSearch] = React.useState("");
   const [stmtContract, setStmtContract] = React.useState(null);
 
-  const active = (contracts||[]).filter(c=>!c.deleted);
+  const _doneIds = _arr(doneIds);
+  const active = (contracts||[]).filter(c=>!c.deleted && _doneIds.indexOf(c.id)<0);
   const pays = _arr(payments);
   const logs = _arr(activity);
 
@@ -10935,24 +10936,24 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
         stmtContract
           ? renderStatement(stmtContract)
           : React.createElement(React.Fragment,null,
-              React.createElement("input",{style:{width:"100%",padding:"12px 14px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:14,fontFamily:"IBM Plex Sans Arabic,Arial",background:"#fff",boxSizing:"border-box",marginBottom:10},placeholder:"🔍 ابحث باسم العميل...",value:stmtSearch,onChange:e=>setStmtSearch(e.target.value)}),
+              React.createElement("input",{style:{width:"100%",padding:"14px 16px",borderRadius:12,border:"1.5px solid #e2e8f0",fontSize:16,fontFamily:"IBM Plex Sans Arabic,Arial",background:"#fff",boxSizing:"border-box",marginBottom:12},placeholder:"ابحث باسم العميل...",value:stmtSearch,onChange:e=>setStmtSearch(e.target.value)}),
               stmtGrouped.map(g=>
                 React.createElement(React.Fragment,{key:g.inv.id},
-                  React.createElement("div",{style:{fontSize:17,fontWeight:900,color:"#1a1a2e",padding:"14px 10px 6px",borderBottom:"2px solid #c8922a",marginBottom:8,marginTop:12}},g.inv.name),
+                  React.createElement("div",{style:{fontSize:18,fontWeight:900,color:"#fff",padding:"12px 16px",background:"linear-gradient(135deg,#1a1a2e,#0f3460)",borderRadius:10,marginBottom:10,marginTop:16}},g.inv.name),
                   g.contracts.map(c=>{
                     const cPaid = pays.filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
                     const rem = Math.max(0,(+c.totalInst||0)-cPaid);
                     const _cNum = (function(){ if(c.contractType==="migrated"){ if(c.num) return c.num; if(c.oldNum) return c.oldNum; var m=String(c.note||"").match(/(\d+)/); return m?m[1]:"—"; } return c.num||"—"; }());
-                    return React.createElement("div",{key:c.id,onClick:()=>setStmtContract(c),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 14px",background:c.contractType==="migrated"?"#fffbf0":"#f8fafc",borderRadius:10,marginBottom:6,cursor:"pointer",border:c.contractType==="migrated"?"1px solid #e0b85c":"1px solid #e5e7eb"}},
-                      React.createElement("div",null,
-                        React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"#1a1a2e"}},c.client),
-                        React.createElement("div",{style:{fontSize:12,color:"#1a1a2e",fontWeight:800,marginTop:3}},"عقد #"+_cNum+" — قسط "+SAR(c.instAmt||c.installment||0)),
-                        c.date && React.createElement("div",{style:{fontSize:10,color:"#6b7280",marginTop:2}},"تاريخ العقد: "+c.date),
-                        c.contractType==="migrated" && React.createElement("div",{style:{fontSize:9,color:"#c8922a",fontWeight:700,marginTop:2}},"مرحّل")
+                    return React.createElement("div",{key:c.id,onClick:()=>setStmtContract(c),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px",background:"#f8fafc",borderRadius:10,marginBottom:6,cursor:"pointer",border:"1px solid #e2e8f0"}},
+                      React.createElement("div",{style:{flex:1}},
+                        React.createElement("div",{style:{fontSize:16,fontWeight:900,color:"#1a1a2e"}},c.client),
+                        React.createElement("div",{style:{fontSize:14,color:"#1a1a2e",fontWeight:800,marginTop:4}},"عقد "+_cNum+" — قسط "+SAR(c.instAmt||c.installment||0)),
+                        c.date && React.createElement("div",{style:{fontSize:11,color:"#64748b",marginTop:3}},"تاريخ العقد: "+c.date),
+                        c.contractType==="migrated" && React.createElement("div",{style:{fontSize:10,color:"#c8922a",fontWeight:700,marginTop:2}},"مرحّل")
                       ),
-                      React.createElement("div",{style:{textAlign:"left"}},
-                        React.createElement("div",{style:{fontSize:13,fontWeight:800,color:rem>0?"#dc2626":"#059669"}},SAR(rem)),
-                        React.createElement("div",{style:{fontSize:9,color:"#94a3b8"}},"متبقي")
+                      React.createElement("div",{style:{textAlign:"left",minWidth:70}},
+                        React.createElement("div",{style:{fontSize:16,fontWeight:900,color:"#1a1a2e"}},SAR(rem)),
+                        React.createElement("div",{style:{fontSize:10,color:"#64748b",fontWeight:600}},"متبقي")
                       )
                     );
                   })
@@ -11591,7 +11592,7 @@ function App() {
         {page==="search" && <SearchPage contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="qimaai" && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:999,background:"#f4f4f6",overflowY:"auto"}}><QimaAI contracts={contracts} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct} goBack={()=>setPage("dashboard")}/></div>}
         {page==="pastclients" && <PastClientsPage toast={toast} pastClients={pastClients} setPastClients={setPastClients} contracts={contracts}/>}
-        {page==="upgrades" && <UpgradesPage contracts={publicContracts} investors={publicInvestors} payments={publicPayments} activity={activity} settings={settings} toast={toast} setPage={setPage}/>}
+        {page==="upgrades" && <UpgradesPage contracts={publicContracts} investors={publicInvestors} payments={publicPayments} activity={activity} settings={settings} toast={toast} setPage={setPage} doneIds={doneIds}/>}
         {page==="collect" && <CollectionPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="collect" goBack={()=>setPage("contracts")}/>}
         {page==="overdue" && <CollectionPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="overdue" goBack={()=>setPage("contracts")}/>}
         {page==="contracts" && <ContractsPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={publicPayments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);addPastClientFromContract(c);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
