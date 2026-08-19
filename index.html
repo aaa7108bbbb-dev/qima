@@ -4048,7 +4048,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                                       <button style={{background:"#fee2e2",border:"1px solid #fca5a5",borderRadius:6,padding:"3px 6px",fontSize:11,cursor:"pointer",color:"#b91c1c",fontWeight:700}} onClick={()=>{
                                         if(!window.confirm("حذف سداد "+d.client+" — "+SAR(d.amount)+"؟")) return;
                                         setPayments(function(prev){return prev.filter(function(p){return String(p.id)!==String(d.payId);});});
-                                        toast("🗑️ تم حذف السداد");
+                                        toast("تم حذف السداد");
                                       }}>🗑️</button>
                                     </div>
                                   </td>
@@ -4084,12 +4084,12 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                             if(!window.confirm("حذف جميع سدادات هذا الشهر ("+tx.details.length+" سداد) من كشف المستثمر؟")) return;
                             const payIds = tx.details.map(d=>String(d.payId)).filter(Boolean);
                             setPayments(prev=>prev.filter(p=>!payIds.includes(String(p.id))));
-                            toast("🗑️ تم حذف "+payIds.length+" سداد");
+                            toast("تم حذف "+payIds.length+" سداد");
                           } else if(tx.type==="contract"){
                             if(!window.confirm("حذف هذا العقد من كشف المستثمر؟")) return;
                             const cId = tx.id.replace("auto_","");
                             setContracts(prev=>prev.map(c=>String(c.id)===String(cId)?{...c,excludeFromStatement:true}:c));
-                            toast("🗑️ تم استثناء العقد من الكشف");
+                            toast("تم استثناء العقد من الكشف");
                           }
                         }}>حذف</button>
                       </div>
@@ -7627,7 +7627,7 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
               if(cnt===0){ toast&&toast("لا توجد دفعات مسجّلة"); return; }
               if(window.confirm("سيتم حذف جميع الدفعات المسجّلة نهائياً ("+cnt+" دفعة). سيرجع المحصّل إلى صفر. دفتر اليومية والعقود لن تتأثر.\n\nهل أنت متأكد؟")){
                 if(window.confirm("تأكيد أخير: هذا الإجراء لا يمكن التراجع عنه. متابعة الحذف؟")){
-                  setPayments([]); toast&&toast("🗑️ تم تصفير جميع الدفعات");
+                  setPayments([]); toast&&toast("تم تصفير جميع الدفعات");
                 }
               }
             }}>🗑️ حذف جميع الدفعات وتصفير المحصّل</button>
@@ -10922,7 +10922,7 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
                 React.createElement("div",{style:{flex:1}},
                   React.createElement("div",{style:{fontSize:12,fontWeight:700,color:actColor(a)}},a.action+" — "+a.entity),
                   a.detail && React.createElement("div",{style:{fontSize:11,color:"#64748b",marginTop:2}},a.detail),
-                  a.user && React.createElement("div",{style:{fontSize:10,color:"#94a3b8",marginTop:2}},"👤 "+a.user.replace(/@.*/,""))
+                  a.user && React.createElement("div",{style:{fontSize:10,color:"#94a3b8",marginTop:2}},"بواسطة: "+a.user)
                 )
               )
             )
@@ -10947,7 +10947,7 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
                       React.createElement("div",null,
                         React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"#1a1a2e"}},c.client),
                         React.createElement("div",{style:{fontSize:12,color:"#1a1a2e",fontWeight:800,marginTop:3}},"عقد #"+_cNum+" — قسط "+SAR(c.instAmt||c.installment||0)),
-                        c.date && React.createElement("div",{style:{fontSize:10,color:"#6b7280",marginTop:2}},"📅 تاريخ العقد: "+c.date),
+                        c.date && React.createElement("div",{style:{fontSize:10,color:"#6b7280",marginTop:2}},"تاريخ العقد: "+c.date),
                         c.contractType==="migrated" && React.createElement("div",{style:{fontSize:9,color:"#c8922a",fontWeight:700,marginTop:2}},"مرحّل")
                       ),
                       React.createElement("div",{style:{textAlign:"left"}},
@@ -11106,7 +11106,7 @@ function ActivityPage({activity, setActivity, toast, setPage}){
                     <span style={{background:actColor(a),color:"#fff",borderRadius:6,padding:"3px 10px",fontSize:13,fontWeight:800,whiteSpace:"nowrap"}}>{a.action}</span>
                     <div style={{flex:1}}>
                       <div style={{fontSize:14,fontWeight:700,color:C.ink}}>{a.entity}{a.detail?(" — "+a.detail):""}</div>
-                      <div style={{fontSize:12,color:"#1f2937",marginTop:2}}>🕐 {a.time}{a.user ? (" — 👤 "+a.user.replace(/@.*/,"")) : ""}</div>
+                      <div style={{fontSize:12,color:"#1f2937",marginTop:2}}>{a.time}{a.user ? (" — بواسطة: "+a.user) : ""}</div>
                     </div>
                   </div>
                 ))}
