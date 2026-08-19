@@ -4136,7 +4136,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
 
   const getVal = (key) => {
     // البطاقات والزكاة والاستقطاعات: تلقائية دائماً (تتجاهل أي قيمة يدوية قديمة)
-    const alwaysAuto = ["cards","zakat","deductions","cash","accounts"];
+    const alwaysAuto = ["cards","zakat","deductions","cash","accounts","staff"];
     if(!alwaysAuto.includes(key) && overrides[selMonth+"_"+key]!==undefined) return overrides[selMonth+"_"+key];
     // رصيد الحسابات البنكية: آخر رصيد من كشف الراجحي المستورد
     if(key==="accounts") {
@@ -4164,6 +4164,18 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     }
     if(key==="zakat")   return (zakatTx||[]).reduce((s,t)=>s+(t.type==="collect"?t.amount:-t.amount),0);
     if(key==="deductions") return (pending||[]).reduce((s,p)=>s+p.amount,0);
+    if(key==="staff") {
+      // حساب المتبقي للمدير والمحاسب = المستحق - المستلم
+      const _daily2 = _arr(daily);
+      const base2 = _daily2.find(d=>d.type==="opening");
+      const bDate = base2 ? base2.date : "0000-00-00";
+      const cycleC = contracts.filter(c=>!c.deleted && (!c.date || c.date >= bDate));
+      const mgrE = cycleC.reduce((s,c)=>s+calcC(c,settings).inst,0);
+      const accE = cycleC.reduce((s,c)=>s+calcC(c,settings).acc,0);
+      const mgrT = _daily2.filter(d=>d.type==="mgr" && d.date>=bDate).reduce((s,d)=>s+(d.amount||0),0);
+      const accT = _daily2.filter(d=>d.type==="acc" && d.date>=bDate).reduce((s,d)=>s+(d.amount||0),0);
+      return (mgrE - mgrT) + (accE - accT);
+    }
     if(key==="cards") {
       // مطابقة كشف البضاعة (GoodsPage) بالضبط: نميّز البطاقة عن السلعة النقدية،
       // ونرجّع الإجمالي النقدي = نقدي البطاقات + نقدي السلع (العمود الأخير في الكشف).
@@ -4247,6 +4259,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
   const invRows = [
     {key:"deductions", name:"المتبقي من الاستقطاعات",  sign:1,  hint:"ناس لهم فلوس عندي"},
     {key:"zakat",      name:"صندوق الزكاة",            sign:1,  hint:"زكاة مدفوعة مقدماً"},
+    {key:"staff",      name:"مستحقات الإدارة",          sign:1,  hint:"المتبقي للمدير والمحاسب"},
   ];
   // بنود "لي عنده" (أصول)
   const otherRows = [
