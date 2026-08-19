@@ -5492,7 +5492,6 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
     {k:"ind",l:"المؤشرات",icon:'<path d="M3.5 7.5h17v12h-17Z"/><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/>'},
     {k:"jard",l:"الجرد",icon:'<path d="M3.6 7.6h16.8v12H3.6Z"/><path d="M3.6 11.6h16.8M12 7.6v12"/>'},
     {k:"bank",l:"رصيد الحساب",icon:'<path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/>'},
-    {k:"cash",l:"البوصلة المالية",icon:'<circle cx="12" cy="12" r="8.4"/><path d="M15.7 8.3 13.1 13.1 8.3 15.7l2.6-4.8Z"/>'}
   ];
 
   return (
@@ -10809,9 +10808,25 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
   const fbConnected = typeof firebase !== "undefined" && firebase.apps && firebase.apps.length > 0;
 
   // ═══ كشف حساب العميل ═══
-  const stmtResults = stmtSearch.trim().length >= 2 
-    ? active.filter(c => (c.client||"").includes(stmtSearch.trim())).slice(0,10)
-    : [];
+  const stmtFiltered = stmtSearch.trim().length >= 2 
+    ? active.filter(c => (c.client||"").includes(stmtSearch.trim()))
+    : active;
+  // ترتيب المستثمرين حسب الرقم
+  const stmtInvOrder = [...(investors||[])].sort((a,b)=>{
+    const numOf=nm=>{const m=String(nm).match(/(\d+)\s*$/);return m?parseInt(m[1]):9999;};
+    return numOf(a.name)-numOf(b.name);
+  });
+  const stmtGrouped = stmtInvOrder.map(inv=>{
+    const invContracts = stmtFiltered.filter(c=>String(c.investorId)===String(inv.id));
+    if(invContracts.length===0) return null;
+    // المرحّل أولاً ثم العادي
+    const sorted = [...invContracts].sort((a,b)=>{
+      const aM=a.contractType==="migrated"?0:1, bM=b.contractType==="migrated"?0:1;
+      if(aM!==bM) return aM-bM;
+      return (a.num||9999)-(b.num||9999);
+    });
+    return {inv, contracts:sorted};
+  }).filter(Boolean);
 
   const renderStatement = (c) => {
     const cPays = pays.filter(p=>p.contractId===c.id).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
@@ -10906,7 +10921,8 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
                 ),
                 React.createElement("div",{style:{flex:1}},
                   React.createElement("div",{style:{fontSize:12,fontWeight:700,color:actColor(a)}},a.action+" — "+a.entity),
-                  a.detail && React.createElement("div",{style:{fontSize:11,color:"#64748b",marginTop:2}},a.detail)
+                  a.detail && React.createElement("div",{style:{fontSize:11,color:"#64748b",marginTop:2}},a.detail),
+                  a.user && React.createElement("div",{style:{fontSize:10,color:"#94a3b8",marginTop:2}},"👤 "+a.user.replace(/@.*/,""))
                 )
               )
             )
@@ -10920,23 +10936,29 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
           ? renderStatement(stmtContract)
           : React.createElement(React.Fragment,null,
               React.createElement("input",{style:{width:"100%",padding:"12px 14px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:14,fontFamily:"IBM Plex Sans Arabic,Arial",background:"#fff",boxSizing:"border-box",marginBottom:10},placeholder:"🔍 ابحث باسم العميل...",value:stmtSearch,onChange:e=>setStmtSearch(e.target.value)}),
-              stmtResults.map(c=>{
-                const cPaid = pays.filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
-                const rem = Math.max(0,(+c.totalInst||0)-cPaid);
-                const _cNum = (function(){ if(c.contractType==="migrated"){ if(c.num) return c.num; if(c.oldNum) return c.oldNum; var m=String(c.note||"").match(/(\d+)/); return m?m[1]:"—"; } return c.num||"—"; }());
-                return React.createElement("div",{key:c.id,onClick:()=>setStmtContract(c),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 14px",background:"#f8fafc",borderRadius:10,marginBottom:6,cursor:"pointer",border:"1px solid #e5e7eb"}},
-                  React.createElement("div",null,
-                    React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"#1a1a2e"}},c.client),
-                    React.createElement("div",{style:{fontSize:12,color:"#1a1a2e",fontWeight:800,marginTop:3}},"عقد #"+_cNum+" — قسط "+SAR(c.instAmt||c.installment||0)),
-                    c.date && React.createElement("div",{style:{fontSize:10,color:"#6b7280",marginTop:2}},"📅 تاريخ العقد: "+c.date)
-                  ),
-                  React.createElement("div",{style:{textAlign:"left"}},
-                    React.createElement("div",{style:{fontSize:13,fontWeight:800,color:rem>0?"#dc2626":"#059669"}},SAR(rem)),
-                    React.createElement("div",{style:{fontSize:9,color:"#94a3b8"}},"متبقي")
-                  )
-                );
-              }),
-              stmtSearch.trim().length>=2 && stmtResults.length===0 && React.createElement("div",{style:{textAlign:"center",padding:20,color:"#94a3b8"}},"لا توجد نتائج")
+              stmtGrouped.map(g=>
+                React.createElement(React.Fragment,{key:g.inv.id},
+                  React.createElement("div",{style:{fontSize:17,fontWeight:900,color:"#1a1a2e",padding:"14px 10px 6px",borderBottom:"2px solid #c8922a",marginBottom:8,marginTop:12}},g.inv.name),
+                  g.contracts.map(c=>{
+                    const cPaid = pays.filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
+                    const rem = Math.max(0,(+c.totalInst||0)-cPaid);
+                    const _cNum = (function(){ if(c.contractType==="migrated"){ if(c.num) return c.num; if(c.oldNum) return c.oldNum; var m=String(c.note||"").match(/(\d+)/); return m?m[1]:"—"; } return c.num||"—"; }());
+                    return React.createElement("div",{key:c.id,onClick:()=>setStmtContract(c),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 14px",background:c.contractType==="migrated"?"#fffbf0":"#f8fafc",borderRadius:10,marginBottom:6,cursor:"pointer",border:c.contractType==="migrated"?"1px solid #e0b85c":"1px solid #e5e7eb"}},
+                      React.createElement("div",null,
+                        React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"#1a1a2e"}},c.client),
+                        React.createElement("div",{style:{fontSize:12,color:"#1a1a2e",fontWeight:800,marginTop:3}},"عقد #"+_cNum+" — قسط "+SAR(c.instAmt||c.installment||0)),
+                        c.date && React.createElement("div",{style:{fontSize:10,color:"#6b7280",marginTop:2}},"📅 تاريخ العقد: "+c.date),
+                        c.contractType==="migrated" && React.createElement("div",{style:{fontSize:9,color:"#c8922a",fontWeight:700,marginTop:2}},"مرحّل")
+                      ),
+                      React.createElement("div",{style:{textAlign:"left"}},
+                        React.createElement("div",{style:{fontSize:13,fontWeight:800,color:rem>0?"#dc2626":"#059669"}},SAR(rem)),
+                        React.createElement("div",{style:{fontSize:9,color:"#94a3b8"}},"متبقي")
+                      )
+                    );
+                  })
+                )
+              ),
+              stmtSearch.trim().length>=2 && stmtGrouped.length===0 && React.createElement("div",{style:{textAlign:"center",padding:20,color:"#94a3b8"}},"لا توجد نتائج")
             )
       )
     ),
@@ -11084,7 +11106,7 @@ function ActivityPage({activity, setActivity, toast, setPage}){
                     <span style={{background:actColor(a),color:"#fff",borderRadius:6,padding:"3px 10px",fontSize:13,fontWeight:800,whiteSpace:"nowrap"}}>{a.action}</span>
                     <div style={{flex:1}}>
                       <div style={{fontSize:14,fontWeight:700,color:C.ink}}>{a.entity}{a.detail?(" — "+a.detail):""}</div>
-                      <div style={{fontSize:12,color:"#1f2937",marginTop:2}}>🕐 {a.time}</div>
+                      <div style={{fontSize:12,color:"#1f2937",marginTop:2}}>🕐 {a.time}{a.user ? (" — 👤 "+a.user.replace(/@.*/,"")) : ""}</div>
                     </div>
                   </div>
                 ))}
@@ -11366,7 +11388,8 @@ function App() {
   const logAct = (action, entity, detail) => {
     const now = new Date();
     const stamp = now.getFullYear()+"/"+String(now.getMonth()+1).padStart(2,"0")+"/"+String(now.getDate()).padStart(2,"0")+" "+String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
-    setActivity(prev => [{id:Date.now()+"_"+Math.floor(Math.random()*1000), action, entity, detail:detail||"", time:stamp}, ..._arr(prev)].slice(0,500));
+    const userEmail = (window._fbAuth && window._fbAuth.currentUser) ? window._fbAuth.currentUser.email : "";
+    setActivity(prev => [{id:Date.now()+"_"+Math.floor(Math.random()*1000), action, entity, detail:detail||"", time:stamp, user:userEmail}, ..._arr(prev)].slice(0,500));
   };
   const [daily,setDailyRaw]=useState(()=>_arr(loadLS("qimma_daily",[])));
   const setDaily = v => { const d=_arr(typeof v==="function"?v(daily):v); setDailyRaw(d); saveLS("qimma_daily",d); gsWrite("daily",d); };
