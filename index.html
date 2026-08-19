@@ -2373,7 +2373,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                     <td style={{...styles.td,whiteSpace:"nowrap"}}>
                       <button style={{...styles.btn(C.green),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>{setPayModal(c);setPayAmount("");setPayNote("");}}>💳 سدّد</button>
                       <button style={{...styles.btn(C.teal),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>{setPrintSel({contract:true,bond:false,bondG:false,cheque:false,chequeG:false});setPrintModal(c);}}>🖨️ طباعة</button>
-                      <button style={{...styles.btn("#f59e0b"),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>{setEditC(c);setEditForm({...c, investorId:c.investorId!=null?String(c.investorId):""});}}>✏️ تعديل</button>
+                      <button style={{...styles.btn("#f59e0b"),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>{setEditC(c);setEditForm({...c, investorId:c.investorId!=null?String(c.investorId):"", deductEnabled:!!(c.deducts&&c.deducts.length>0&&c.deducts.some(d=>d.amount||d.investorId)), deducts:c.deducts&&c.deducts.length>0?c.deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}]});}}>تعديل</button>
                       {statusTab==="deleted"
                         ? <button style={{...styles.btn(C.green),fontSize:14,padding:"5px 10px"}} onClick={()=>{onRestore(c.id);toast("✅ تم الاسترجاع");}}>↩️ استرجاع</button>
                         : <button style={{...styles.btn(C.red),fontSize:14,padding:"5px 10px"}} onClick={()=>{if(confirm("نقل هذا العقد للمحذوفة؟ (يبقى محفوظاً ويمكن استرجاعه)")){onDelete(c.id);toast("تم النقل للمحذوفة");}}}>🗑️ حذف</button>}
@@ -2688,6 +2688,35 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               <label style={{fontSize:14,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>ملاحظة</label>
               <textarea style={{...styles.input,height:60}} value={editForm.note||""} onChange={e=>setEditForm(f=>({...f,note:e.target.value}))}/>
             </div>
+          </div>
+          {/* خصم سداد مستثمر */}
+          <div style={{marginBottom:14}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:editForm.deductEnabled?14:0}}>
+              <button style={{padding:"10px 18px",borderRadius:10,border:"2px solid "+(editForm.deductEnabled?C.gold:"#e2e8f0"),background:editForm.deductEnabled?"linear-gradient(135deg,#fefbf3,#fef3c7)":"#fff",color:editForm.deductEnabled?C.gold:"#94a3b8",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:7}}
+                onClick={()=>setEditForm(f=>({...f,deductEnabled:!f.deductEnabled}))}>
+                {editForm.deductEnabled?"✓ ":""}خصم سداد مستثمر
+              </button>
+              {editForm.deductEnabled && <span style={{fontSize:13,color:"#64748b"}}>سيطلع في العقد المطبوع</span>}
+            </div>
+            {editForm.deductEnabled && (
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                {(editForm.deducts||[]).map((d,idx)=>(
+                  <div key={idx} style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,background:idx%2===0?"#fefce8":"#fff",padding:"12px 14px",borderRadius:12,border:"1px solid #e5e7eb"}}>
+                    <div>
+                      <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المبلغ (ريال) {idx+1}</label>
+                      <input style={styles.input} type="number" placeholder="مثال: 3000" value={d.amount||""} onChange={e=>{const dd=[...(editForm.deducts||[])];dd[idx]={...dd[idx],amount:e.target.value};setEditForm(f=>({...f,deducts:dd}));}}/>
+                    </div>
+                    <div>
+                      <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المستثمر {idx+1}</label>
+                      <select style={{...styles.select,borderRadius:10}} value={d.investorId||""} onChange={e=>{const dd=[...(editForm.deducts||[])];dd[idx]={...dd[idx],investorId:e.target.value};setEditForm(f=>({...f,deducts:dd}));}}>
+                        <option value="">اختر مستثمر</option>
+                        {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <button style={styles.btn(C.teal)} onClick={()=>{const ef={...editForm}; if(ef.investorId!==undefined&&ef.investorId!=="") ef.investorId=parseInt(ef.investorId); ["amount","totalInst","instAmt","qty"].forEach(k=>{if(ef[k]!==undefined&&ef[k]!=="")ef[k]=parseFloat(ef[k])||0;}); onUpdate({...editC,...ef});setEditC(null);toast("✅ تم التعديل");}}>💾 حفظ التعديل</button>
         </div>
