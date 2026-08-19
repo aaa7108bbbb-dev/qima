@@ -10944,7 +10944,7 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
                     const cPaid = pays.filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
                     const rem = Math.max(0,(+c.totalInst||0)-cPaid);
                     const _cNum = (function(){ if(c.contractType==="migrated"){ if(c.num) return c.num; if(c.oldNum) return c.oldNum; var m=String(c.note||"").match(/(\d+)/); return m?m[1]:"—"; } return c.num||"—"; }());
-                    return React.createElement("div",{key:c.id,onClick:()=>setStmtContract(c),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px",background:"#f8fafc",borderRadius:10,marginBottom:6,cursor:"pointer",border:"1px solid #e2e8f0"}},
+                    return React.createElement("div",{key:c.id,onClick:()=>setStmtContract(c),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px",background:"#fffbf0",borderRadius:10,marginBottom:6,cursor:"pointer",border:"2px solid #1a1a2e"}},
                       React.createElement("div",{style:{flex:1}},
                         React.createElement("div",{style:{fontSize:16,fontWeight:900,color:"#1a1a2e"}},c.client),
                         React.createElement("div",{style:{fontSize:14,color:"#1a1a2e",fontWeight:800,marginTop:4}},"عقد "+_cNum+" — قسط "+SAR(c.instAmt||c.installment||0)),
