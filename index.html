@@ -4267,6 +4267,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     {key:"accounts",   name:"رصيد الحسابات البنكية",   sign:1,  hint:"رصيد البنك"},
     {key:"cards",      name:"رصيد البطاقات",           sign:1,  hint:"قيمة البضاعة الموجودة"},
     {key:"loans",      name:"السلف",                   sign:1,  hint:"مبالغ مسلّفة لأشخاص"},
+    {key:"missing",    name:"أصول مفقودة",              sign:1,  hint:"تعديل يدوي لتصفير الفرق"},
   ];
 
   // calc totals with correct signs
@@ -4424,6 +4425,13 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
                     mojab={v<0?Math.abs(v):""} salib={v>=0?v:""}
                     onMojab={()=>{}} onSalib={()=>{}}
                     auto={true}/>;
+                }
+                if(row.key==="missing"){
+                  return <Row key={row.key} i={i} name={row.name} hint={row.hint}
+                    mojab={""} salib={v||""}
+                    onMojab={()=>{}}
+                    onSalib={v2=>setVal(row.key,parseFloat(v2)||0)}
+                    hideMojab={true}/>;
                 }
                 return <Row key={row.key} i={i} name={row.name} hint={row.hint}
                   mojab={v<0?Math.abs(v):""}
