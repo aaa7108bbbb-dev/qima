@@ -2078,34 +2078,34 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     <div>
       {/* ═══ Action Buttons — Premium Grid ═══ */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10,marginBottom:10}}>
-        <button onClick={()=>setShowNew(true)} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 8.4v7.2M8.4 12h7.2"/></g></svg>
+        <button onClick={()=>setShowNew(true)} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 8.4v7.2M8.4 12h7.2"/></g></svg>
           عقد جديد
         </button>
-        <button onClick={()=>setPage("accounts")} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g><circle cx="16.9" cy="15.1" r="1.4" fill="#e0b85c"/></svg>
+        <button onClick={()=>setPage("accounts")} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g><circle cx="16.9" cy="15.1" r="1.4" fill="#141428"/></svg>
           الحسابات
         </button>
-        <button onClick={()=>setPage("goods")} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.6 7.6h16.8v12H3.6Z"/><path d="M3.6 11.6h16.8M12 7.6v12"/></g></svg>
+        <button onClick={()=>setPage("goods")} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.6 7.6h16.8v12H3.6Z"/><path d="M3.6 11.6h16.8M12 7.6v12"/></g></svg>
           البضاعة
         </button>
-        <button onClick={()=>setPage("collect")} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></g></svg>
+        <button onClick={()=>setPage("collect")} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></g></svg>
           التحصيل
         </button>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
-        <button onClick={()=>setShowDeduct(true)} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2v6h6M18 22v-6h-6"/><path d="M21 11.5A8.5 8.5 0 0 0 6.7 4.4L2 8M3 12.5a8.5 8.5 0 0 0 14.3 7.1L22 16"/></g></svg>
+        <button onClick={()=>setShowDeduct(true)} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2v6h6M18 22v-6h-6"/><path d="M21 11.5A8.5 8.5 0 0 0 6.7 4.4L2 8M3 12.5a8.5 8.5 0 0 0 14.3 7.1L22 16"/></g></svg>
           الطباعة
         </button>
-        <button onClick={()=>setPage("investorsList")} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></g></svg>
+        <button onClick={()=>setPage("investorsList")} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></g></svg>
           المستثمرون
         </button>
-        <button onClick={()=>setPage("overdue")} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></g></svg>
+        <button onClick={()=>setPage("overdue")} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+          <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></g></svg>
           المتعثرون
         </button>
       </div>
@@ -2117,7 +2117,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           <span style={{fontSize:17,fontWeight:900,color:C.gold}}>كشف المستثمر</span>
         </div>
         <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
-          <select style={{flex:1,minWidth:180,padding:"12px 14px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:15,fontWeight:600,background:"#fff",fontFamily:"IBM Plex Sans Arabic,Arial",cursor:"pointer"}} value={invSearch} onChange={e=>{setInvSearch(e.target.value);setPayFilter("");}}>
+          <select style={{flex:1,minWidth:180,padding:"12px 14px",borderRadius:10,border:"2px solid #141428",fontSize:15,fontWeight:600,background:"#fff",fontFamily:"IBM Plex Sans Arabic,Arial",cursor:"pointer"}} value={invSearch} onChange={e=>{setInvSearch(e.target.value);setPayFilter("");}}>
             <option value="">-- اختار المستثمر --</option>
             <option value="__all__">📋 كل المستثمرين</option>
             {sortedInvestors(investors).map(i=>(
@@ -2125,10 +2125,10 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
             ))}
           </select>
           <div style={{display:"flex",gap:4,background:"#f1f5f9",borderRadius:10,padding:3}}>
-            <button onClick={()=>setReportMode("detailed")} style={{padding:"8px 13px",borderRadius:8,border:"none",background:reportMode==="detailed"?"linear-gradient(135deg,#1a1a2e,#0f3460)":"transparent",color:reportMode==="detailed"?"#e0b85c":"#64748b",fontWeight:800,fontSize:12.5,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:5}}>
-              <svg width="14" height="14" viewBox="0 0 24 24"><g fill="none" stroke={reportMode==="detailed"?"#e0b85c":"#94a3b8"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.6 20.4h16.8M7.2 20.4v-4.6M12 20.4v-8.2M16.8 20.4v-6.4"/></g></svg>مفصل</button>
-            <button onClick={()=>setReportMode("brief")} style={{padding:"8px 13px",borderRadius:8,border:"none",background:reportMode==="brief"?"linear-gradient(135deg,#1a1a2e,#0f3460)":"transparent",color:reportMode==="brief"?"#e0b85c":"#64748b",fontWeight:800,fontSize:12.5,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:5}}>
-              <svg width="14" height="14" viewBox="0 0 24 24"><g fill="none" stroke={reportMode==="brief"?"#e0b85c":"#94a3b8"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6.2 3.2h7.4l4.2 4.2V20.8H6.2Z"/><path d="M13.6 3.2v4.2h4.2M9.2 12.4h5.6M9.2 15.8h3.8"/></g></svg>مختصر</button>
+            <button onClick={()=>setReportMode("detailed")} style={{padding:"8px 13px",borderRadius:8,border:reportMode==="detailed"?"2.5px solid #141428":"2px solid transparent",background:reportMode==="detailed"?"linear-gradient(140deg,#e0b85c,#c8922a)":"transparent",color:reportMode==="detailed"?"#141428":"#64748b",fontWeight:800,fontSize:12.5,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:5}}>
+              <svg width="14" height="14" viewBox="0 0 24 24"><g fill="none" stroke={reportMode==="detailed"?"#141428":"#94a3b8"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.6 20.4h16.8M7.2 20.4v-4.6M12 20.4v-8.2M16.8 20.4v-6.4"/></g></svg>مفصل</button>
+            <button onClick={()=>setReportMode("brief")} style={{padding:"8px 13px",borderRadius:8,border:reportMode==="brief"?"2.5px solid #141428":"2px solid transparent",background:reportMode==="brief"?"linear-gradient(140deg,#e0b85c,#c8922a)":"transparent",color:reportMode==="brief"?"#141428":"#64748b",fontWeight:800,fontSize:12.5,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:5}}>
+              <svg width="14" height="14" viewBox="0 0 24 24"><g fill="none" stroke={reportMode==="brief"?"#141428":"#94a3b8"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6.2 3.2h7.4l4.2 4.2V20.8H6.2Z"/><path d="M13.6 3.2v4.2h4.2M9.2 12.4h5.6M9.2 15.8h3.8"/></g></svg>مختصر</button>
           </div>
           {invSearch && invReportContracts.length>0 && (
             <>
@@ -2294,12 +2294,12 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
 
       <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
         <div style={{flex:1,minWidth:140,position:"relative"}}>
-          <input style={{width:"100%",padding:"12px 14px 12px 36px",borderRadius:12,border:"1.5px solid #e2e8f0",fontSize:15,fontFamily:"IBM Plex Sans Arabic,Arial",background:"#fff",boxSizing:"border-box"}} placeholder="بحث بالاسم..." value={search} onChange={e=>setSearch(e.target.value)}/>
+          <input style={{width:"100%",padding:"12px 14px 12px 36px",borderRadius:12,border:"2px solid #141428",fontSize:15,fontFamily:"IBM Plex Sans Arabic,Arial",background:"#fff",boxSizing:"border-box"}} placeholder="بحث بالاسم..." value={search} onChange={e=>setSearch(e.target.value)}/>
           <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",pointerEvents:"none",display:"flex"}}>
             <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#94a3b8" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-4-4"/></g></svg>
           </span>
         </div>
-        <select style={{flex:1,minWidth:140,padding:"12px 14px",borderRadius:12,border:"1.5px solid #e2e8f0",fontSize:14,fontWeight:600,background:"#fff",fontFamily:"IBM Plex Sans Arabic,Arial",cursor:"pointer"}} value={filterInv} onChange={e=>setFilterInv(e.target.value)}>
+        <select style={{flex:1,minWidth:140,padding:"12px 14px",borderRadius:12,border:"2px solid #141428",fontSize:14,fontWeight:600,background:"#fff",fontFamily:"IBM Plex Sans Arabic,Arial",cursor:"pointer"}} value={filterInv} onChange={e=>setFilterInv(e.target.value)}>
           <option value="">كل المستثمرين</option>
           {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
         </select>
@@ -2317,11 +2317,11 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           const on = statusTab===t.id;
           return (
           <button key={t.id} onClick={()=>setStatusTab(t.id)} style={{padding:"10px 20px",borderRadius:10,
-            border:on?"2px solid #c8922a":"1.5px solid #e2e8f0",
-            background:on?"#fffbf0":"#fff",
+            border:on?"2.5px solid #141428":"2px solid #141428",
+            background:on?"linear-gradient(140deg,#e0b85c,#c8922a)":"#fff",
             cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6,transition:"all 0.15s"}}>
-            <span style={{fontSize:15,fontWeight:900,color:on?"#1a1a2e":"#1f2937"}}>{t.label}</span>
-            <span style={{fontSize:14,fontWeight:800,color:on?"#c8922a":"#94a3b8"}}>({t.count})</span>
+            <span style={{fontSize:15,fontWeight:900,color:"#141428"}}>{t.label}</span>
+            <span style={{fontSize:14,fontWeight:800,color:on?"#141428":"#64748b"}}>({t.count})</span>
           </button>
         );})}
         </div>
@@ -2359,18 +2359,18 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                     <tr style={{background:bg,opacity:isOld?0.65:1}}>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.num||i+1}</td>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.date}</td>
-                    <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",...stickyCell}}><span onClick={()=>setCardModal(c)} style={{color:C.teal,cursor:"pointer",textDecoration:"underline"}}>{c.client}</span></td>
-                    <td style={{...styles.td,color:"#1f2937"}}>{c.idNum||"—"}</td>
+                    <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",...stickyCell}}><span onClick={()=>setCardModal(c)} style={{color:"#0f1923",cursor:"pointer",textDecoration:"underline",fontWeight:900}}>{c.client}</span></td>
+                    <td style={{...styles.td,color:"#0f1923"}}>{c.idNum||"—"}</td>
                     <td style={styles.td}>{c.job||"—"}</td>
-                    <td style={{...styles.td,color:C.gold,fontWeight:600,whiteSpace:"nowrap"}}>{c.gName||"—"}</td>
-                    <td style={styles.td}><span style={styles.badge(C.tealLt,C.teal)}>{c.goods||"—"}</span></td>
+                    <td style={{...styles.td,color:"#0f1923",fontWeight:700,whiteSpace:"nowrap"}}>{c.gName||"—"}</td>
+                    <td style={styles.td}><span style={{...styles.btnGold(),fontSize:12,padding:"3px 10px",cursor:"default"}}>{c.goods||"—"}</span></td>
                     <td style={{...styles.td,textAlign:"center",fontWeight:700}}>{c.qty||"—"}</td>
                     <td style={styles.td}>{inv?invLabel(inv):"—"}</td>
                     <td style={styles.td}>{SAR(c.amount)}</td>
-                    <td style={{...styles.td,fontWeight:800,color:C.ink}}>{SAR(c.totalInst||0)}</td>
-                    <td style={{...styles.td,color:C.teal,fontWeight:800}}>{SAR(c.instAmt||0)}</td>
-                    <td style={{...styles.td,color:C.green,fontSize:14}}>{c.firstInst||"—"}</td>
-                    <td style={{...styles.td,color:C.green}}>{SAR(r.profit)}</td>
+                    <td style={{...styles.td,fontWeight:800,color:"#0f1923"}}>{SAR(c.totalInst||0)}</td>
+                    <td style={{...styles.td,color:"#0f1923",fontWeight:800}}>{SAR(c.instAmt||0)}</td>
+                    <td style={{...styles.td,color:"#0f1923",fontWeight:800,fontSize:14}}>{c.firstInst||"—"}</td>
+                    <td style={{...styles.td,color:"#0f1923",fontWeight:800}}>{SAR(r.profit)}</td>
                     <td style={{...styles.td,whiteSpace:"nowrap"}}>
                       <button style={styles.btnGold()} onClick={()=>{setPayModal(c);setPayAmount("");setPayNote("");}}>سدّد</button>
                       <button style={styles.btnGold()} onClick={()=>{setPrintSel({contract:true,bond:false,bondG:false,cheque:false,chequeG:false});setPrintModal(c);}}>طباعة</button>
