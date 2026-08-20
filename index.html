@@ -153,7 +153,7 @@
   .table-scroll { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
   table { width: 100%; min-width: max-content; border-collapse: collapse; }
   /* خطوط شبكة كاملة (أفقية وعمودية) لكل الخلايا — مثل Excel */
-  table th, table td { border: 1px solid #cbd5e1; }
+  table th, table td { border: 1px solid #141428; }
   /* رأس الجدول ثابت: يلتصق بأعلى الشاشة عند تمرير الصفحة وبأعلى الحاوية عند التمرير الداخلي */
   table thead th { position: -webkit-sticky; position: sticky; top: 0; z-index: 5; }
   /* شريط تمرير واضح */
@@ -543,7 +543,7 @@ const C = {
   ink:"#0f1923", ink2:"#2c3e50", gold:"#c8922a", goldLt:"#f5e6c8",
   teal:"#0d7377", tealLt:"#d0f0f0", red:"#c0392b", redLt:"#fdecea",
   green:"#1a7a4a", greenLt:"#e3f5ec", purple:"#7030A0", purpleLt:"#f3e8ff",
-  slate:"#faf6ee", border:"#dde3ea", white:"#ffffff", gray:"#f2f2f2",
+  slate:"#faf6ee", border:"#141428", white:"#ffffff", gray:"#f2f2f2",
 };
 
 const styles = {
@@ -1042,7 +1042,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
   const secHead = (icon,title,color) => ({display:"flex",alignItems:"center",gap:10,marginBottom:16,paddingBottom:10,borderBottom:"2px solid "+(color||"rgba(200,146,42,0.2)")});
   const secTitle = (color) => ({fontSize:"clamp(17px,2vw,22px)",fontWeight:900,color:color||C.gold,margin:0});
   const fLabel = {fontSize:"clamp(14px,1.5vw,18px)",fontWeight:700,color:"#4a5568",display:"block",marginBottom:6};
-  const fInput = {...styles.input,borderRadius:10,border:"1.5px solid #e2e8f0",transition:"all 0.2s",fontSize:"clamp(15px,1.5vw,19px)",padding:"clamp(10px,1.2vw,16px) 14px"};
+  const fInput = {...styles.input,borderRadius:10,border:"1.5px solid #141428",transition:"all 0.2s",fontSize:"clamp(15px,1.5vw,19px)",padding:"clamp(10px,1.2vw,16px) 14px"};
   const fInputFocus = "border-color:#c8922a;box-shadow:0 0 0 3px rgba(200,146,42,0.1)";
 
   return (
@@ -1068,7 +1068,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
           <svg width="19" height="19" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5M3.5 12.5h17"/></g><circle cx="12" cy="12.5" r="1.3" fill="#a87520"/></svg>
           <h3 style={secTitle()}>المستثمر (الصندوق)</h3>
         </div>
-        <select style={{...styles.select,borderRadius:10,padding:"14px 16px",fontSize:16,fontWeight:700,border:"2px solid "+(form.investorId?C.gold:"#e2e8f0"),background:form.investorId?"#fefbf3":"#fff"}} value={form.investorId} onChange={e=>set("investorId",e.target.value)}>
+        <select style={{...styles.select,borderRadius:10,padding:"14px 16px",fontSize:16,fontWeight:700,border:"2px solid "+(form.investorId?C.gold:"#141428"),background:form.investorId?"#fefbf3":"#fff"}} value={form.investorId} onChange={e=>set("investorId",e.target.value)}>
           <option value="">— اختر المستثمر —</option>
           {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)} ({i.fund})</option>)}
         </select>
@@ -1106,9 +1106,9 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
         </div>
         <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}}>
           {GOODS_LIST.map(g=>(
-            <button key={g} onClick={()=>set("goods",g)} style={{padding:"10px 18px",borderRadius:25,border:"2px solid "+(form.goods===g?"#c8922a":"#e2e8f0"),background:form.goods===g?"#c8922a":"#fff",color:form.goods===g?"#fff":"#4a5568",fontWeight:700,fontSize:14,cursor:"pointer",transition:"all 0.2s",fontFamily:"IBM Plex Sans Arabic,Arial"}}>{g}</button>
+            <button key={g} onClick={()=>set("goods",g)} style={{padding:"10px 18px",borderRadius:25,border:"2px solid "+(form.goods===g?"#c8922a":"#141428"),background:form.goods===g?"#c8922a":"#fff",color:form.goods===g?"#fff":"#4a5568",fontWeight:700,fontSize:14,cursor:"pointer",transition:"all 0.2s",fontFamily:"IBM Plex Sans Arabic,Arial"}}>{g}</button>
           ))}
-          <button onClick={()=>set("goods","")} style={{padding:"10px 18px",borderRadius:25,border:"2px solid "+(form.goods&&!GOODS_LIST.includes(form.goods)?"#c8922a":"#e2e8f0"),background:form.goods&&!GOODS_LIST.includes(form.goods)?"#c8922a":"#fff",color:form.goods&&!GOODS_LIST.includes(form.goods)?"#fff":"#4a5568",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
+          <button onClick={()=>set("goods","")} style={{padding:"10px 18px",borderRadius:25,border:"2px solid "+(form.goods&&!GOODS_LIST.includes(form.goods)?"#c8922a":"#141428"),background:form.goods&&!GOODS_LIST.includes(form.goods)?"#c8922a":"#fff",color:form.goods&&!GOODS_LIST.includes(form.goods)?"#fff":"#4a5568",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
             <svg width="14" height="14" viewBox="0 0 24 24" style={{stroke:"currentColor"}}><g fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M16.5 4.5l3 3L8 19l-4 1 1-4Z"/></g></svg>
             أخرى</button>
         </div>
@@ -1229,7 +1229,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
               {[1,5,10,14,15,20,25,27].map(d=>(
                 <button key={d} type="button" onClick={()=>set("payDay",form.payDay===d?"":d)}
                   style={{padding:"8px 14px",borderRadius:10,fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
-                    border:form.payDay===d?"2px solid #c8922a":"1px solid #e2e8f0",
+                    border:form.payDay===d?"2px solid #c8922a":"1px solid #141428",
                     background:form.payDay===d?"#fffbf0":"#fff",
                     color:form.payDay===d?"#c8922a":"#64748b"}}>{d}</button>
               ))}
@@ -1253,7 +1253,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
               <label style={fLabel}>{
                 form.contractType==="defer" ? (f.key==="amount"?"المبلغ نقداً *":f.key==="totalInst"?"المبلغ الإجمالي (مع فائدتك) *":f.label) : f.label
               }</label>
-              <input style={{...fInput,borderColor:["amount","instAmt","totalInst"].includes(f.key)?"#c8922a":"#e2e8f0",fontWeight:["amount","instAmt","totalInst"].includes(f.key)?800:400}} type={f.type} placeholder={f.key==="totalInst"&&form.contractType==="defer"?"اكتب الإجمالي مع الفائدة":f.ph} value={form[f.key]} onChange={e=>set(f.key,e.target.value)}/>
+              <input style={{...fInput,borderColor:["amount","instAmt","totalInst"].includes(f.key)?"#c8922a":"#141428",fontWeight:["amount","instAmt","totalInst"].includes(f.key)?800:400}} type={f.type} placeholder={f.key==="totalInst"&&form.contractType==="defer"?"اكتب الإجمالي مع الفائدة":f.ph} value={form[f.key]} onChange={e=>set(f.key,e.target.value)}/>
             </div>
           ))}
         </div>
@@ -1325,7 +1325,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
           {[["اسم الكفيل","gName","text","الاسم الكامل"],["هوية الكفيل","gId","text","رقم الهوية"],["عمل الكفيل","gJob","text","جهة العمل"],["جوال الكفيل","gPhone","tel","05xxxxxxxx"]].map(([l,k,t,p])=>(
             <div key={k}>
               <label style={fLabel}>{l}</label>
-              <input style={{...fInput,borderColor:k==="gName"?"#b45309":"#e2e8f0"}} type={t} placeholder={p} value={form[k]} onChange={e=>set(k,e.target.value)}/>
+              <input style={{...fInput,borderColor:k==="gName"?"#b45309":"#141428"}} type={t} placeholder={p} value={form[k]} onChange={e=>set(k,e.target.value)}/>
             </div>
           ))}
         </div>
@@ -1338,7 +1338,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
           <textarea style={{...fInput,height:60,resize:"vertical"}} placeholder="أكتب ملاحظة..." value={form.note||""} onChange={e=>set("note",e.target.value)}/>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:form.deductEnabled?14:0}}>
-          <button style={{padding:"10px 18px",borderRadius:10,border:"2px solid "+(form.deductEnabled?C.gold:"#e2e8f0"),background:form.deductEnabled?"linear-gradient(135deg,#fefbf3,#fef3c7)":"#fff",color:form.deductEnabled?C.gold:"#94a3b8",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:7}}
+          <button style={{padding:"10px 18px",borderRadius:10,border:"2px solid "+(form.deductEnabled?C.gold:"#141428"),background:form.deductEnabled?"linear-gradient(135deg,#fefbf3,#fef3c7)":"#fff",color:form.deductEnabled?C.gold:"#94a3b8",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:7}}
             onClick={()=>set("deductEnabled",!form.deductEnabled)}>
             <svg width="16" height="16" viewBox="0 0 24 24" style={{stroke:"currentColor"}}><g fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">{form.deductEnabled?<path d="M20 7 10 17l-5-5"/>:<><circle cx="12" cy="12" r="8.4"/><path d="M12 8v8M9.5 10h3.5a1.5 1.5 0 0 1 0 3h-2a1.5 1.5 0 0 0 0 3h4"/></>}</g></svg>
             خصم سداد مستثمر
@@ -1348,7 +1348,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
         {form.deductEnabled && (
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {(form.deducts||[]).map((d,idx)=>(
-              <div key={idx} style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,background:idx%2===0?"#fefce8":"#fff",padding:"12px 14px",borderRadius:12,border:"1px solid #e5e7eb"}}>
+              <div key={idx} style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,background:idx%2===0?"#fefce8":"#fff",padding:"12px 14px",borderRadius:12,border:"1px solid #141428"}}>
                 <div>
                   <label style={{...fLabel,fontSize:13}}>المبلغ (ريال) {idx+1}</label>
                   <input style={fInput} type="number" placeholder="مثال: 3000" value={d.amount||""} onChange={e=>{const dd=[...(form.deducts||[])];dd[idx]={...dd[idx],amount:e.target.value};setForm(f=>({...f,deducts:dd}));}}/>
@@ -1371,7 +1371,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
         <button onClick={save} style={{background:"linear-gradient(135deg,#c8922a,#a87520)",color:"#fff",border:"none",borderRadius:14,padding:"18px",fontSize:18,fontWeight:900,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 16px rgba(200,146,42,0.3)",display:"flex",alignItems:"center",justifyContent:"center",gap:9}}>
           <svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h11l3 3v13H5Z"/><path d="M8 4v5h7M8 20v-6h8v6"/></g></svg>
           حفظ العقد</button>
-        <button onClick={()=>setForm({client:"",idNum:"",idType:"هوية وطنية",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}],isOldContract:false})} style={{background:"#fff",color:"#94a3b8",border:"2px solid #e2e8f0",borderRadius:14,padding:"18px 24px",fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>مسح</button>
+        <button onClick={()=>setForm({client:"",idNum:"",idType:"هوية وطنية",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}],isOldContract:false})} style={{background:"#fff",color:"#94a3b8",border:"2px solid #141428",borderRadius:14,padding:"18px 24px",fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>مسح</button>
       </div>
     </div>
   );
@@ -1825,7 +1825,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     };
     return (
       <div>
-        <button style={{background:"#fff",border:"1.5px solid #e6eaf0",borderRadius:10,padding:"9px 16px",fontSize:14,fontWeight:700,color:"#1a1a2e",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",marginBottom:16,display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>setShowMigrated(false)}>← رجوع للعقود</button>
+        <button style={{background:"#fff",border:"1.5px solid #141428",borderRadius:10,padding:"9px 16px",fontSize:14,fontWeight:700,color:"#1a1a2e",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",marginBottom:16,display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>setShowMigrated(false)}>← رجوع للعقود</button>
         <div style={{...styles.panel,padding:20}}>
           <h3 style={{margin:"0 0 16px",fontSize:18,fontWeight:800,color:"#c8922a",display:"flex",alignItems:"center",gap:8}}>
             <svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.6 7.6h16.8v12H3.6Z"/><path d="M3.6 11.6h16.8M12 7.6v12"/></g></svg>
@@ -1879,7 +1879,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   if(showDeduct){
     return (
       <div>
-        <button onClick={()=>setShowDeduct(false)} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"1px solid rgba(200,146,42,0.3)",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16}}>
+        <button onClick={()=>setShowDeduct(false)} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16}}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e0b85c" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           رجوع
         </button>
@@ -1891,7 +1891,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   if(showNew){
     return (
       <div>
-        <button onClick={()=>setShowNew(false)} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"1px solid rgba(200,146,42,0.3)",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16}}>
+        <button onClick={()=>setShowNew(false)} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16}}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e0b85c" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           رجوع
         </button>
@@ -2132,7 +2132,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           </div>
           {invSearch && invReportContracts.length>0 && (
             <>
-            <button style={{width:40,height:40,borderRadius:10,border:showInvFilters?"2px solid #c8922a":"1px solid #e2e8f0",background:showInvFilters?"#fffbf0":"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}} onClick={()=>setShowInvFilters(!showInvFilters)}>
+            <button style={{width:40,height:40,borderRadius:10,border:showInvFilters?"2px solid #c8922a":"1px solid #141428",background:showInvFilters?"#fffbf0":"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}} onClick={()=>setShowInvFilters(!showInvFilters)}>
               <svg width="18" height="18" viewBox="0 0 24 24"><g fill="none" stroke={showInvFilters?"#c8922a":"#64748b"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M7 12h10M10 18h4"/></g></svg>
             </button>
             <button style={{padding:"8px 14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#c8922a,#a87520)",color:"#fff",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center"}} onClick={()=>printInvReport()}>
@@ -2172,7 +2172,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
             {[{v:"",l:"الكل"},{v:"نقدي",l:"نقدي"},{v:"تحويل",l:"تحويل"},{v:"صرافة",l:"صرافة"},{v:"شيكات",l:"شيكات"},{v:"المقاصة",l:"المقاصة"},{v:"استقطاع",l:"استقطاع"}].map(f=>(
               <button key={f.v} onClick={()=>setPayFilter(payFilter===f.v && f.v?"":f.v)}
                 style={{padding:"6px 12px",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
-                  border:(payFilter===f.v||(f.v&&payFilter.startsWith(f.v+":")))?"2px solid #c8922a":"1px solid #e2e8f0",
+                  border:(payFilter===f.v||(f.v&&payFilter.startsWith(f.v+":")))?"2px solid #c8922a":"1px solid #141428",
                   background:(payFilter===f.v||(f.v&&payFilter.startsWith(f.v+":")))?"#fffbf0":"#fff",
                   color:(payFilter===f.v||(f.v&&payFilter.startsWith(f.v+":")))?"#c8922a":"#64748b"}}>{f.l}</button>
             ))}
@@ -2225,7 +2225,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                   return (
                     <tr key={c.id} style={{background:i%2===0?"#fff":"#f8f8f8"}}>
                       <td style={styles.td}>{i+1}</td>
-                      <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",position:"sticky",right:0,background:i%2===0?"#fff":"#f8f8f8",zIndex:5,borderLeft:"2px solid #e2e8f0"}}>{c.client}</td>
+                      <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",position:"sticky",right:0,background:i%2===0?"#fff":"#f8f8f8",zIndex:5,borderLeft:"2px solid #141428"}}>{c.client}</td>
                       <td style={styles.td}>{c.cPhone||"—"}</td>
                       <td style={styles.td}>{c.gName||"—"}</td>
                       <td style={styles.td}>{c.gPhone||"—"}</td>
@@ -2266,7 +2266,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               <tbody>
                 {invReportContracts.map((c,i)=>(
                   <tr key={c.id} style={{background:i%2===0?"#fff":"#f8f8f8"}}>
-                    <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",position:"sticky",right:0,background:i%2===0?"#fff":"#f8f8f8",zIndex:5,borderLeft:"2px solid #e2e8f0"}}>{c.client}</td>
+                    <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",position:"sticky",right:0,background:i%2===0?"#fff":"#f8f8f8",zIndex:5,borderLeft:"2px solid #141428"}}>{c.client}</td>
                     <td style={styles.td}>{c.cPhone||"—"}</td>
                     <td style={styles.td}>{SAR(c.instAmt||0)}</td>
                     <td style={{...styles.td,textAlign:"center"}}></td>
@@ -2693,7 +2693,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           {/* خصم سداد مستثمر */}
           <div style={{marginBottom:14}}>
             <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:editForm.deductEnabled?14:0}}>
-              <button style={{padding:"10px 18px",borderRadius:10,border:"2px solid "+(editForm.deductEnabled?C.gold:"#e2e8f0"),background:editForm.deductEnabled?"linear-gradient(135deg,#fefbf3,#fef3c7)":"#fff",color:editForm.deductEnabled?C.gold:"#94a3b8",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:7}}
+              <button style={{padding:"10px 18px",borderRadius:10,border:"2px solid "+(editForm.deductEnabled?C.gold:"#141428"),background:editForm.deductEnabled?"linear-gradient(135deg,#fefbf3,#fef3c7)":"#fff",color:editForm.deductEnabled?C.gold:"#94a3b8",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:7}}
                 onClick={()=>setEditForm(f=>({...f,deductEnabled:!f.deductEnabled}))}>
                 {editForm.deductEnabled?"✓ ":""}خصم سداد مستثمر
               </button>
@@ -2702,7 +2702,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
             {editForm.deductEnabled && (
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {(editForm.deducts||[]).map((d,idx)=>(
-                  <div key={idx} style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,background:idx%2===0?"#fefce8":"#fff",padding:"12px 14px",borderRadius:12,border:"1px solid #e5e7eb"}}>
+                  <div key={idx} style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,background:idx%2===0?"#fefce8":"#fff",padding:"12px 14px",borderRadius:12,border:"1px solid #141428"}}>
                     <div>
                       <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المبلغ (ريال) {idx+1}</label>
                       <input style={styles.input} type="number" placeholder="مثال: 3000" value={d.amount||""} onChange={e=>{const dd=[...(editForm.deducts||[])];dd[idx]={...dd[idx],amount:e.target.value};setEditForm(f=>({...f,deducts:dd}));}}/>
@@ -3368,7 +3368,7 @@ function DeductionsSheet({contracts, investors, payments}){
           {payLabel} ({dRows.length})</div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <button onClick={()=>setShowFilters(!showFilters)}
-            style={{width:40,height:40,borderRadius:10,border:showFilters?"2px solid #c8922a":"1px solid #e2e8f0",background:showFilters?"#fffbf0":"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>
+            style={{width:40,height:40,borderRadius:10,border:showFilters?"2px solid #c8922a":"1px solid #141428",background:showFilters?"#fffbf0":"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>
             <svg width="18" height="18" viewBox="0 0 24 24"><g fill="none" stroke={showFilters?"#c8922a":"#64748b"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M7 12h10M10 18h4"/></g></svg>
           </button>
           <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px",display:"inline-flex",alignItems:"center",gap:6}} onClick={printSheet}>
@@ -3381,7 +3381,7 @@ function DeductionsSheet({contracts, investors, payments}){
       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:8}}>
         <span style={{fontSize:13,fontWeight:700,color:"#4a5568"}}>ترتيب الكشف:</span>
         <select value={sortBy} onChange={e=>setSortBy(e.target.value)}
-          style={{padding:"8px 12px",borderRadius:8,border:sortBy?"2px solid #c8922a":"1px solid #e2e8f0",fontSize:14,fontWeight:700,
+          style={{padding:"8px 12px",borderRadius:8,border:sortBy?"2px solid #c8922a":"1px solid #141428",fontSize:14,fontWeight:700,
             fontFamily:"IBM Plex Sans Arabic,Arial",cursor:"pointer",background:sortBy?"#fffbf0":"#fff",color:sortBy?"#c8922a":"#4a5568",outline:"none"}}>
           <option value="">بدون ترتيب</option>
           <option value="inv">حسب المستثمر</option>
@@ -3393,7 +3393,7 @@ function DeductionsSheet({contracts, investors, payments}){
         {["شهري","مستمر","مؤجل","منتهي"].map(s=>(
           <button key={s} onClick={()=>toggleStatus(s)}
             style={{padding:"6px 14px",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
-              border:statusF.has(s)?"2px solid #c8922a":"1px solid #e2e8f0",
+              border:statusF.has(s)?"2px solid #c8922a":"1px solid #141428",
               background:statusF.has(s)?"#fffbf0":"#fff",
               color:statusF.has(s)?"#c8922a":"#64748b"}}>{s}</button>
         ))}
@@ -3403,7 +3403,7 @@ function DeductionsSheet({contracts, investors, payments}){
         {["استقطاع","شيكات","المقاصة","نقدي","تحويل","صرافة","الكل"].map(f=>(
           <button key={f} onClick={()=>togglePay(f)}
             style={{padding:"6px 14px",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
-              border:payF.has(f)?"2px solid #c8922a":"1px solid #e2e8f0",
+              border:payF.has(f)?"2px solid #c8922a":"1px solid #141428",
               background:payF.has(f)?"#fffbf0":"#fff",
               color:payF.has(f)?"#c8922a":"#64748b"}}>{f}</button>
         ))}
@@ -3443,7 +3443,7 @@ function DeductionsSheet({contracts, investors, payments}){
         <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:14,flexWrap:"wrap"}}>
           <span style={{fontSize:13,fontWeight:700,color:"#4a5568"}}>يوم الاستحقاق:</span>
           <select value={dayF} onChange={e=>setDayF(e.target.value)}
-            style={{padding:"8px 14px",borderRadius:8,border:dayF?"2px solid #c8922a":"1px solid #e2e8f0",fontSize:15,fontWeight:700,
+            style={{padding:"8px 14px",borderRadius:8,border:dayF?"2px solid #c8922a":"1px solid #141428",fontSize:15,fontWeight:700,
               fontFamily:"IBM Plex Sans Arabic,Arial",cursor:"pointer",background:dayF?"#fffbf0":"#fff",color:dayF?"#c8922a":"#4a5568",outline:"none"}}>
             <option value="">كل الأيام</option>
             {allDays.map(d=><option key={d} value={d}>يوم {d}</option>)}
@@ -3465,7 +3465,7 @@ function DeductionsSheet({contracts, investors, payments}){
               {dRows.map((c,i)=>(
                 <tr key={c.id} style={{background:checked[c.id]?"#ecfdf5":(i%2===0?"#fff":"#f8f8f8")}}>
                   <td style={{...styles.td,textAlign:"center"}}><input type="checkbox" checked={!!checked[c.id]} onChange={()=>toggle(c.id)} style={{width:20,height:20,cursor:"pointer"}}/></td>
-                  <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",textDecoration:checked[c.id]?"line-through":"none",position:"sticky",right:0,background:checked[c.id]?"#ecfdf5":(i%2===0?"#fff":"#f8f8f8"),zIndex:5,borderLeft:"2px solid #e2e8f0"}}>{c.client}</td>
+                  <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",textDecoration:checked[c.id]?"line-through":"none",position:"sticky",right:0,background:checked[c.id]?"#ecfdf5":(i%2===0?"#fff":"#f8f8f8"),zIndex:5,borderLeft:"2px solid #141428"}}>{c.client}</td>
                   <td style={{...styles.td,whiteSpace:"nowrap"}}>{c.cPhone||"—"}</td>
                   <td style={{...styles.td,textAlign:"center"}}>{c.contractType==="migrated"?(c.oldNum||(String(c.note||"").match(/عقد\s*(\d+)/)||[])[1]||"—"):(c.num||"—")}</td>
                   <td style={{...styles.td,fontFamily:"monospace",whiteSpace:"nowrap"}}>{c.bankAccount||"—"}</td>
@@ -3664,7 +3664,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
   return (
     <div>
       {goBack && (
-        <button onClick={goBack} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"1px solid rgba(200,146,42,0.3)",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16}}>
+        <button onClick={goBack} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16}}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e0b85c" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           رجوع
         </button>
@@ -3894,7 +3894,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
           {!privateAccMode && <option value="zakat">🌙 صندوق الزكاة</option>}
           {!privateAccMode && <option value="pending">📌 المتبقي</option>}
         </select>
-        {privateAccMode && <button style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"1px solid rgba(200,146,42,0.3)",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} onClick={()=>{
+        {privateAccMode && <button style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} onClick={()=>{
           const name = window.prompt("اسم المستثمر الخفي:");
           if(!name || !name.trim()) return;
           const newInv = {id:Date.now(), name:name.trim(), capital:0, hidden:true};
@@ -4101,14 +4101,14 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                     <td style={{...styles.td,whiteSpace:"nowrap"}}>
                       <div style={{display:"flex",gap:4,justifyContent:"center"}}>
                         {tx.auto ? (
-                          <button style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"1px solid rgba(200,146,42,0.3)",borderRadius:6,padding:"5px 14px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>{
+                          <button style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:6,padding:"5px 14px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>{
                             if(tx.type==="installments"){ setExpandRow(expandRow===tx.id?null:tx.id); }
                             else if(tx.type==="contract"){ goBack(); }
                           }}>تعديل</button>
                         ) : (
                           <button style={{background:"#1a1a2e",color:"rgba(224,184,92,0.35)",border:"1px solid rgba(200,146,42,0.1)",borderRadius:6,padding:"5px 14px",fontSize:11,fontWeight:800,fontFamily:"IBM Plex Sans Arabic,Arial",cursor:"default"}}>تعديل</button>
                         )}
-                        <button style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"1px solid rgba(200,146,42,0.3)",borderRadius:6,padding:"5px 14px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>{
+                        <button style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:6,padding:"5px 14px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>{
                           if(!tx.auto){ delTx(tx.id); return; }
                           if(tx.type==="installments"){
                             if(!window.confirm("حذف جميع سدادات هذا الشهر ("+tx.details.length+" سداد) من كشف المستثمر؟")) return;
@@ -4832,7 +4832,7 @@ function BankReconcile({bankTx, contracts, investors, payments, setPayments, don
   ];
 
   const Card = ({item, kind}) => (
-    <div style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"12px 14px",marginBottom:8}}>
+    <div style={{background:"#fff",border:"1px solid #141428",borderRadius:12,padding:"12px 14px",marginBottom:8}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10,flexWrap:"wrap"}}>
         <div style={{flex:1,minWidth:180}}>
           <div style={{fontSize:12,color:"#94a3b8",fontWeight:600}}>{item.tx.date}</div>
@@ -4856,7 +4856,7 @@ function BankReconcile({bankTx, contracts, investors, payments, setPayments, don
         </div>
       )}
       {item.cls && !item.best && (
-        <div style={{marginTop:10,background:"#f8fafc",borderRadius:10,padding:"9px 12px",border:"1px solid #e2e8f0"}}>
+        <div style={{marginTop:10,background:"#f8fafc",borderRadius:10,padding:"9px 12px",border:"1px solid #141428"}}>
           <div style={{fontSize:13,fontWeight:700,color:"#475569"}}>
             التصنيف المقترح: {item.cls.label}
             <span style={{fontSize:11,marginRight:6,color:item.cls.sure?"#16a34a":"#f97316"}}>
@@ -4866,10 +4866,10 @@ function BankReconcile({bankTx, contracts, investors, payments, setPayments, don
         </div>
       )}
       <div style={{display:"flex",gap:6,marginTop:10,flexWrap:"wrap"}}>
-        {kind==="alert" && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"none",background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}} onClick={()=>recordPay(item)}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7 10 17l-5-5"/></g></svg>سجّل السداد</button>}
-        {(kind==="unknown"||kind==="exp") && item.cls && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"none",background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}} onClick={()=>recordExpense(item)}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h13v16H7a2 2 0 0 1-2-2Z"/><path d="M5 17h13"/></g></svg>أضف لليومية</button>}
-        {kind==="review" && item.best && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"none",background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}} onClick={()=>{ if(window.confirm("تأكيد ربط "+SAR(item.amt)+" بـ "+item.best.c.client+"؟\n\nالأدلة ضعيفة — تأكد بنفسك.")) recordPay(item); }}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></g></svg>اربط يدوياً</button>}
-        <button style={{padding:"10px 14px",borderRadius:9,border:"1.5px solid #e2e8f0",background:"#fff",color:"#94a3b8",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>ign(item.key)}>تجاهل</button>
+        {kind==="alert" && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"2.5px solid #141428",background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}} onClick={()=>recordPay(item)}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7 10 17l-5-5"/></g></svg>سجّل السداد</button>}
+        {(kind==="unknown"||kind==="exp") && item.cls && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"2.5px solid #141428",background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}} onClick={()=>recordExpense(item)}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h13v16H7a2 2 0 0 1-2-2Z"/><path d="M5 17h13"/></g></svg>أضف لليومية</button>}
+        {kind==="review" && item.best && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"2.5px solid #141428",background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}} onClick={()=>{ if(window.confirm("تأكيد ربط "+SAR(item.amt)+" بـ "+item.best.c.client+"؟\n\nالأدلة ضعيفة — تأكد بنفسك.")) recordPay(item); }}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></g></svg>اربط يدوياً</button>}
+        <button style={{padding:"10px 14px",borderRadius:9,border:"1.5px solid #141428",background:"#fff",color:"#94a3b8",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>ign(item.key)}>تجاهل</button>
       </div>
     </div>
   );
@@ -4891,8 +4891,8 @@ function BankReconcile({bankTx, contracts, investors, payments, setPayments, don
           const on = tab===t.id;
           return (
           <button key={t.id} onClick={()=>setTab(t.id)}
-            style={{padding:"10px 4px",borderRadius:11,border:on?"none":"1.5px solid #e2e8f0",
-              background:on?"linear-gradient(135deg,#1a1a2e,#0f3460)":"#fff",color:on?"#e0b85c":"#64748b",
+            style={{padding:"10px 4px",borderRadius:11,border:on?"none":"1.5px solid #141428",
+              background:on?"linear-gradient(140deg,#e0b85c,#c8922a)":"#fff",color:on?"#141428":"#64748b",
               fontWeight:800,fontSize:11,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",textAlign:"center",
               display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
             <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke={on?"#e0b85c":"#8b93a7"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{__html:t.icon}}/><g fill={on?"#e0b85c":"#8b93a7"} dangerouslySetInnerHTML={{__html:t.dot}}/></svg>
@@ -4904,7 +4904,7 @@ function BankReconcile({bankTx, contracts, investors, payments, setPayments, don
       {ignored.length>0 && (
         <div style={{fontSize:12,color:"#94a3b8",marginBottom:10,display:"flex",alignItems:"center",gap:8}}>
           <span>{ignored.length} حركة متجاهَلة</span>
-          <button style={{padding:"5px 10px",borderRadius:8,border:"1.5px solid #e2e8f0",background:"#fff",color:"#6d28d9",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={unIgn}>استرجاع الكل</button>
+          <button style={{padding:"5px 10px",borderRadius:8,border:"1.5px solid #141428",background:"#fff",color:"#6d28d9",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={unIgn}>استرجاع الكل</button>
         </div>
       )}
       {cur.length===0
@@ -5206,15 +5206,15 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
     <div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
         <button onClick={()=>setBankView("tx")}
-          style={{padding:"13px",borderRadius:13,border:bankView==="tx"?"none":"2px solid #e2e8f0",
+          style={{padding:"13px",borderRadius:13,border:bankView==="tx"?"none":"2px solid #141428",
             background:bankView==="tx"?"linear-gradient(135deg,#1a1a2e,#16213e)":"#fff",
             color:bankView==="tx"?"#e0b85c":"#64748b",fontWeight:900,fontSize:14,cursor:"pointer",
             fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
           <svg width="17" height="17" viewBox="0 0 24 24"><g fill="none" stroke={bankView==="tx"?"#e0b85c":"#8b93a7"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg>
           الحركات</button>
         <button onClick={()=>setBankView("rc")}
-          style={{padding:"13px",borderRadius:13,border:bankView==="rc"?"none":"2px solid #e2e8f0",
-            background:bankView==="rc"?"linear-gradient(135deg,#1a1a2e,#0f3460)":"#fff",
+          style={{padding:"13px",borderRadius:13,border:bankView==="rc"?"none":"2px solid #141428",
+            background:bankView==="rc"?"linear-gradient(140deg,#e0b85c,#c8922a)":"#fff",
             color:bankView==="rc"?"#e0b85c":"#64748b",fontWeight:900,fontSize:14,cursor:"pointer",
             fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
           <svg width="17" height="17" viewBox="0 0 24 24"><g fill="none" stroke={bankView==="rc"?"#e0b85c":"#8b93a7"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></g></svg>
@@ -5232,8 +5232,8 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12,marginBottom:14}}>
           <div style={{fontSize:18,fontWeight:800,color:C.ink,display:"flex",alignItems:"center",gap:8}}><svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg>رصيد الحساب البنكي (الراجحي)</div>
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-            <button style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:10,padding:"10px 16px",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>fileRef.current&&fileRef.current.click()}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V4M8 8l4-4 4 4M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></g></svg>رفع كشف (Excel أو PDF)</button>
-            {rows.length>0 && <button style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:10,padding:"10px 16px",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>printBankStatement(shownRows,lastBalance,_bq?qDain:totalDain,_bq?qMadin:totalMadin,_bq?("بحث: "+bankQuery):"")}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9V4h10v5M6 18H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1M7 15h10v5H7Z"/></g></svg>طباعة الكشف</button>}
+            <button style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:10,padding:"10px 16px",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>fileRef.current&&fileRef.current.click()}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V4M8 8l4-4 4 4M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></g></svg>رفع كشف (Excel أو PDF)</button>
+            {rows.length>0 && <button style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:10,padding:"10px 16px",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>printBankStatement(shownRows,lastBalance,_bq?qDain:totalDain,_bq?qMadin:totalMadin,_bq?("بحث: "+bankQuery):"")}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9V4h10v5M6 18H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1M7 15h10v5H7Z"/></g></svg>طباعة الكشف</button>}
             {rows.length>0 && <button style={{...styles.btn(C.red),display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>{if(window.confirm("مسح كل الحركات؟"))setBankTx([]);}}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></g></svg>مسح</button>}
           </div>
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style={{display:"none"}}
@@ -5322,7 +5322,7 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
             <input type="text" placeholder="ابحث باسم شخص أو نوع عملية (تحويل / راتب / إيداع ...)"
               value={bankQuery} onChange={e=>setBankQuery(e.target.value)}
               style={{flex:1,border:"none",outline:"none",background:"transparent",fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:600,color:C.ink}}/>
-            {bankQuery && <button onClick={()=>setBankQuery("")} style={{border:"none",background:"#e2e8f0",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:14,fontWeight:700,color:"#475569"}}>✕</button>}
+            {bankQuery && <button onClick={()=>setBankQuery("")} style={{border:"none",background:"#141428",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:14,fontWeight:700,color:"#475569"}}>✕</button>}
           </div>
           {_bq && (
             <div style={{fontSize:14,fontWeight:700,color:C.ink2,marginBottom:10}}>
@@ -5531,7 +5531,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
           const on = tab===t.k;
           return (
           <button key={t.k} onClick={()=>{setTab(t.k);setOpenMonth(null);}}
-            style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:700,padding:"11px 18px",border:"none",cursor:"pointer",background:on?"linear-gradient(135deg,#1a1a2e,#0f3460)":C.white,color:on?"#e0b85c":C.ink2,whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:7,transition:"all .15s"}}>
+            style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:700,padding:"11px 18px",border:"none",cursor:"pointer",background:on?"linear-gradient(140deg,#e0b85c,#c8922a)":C.white,color:on?"#141428":C.ink2,whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:7,transition:"all .15s"}}>
             <svg width="17" height="17" viewBox="0 0 24 24"><g fill="none" stroke={on?"#e0b85c":"#8b93a7"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{__html:t.icon}}/></svg>
             {t.l}</button>
         );})}
@@ -5553,7 +5553,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
               مؤشرات المحفظة الشهرية</h2>
             <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
               <span style={{fontSize:13,color:"#1f2937",fontWeight:700}}>المتبقي الكلي: <span style={{color:C.red,fontWeight:900}}>{SAR(totalRemaining)}</span></span>
-              <button style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:10,fontSize:13,fontWeight:800,padding:"7px 12px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}} onClick={closeCycleAndReset}>
+              <button style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:10,fontSize:13,fontWeight:800,padding:"7px 12px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}} onClick={closeCycleAndReset}>
                 <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></g></svg>
                 إقفال الدورة وبدء شهر جديد</button>
               <button style={{...styles.btn(C.gold),fontSize:13,padding:"7px 12px",display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>printAll(months.map(ym=>({ym,d:calcMonth(ym)})),"المؤشرات الشهرية")}>
@@ -5678,11 +5678,11 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
           <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>{mLabel(ym)} {isClosed&&<span style={{fontSize:12,background:C.green,color:"#fff",borderRadius:10,padding:"2px 10px",marginRight:6}}>مقفل</span>}</h2>
         </div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-          <button onClick={printReport} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:10,fontSize:14,fontWeight:800,padding:"8px 16px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
+          <button onClick={printReport} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:10,fontSize:14,fontWeight:800,padding:"8px 16px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
             <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9V4h10v5M6 18H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1M7 15h10v5H7Z"/></g></svg>
             طباعة التقرير</button>
           {isClosed
-            ? <button onClick={onReopen} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:10,fontSize:14,fontWeight:800,padding:"8px 16px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
+            ? <button onClick={onReopen} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:10,fontSize:14,fontWeight:800,padding:"8px 16px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
                 <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7-2.6"/></g></svg>
                 فتح الشهر</button>
             : <button onClick={onClose} style={{...styles.btn(C.green,"#fff"),fontSize:14,padding:"8px 16px",display:"inline-flex",alignItems:"center",gap:6}}>
@@ -5977,7 +5977,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
       {/* المربعين: أقساط الشهر / المنجز */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:11,marginBottom:11}}>
         <div onClick={()=>setDetail({mode:"target"})}
-          style={{background:"#fff",border:"1px solid #e6eaf0",borderRadius:16,padding:"16px 15px",cursor:"pointer",
+          style={{background:"#fff",border:"1px solid #141428",borderRadius:16,padding:"16px 15px",cursor:"pointer",
           position:"relative",overflow:"hidden",boxShadow:"0 2px 10px rgba(0,0,0,.04)"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
             <div style={{fontSize:12.5,fontWeight:700,color:"#64748b"}}>أقساط الشهر</div>
@@ -5991,7 +5991,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
           <div style={{position:"absolute",bottom:0,right:0,left:0,height:3,background:"#c8922a"}}/>
         </div>
         <div onClick={()=>setDetail({mode:"done"})}
-          style={{background:"#fff",border:"1px solid #e6eaf0",borderRadius:16,padding:"16px 15px",cursor:"pointer",
+          style={{background:"#fff",border:"1px solid #141428",borderRadius:16,padding:"16px 15px",cursor:"pointer",
           position:"relative",overflow:"hidden",boxShadow:"0 2px 10px rgba(0,0,0,.04)"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
             <div style={{fontSize:12.5,fontWeight:700,color:"#64748b"}}>المنجز منها</div>
@@ -6002,12 +6002,12 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
           </div>
           <div style={{fontSize:29,fontWeight:800,lineHeight:1,letterSpacing:"-.5px",color:"#16a34a"}}>{SARf(doneAmount)}</div>
           <div style={{fontSize:11.5,color:"#64748b",marginTop:8,fontWeight:600}}>{doneCount} قسط</div>
-          <div style={{position:"absolute",bottom:0,right:0,left:0,height:3,background:"#e2e8f0"}}><div style={{height:"100%",width:donePct+"%",background:"#16a34a"}}/></div>
+          <div style={{position:"absolute",bottom:0,right:0,left:0,height:3,background:"#141428"}}><div style={{height:"100%",width:donePct+"%",background:"#16a34a"}}/></div>
         </div>
       </div>
 
       {/* شريط التقدّم */}
-      <div style={{background:C.white,border:"1px solid #e6eaf0",borderRadius:13,padding:"12px 15px",marginBottom:14,boxShadow:"0 2px 10px rgba(0,0,0,.04)"}}>
+      <div style={{background:C.white,border:"1px solid #141428",borderRadius:13,padding:"12px 15px",marginBottom:14,boxShadow:"0 2px 10px rgba(0,0,0,.04)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:15,marginBottom:9,fontWeight:800}}>
           <span style={{color:C.green,fontWeight:900,fontSize:15}}>أنجزت {donePct}%</span>
           <span style={{color:"#1a1a2e",fontWeight:900,fontSize:16}}>باقي <span style={{color:"#c8922a"}}>{remCount}</span> قسط · <span style={{color:"#c8922a"}}>{SARf(remAmount)}</span></span>
@@ -6517,10 +6517,10 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
               <button key={ch.k} onClick={()=>set("channel",ch.k)}
                 style={{flex:1,fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:14,fontWeight:800,padding:"11px 10px",borderRadius:10,cursor:"pointer",
                   display:"inline-flex",alignItems:"center",justifyContent:"center",gap:7,
-                  border:on?"2px solid #c8922a":"1.5px solid #e2e8f0",
-                  background:on?"linear-gradient(135deg,#1a1a2e,#0f3460)":"#fff",
-                  color:on?"#e0b85c":"#64748b"}}>
-                <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke={on?"#e0b85c":"#94a3b8"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  border:on?"2.5px solid #141428":"2px solid #141428",
+                  background:on?"linear-gradient(140deg,#e0b85c,#c8922a)":"#fff",
+                  color:on?"#141428":"#64748b"}}>
+                <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke={on?"#141428":"#94a3b8"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                   {ch.d.split("|").map((p,pi)=><path key={pi} d={p}/>)}
                 </g></svg>
                 {ch.l}
@@ -6528,8 +6528,8 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
             })}
           </div>
           <button onClick={addRow}
-            style={{width:"100%",padding:"14px",borderRadius:12,border:"none",cursor:"pointer",
-              background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",
+            style={{width:"100%",padding:"14px",borderRadius:12,border:"2.5px solid #141428",cursor:"pointer",
+              background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",
               fontSize:15,fontWeight:800,fontFamily:"IBM Plex Sans Arabic,Arial",
               boxShadow:"0 4px 14px rgba(26,26,46,0.25)"}}>إضافة الحركة</button>
         </div>
@@ -6539,7 +6539,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
       <div style={styles.panel}>
         <div style={styles.panelHdr}>
           <h3 style={{margin:0,fontSize:15,fontWeight:700}}>📋 حركات يوم {dLabel(selDay)}</h3>
-          <span style={{fontSize:15,fontWeight:800,background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:closingBalance>=0?"#e0b85c":"#fca5a5",padding:"6px 14px",borderRadius:10,border:"1px solid rgba(200,146,42,0.25)"}}>المتبقي: {SAR(closingBalance)}</span>
+          <span style={{fontSize:15,fontWeight:800,background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:closingBalance>=0?"#141428":"#fca5a5",padding:"6px 14px",borderRadius:10,border:"1px solid rgba(200,146,42,0.25)"}}>المتبقي: {SAR(closingBalance)}</span>
         </div>
         <div style={{overflowX:"auto",maxHeight:"70vh",overflowY:"auto",WebkitOverflowScrolling:"touch",position:"relative"}}>
           <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:15}}>
@@ -6552,7 +6552,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
             <tbody>
               <tr style={{background:"#f8fafc"}}>
                 <td style={{...styles.td,fontWeight:700,color:"#c8922a"}}>رصيد افتتاحي</td>
-                <td style={{...styles.td,color:"#1f2937",position:"sticky",right:0,background:"#f8fafc",zIndex:5,borderLeft:"2px solid #e2e8f0"}}>متبقي أمس</td>
+                <td style={{...styles.td,color:"#1f2937",position:"sticky",right:0,background:"#f8fafc",zIndex:5,borderLeft:"2px solid #141428"}}>متبقي أمس</td>
                 <td style={{...styles.td,fontWeight:800,color:"#334155"}}>{SAR(openingBalance)}</td>
                 <td style={styles.td}></td>
               </tr>
@@ -6563,7 +6563,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                 return (
                   <tr key={d.id} style={{background:i%2===0?C.white:C.gray}}>
                     <td style={styles.td}><span style={styles.badge("#141428","#c8922a")}>{t?.label||d.type}</span>{d.channel==="transfer"&&<span style={{fontSize:9,fontWeight:700,color:"#2563eb",marginRight:4}}>🏦</span>}</td>
-                    <td style={{...styles.td,fontWeight:700,position:"sticky",right:0,background:i%2===0?C.white:C.gray,zIndex:5,borderLeft:"2px solid #e2e8f0"}}>{d.desc||"—"}</td>
+                    <td style={{...styles.td,fontWeight:700,position:"sticky",right:0,background:i%2===0?C.white:C.gray,zIndex:5,borderLeft:"2px solid #141428"}}>{d.desc||"—"}</td>
                     <td style={{...styles.td,fontWeight:800,color:t&&t.sign<0?"#dc2626":"#16a34a"}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
                     <td style={{...styles.td,whiteSpace:"nowrap"}}>
                       <button style={{...styles.btn("#0d7a6f"),fontSize:13,padding:"5px 9px",marginLeft:4,display:"inline-flex",alignItems:"center"}} onClick={()=>printDailyReceipt(d, d.receiptNum||0)} title="طباعة إيصال">
@@ -6641,7 +6641,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
       <div style={{marginBottom:16}}>
         <button style={{width:"100%",justifyContent:"center",fontSize:15.5,padding:"14px",borderRadius:13,fontWeight:800,
           border:"none",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:9,
-          background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",boxShadow:"0 4px 14px rgba(26,26,46,0.22)"}}
+          background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",boxShadow:"0 4px 14px rgba(26,26,46,0.22)"}}
           onClick={()=>{
             let mgrP = "";
             try{ mgrP = localStorage.getItem("qimma_mgr_phone")||""; }catch(e){}
@@ -6705,7 +6705,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
           <h3 style={{margin:0,fontSize:16,fontWeight:800,display:"flex",alignItems:"center",gap:8}}>
             <svg width="19" height="19" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.6 20.4h16.8"/><path d="M7.2 20.4v-4.6M12 20.4v-8.2M16.8 20.4v-6.4"/></g><circle cx="12" cy="9.2" r="1.35" fill="#a87520"/></svg>
             كشف حساب شامل</h3>
-          <button style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"1px solid rgba(200,146,42,0.3)",borderRadius:10,padding:"9px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:7}}
+          <button style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:10,padding:"9px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:7}}
             onClick={()=>printAccountStatement(stmtFrom,stmtTo,stmtTotals,stmtIn,stmtOut,stmtNet)}>
             <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9V4h10v5M6 18H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1M7 15h10v5H7Z"/></g></svg>
             طباعة الكشف</button>
@@ -6717,7 +6717,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
             <input type="text" placeholder="ابحث باسم شخص أو وصف (سداد / مصروف / سحب ...)"
               value={stmtQuery} onChange={e=>setStmtQuery(e.target.value)}
               style={{flex:1,border:"none",outline:"none",background:"transparent",fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:600,color:C.ink}}/>
-            {stmtQuery && <button onClick={()=>setStmtQuery("")} style={{border:"none",background:"#e2e8f0",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:14,fontWeight:700,color:"#475569"}}>✕</button>}
+            {stmtQuery && <button onClick={()=>setStmtQuery("")} style={{border:"none",background:"#141428",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:14,fontWeight:700,color:"#475569"}}>✕</button>}
           </div>
 
           {/* بطاقات الإجماليات لكل نوع (انقر لعرض تفاصيل النوع) */}
@@ -6787,7 +6787,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                         <tr style={{background:d.date>=baseDate?(i%2===0?C.white:C.gray):"#f8fafc",opacity:d.date>=baseDate?1:0.65}}>
                           <td style={{...styles.td,whiteSpace:"nowrap",color:"#475569",fontWeight:600}}>{dLabel(d.date)}</td>
                           <td style={styles.td}><span style={styles.badge("#141428","#c8922a")}>{t?.label||d.type}</span></td>
-                          <td style={{...styles.td,fontWeight:700,position:"sticky",right:0,background:d.date>=baseDate?(i%2===0?C.white:C.gray):"#f8fafc",zIndex:5,borderLeft:"2px solid #e2e8f0"}}>{d.desc||"—"}</td>
+                          <td style={{...styles.td,fontWeight:700,position:"sticky",right:0,background:d.date>=baseDate?(i%2===0?C.white:C.gray):"#f8fafc",zIndex:5,borderLeft:"2px solid #141428"}}>{d.desc||"—"}</td>
                           <td style={{...styles.td,fontWeight:800,color:t&&t.sign<0?"#dc2626":"#16a34a",whiteSpace:"nowrap"}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
                         </tr>
                       </React.Fragment>
@@ -7726,7 +7726,7 @@ function PrivateNotes({toast, gsWrite, saveLS, loadLS}){
   const totalPaid = loans.reduce((s,l)=>s+l.payments.reduce((s2,p)=>s2+p.amount,0),0);
   const totalLeft = totalGiven - totalPaid;
 
-  const iS = {padding:"10px 14px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:15,fontFamily:"inherit",outline:"none",boxSizing:"border-box"};
+  const iS = {padding:"10px 14px",borderRadius:10,border:"1.5px solid #141428",fontSize:15,fontFamily:"inherit",outline:"none",boxSizing:"border-box"};
 
   return (
     <div style={{marginTop:30}}>
@@ -7750,11 +7750,11 @@ function PrivateNotes({toast, gsWrite, saveLS, loadLS}){
         <div style={{background:"#fff",borderRadius:14,boxShadow:"0 2px 12px rgba(0,0,0,.08)",maxWidth:700,margin:"10px auto",padding:20}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
             <div style={{fontSize:17,fontWeight:800,color:"#1a1a2e"}}>🔐 الدفتر الخاص</div>
-            <button onClick={()=>{setPvtUnlocked(false);setPvtPin("");setPvtOpen(false);}} style={{padding:"6px 14px",borderRadius:8,border:"1px solid #e2e8f0",background:"#fff",color:"#6b7280",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>قفل</button>
+            <button onClick={()=>{setPvtUnlocked(false);setPvtPin("");setPvtOpen(false);}} style={{padding:"6px 14px",borderRadius:8,border:"1px solid #141428",background:"#fff",color:"#6b7280",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>قفل</button>
           </div>
 
           {/* الإجماليات */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1,background:"#e2e8f0",borderRadius:11,overflow:"hidden",marginBottom:16}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1,background:"#141428",borderRadius:11,overflow:"hidden",marginBottom:16}}>
             <div style={{background:"#f0fdf4",padding:"10px 8px",textAlign:"center"}}>
               <div style={{fontSize:11,color:"#16a34a",fontWeight:600}}>إجمالي السلف</div>
               <div style={{fontSize:16,fontWeight:800,color:"#16a34a"}}>{NF(totalGiven)}</div>
@@ -7786,7 +7786,7 @@ function PrivateNotes({toast, gsWrite, saveLS, loadLS}){
             const left = l.amount - paid;
             const done = left <= 0;
             return (
-              <div key={l.id} style={{background:done?"#f0fdf4":"#f8fafc",borderRadius:12,padding:14,marginBottom:10,border:"1px solid "+(done?"#86efac":"#e2e8f0")}}>
+              <div key={l.id} style={{background:done?"#f0fdf4":"#f8fafc",borderRadius:12,padding:14,marginBottom:10,border:"1px solid "+(done?"#86efac":"#141428")}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                   <div>
                     <span style={{fontWeight:800,fontSize:16,color:"#1f2937"}}>{l.name}</span>
@@ -7803,7 +7803,7 @@ function PrivateNotes({toast, gsWrite, saveLS, loadLS}){
                   <div><div style={{fontSize:10,color:"#6b7280"}}>المتبقي</div><div style={{fontSize:15,fontWeight:700,color:left>0?"#dc2626":"#16a34a"}}>{NF(left)}</div></div>
                 </div>
                 {/* شريط التقدم */}
-                <div style={{height:6,background:"#e2e8f0",borderRadius:4,overflow:"hidden",marginBottom:8}}>
+                <div style={{height:6,background:"#141428",borderRadius:4,overflow:"hidden",marginBottom:8}}>
                   <div style={{height:"100%",width:Math.min(100,l.amount>0?(paid/l.amount*100):0)+"%",borderRadius:4,background:done?"#16a34a":"#c8922a"}}/>
                 </div>
                 {/* الدفعات */}
@@ -7830,10 +7830,10 @@ function PrivateNotes({toast, gsWrite, saveLS, loadLS}){
                       <input placeholder="ملاحظة (اختياري)" value={payForm.note} onChange={e=>setPayForm(f=>({...f,note:e.target.value}))}
                         style={{...iS,flex:2,minWidth:100,fontSize:14,padding:"8px 10px"}}/>
                       <button onClick={addPayment} style={{padding:"8px 14px",borderRadius:8,border:"none",background:"#2563eb",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>سداد</button>
-                      <button onClick={()=>setPayForm({id:null,amount:"",note:""})} style={{padding:"8px 10px",borderRadius:8,border:"1px solid #e2e8f0",background:"#fff",color:"#6b7280",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>✕</button>
+                      <button onClick={()=>setPayForm({id:null,amount:"",note:""})} style={{padding:"8px 10px",borderRadius:8,border:"1px solid #141428",background:"#fff",color:"#6b7280",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>✕</button>
                     </div>
                   ) : (
-                    <button onClick={()=>setPayForm({id:l.id,amount:"",note:""})} style={{padding:"6px 14px",borderRadius:8,border:"1px solid #e2e8f0",background:"#fff",color:"#2563eb",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>💰 تسديد دفعة</button>
+                    <button onClick={()=>setPayForm({id:l.id,amount:"",note:""})} style={{padding:"6px 14px",borderRadius:8,border:"1px solid #141428",background:"#fff",color:"#2563eb",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>💰 تسديد دفعة</button>
                   )
                 )}
               </div>
@@ -8275,7 +8275,7 @@ function GoodsPage({investors, contracts, toast, gsWrite, goBack}) {
   return (
     <div>
       {goBack && (
-        <button onClick={goBack} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"1px solid rgba(200,146,42,0.3)",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16}}>
+        <button onClick={goBack} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16}}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e0b85c" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           رجوع
         </button>
@@ -8389,7 +8389,7 @@ function GoodsPage({investors, contracts, toast, gsWrite, goBack}) {
               const C_={
                 "رقم العقد":cell({textAlign:"center",fontWeight:700},row.contractNum),
                 "قيمة العقد":cell({textAlign:"center"},row.contractAmount>0?row.contractAmount.toLocaleString("en-US"):""),
-                "اسم العميل":cell({fontWeight:700,whiteSpace:"nowrap",position:"sticky",right:0,background:i%2===0?"#fff":"#f8f8f8",zIndex:5,borderLeft:"2px solid #e2e8f0"},row.client),
+                "اسم العميل":cell({fontWeight:700,whiteSpace:"nowrap",position:"sticky",right:0,background:i%2===0?"#fff":"#f8f8f8",zIndex:5,borderLeft:"2px solid #141428"},row.client),
                 "اسم المستثمر":cell({},row.investor),
                 "دعم العميل":cell({textAlign:"center",color:C.green,fontWeight:700},row.supportClient>0?row.supportClient.toLocaleString("en-US"):""),
                 "دعم الحساب":cell({textAlign:"center",color:C.teal,fontWeight:700},row.supportAcc>0?row.supportAcc.toLocaleString("en-US"):""),
@@ -8997,7 +8997,7 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
   const Chart = ({spec}) => {
     const data = _arr(spec.data).slice(0,24);
     const max = Math.max(...data.map(d=>Math.abs(_n(d.value))), 1);
-    return React.createElement("div",{style:{background:"#fff",borderRadius:14,padding:"16px",marginTop:10,border:"1px solid #e2e8f0"}},
+    return React.createElement("div",{style:{background:"#fff",borderRadius:14,padding:"16px",marginTop:10,border:"1px solid #141428"}},
       spec.title && React.createElement("div",{style:{fontSize:14,fontWeight:800,color:"#1a1a2e",marginBottom:12}},spec.title),
       React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
         data.map((d,i)=>
@@ -9426,9 +9426,9 @@ tbody tr:nth-child(even){background:#f7f9fb}
       showSetup && React.createElement("div",{style:{background:"rgba(255,255,255,0.96)",borderRadius:16,padding:"18px",marginBottom:12,border:"2px solid #7c3aed",flexShrink:0}},
         React.createElement("div",{style:{fontSize:15,fontWeight:800,color:"#6d28d9",marginBottom:10}},"⚙️ إعداد Gemini AI"),
         React.createElement("label",{style:{fontSize:13,fontWeight:700,color:"#4a5568",display:"block",marginBottom:4}},"المفتاح (aistudio.google.com/apikey)"),
-        React.createElement("input",{style:{width:"100%",padding:"12px 14px",borderRadius:10,border:"2px solid #e2e8f0",fontSize:14,fontFamily:"monospace",direction:"ltr",marginBottom:10,boxSizing:"border-box"},placeholder:"AQ.Ab8... أو AIzaSy...",defaultValue:aiKey,id:"_aiKey"}),
+        React.createElement("input",{style:{width:"100%",padding:"12px 14px",borderRadius:10,border:"2px solid #141428",fontSize:14,fontFamily:"monospace",direction:"ltr",marginBottom:10,boxSizing:"border-box"},placeholder:"AQ.Ab8... أو AIzaSy...",defaultValue:aiKey,id:"_aiKey"}),
         React.createElement("label",{style:{fontSize:13,fontWeight:700,color:"#4a5568",display:"block",marginBottom:4}},"الموديل"),
-        React.createElement("select",{style:{width:"100%",padding:"12px 14px",borderRadius:10,border:"2px solid #e2e8f0",fontSize:14,fontFamily:"monospace",direction:"ltr",marginBottom:10,boxSizing:"border-box",background:"#fff"},defaultValue:aiModel,id:"_aiModel"},
+        React.createElement("select",{style:{width:"100%",padding:"12px 14px",borderRadius:10,border:"2px solid #141428",fontSize:14,fontFamily:"monospace",direction:"ltr",marginBottom:10,boxSizing:"border-box",background:"#fff"},defaultValue:aiModel,id:"_aiModel"},
           React.createElement("option",{value:"gemini-3.5-flash-lite"},"gemini-3.5-flash-lite"),
           React.createElement("option",{value:"gemini-3.1-flash-lite"},"gemini-3.1-flash-lite"),
           React.createElement("option",{value:"gemini-3.6-flash"},"gemini-3.6-flash"),
@@ -9439,7 +9439,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
         lastCost && React.createElement("div",{style:{fontSize:12,color:"#94a3b8",marginBottom:10}},"حجم آخر طلب: ~"+lastCost.toLocaleString()+" توكن"),
         React.createElement("div",{style:{display:"flex",gap:8}},
           React.createElement("button",{onClick:()=>{const k=document.getElementById("_aiKey").value.trim();const m=document.getElementById("_aiModel").value;saveKey(k,m);},style:{flex:1,padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#6d28d9,#7c3aed)",color:"#fff",fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"حفظ وتفعيل"),
-          aiKey && React.createElement("button",{onClick:()=>saveKey("",""),style:{padding:"12px 16px",borderRadius:10,border:"2px solid #e2e8f0",background:"#fff",color:"#dc2626",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"إلغاء")
+          aiKey && React.createElement("button",{onClick:()=>saveKey("",""),style:{padding:"12px 16px",borderRadius:10,border:"2px solid #141428",background:"#fff",color:"#dc2626",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"إلغاء")
         )
       ),
 
@@ -9656,10 +9656,10 @@ tbody tr:nth-child(even){background:#f7f9fb}
             m.role==="ai" && !String(m.text||"").startsWith("⚠️") && !String(m.text||"").startsWith("⚙️") &&
               React.createElement("div",{style:{marginRight:38,marginTop:6,display:"flex",gap:6,flexWrap:"wrap"}},
                 isBrief && React.createElement("button",{onClick:sendBriefWA,style:{padding:"8px 14px",borderRadius:10,border:"none",background:"#25D366",color:"#fff",fontWeight:800,fontSize:12,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"📤 واتساب"),
-                React.createElement("button",{onClick:()=>copyText(m.text),style:{padding:"8px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",background:"#fff",color:"#64748b",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"📋 نسخ"),
-                React.createElement("button",{onClick:()=>printAnswer(i>0&&msgs[i-1].role==="user"?msgs[i-1].text:"تقرير قمة AI", m.text),style:{padding:"8px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",background:"#fff",color:"#64748b",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"🖨️ طباعة"),
+                React.createElement("button",{onClick:()=>copyText(m.text),style:{padding:"8px 12px",borderRadius:10,border:"1.5px solid #141428",background:"#fff",color:"#64748b",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"📋 نسخ"),
+                React.createElement("button",{onClick:()=>printAnswer(i>0&&msgs[i-1].role==="user"?msgs[i-1].text:"تقرير قمة AI", m.text),style:{padding:"8px 12px",borderRadius:10,border:"1.5px solid #141428",background:"#fff",color:"#64748b",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"🖨️ طباعة"),
                 m.role==="ai" && i===msgs.length-1 && i>0 && msgs[i-1].role==="user" &&
-                  React.createElement("button",{onClick:()=>{ const q=msgs[i-1].text; setMsgs(p=>p.slice(0,i)); setTimeout(()=>send(q),50); },style:{padding:"8px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",background:"#fff",color:"#64748b",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"🔄 إعادة")
+                  React.createElement("button",{onClick:()=>{ const q=msgs[i-1].text; setMsgs(p=>p.slice(0,i)); setTimeout(()=>send(q),50); },style:{padding:"8px 12px",borderRadius:10,border:"1.5px solid #141428",background:"#fff",color:"#64748b",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"🔄 إعادة")
               ),
             m.role==="ai" && parseFollow(m.text).length>0 && i===msgs.length-1 &&
               React.createElement("div",{style:{marginRight:38,marginTop:8,display:"flex",gap:6,flexWrap:"wrap"}},
@@ -9685,7 +9685,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
         ),
         React.createElement("div",{style:{display:"flex",gap:8}},
           React.createElement("button",{onClick:()=>{ const ok=runAction(pendingAction); setPendingAction(null); if(ok) setMsgs(p=>[...p,{role:"ai",text:"✅ **تم التنفيذ.**"}]); },style:{flex:1,padding:"11px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#16a34a,#15803d)",color:"#fff",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"✅ نفّذ"),
-          React.createElement("button",{onClick:()=>setPendingAction(null),style:{padding:"11px 20px",borderRadius:10,border:"2px solid #e2e8f0",background:"#fff",color:"#64748b",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"إلغاء")
+          React.createElement("button",{onClick:()=>setPendingAction(null),style:{padding:"11px 20px",borderRadius:10,border:"2px solid #141428",background:"#fff",color:"#64748b",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"إلغاء")
         )
       ),
 
@@ -9697,13 +9697,13 @@ tbody tr:nth-child(even){background:#f7f9fb}
       ),
 
       /* Input - chat only */
-      aiTab==="chat" && imgData.length>0 && React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:6,background:"#f8fafc",borderRadius:12,padding:8,border:"1.5px solid #e2e8f0",flexWrap:"wrap"}},
+      aiTab==="chat" && imgData.length>0 && React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:6,background:"#f8fafc",borderRadius:12,padding:8,border:"1.5px solid #141428",flexWrap:"wrap"}},
         imgData.map((im,ii)=>React.createElement("div",{key:ii,style:{position:"relative"}},
           React.createElement("img",{src:im.preview,style:{width:48,height:48,borderRadius:8,objectFit:"cover"}}),
           React.createElement("button",{onClick:()=>setImgData(p=>p.filter((_,j)=>j!==ii)),style:{position:"absolute",top:-4,right:-4,width:18,height:18,borderRadius:"50%",border:"none",background:"#ef4444",color:"#fff",fontSize:10,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}},"✕")
         )),
         React.createElement("div",{style:{flex:1,fontSize:12,color:"#64748b",fontFamily:"IBM Plex Sans Arabic,Arial"}},"📷 "+imgData.length+" صورة"),
-        React.createElement("button",{onClick:()=>setImgData([]),style:{padding:"4px 10px",borderRadius:8,border:"1px solid #e2e8f0",background:"#fff",color:"#ef4444",fontSize:13,cursor:"pointer"}},"مسح الكل")
+        React.createElement("button",{onClick:()=>setImgData([]),style:{padding:"4px 10px",borderRadius:8,border:"1px solid #141428",background:"#fff",color:"#ef4444",fontSize:13,cursor:"pointer"}},"مسح الكل")
       ),
       aiTab==="chat" && React.createElement("input",{ref:imgRef,type:"file",accept:"image/*",multiple:true,style:{display:"none"},onChange:e=>{
         const fs=e.target.files; if(!fs||!fs.length)return;
@@ -10033,7 +10033,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
   if(!selInv){
     return (
       React.createElement("div",{style:{minHeight:"80vh"}},
-        goBack && React.createElement("button",{onClick:goBack,style:{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"1px solid rgba(200,146,42,0.3)",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16}},
+        goBack && React.createElement("button",{onClick:goBack,style:{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16}},
           React.createElement("svg",{width:18,height:18,viewBox:"0 0 24 24",fill:"none",stroke:"#e0b85c",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:"M15 18l-6-6 6-6"})),
           "رجوع"
         ),
@@ -10042,7 +10042,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
         !initialMode && React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}},
           React.createElement("button",{onClick:()=>setViewMode("collect"),
             style:{padding:"13px",borderRadius:13,border:viewMode==="collect"?"none":"2px solid #e6eaf0",
-              background:viewMode==="collect"?"linear-gradient(135deg,#1a1a2e,#0f3460)":"#fff",
+              background:viewMode==="collect"?"linear-gradient(140deg,#e0b85c,#c8922a)":"#fff",
               color:viewMode==="collect"?"#e0b85c":"#64748b",fontWeight:800,fontSize:14.5,cursor:"pointer",
               fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
             React.createElement("svg",{width:18,height:18,viewBox:"0 0 24 24"},
@@ -10052,7 +10052,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
           ),
           React.createElement("button",{onClick:()=>setViewMode("overdue"),
             style:{padding:"13px",borderRadius:13,border:viewMode==="overdue"?"none":"2px solid #e6eaf0",
-              background:viewMode==="overdue"?"linear-gradient(135deg,#1a1a2e,#0f3460)":"#fff",
+              background:viewMode==="overdue"?"linear-gradient(140deg,#e0b85c,#c8922a)":"#fff",
               color:viewMode==="overdue"?"#e0b85c":"#64748b",fontWeight:800,fontSize:14.5,cursor:"pointer",
               fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
             React.createElement("svg",{width:18,height:18,viewBox:"0 0 24 24"},
@@ -10498,7 +10498,7 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
           {arcs.map((a,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:6,fontSize:12}}>
             <div style={{width:10,height:10,borderRadius:3,background:a.color,flexShrink:0}}/>
             <span style={{color:"#94a3b8",fontWeight:500}}>{a.name}</span>
-            <span style={{marginRight:"auto",fontWeight:800,color:"#e2e8f0",fontSize:13}}>{SAR(a.val)}</span>
+            <span style={{marginRight:"auto",fontWeight:800,color:"#141428",fontSize:13}}>{SAR(a.val)}</span>
             <span style={{fontSize:11,color:"#64748b",fontWeight:700,minWidth:28,textAlign:"left"}}>{a.pct}%</span>
           </div>)}
         </div>
@@ -10636,7 +10636,7 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
           {top3.map((o,i)=><div key={i} style={{background:"rgba(239,68,68,0.06)",border:"1px solid rgba(239,68,68,0.1)",borderRadius:12,padding:"10px 14px",display:"flex",alignItems:"center",gap:10}}>
             <div style={{width:36,height:36,borderRadius:10,background:"rgba(239,68,68,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:900,color:"#fca5a5",flexShrink:0}}>{initials(o.name)}</div>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:13,fontWeight:700,color:"#e2e8f0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{o.name}</div>
+              <div style={{fontSize:13,fontWeight:700,color:"#141428",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{o.name}</div>
               <div style={{fontSize:11,color:"#64748b",fontWeight:500,marginTop:2}}>{o.monthsLate} قسط متأخر · {o.investor}</div>
             </div>
             <div style={{fontSize:15,fontWeight:900,color:"#ef4444",whiteSpace:"nowrap"}}>{SAR(o.overdue)}</div>
@@ -10699,14 +10699,14 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
         <div style={{position:"relative",padding:"0 40px 18px 0"}}>
           <div style={{position:"absolute",right:12,top:4,width:14,height:14,borderRadius:"50%",background:"#8b5cf6",border:"3px solid "+C.bg}}/>
           <div style={{fontSize:11,color:"#64748b",fontWeight:600}}>الدورة الأولى ({simMonths} شهر)</div>
-          <div style={{fontSize:15,fontWeight:900,color:"#e2e8f0"}}>{SAR(simAmount)} → {SAR(cycleTotal)}</div>
+          <div style={{fontSize:15,fontWeight:900,color:"#141428"}}>{SAR(simAmount)} → {SAR(cycleTotal)}</div>
           <div style={{fontSize:11,fontWeight:700,color:"#a78bfa"}}>+ {SAR(cycleProfit)} ربح ({profitRate}%)</div>
         </div>
 
         <div style={{position:"relative",padding:"0 40px 18px 0"}}>
           <div style={{position:"absolute",right:12,top:4,width:14,height:14,borderRadius:"50%",background:"#7c3aed",border:"3px solid "+C.bg}}/>
           <div style={{fontSize:11,color:"#64748b",fontWeight:600}}>بعد 12 شهر (مرتجع جزئي)</div>
-          <div style={{fontSize:15,fontWeight:900,color:"#e2e8f0"}}>رجع لك: {SAR(returned12)}</div>
+          <div style={{fontSize:15,fontWeight:900,color:"#141428"}}>رجع لك: {SAR(returned12)}</div>
           <div style={{fontSize:11,fontWeight:700,color:"#a78bfa"}}>+ إعادة تدوير {SAR(cycle2Capital)}</div>
         </div>
 
@@ -10966,7 +10966,7 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
         stmtContract
           ? renderStatement(stmtContract)
           : React.createElement(React.Fragment,null,
-              React.createElement("input",{style:{width:"100%",padding:"14px 16px",borderRadius:12,border:"1.5px solid #e2e8f0",fontSize:16,fontFamily:"IBM Plex Sans Arabic,Arial",background:"#fff",boxSizing:"border-box",marginBottom:12},placeholder:"ابحث باسم العميل...",value:stmtSearch,onChange:e=>setStmtSearch(e.target.value)}),
+              React.createElement("input",{style:{width:"100%",padding:"14px 16px",borderRadius:12,border:"1.5px solid #141428",fontSize:16,fontFamily:"IBM Plex Sans Arabic,Arial",background:"#fff",boxSizing:"border-box",marginBottom:12},placeholder:"ابحث باسم العميل...",value:stmtSearch,onChange:e=>setStmtSearch(e.target.value)}),
               stmtGrouped.map(g=>
                 React.createElement(React.Fragment,{key:g.inv.id},
                   React.createElement("div",{style:{fontSize:18,fontWeight:900,color:"#fff",padding:"12px 16px",background:"linear-gradient(135deg,#1a1a2e,#0f3460)",borderRadius:10,marginBottom:10,marginTop:16}},g.inv.name),
@@ -11727,13 +11727,13 @@ function LoginGate() {
         <div style={{marginBottom:14}}>
           <label style={{fontSize:14,fontWeight:700,color:"#334155",display:"block",marginBottom:6}}>البريد الإلكتروني</label>
           <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="example@email.com"
-            style={{width:"100%",padding:"12px 14px",borderRadius:10,border:"2px solid #e2e8f0",fontSize:15,fontFamily:"IBM Plex Sans Arabic,Arial",boxSizing:"border-box"}}/>
+            style={{width:"100%",padding:"12px 14px",borderRadius:10,border:"2px solid #141428",fontSize:15,fontFamily:"IBM Plex Sans Arabic,Arial",boxSizing:"border-box"}}/>
         </div>
         <div style={{marginBottom:18}}>
           <label style={{fontSize:14,fontWeight:700,color:"#334155",display:"block",marginBottom:6}}>كلمة السر</label>
           <input type="password" value={pass} onChange={e=>setPass(e.target.value)} placeholder="••••••••"
             onKeyDown={e=>e.key==="Enter"&&doAuth()}
-            style={{width:"100%",padding:"12px 14px",borderRadius:10,border:"2px solid #e2e8f0",fontSize:15,fontFamily:"IBM Plex Sans Arabic,Arial",boxSizing:"border-box"}}/>
+            style={{width:"100%",padding:"12px 14px",borderRadius:10,border:"2px solid #141428",fontSize:15,fontFamily:"IBM Plex Sans Arabic,Arial",boxSizing:"border-box"}}/>
         </div>
         {err && <div style={{background:"#fef2f2",color:"#dc2626",padding:"10px 12px",borderRadius:8,fontSize:14,marginBottom:14,fontWeight:600}}>⚠️ {err}</div>}
         <button onClick={doAuth} disabled={busy||!email||!pass}
