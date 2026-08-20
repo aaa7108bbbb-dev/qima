@@ -17,6 +17,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="قمة الفرصة">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 <!-- تحميل المكتبات من jsdelivr (unpkg محجوب عند بعض المزوّدين) مع بديل احتياطي onerror -->
 <script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"
   onerror="this.onerror=null;document.write(unescape('%3Cscript src=\'https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js\'%3E%3C/script%3E'));"></script>
@@ -11169,9 +11170,9 @@ function NavIcon({id, on}){
   const [strokes, dot] = raw.split("|");
   return (
     <svg viewBox="0 0 24 24" style={{width:"100%",height:"100%",display:"block"}} aria-hidden="true">
-      <g fill="none" stroke={on?"#ffffff":"#c8922a"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+      <g fill="none" stroke={on?"#e0b85c":"#141428"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
          dangerouslySetInnerHTML={{__html:strokes}}/>
-      <g fill={on?"#ffffff":"#c8922a"} dangerouslySetInnerHTML={{__html:dot}}/>
+      <g fill={on?"#e0b85c":"#141428"} dangerouslySetInnerHTML={{__html:dot}}/>
     </svg>
   );
 }
@@ -11556,11 +11557,11 @@ function App() {
 
         {/* الوسط: اسم المؤسسة بخط فخم */}
         <div style={{flex:1,textAlign:"center",padding:"0 8px",minWidth:0}}>
-          <div style={{fontWeight:900,fontSize:"clamp(18px,4.4vw,28px)",letterSpacing:"0.5px",
-            color:"#c8922a",lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+          <div style={{fontFamily:"'Amiri','Traditional Arabic','Scheherazade New',serif",fontWeight:700,fontSize:"clamp(22px,5.5vw,34px)",letterSpacing:"1px",
+            color:"#e0b85c",lineHeight:1.3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
             مؤسسة قمة الفرصة التجارية
           </div>
-          <div style={{width:"clamp(50px,16vw,100px)",height:2.5,background:"linear-gradient(90deg,transparent,#c8922a,transparent)",
+          <div style={{width:"clamp(80px,22vw,160px)",height:3,background:"linear-gradient(90deg,transparent,#c8922a,transparent)",
             margin:"5px auto 0",borderRadius:2}}/>
         </div>
 
@@ -11598,18 +11599,18 @@ function App() {
               fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",opacity:dragTab===idx?0.4:1,
               WebkitTapHighlightColor:"transparent"}}>
             <div style={{width:"clamp(52px,14vw,78px)",aspectRatio:"1",borderRadius:"clamp(13px,3vw,20px)",
-              background:on?"linear-gradient(150deg,#c8922a,#a87520)":"rgba(255,255,255,0.055)",
+              background:on?"#0d0d1f":"linear-gradient(140deg,#e8c96a,#d4a83a,#c8922a)",
               display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s",
               padding:"clamp(11px,2.8vw,17px)",
-              border:"2.5px solid #141428",
-              boxShadow:on?"0 6px 24px rgba(200,146,42,0.45)":"none"}}>
+              border:on?"2.5px solid #e0b85c":"2.5px solid #141428",
+              boxShadow:on?"0 6px 24px rgba(200,146,42,0.45)":"0 2px 8px rgba(0,0,0,0.12)"}}>
               <NavIcon id={t.id} on={on}/>
             </div>
             <span style={{fontSize:"clamp(12px,3vw,16px)",fontWeight:800,
-              color:"#c8922a",whiteSpace:"nowrap",lineHeight:1.25,
+              color:on?"#e0b85c":"#c8922a",whiteSpace:"nowrap",lineHeight:1.25,
               letterSpacing:"0.5px"}}>{t.name}</span>
-            <div style={{width:on?"clamp(14px,3.5vw,20px)":0,height:2,borderRadius:2,
-              background:"#c8922a",transition:"width 0.2s"}}/>
+            <div style={{width:on?"clamp(14px,3.5vw,20px)":0,height:2.5,borderRadius:2,
+              background:"#e0b85c",transition:"width 0.2s"}}/>
           </button>
           );
         })}
