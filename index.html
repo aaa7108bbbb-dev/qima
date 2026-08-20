@@ -6448,26 +6448,12 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   const [pinModal,setPinModal] = useState(null); // null | {action: fn}
   const [pinVal,setPinVal] = useState("");
   const [pinErr,setPinErr] = useState(false);
-  const hashPinSync = async (pin) => {
-    const enc = new TextEncoder().encode(pin+"qima_salt_2024");
-    const buf = await crypto.subtle.digest("SHA-256", enc);
-    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
-  };
   const checkPin = (action) => {
     if(!isPastDay){ action(); return; }
     setPinModal({action}); setPinVal(""); setPinErr(false);
   };
-  const confirmPinModal = async () => {
-    let savedPin = "1234";
-    try{ savedPin = localStorage.getItem("qimma_settings_pin")||"1234"; }catch(e){}
-    let ok = false;
-    if(savedPin.length===64){
-      const h = await hashPinSync(pinVal);
-      ok = (h===savedPin);
-    } else {
-      ok = (pinVal===savedPin);
-    }
-    if(ok){ setPinModal(null); pinModal.action(); }
+  const confirmPinModal = () => {
+    if(pinVal==="1010"){ setPinModal(null); pinModal.action(); }
     else { setPinErr(true); setPinVal(""); }
   };
 
@@ -7563,23 +7549,39 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
               <button style={styles.btnGold()}
                 onClick={()=>{setBaseInput(String(baseAmount));setBaseDateInput(baseDate);setEditingBase(true);}}>تعديل</button>
             </div>
-            {/* زر استرجاع البداية السابقة */}
+            {/* زر استرجاع البداية السابقة — يحسب الرصيد الفعلي */}
             {(()=>{
               const _dox = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
               const prev = _dox.__prevBase;
               if(!prev) return null;
+              // حساب الرصيد الحقيقي لنهاية اليوم السابق للإقفال
+              const _dl = Array.isArray(daily) ? daily : [];
+              const prevAmt = +prev.amount||0;
+              const prevDate = prev.date||"0000-00-00";
+              // المتبقي = البداية القديمة + كل الحركات من تاريخ البداية القديمة حتى أمس الإقفال
+              const closureDate = base ? base.date : todayLocal();
+              // نحسب الرصيد قبل يوم الإقفال
+              const dayBefore = (()=>{const d=new Date(closureDate);d.setDate(d.getDate()-1);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");})();
+              const netUpTo = _dl.filter(d=>d.date >= prevDate && d.date <= dayBefore)
+                .reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
+              const realBalance = prevAmt + netUpTo;
               return (
-                <button style={{...styles.btnGold(),width:"100%",justifyContent:"center",padding:"10px",marginTop:6,background:"#fff",color:"#dc2626",border:"2px solid #dc2626"}}
-                  onClick={()=>{
-                    if(!window.confirm("استرجاع البداية السابقة؟\n\nالتاريخ: "+prev.date+"\nالمبلغ: "+SAR(prev.amount)+"\n\nهذا يرجع اليومية كما كانت قبل الإقفال")) return;
-                    setDailyOpen(p=>{
-                      const np = {...(p&&typeof p==="object"&&!Array.isArray(p)?p:{})};
-                      np.__base = {...prev};
-                      delete np.__prevBase;
-                      return np;
-                    });
-                    toast("✅ تم الاسترجاع — رجعت البداية السابقة");
-                  }}>استرجاع البداية السابقة ({prev.date} — {SAR(prev.amount)})</button>
+                <div style={{marginTop:10}}>
+                  <div style={{fontSize:13,color:"#333",marginBottom:6,fontWeight:700}}>
+                    الرصيد المحسوب لنهاية {dayBefore}: <strong style={{color:"#141428",fontSize:16}}>{SAR(realBalance)}</strong>
+                  </div>
+                  <button style={{...styles.btnGold(),width:"100%",justifyContent:"center",padding:"10px"}}
+                    onClick={()=>{
+                      if(!window.confirm("ضبط البداية على:\n\nالتاريخ: "+dayBefore+"\nالرصيد: "+SAR(realBalance)+"\n\nيرجع كل حركات اليومية تظهر")) return;
+                      setDailyOpen(p=>{
+                        const np = {...(p&&typeof p==="object"&&!Array.isArray(p)?p:{})};
+                        np.__base = {date:dayBefore, amount:realBalance};
+                        delete np.__prevBase;
+                        return np;
+                      });
+                      toast("✅ تم — رجعت البداية لـ "+dayBefore);
+                    }}>استرجاع ليوم {dayBefore} — رصيد {SAR(realBalance)}</button>
+                </div>
               );
             })()}
           </div>
