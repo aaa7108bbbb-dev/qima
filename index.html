@@ -3992,7 +3992,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
               <tr>
                 {["التاريخ","نوع الحركة","البيان","دعم","خصم","الرصيد",""].map((h,hi)=>{
                   const isBayan = h==="البيان";
-                  return <th key={h} style={{...styles.th,position:"sticky",top:0,zIndex:isBayan?22:20,background:C.ink,...(isBayan?{right:0}:{})}}>{h}</th>;
+                  return <th key={h} style={{...styles.th,position:"sticky",top:0,zIndex:isBayan?22:20,background:"linear-gradient(140deg,#e0b85c,#c8922a)",...(isBayan?{right:0}:{})}}>{h}</th>;
                 })}
               </tr>
             </thead>
@@ -5333,7 +5333,7 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
           <div style={{overflowX:"auto",borderRadius:10,boxShadow:"0 2px 12px rgba(0,0,0,0.08)"}}>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
               <thead>
-                <tr style={{background:C.ink,color:"#fff"}}>
+                <tr style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#fff"}}>
                   {["التاريخ","تفاصيل العملية","مدين","دائن","الرصيد"].map(h=>(
                     <th key={h} style={{padding:"10px 8px",whiteSpace:"nowrap",fontWeight:700,textAlign:"center"}}>{h}</th>
                   ))}
@@ -5571,7 +5571,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
                     style={{cursor:"pointer",border:"1px solid "+C.border,borderRadius:12,padding:14,background:closed?"#f0fdf4":"#fff",borderRight:"4px solid "+(closed?C.green:"#c8922a")}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:6}}>
                       <div style={{fontSize:16,fontWeight:900,color:C.ink}}>{mLabel(ym)} {closed&&<span style={{fontSize:12,background:C.green,color:"#fff",borderRadius:10,padding:"2px 10px",marginRight:6}}>مقفل</span>}</div>
-                      <span style={{fontSize:13,color:"#c8922a",fontWeight:700}}>التفاصيل ›</span>
+                      <span style={{fontSize:13,color:"#141428",fontWeight:700}}>التفاصيل ›</span>
                     </div>
                     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}>
                       {[["عدد العقود",d.count,"#1a1a2e",true],["القيمة النقدية",d.tot.amt,"#c8922a"],["الإجمالي",d.totalWithProfit,"#1a1a2e"],["الأرباح",d.tot.profit,C.green],["ربح المستثمرين",d.tot.profit-d.tot.inst-d.tot.acc,C.green],["المحصّل",d.collected,C.green]].map(([l,v,col,isCount],i)=>(
@@ -5967,11 +5967,10 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
           </div>
         </div>
       )}
-      <div style={{background:C.white,borderRadius:12,padding:"9px 14px",marginBottom:11,display:"flex",
-        alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 2px 8px rgba(0,0,0,.04)"}}>
-        <span style={{fontSize:14}}>🗓️</span>
-        <span style={{fontSize:12.5,fontWeight:700,color:C.ink2}}>دورة الشهر:</span>
-        <span style={{fontSize:13,fontWeight:800,color:C.teal}}>{cycleLabel}</span>
+      <div style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:12,padding:"9px 14px",marginBottom:11,display:"flex",
+        alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 2px 8px rgba(0,0,0,.04)",border:"2.5px solid #141428"}}>
+        <span style={{fontSize:12.5,fontWeight:800,color:"#141428"}}>دورة الشهر:</span>
+        <span style={{fontSize:13,fontWeight:800,color:"#141428"}}>{cycleLabel}</span>
       </div>
 
       {/* المربعين: أقساط الشهر / المنجز */}
@@ -6546,12 +6545,12 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
             <thead style={{position:"sticky",top:0,zIndex:20}}>
               <tr>{["النوع","الوصف","المبلغ",""].map((h,hi)=>{
                 const isDesc = h==="الوصف";
-                return <th key={h||"act"} style={{...styles.th,position:"sticky",top:0,zIndex:isDesc?22:20,background:C.ink,...(isDesc?{right:0}:{})}}>{h}</th>;
+                return <th key={h||"act"} style={{...styles.th,position:"sticky",top:0,zIndex:isDesc?22:20,...(isDesc?{right:0}:{})}}>{h}</th>;
               })}</tr>
             </thead>
             <tbody>
               <tr style={{background:"#f8fafc"}}>
-                <td style={{...styles.td,fontWeight:700,color:"#c8922a"}}>رصيد افتتاحي</td>
+                <td style={{...styles.td,fontWeight:700,color:"#141428"}}>رصيد افتتاحي</td>
                 <td style={{...styles.td,color:"#1f2937",position:"sticky",right:0,background:"#f8fafc",zIndex:5,borderLeft:"2px solid #141428"}}>متبقي أمس</td>
                 <td style={{...styles.td,fontWeight:800,color:"#334155"}}>{SAR(openingBalance)}</td>
                 <td style={styles.td}></td>
@@ -6566,11 +6565,11 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                     <td style={{...styles.td,fontWeight:700,position:"sticky",right:0,background:i%2===0?C.white:C.gray,zIndex:5,borderLeft:"2px solid #141428"}}>{d.desc||"—"}</td>
                     <td style={{...styles.td,fontWeight:800,color:t&&t.sign<0?"#dc2626":"#16a34a"}}>{t&&t.sign<0?"−":"+"}{SAR(d.amount)}</td>
                     <td style={{...styles.td,whiteSpace:"nowrap"}}>
-                      <button style={{...styles.btn("#0d7a6f"),fontSize:13,padding:"5px 9px",marginLeft:4,display:"inline-flex",alignItems:"center"}} onClick={()=>printDailyReceipt(d, d.receiptNum||0)} title="طباعة إيصال">
-                        <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6M9 12h6"/></g></svg>
+                      <button style={{...styles.btnGold(),fontSize:13,padding:"5px 9px",marginLeft:4}} onClick={()=>printDailyReceipt(d, d.receiptNum||0)} title="طباعة إيصال">
+                        <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6M9 12h6"/></g></svg>
                       </button>
-                      <button style={{...styles.btn(C.red),fontSize:13,padding:"5px 9px",display:"inline-flex",alignItems:"center"}} onClick={()=>delRow(d.id)} title="حذف">
-                        <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6"/></g></svg>
+                      <button style={{...styles.btnGold(),fontSize:13,padding:"5px 9px"}} onClick={()=>delRow(d.id)} title="حذف">
+                        <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6"/></g></svg>
                       </button>
                     </td>
                   </tr>
@@ -6609,8 +6608,8 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
             المصروفات + السحوبات</div>
           <div style={{fontSize:20,fontWeight:800,color:"#dc2626"}}>{SAR(sumByType("masroof")+sumByType("sahb")+sumByType("estilam"))}</div>
         </div>
-        <div style={{...styles.card,borderRight:"3px solid #141428",background:"linear-gradient(140deg,#e0b85c,#c8922a)",border:"2.5px solid #141428"}}>
-          <div style={{fontSize:12,color:"#141428",marginBottom:6,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>
+        <div style={{...styles.card,borderRight:"3px solid #141428"}}>
+          <div style={{fontSize:12,color:"#64748b",marginBottom:6,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>
             <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g><circle cx="16.9" cy="15.1" r="1.4" fill="#141428"/></svg>
             المتبقي في الصندوق</div>
           <div style={{fontSize:22,fontWeight:900,color:closingBalance>=0?"#141428":"#dc2626"}}>{SAR(closingBalance)}</div>
@@ -6728,9 +6727,9 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
               return (
               <div key={t.key} onClick={()=>setStmtTypeFilter(f=>f===t.key?"all":t.key)}
                 title="انقر لعرض تفاصيل هذا النوع"
-                style={{...styles.card,borderRight:"3px solid "+dir,cursor:"pointer",
-                  border: sel ? "1.5px solid #c8922a" : "1px solid #141428",
-                  borderRight:"3px solid "+dir,
+                style={{...styles.card,borderRight:"3px solid #141428",cursor:"pointer",
+                  border: sel ? "2.5px solid #141428" : "1px solid #141428",
+                  borderRight:"3px solid #141428",
                   background: sel ? "linear-gradient(150deg,#fefbf3,#fef7e8)" : "#fff",
                   transition:"all .12s"}}>
                 <div style={{fontSize:14,color:"#334155",marginBottom:6,fontWeight:700}}>{t.label}</div>
@@ -6747,7 +6746,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                 📋 التفاصيل {stmtTypeFilter!=="all" ? ("— "+(DAILY_TYPES.find(x=>x.key===stmtTypeFilter)||{}).label) : ""}{_q ? (" — بحث: “"+stmtQuery+"”") : ""}
               </h4>
               <span style={{fontSize:14,fontWeight:800,color:C.ink2}}>{stmtDetailRows.length} حركة · {SAR(Math.abs(stmtDetailTotal))}</span>
-              <button style={{...styles.btn(C.teal),fontSize:13,padding:"5px 12px"}} onClick={()=>{
+              <button style={{...styles.btnGold(),fontSize:13,padding:"5px 12px"}} onClick={()=>{
                 const w=window.open("","_blank");if(!w)return;
                 let rows=stmtDetailRows.map(d=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return "<tr><td style='padding:6px 8px;border:1px solid #ddd'>"+dLabel(d.date)+"</td><td style='padding:6px 8px;border:1px solid #ddd'>"+(t?.label||d.type)+"</td><td style='padding:6px 8px;border:1px solid #ddd'>"+(d.desc||"—")+"</td><td style='padding:6px 8px;border:1px solid #ddd;color:"+(t?.sign<0?"#dc2626":"#16a34a")+"'>"+(t?.sign<0?"−":"+")+SAR(d.amount)+"</td></tr>";}).join("");
                 w.document.write("<!DOCTYPE html><html dir=rtl><head><meta charset=utf-8><style>*{font-family:Arial,sans-serif;box-sizing:border-box}body{margin:12px;color:#000}table{width:100%;border-collapse:collapse;font-size:14px}th,td{border:1px solid #000;padding:8px;font-weight:600}th{background:#fff;color:#000;font-weight:900;border-bottom:2px solid #000}@media print{button{display:none!important}}</style></head><body>");
@@ -6762,7 +6761,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                 <thead style={{position:"sticky",top:0,zIndex:20}}>
                   <tr>{["التاريخ","النوع","الاسم / الوصف","المبلغ"].map((h,hi)=>{
                     const isName = h==="الاسم / الوصف";
-                    return <th key={h} style={{...styles.th,position:"sticky",top:0,zIndex:isName?22:20,background:C.ink,...(isName?{right:0}:{})}}>{h}</th>;
+                    return <th key={h} style={{...styles.th,position:"sticky",top:0,zIndex:isName?22:20,...(isName?{right:0}:{})}}>{h}</th>;
                   })}</tr>
                 </thead>
                 <tbody>
@@ -6795,7 +6794,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                   })}
                   {!stmtShowAll && stmtDetailRows.length>10 && (
                     <tr><td colSpan={4} style={{textAlign:"center",padding:12}}>
-                      <button onClick={()=>setStmtShowAll(true)} style={{...styles.btn("#64748b"),fontSize:14,padding:"8px 20px",margin:"0 auto"}}>
+                      <button onClick={()=>setStmtShowAll(true)} style={{...styles.btnGold(),fontSize:14,padding:"8px 20px",margin:"0 auto"}}>
                         عرض الكل ({stmtDetailRows.length} حركة) ▼
                       </button>
                     </td></tr>
@@ -6828,15 +6827,15 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                 ))}
                 {!stmtShowAll && stmtTotals.length>10 && (
                   <tr><td colSpan={3} style={{textAlign:"center",padding:12}}>
-                    <button onClick={()=>setStmtShowAll(true)} style={{...styles.btn("#64748b"),fontSize:14,padding:"8px 20px"}}>عرض الكل ▼</button>
+                    <button onClick={()=>setStmtShowAll(true)} style={{...styles.btnGold(),fontSize:14,padding:"8px 20px"}}>عرض الكل ▼</button>
                   </td></tr>
                 )}
               </tbody>
               <tfoot>
                 <tr style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)"}}>
-                  <td style={{...styles.td,fontWeight:800,color:"#e0b85c",borderBottom:"none"}}>الداخل: {SAR(stmtIn+(baseAmount||0))} · الخارج: {SAR(stmtOut)}</td>
-                  <td style={{...styles.td,fontWeight:800,color:"#e0b85c",borderBottom:"none"}}>الصافي</td>
-                  <td style={{...styles.td,fontWeight:900,fontSize:16,color:(stmtNet+(baseAmount||0))>=0?"#f5d799":"#fca5a5",borderBottom:"none"}}>{SAR(stmtNet+(baseAmount||0))}</td>
+                  <td style={{...styles.td,fontWeight:800,color:"#141428",borderBottom:"none"}}>الداخل: {SAR(stmtIn+(baseAmount||0))} · الخارج: {SAR(stmtOut)}</td>
+                  <td style={{...styles.td,fontWeight:800,color:"#141428",borderBottom:"none"}}>الصافي</td>
+                  <td style={{...styles.td,fontWeight:900,fontSize:16,color:(stmtNet+(baseAmount||0))>=0?"#141428":"#dc2626",borderBottom:"none"}}>{SAR(stmtNet+(baseAmount||0))}</td>
                 </tr>
               </tfoot>
             </table>
@@ -7190,7 +7189,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
               </div>
               <div style={{overflowX:"auto"}}>
                 <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
-                  <thead><tr style={{background:C.ink,color:"#fff"}}>
+                  <thead><tr style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#fff"}}>
                     <th style={styles.th}>الشهر</th><th style={styles.th}>النقدي</th><th style={styles.th}>المتبقي</th><th style={styles.th}>الإجمالي</th><th style={styles.th}>التغيّر %</th>
                   </tr></thead>
                   <tbody>
@@ -8369,7 +8368,7 @@ function GoodsPage({investors, contracts, toast, gsWrite, goBack}) {
       <div style={{overflowX:"auto",maxHeight:"75vh",overflowY:"auto",borderRadius:10,boxShadow:"0 2px 12px rgba(0,0,0,0.08)"}}>
         <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14}}>
           <thead>
-            <tr style={{background:C.ink,color:"#fff"}}>
+            <tr style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#fff"}}>
               <th style={{padding:"8px",whiteSpace:"nowrap",fontWeight:700,textAlign:"center",position:"sticky",top:0,zIndex:10}}>التاريخ</th>
               {ALL_COLS.filter(c=>visCols[c]!==false).map((h,hi)=>{
                 const isName = h==="اسم العميل";
