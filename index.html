@@ -190,7 +190,7 @@
     table { font-size: 12px !important; }
     th, td { padding: 6px 8px !important; }
   }
-  body { margin: 0; font-family: 'IBM Plex Sans Arabic', 'Poppins', Arial, sans-serif; background: #f4f4f6; }
+  body { margin: 0; font-family: 'IBM Plex Sans Arabic', 'Poppins', Arial, sans-serif; background: #faf6ee; }
   /* LOGIN PAGE STYLES */
   #lock-screen { background: linear-gradient(135deg, #0a1428 0%, #1a2a45 25%, #0f3a4f 50%, #1a2a45 75%, #0a1428 100%) !important; overflow: hidden !important; }
   .animated-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0a1428 0%, #1a2a45 25%, #0f3a4f 50%, #1a2a45 75%, #0a1428 100%); z-index: 1; overflow: hidden; }
@@ -543,7 +543,7 @@ const C = {
   ink:"#0f1923", ink2:"#2c3e50", gold:"#c8922a", goldLt:"#f5e6c8",
   teal:"#0d7377", tealLt:"#d0f0f0", red:"#c0392b", redLt:"#fdecea",
   green:"#1a7a4a", greenLt:"#e3f5ec", purple:"#7030A0", purpleLt:"#f3e8ff",
-  slate:"#f4f6f9", border:"#dde3ea", white:"#ffffff", gray:"#f2f2f2",
+  slate:"#faf6ee", border:"#dde3ea", white:"#ffffff", gray:"#f2f2f2",
 };
 
 const styles = {
@@ -562,6 +562,7 @@ const styles = {
   input:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,padding:"9px 12px",border:"2px solid "+C.border,borderRadius:8,color:C.ink,background:C.white,width:"100%",boxSizing:"border-box",textAlign:"right",fontWeight:600},
   select:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,padding:"9px 12px",border:"2px solid "+C.border,borderRadius:8,color:C.ink,background:C.white,width:"100%",textAlign:"right",fontWeight:600},
   btn:(bg,color="#fff")=>({fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,fontWeight:700,padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",background:bg,color,display:"inline-flex",alignItems:"center",gap:4}),
+  btnGold:()=>({fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:14,fontWeight:800,padding:"6px 14px",borderRadius:8,border:"2.5px solid #141428",cursor:"pointer",background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",display:"inline-flex",alignItems:"center",gap:4,marginLeft:3,whiteSpace:"nowrap",boxShadow:"0 2px 6px rgba(20,20,40,0.12)"}),
   badge:(bg,color)=>({display:"inline-block",padding:"4px 0",borderRadius:20,fontSize:13,fontWeight:700,background:bg,color,textAlign:"center",minWidth:110}),
   calcBox:{background:"linear-gradient(135deg,#0f1923,#1a2e45)",borderRadius:12,padding:"16px 20px",marginTop:16,color:C.white},
   goodsBtn:(active)=>({fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,fontWeight:700,padding:"6px 14px",borderRadius:20,border:"2px solid "+(active?C.teal:C.border),background:active?C.teal:C.white,color:active?C.white:C.ink2,cursor:"pointer",margin:"3px 3px 3px 0"}),
@@ -2007,8 +2008,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                     <div style={{display:"flex",gap:8,alignItems:"center"}}>
                       <input type="number" style={{...styles.input,flex:1,fontWeight:700,fontSize:16,borderColor:C.teal,borderWidth:2,borderRadius:10,padding:"10px 14px"}} placeholder="المبلغ" value={amtVal}
                         onChange={e=>setCollectAmounts(p=>({...p,[c.id]:e.target.value}))}/>
-                      <button style={{...styles.btn(C.green),fontSize:14,fontWeight:800,padding:"12px 18px",whiteSpace:"nowrap",borderRadius:10,boxShadow:"0 2px 8px rgba(34,197,94,0.3)"}} onClick={()=>doCollect(c)}>💰 سدّد</button>
-                      <button style={{...styles.btn("#7c3aed","#fff"),fontSize:13,fontWeight:800,padding:"12px 14px",whiteSpace:"nowrap",borderRadius:10,boxShadow:"0 2px 8px rgba(124,58,237,0.3)"}} onClick={()=>{
+                      <button style={{...styles.btnGold(),fontSize:14,fontWeight:800,padding:"12px 18px",borderRadius:10}} onClick={()=>doCollect(c)}>سدّد</button>
+                      <button style={{...styles.btnGold(),fontSize:13,fontWeight:800,padding:"12px 14px",borderRadius:10}} onClick={()=>{
                         const amt = parseFloat(collectAmounts[c.id]!=null?collectAmounts[c.id]:0)||0;
                         if(amt<0){toast("⚠️ المبلغ غير صحيح","warn");return;}
                         const confirmMsg = amt>0
@@ -2021,7 +2022,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                         markDone(c.id);
                         setCollectAmounts(p=>{const n={...p};delete n[c.id];return n;});
                         toast("✅ "+c.client+" — تم السداد وإقفال العقد");
-                      }}>📋 سداد وإنهاء</button>
+                      }}>سداد وإنهاء</button>
                     </div>
                   </div>
                   {(()=>{
@@ -2048,14 +2049,14 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                               <td style={{padding:"10px 8px",textAlign:"center",fontWeight:900,fontSize:16,color:p.remaining>0?"#dc2626":"#059669",border:"2px solid #000"}}>{SAR(p.remaining)}</td>
                               <td style={{padding:"10px 4px",textAlign:"center",border:"2px solid #000"}}>
                                 <span style={{display:"flex",gap:4,justifyContent:"center"}}>
-                                  <button style={{...styles.btn("#e5e7eb",C.ink),fontSize:13,padding:"6px 12px",fontWeight:700}} onClick={()=>{
+                                  <button style={{...styles.btnGold(),fontSize:13,padding:"6px 12px"}} onClick={()=>{
                                     const v=window.prompt("تعديل مبلغ السداد:",p.amount);
                                     if(v===null) return;
                                     const n=parseFloat(v);
                                     if(isNaN(n)||n<=0){toast("⚠️ مبلغ غير صحيح","warn");return;}
                                     setPayments(arr=>arr.map(x=>x.id===p.id?{...x,amount:n}:x));
                                     toast("✅ تم تعديل السداد");
-                                  }}>✏️</button>
+                                  }}>تعديل</button>
                                 </span>
                               </td>
                             </tr>
@@ -2371,12 +2372,12 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                     <td style={{...styles.td,color:C.green,fontSize:14}}>{c.firstInst||"—"}</td>
                     <td style={{...styles.td,color:C.green}}>{SAR(r.profit)}</td>
                     <td style={{...styles.td,whiteSpace:"nowrap"}}>
-                      <button style={{...styles.btn(C.green),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>{setPayModal(c);setPayAmount("");setPayNote("");}}>💳 سدّد</button>
-                      <button style={{...styles.btn(C.teal),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>{setPrintSel({contract:true,bond:false,bondG:false,cheque:false,chequeG:false});setPrintModal(c);}}>🖨️ طباعة</button>
-                      <button style={{...styles.btn("#f59e0b"),marginLeft:3,fontSize:14,padding:"5px 10px"}} onClick={()=>{setEditC(c);setEditForm({...c, investorId:c.investorId!=null?String(c.investorId):"", deductEnabled:!!(c.deducts&&c.deducts.length>0&&c.deducts.some(d=>d.amount||d.investorId)), deducts:c.deducts&&c.deducts.length>0?c.deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}]});}}>تعديل</button>
+                      <button style={styles.btnGold()} onClick={()=>{setPayModal(c);setPayAmount("");setPayNote("");}}>سدّد</button>
+                      <button style={styles.btnGold()} onClick={()=>{setPrintSel({contract:true,bond:false,bondG:false,cheque:false,chequeG:false});setPrintModal(c);}}>طباعة</button>
+                      <button style={styles.btnGold()} onClick={()=>{setEditC(c);setEditForm({...c, investorId:c.investorId!=null?String(c.investorId):"", deductEnabled:!!(c.deducts&&c.deducts.length>0&&c.deducts.some(d=>d.amount||d.investorId)), deducts:c.deducts&&c.deducts.length>0?c.deducts:[{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""},{amount:"",investorId:""}]});}}>تعديل</button>
                       {statusTab==="deleted"
-                        ? <button style={{...styles.btn(C.green),fontSize:14,padding:"5px 10px"}} onClick={()=>{onRestore(c.id);toast("✅ تم الاسترجاع");}}>↩️ استرجاع</button>
-                        : <button style={{...styles.btn(C.red),fontSize:14,padding:"5px 10px"}} onClick={()=>{if(confirm("نقل هذا العقد للمحذوفة؟ (يبقى محفوظاً ويمكن استرجاعه)")){onDelete(c.id);toast("تم النقل للمحذوفة");}}}>🗑️ حذف</button>}
+                        ? <button style={styles.btnGold()} onClick={()=>{onRestore(c.id);toast("✅ تم الاسترجاع");}}>استرجاع</button>
+                        : <button style={styles.btnGold()} onClick={()=>{if(confirm("نقل هذا العقد للمحذوفة؟ (يبقى محفوظاً ويمكن استرجاعه)")){onDelete(c.id);toast("تم النقل للمحذوفة");}}}>حذف</button>}
                     </td>
                     </tr>
                   </React.Fragment>
@@ -2411,7 +2412,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           return (
             <div>
               <div style={{display:"flex",gap:10,marginBottom:14}}>
-                <button style={{...styles.btn(C.gold,"#fff"),flex:1,justifyContent:"center",padding:"10px"}} onClick={()=>openContractCard(c)}>🖨️ كشف حساب</button>
+                <button style={{...styles.btnGold(),flex:1,justifyContent:"center",padding:"10px"}} onClick={()=>openContractCard(c)}>كشف حساب</button>
                 <button style={{...styles.btn("#25D366","#fff"),flex:1,justifyContent:"center",padding:"10px"}} onClick={()=>{
                   const paid=_getPaid(payments,c.id);
                   const left=Math.max(0,(c.totalInst||0)-paid);
@@ -2429,8 +2430,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                   const phone=c.cPhone?c.cPhone.replace(/^0/,"966"):"";
                   const url="https://wa.me/"+(phone||"")+"?text="+encodeURIComponent(msg);
                   window.open(url,"_blank");
-                }}>📲 واتساب</button>
-                <button style={{...styles.btn(C.red,"#fff"),flex:1,justifyContent:"center",padding:"10px"}} onClick={()=>setCardModal(null)}>✕ إغلاق</button>
+                }}>واتساب</button>
+                <button style={{...styles.btnGold(),flex:1,justifyContent:"center",padding:"10px"}} onClick={()=>setCardModal(null)}>إغلاق</button>
               </div>
               <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}}>
                 {box("الإجمالي",tot,C.ink)}
@@ -2445,7 +2446,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                 {c.gName&&<div><b>الكفيل:</b> {c.gName}</div>}
                 {c.goods&&<div><b>السلعة:</b> {c.goods}</div>}
               </div>
-              <button style={{...styles.btn(C.green,"#fff"),width:"100%",justifyContent:"center",fontSize:16,padding:"12px",marginBottom:10}} onClick={()=>{setCardModal(null);setPayModal(c);setPayAmount("");setPayNote("");}}>💵 تسجيل سداد جديد</button>
+              <button style={{...styles.btnGold(),width:"100%",justifyContent:"center",fontSize:16,padding:"12px",marginBottom:10}} onClick={()=>{setCardModal(null);setPayModal(c);setPayAmount("");setPayNote("");}}>تسجيل سداد جديد</button>
 
               <h3 style={{color:C.ink,fontWeight:900,marginBottom:10,fontSize:16}}>📋 السدادات السابقة ({list.length})</h3>
               <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
@@ -2469,7 +2470,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       </Modal>
 
       {/* Print Selection Modal */}
-      <Modal open={!!printModal} onClose={()=>setPrintModal(null)} title={"🖨️ طباعة — "+(printModal?.client||"")} titleBg={C.teal}>
+      <Modal open={!!printModal} onClose={()=>setPrintModal(null)} title={"طباعة — "+(printModal?.client||"")} titleBg={C.teal}>
         {printModal && (()=>{
           const hasG = !!printModal.gName;
           const opts = [
@@ -2522,7 +2523,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
             <div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
                 <span style={{fontSize:14,color:"#555"}}>اختر المستندات التي تريد طباعتها:</span>
-                <button style={{...styles.btn(allSel?"#64748b":C.teal,"#fff"),fontSize:13,padding:"5px 12px"}} onClick={()=>{
+                <button style={{...styles.btnGold(),fontSize:13,padding:"5px 12px"}} onClick={()=>{
                   const v=!allSel;
                   setPrintSel({contract:v,bond:v,cheque:v,bondG:v,chequeG:v});
                 }}>{allSel?"إلغاء الكل":"تحديد الكل"}</button>
@@ -2535,8 +2536,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                 </div>
               ))}
               <button disabled={!anySel} onClick={doPrint}
-                style={{...styles.btn(anySel?C.teal:"#ccc","#fff"),width:"100%",justifyContent:"center",fontSize:16,padding:"12px",marginTop:8,opacity:anySel?1:0.6}}>
-                🖨️ طباعة المحدد
+                style={{...styles.btnGold(),width:"100%",justifyContent:"center",fontSize:16,padding:"12px",marginTop:8,opacity:anySel?1:0.6}}>
+                طباعة المحدد
               </button>
             </div>
           );
@@ -2544,7 +2545,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       </Modal>
 
       {/* Payment Modal */}
-      <Modal open={!!payModal} onClose={()=>setPayModal(null)} title={"💳 تسجيل سداد — "+(payModal?.client||"")} titleBg={C.green}>
+      <Modal open={!!payModal} onClose={()=>setPayModal(null)} title={"تسجيل سداد — "+(payModal?.client||"")} titleBg={C.green}>
         {payModal && (
           <div style={{padding:"16px 20px"}}>
             {/* Summary */}
@@ -2580,7 +2581,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                 <input style={styles.input} type="text" placeholder="اختياري" value={payNote} onChange={e=>setPayNote(e.target.value)}/>
               </div>
             </div>
-            <button style={{...styles.btn(C.green),marginBottom:16}} onClick={addPayment}>💾 تسجيل السداد</button>
+            <button style={{...styles.btnGold(),marginBottom:16}} onClick={addPayment}>تسجيل السداد</button>
             {/* Payment history */}
             {(payments||[]).filter(p=>p.contractId===payModal.id).length>0 && (
               <div>
@@ -2599,8 +2600,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                         <td style={{...styles.td,color:C.green,fontWeight:700}}>{SAR(p.amount)}</td>
                         <td style={styles.td}>{p.note||"—"}</td>
                         <td style={styles.td}>
-                          <button style={{...styles.btn(C.red),fontSize:13,padding:"3px 8px"}}
-                            onClick={()=>{if(window.confirm("حذف هذا السداد؟"))setPayments(prev=>prev.filter(x=>x.id!==p.id));}}>🗑️</button>
+                          <button style={{...styles.btnGold(),fontSize:13,padding:"3px 8px"}}
+                            onClick={()=>{if(window.confirm("حذف هذا السداد؟"))setPayments(prev=>prev.filter(x=>x.id!==p.id));}}>حذف</button>
                         </td>
                       </tr>
                     ))}
@@ -2623,17 +2624,17 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               هل تريدين نقله لقائمة العقود المنتهية؟
             </div>
             <div style={{display:"flex",gap:10,justifyContent:"center"}}>
-              <button onClick={()=>{markDone(completionAlert.id);setCompletionAlert(null);toast("✅ تم نقل العقد للمنتهية");}} style={{...styles.btn(C.green),padding:"10px 20px",fontSize:16}}>
-                ✅ نعم، انقله
+              <button onClick={()=>{markDone(completionAlert.id);setCompletionAlert(null);toast("✅ تم نقل العقد للمنتهية");}} style={{...styles.btnGold(),padding:"10px 20px",fontSize:16}}>
+                نعم، انقله
               </button>
-              <button onClick={()=>setCompletionAlert(null)} style={{...styles.btn("#e5e7eb",C.ink),padding:"10px 20px",fontSize:16}}>
+              <button onClick={()=>setCompletionAlert(null)} style={{...styles.btnGold(),padding:"10px 20px",fontSize:16}}>
                 لاحقاً
               </button>
             </div>
           </div>
         </div>
       )}
-      <Modal open={!!editC} onClose={()=>setEditC(null)} title="✏️ تعديل العقد">
+      <Modal open={!!editC} onClose={()=>setEditC(null)} title="تعديل العقد">
         <div style={{padding:"14px 18px"}}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
             {[["اسم العميل","client","text"],["رقم الهوية","idNum","text"],["جوال العميل","cPhone","tel"],["العمل","job","text"],["الجنسية","nationality","text"],["العنوان","address","text"],
@@ -2718,13 +2719,13 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               </div>
             )}
           </div>
-          <button style={styles.btn(C.teal)} onClick={()=>{const ef={...editForm}; if(ef.investorId!==undefined&&ef.investorId!=="") ef.investorId=parseInt(ef.investorId); ["amount","totalInst","instAmt","qty"].forEach(k=>{if(ef[k]!==undefined&&ef[k]!=="")ef[k]=parseFloat(ef[k])||0;}); onUpdate({...editC,...ef});setEditC(null);toast("✅ تم التعديل");}}>💾 حفظ التعديل</button>
+          <button style={styles.btnGold()} onClick={()=>{const ef={...editForm}; if(ef.investorId!==undefined&&ef.investorId!=="") ef.investorId=parseInt(ef.investorId); ["amount","totalInst","instAmt","qty"].forEach(k=>{if(ef[k]!==undefined&&ef[k]!=="")ef[k]=parseFloat(ef[k])||0;}); onUpdate({...editC,...ef});setEditC(null);toast("✅ تم التعديل");}}>حفظ التعديل</button>
         </div>
       </Modal>
 
       <Modal open={!!bond} onClose={()=>setBond(null)} title="📜 سند الأمر">
         <div style={{padding:"10px 12px 0",textAlign:"left",display:"flex",gap:8,flexWrap:"wrap"}}>
-          <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-print-area")}>🖨️ سند الزبون</button>
+          <button style={styles.btnGold()} onClick={()=>printContent("bond-print-area")}>سند الزبون</button>
         </div>
         <div id="bond-print-area">{bond && <BondContent c={bond} inv={investors.find(i=>String(i.id)===String(bond.investorId))} r={calcContract(bond.amount,settings,bond.totalInst)}/>}</div>
         <div id="bond-cl-print-area" style={{position:"absolute",left:"-9999px",top:0}}>
@@ -2737,7 +2738,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       {/* Cheque Modal */}
       <Modal open={!!bondG} onClose={()=>setBondG(null)} title="📜 سند الأمر">
         <div style={{padding:"10px 12px 0",textAlign:"left",display:"flex",gap:8,flexWrap:"wrap"}}>
-          <button style={styles.btn(C.gold)} onClick={()=>printContent("bond-g-print-area")}>🖨️ سند الكفيل</button>
+          <button style={styles.btnGold()} onClick={()=>printContent("bond-g-print-area")}>سند الكفيل</button>
         </div>
         <div id="bond-g-print-area">{bondG && <BondGuarantorContent c={bondG} inv={investors.find(i=>String(i.id)===String(bondG.investorId))} r={calcContract(bondG.amount,settings,bondG.totalInst)}/>}</div>
         <div id="bond-gg-print-area" style={{position:"absolute",left:"-9999px",top:0}}>
@@ -2749,14 +2750,14 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
 
       <Modal open={!!cheque} onClose={()=>setCheque(null)} title="📋 العقد - المشتري">
         <div style={{padding:"10px 12px 0",textAlign:"left"}}>
-          <button style={styles.btn(C.gold)} onClick={()=>printContent("cheque-print-area")}>🖨️ طباعة</button>
+          <button style={styles.btnGold()} onClick={()=>printContent("cheque-print-area")}>طباعة</button>
         </div>
         <div id="cheque-print-area">{cheque && <ChequeContent c={cheque} r={calcContract(cheque.amount,settings,cheque.totalInst)}/>}</div>
       </Modal>
 
       <Modal open={!!chequeG} onClose={()=>setChequeG(null)} title="📋 العقد - الكفيل">
         <div style={{padding:"10px 12px 0",textAlign:"left"}}>
-          <button style={styles.btn(C.gold)} onClick={()=>printContent("cheque-g-print-area")}>🖨️ طباعة</button>
+          <button style={styles.btnGold()} onClick={()=>printContent("cheque-g-print-area")}>طباعة</button>
         </div>
         <div id="cheque-g-print-area">{chequeG && <ChequeContent c={chequeG} r={calcContract(chequeG.amount,settings,chequeG.totalInst)} isGuarantor={true}/>}</div>
       </Modal>
@@ -2764,7 +2765,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       {/* Contract Doc Modal */}
       <Modal open={!!contractDoc} onClose={()=>setContractDoc(null)} title="📄 عقد التقسيط" titleBg={C.purple} wide>
         <div style={{padding:"10px 12px 0",textAlign:"left"}}>
-          <button style={styles.btn(C.gold)} onClick={()=>printContent("contract-print-area")}>🖨️ طباعة</button>
+          <button style={styles.btnGold()} onClick={()=>printContent("contract-print-area")}>طباعة</button>
         </div>
         <div id="contract-print-area">
           {contractDoc && <ContractContent c={contractDoc} inv={investors.find(i=>String(i.id)===String(contractDoc.investorId))} r={calcContract(contractDoc.amount,settings,contractDoc.totalInst)} settings={settings} investors={investors}/>}
@@ -2816,14 +2817,14 @@ function PendingPage({pending, setPending}) {
               </div>
             ))}
           </div>
-          <button style={styles.btn(C.teal)} onClick={save}>💾 إضافة</button>
+          <button style={styles.btnGold()} onClick={save}>إضافة</button>
         </div>
       </div>
 
       {/* Table */}
       <div style={styles.panel}>
         <div style={styles.panelHdr}>
-          <h3 style={{margin:0,fontSize:15,fontWeight:700}}>📋 سجل المتبقي</h3>
+          <h3 style={{margin:0,fontSize:15,fontWeight:700}}>سجل المتبقي</h3>
           <span style={{fontSize:15,fontWeight:800,color:C.red}}>{SAR(total)}</span>
         </div>
         <div style={{overflowX:"auto"}}>
@@ -2843,8 +2844,8 @@ function PendingPage({pending, setPending}) {
                   <td style={{...styles.td,color:C.red,fontWeight:700}}>{SAR(p.amount)}</td>
                   <td style={styles.td}>{p.note||"—"}</td>
                   <td style={styles.td}>
-                    <button style={{...styles.btn(C.red),fontSize:14,padding:"4px 10px"}}
-                      onClick={()=>{if(window.confirm("حذف هذا العنصر؟"))setPending(prev=>prev.filter(x=>x.id!==p.id));}}>🗑️</button>
+                    <button style={{...styles.btnGold(),fontSize:14,padding:"4px 10px"}}
+                      onClick={()=>{if(window.confirm("حذف هذا العنصر؟"))setPending(prev=>prev.filter(x=>x.id!==p.id));}}>حذف</button>
                   </td>
                 </tr>
               ))}
@@ -2931,7 +2932,7 @@ function LoansPage({loans, setLoans}) {
               </div>
             ))}
           </div>
-          <button style={styles.btn(C.teal)} onClick={save}>💾 تسجيل السلفة</button>
+          <button style={styles.btnGold()} onClick={save}>تسجيل السلفة</button>
         </div>
       </div>
 
@@ -2953,8 +2954,8 @@ function LoansPage({loans, setLoans}) {
                     <div style={{fontWeight:800,fontSize:17,color:C.ink,marginBottom:4}}>{l.name}</div>
                     <div style={{fontSize:14,color:"#1f2937"}}>{l.date} {l.note?"| "+l.note:""}</div>
                   </div>
-                  <button style={{...styles.btn(C.red),fontSize:14,padding:"4px 10px"}}
-                    onClick={()=>{if(window.confirm("حذف هذه السلفة؟"))setLoans(p=>p.filter(x=>x.id!==l.id));}}>🗑️</button>
+                  <button style={{...styles.btnGold(),fontSize:14,padding:"4px 10px"}}
+                    onClick={()=>{if(window.confirm("حذف هذه السلفة؟"))setLoans(p=>p.filter(x=>x.id!==l.id));}}>حذف</button>
                 </div>
                 {/* Progress */}
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:15,marginBottom:6}}>
@@ -2995,8 +2996,8 @@ function LoansPage({loans, setLoans}) {
                           <span style={{color:"#1f2937"}}>{monthName} — {p.date}{p.note?" | "+p.note:""}</span>
                           <div style={{display:"flex",alignItems:"center",gap:8}}>
                             <span style={{color:C.green,fontWeight:700}}>+{SAR(p.amount)}</span>
-                            <button style={{...styles.btn(C.red),fontSize:13,padding:"2px 7px"}}
-                              onClick={()=>{if(window.confirm("حذف هذه الدفعة؟"))setLoans(prev=>prev.map(x=>x.id===l.id?{...x,payments:(x.payments||[]).filter(pp=>pp.id!==p.id)}:x));}}>🗑️</button>
+                            <button style={{...styles.btnGold(),fontSize:13,padding:"2px 7px"}}
+                              onClick={()=>{if(window.confirm("حذف هذه الدفعة؟"))setLoans(prev=>prev.map(x=>x.id===l.id?{...x,payments:(x.payments||[]).filter(pp=>pp.id!==p.id)}:x));}}>حذف</button>
                           </div>
                         </div>
                       );
@@ -3022,7 +3023,7 @@ function LoansPage({loans, setLoans}) {
                       </div>
                     </div>
                     <div style={{display:"flex",gap:8}}>
-                      <button style={styles.btn("#c8922a")} onClick={()=>addMoreLoan(l)}>💾 إضافة السلفة</button>
+                      <button style={styles.btnGold()} onClick={()=>addMoreLoan(l)}>إضافة السلفة</button>
                       <button style={styles.btn("#e5e7eb",C.ink)} onClick={()=>setAddMore(null)}>إلغاء</button>
                     </div>
                   </div>
@@ -3045,24 +3046,24 @@ function LoansPage({loans, setLoans}) {
                       </div>
                     </div>
                     <div style={{display:"flex",gap:8}}>
-                      <button style={styles.btn(C.teal)} onClick={()=>addPayment(l)}>💾 حفظ الدفعة</button>
+                      <button style={styles.btnGold()} onClick={()=>addPayment(l)}>حفظ الدفعة</button>
                       <button style={styles.btn("#e5e7eb",C.ink)} onClick={()=>setSelLoan(null)}>إلغاء</button>
                     </div>
                   </div>
                 ) : remaining>0 ? (
                   <div style={{display:"flex",gap:8}}>
-                    <button style={styles.btn(C.teal)} onClick={()=>{setSelLoan(l.id);setAddMore(null);setPayForm({amount:l.monthly||"",date:today,note:""});}}>
-                      💰 تسجيل دفعة
+                    <button style={styles.btnGold()} onClick={()=>{setSelLoan(l.id);setAddMore(null);setPayForm({amount:l.monthly||"",date:today,note:""});}}>
+                      تسجيل دفعة
                     </button>
-                    <button style={styles.btn("#c8922a")} onClick={()=>{setAddMore(l.id);setSelLoan(null);setAddMoreForm({amount:"",date:today,note:""});}}>
-                      ➕ سلفة إضافية
+                    <button style={styles.btnGold()} onClick={()=>{setAddMore(l.id);setSelLoan(null);setAddMoreForm({amount:"",date:today,note:""});}}>
+                      سلفة إضافية
                     </button>
                   </div>
                 ) : (
                   <div style={{display:"flex",gap:8,alignItems:"center"}}>
                     <div style={{color:C.green,fontWeight:700,fontSize:15}}>✅ تم السداد الكامل</div>
-                    <button style={{...styles.btn("#c8922a"),fontSize:13}} onClick={()=>{setAddMore(l.id);setSelLoan(null);setAddMoreForm({amount:"",date:today,note:""});}}>
-                      ➕ سلفة إضافية
+                    <button style={{...styles.btnGold(),fontSize:13}} onClick={()=>{setAddMore(l.id);setSelLoan(null);setAddMoreForm({amount:"",date:today,note:""});}}>
+                      سلفة إضافية
                     </button>
                   </div>
                 )}
@@ -3133,8 +3134,8 @@ function ZakatPage({investors, contracts, settings, zakatTx, setZakatTx}) {
               <input style={styles.input} type="date" value={form.date} onChange={e=>set("date",e.target.value)}/>
             </div>
           </div>
-          <button style={styles.btn(form.type==="collect"?C.green:C.red)} onClick={save}>
-            {form.type==="collect"?"💰 إضافة للصندوق":"📤 صرف من الصندوق"}
+          <button style={styles.btnGold()} onClick={save}>
+            {form.type==="collect"?"إضافة للصندوق":"صرف من الصندوق"}
           </button>
         </div>
       </div>
@@ -3168,8 +3169,8 @@ function ZakatPage({investors, contracts, settings, zakatTx, setZakatTx}) {
                       <td style={{...styles.td,color:t.type==="collect"?C.green:C.red,fontWeight:700}}>{SAR(t.amount)}</td>
                       <td style={{...styles.td,fontWeight:800,color:running>=0?C.teal:C.red}}>{SAR(running)}</td>
                       <td style={styles.td}>
-                        <button style={{...styles.btn(C.red),fontSize:14,padding:"4px 10px"}}
-                          onClick={()=>{if(window.confirm("حذف هذه الحركة؟"))setZakatTx(p=>p.filter(x=>x.id!==t.id));}}>🗑️</button>
+                        <button style={{...styles.btnGold(),fontSize:14,padding:"4px 10px"}}
+                          onClick={()=>{if(window.confirm("حذف هذه الحركة؟"))setZakatTx(p=>p.filter(x=>x.id!==t.id));}}>حذف</button>
                       </td>
                     </tr>
                   );
@@ -3513,9 +3514,9 @@ function FundsPanel({investors, contracts, settings, setInvestors, toast}){
                 </div>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                   {fundInvs.map(inv=>(
-                    <button key={inv.id} style={{...styles.btn("#f0f4ff","#3b82f6"),fontSize:14,padding:"4px 10px"}}
+                    <button key={inv.id} style={{...styles.btnGold(),fontSize:14,padding:"4px 10px"}}
                       onClick={()=>setEditFund({inv,form:{name:inv.name,code:inv.code||"",fund:inv.fund,capital:String(inv.capital)}})}>
-                      ✏️ {inv.fund}
+                      {inv.fund}
                     </button>
                   ))}
                 </div>
@@ -3525,7 +3526,7 @@ function FundsPanel({investors, contracts, settings, setInvestors, toast}){
         </div>
       </div>
 
-      <Modal open={!!editFund} onClose={()=>setEditFund(null)} title="✏️ تعديل المستثمر">
+      <Modal open={!!editFund} onClose={()=>setEditFund(null)} title="تعديل المستثمر">
         {editFund && (
           <div>
             {[["الاسم","name","text"],["الرمز (اختياري)","code","text"],["الصندوق","fund","text"],["رأس المال","capital","number"]].map(([l,k,t])=>(
@@ -3535,16 +3536,16 @@ function FundsPanel({investors, contracts, settings, setInvestors, toast}){
               </div>
             ))}
             <div style={{display:"flex",gap:8,marginTop:8}}>
-              <button style={{...styles.btn(C.teal,"#fff"),flex:1}} onClick={()=>{
+              <button style={{...styles.btnGold(),flex:1}} onClick={()=>{
                 setInvestors(p=>p.map(i=>i.id===editFund.inv.id?{...i,...editFund.form,capital:parseFloat(editFund.form.capital)||0}:i));
                 setEditFund(null); toast&&toast("✅ تم الحفظ");
-              }}>💾 حفظ</button>
-              <button style={{...styles.btn(C.red,"#fff")}} onClick={()=>{
+              }}>حفظ</button>
+              <button style={styles.btnGold()} onClick={()=>{
                 if(window.confirm("حذف هذا المستثمر؟")){
                   setInvestors(p=>p.filter(i=>i.id!==editFund.inv.id));
-                  setEditFund(null); toast&&toast("🗑 تم الحذف");
+                  setEditFund(null); toast&&toast("تم الحذف");
                 }
-              }}>🗑 حذف</button>
+              }}>حذف</button>
             </div>
           </div>
         )}
@@ -3838,7 +3839,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
               <div style={{height:1,background:K.line,marginBottom:10}}/>
               <button onClick={()=>{setStmtInv({__group:specialInvs,name:"حسابات خاصة (مجمّع)"});setStmtType("brief");}}
                 style={{width:"100%",padding:"clamp(11px,1.2vw,16px)",borderRadius:10,border:"1px solid rgba(200,146,42,.3)",background:K.panel2,
-                color:"#c8922a",fontSize:"clamp(13px,1.3vw,18px)",fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🖨️ كشف مجمّع للسبعة</button>
+                color:"#c8922a",fontSize:"clamp(13px,1.3vw,18px)",fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>كشف مجمّع للسبعة</button>
             </div>
           </div>
           {/* تفصيل كل فرصة */}
@@ -3970,7 +3971,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                 value={form.note} onChange={e=>set("note",e.target.value)}/>
             </div>
           </div>
-          <button style={styles.btn(C.teal)} onClick={addTx}>💾 إضافة</button>
+          <button style={styles.btnGold()} onClick={addTx}>إضافة</button>
         </div>
       </div>
 
@@ -4073,12 +4074,12 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                                   </td>
                                   <td style={{padding:"4px 6px",textAlign:"center"}}>
                                     <div style={{display:"flex",gap:3,justifyContent:"center"}}>
-                                      {!isEditing && <button style={{background:"#e0f2fe",border:"1px solid #7dd3fc",borderRadius:6,padding:"3px 6px",fontSize:11,cursor:"pointer",color:"#0369a1",fontWeight:700}} onClick={()=>setEditPay({payId:d.payId,amount:d.amount})}>✏️</button>}
-                                      <button style={{background:"#fee2e2",border:"1px solid #fca5a5",borderRadius:6,padding:"3px 6px",fontSize:11,cursor:"pointer",color:"#b91c1c",fontWeight:700}} onClick={()=>{
+                                      {!isEditing && <button style={{...styles.btnGold(),fontSize:11,padding:"3px 6px"}} onClick={()=>setEditPay({payId:d.payId,amount:d.amount})}>تعديل</button>}
+                                      <button style={{...styles.btnGold(),fontSize:11,padding:"3px 6px"}} onClick={()=>{
                                         if(!window.confirm("حذف سداد "+d.client+" — "+SAR(d.amount)+"؟")) return;
                                         setPayments(function(prev){return prev.filter(function(p){return String(p.id)!==String(d.payId);});});
                                         toast("تم حذف السداد");
-                                      }}>🗑️</button>
+                                      }}>حذف</button>
                                     </div>
                                   </td>
                                 </tr>);
@@ -5593,7 +5594,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
         <div style={styles.panel}>
           <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
             <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>🗄️ أرشيف الأشهر المقفلة</h2>
-            {closedMonths.length>0 && <button style={{...styles.btn(C.gold),fontSize:13,padding:"7px 12px"}} onClick={()=>printAll(closedMonths.map(ym=>({ym,d:{collected:monthClose[ym].collected,tot:{amt:monthClose[ym].amt,profit:monthClose[ym].profit,net:monthClose[ym].net},count:monthClose[ym].count}})),"أرشيف الأشهر المقفلة")}>🖨️ طباعة الأرشيف</button>}
+            {closedMonths.length>0 && <button style={{...styles.btnGold(),fontSize:13,padding:"7px 12px"}} onClick={()=>printAll(closedMonths.map(ym=>({ym,d:{collected:monthClose[ym].collected,tot:{amt:monthClose[ym].amt,profit:monthClose[ym].profit,net:monthClose[ym].net},count:monthClose[ym].count}})),"أرشيف الأشهر المقفلة")}>طباعة الأرشيف</button>}
           </div>
           <div style={{padding:14,overflowX:"auto"}}>
             {closedMonths.length===0
@@ -6100,7 +6101,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
                         w.document.write(html);
                         w.document.close();
                         setTimeout(()=>w.print(),400);
-                      }} style={{background:"rgba(255,255,255,.2)",border:"1px solid rgba(255,255,255,.4)",borderRadius:9,padding:"7px 14px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🖨️ طباعة</button>
+                      }} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",border:"2.5px solid #141428",borderRadius:9,padding:"7px 14px",color:"#141428",fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>طباعة</button>
                     </div>
                     {unpaidRows.map((r,i)=>{
                       const c2=r.c, inv2=investors.find(x=>String(x.id)===String(c2.investorId));
@@ -6473,7 +6474,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
               <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#c8922a" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M8 3v4M16 3v4"/></g></svg>
               <input type="date" style={{border:"none",outline:"none",fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:700,color:C.ink,background:"transparent",cursor:"pointer"}} value={selDay} onChange={e=>setSelDay(e.target.value)}/>
             </div>
-            <button style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:10,fontSize:15,padding:"8px 16px",fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>printDailyReport(selDay,dayRows,openingBalance,closingBalance,sumByType)}>🖨️ طباعة اليوم</button>
+            <button style={{...styles.btnGold(),fontSize:15,padding:"8px 16px",borderRadius:10}} onClick={()=>printDailyReport(selDay,dayRows,openingBalance,closingBalance,sumByType)}>طباعة اليوم</button>
             {isPastDay && <span style={{background:"#fef2f2",color:"#dc2626",padding:"6px 12px",borderRadius:8,fontSize:13,fontWeight:700}}>🔒 يوم مقفل</span>}
           </div>
         </div>
@@ -6754,7 +6755,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                 w.document.write("<table><thead><tr><th>التاريخ</th><th>النوع</th><th>الاسم / الوصف</th><th>المبلغ</th></tr></thead><tbody>"+rows+"</tbody></table>");
                 w.document.write("<br><button onclick='window.print()' style='background:#0d7a6f;color:#fff;border:none;padding:12px 30px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer'>🖨️ طباعة</button>");
                 w.document.write("</body></html>");w.document.close();
-              }}>🖨️</button>
+              }}>طباعة</button>
             </div>
             <div style={{overflowX:"auto",maxHeight:"70vh",overflowY:"auto",WebkitOverflowScrolling:"touch",position:"relative"}}>
               <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:15}}>
@@ -7250,7 +7251,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
                     {l}
                   </button>
                 ))}
-                <button style={{...styles.btn(C.gold),fontSize:15,padding:"8px 16px",borderRadius:0}} onClick={()=>printStatement("stmt-print-area")}>🖨️ طباعة</button>
+                <button style={{...styles.btnGold(),fontSize:15,padding:"8px 16px",borderRadius:0}} onClick={()=>printStatement("stmt-print-area")}>طباعة</button>
               </div>
 
               {/* Summary cards */}
@@ -8405,7 +8406,7 @@ function GoodsPage({investors, contracts, toast, gsWrite, goBack}) {
                 {cell({textAlign:"center"},row.date)}
                 {ALL_COLS.filter(c=>visCols[c]!==false).map(c=><React.Fragment key={c}>{C_[c]}</React.Fragment>)}
                 <td style={{padding:"4px",borderBottom:"1px solid #eee",textAlign:"center"}}>
-                  {!row.fromContract&&<button style={{...styles.btn(C.red),fontSize:13,padding:"3px 8px"}} onClick={()=>{if(window.confirm("حذف هذا السطر؟"))saveManual(manualRows.filter(r=>r.id!==row.id));}}>🗑️</button>}
+                  {!row.fromContract&&<button style={{...styles.btnGold(),fontSize:13,padding:"3px 8px"}} onClick={()=>{if(window.confirm("حذف هذا السطر؟"))saveManual(manualRows.filter(r=>r.id!==row.id));}}>حذف</button>}
                 </td>
               </tr>
             );})}
@@ -9382,7 +9383,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
   const QUICK = ["☀️ التقرير الصباحي","⚠️ من راح يتعثر قريباً؟","أسوأ 10 متعثرين","قارن كل المستثمرين","التحصيل آخر 6 شهور","أفضل الزبائن التزاماً","تحليل ربح البضائع","مصروفات هذا الشهر","توقع دخل الشهر الجاي"];
 
   return (
-    React.createElement("div",{style:{display:"flex",flexDirection:"column",height:"100vh",height:"100dvh",background:"#f4f4f6",color:"#141428",fontFamily:"'Tajawal','IBM Plex Sans Arabic',sans-serif"}},
+    React.createElement("div",{style:{display:"flex",flexDirection:"column",height:"100vh",height:"100dvh",background:"#faf6ee",color:"#141428",fontFamily:"'Tajawal','IBM Plex Sans Arabic',sans-serif"}},
       /* Header - Premium Navy with rounded bottom */
       React.createElement("div",{style:{background:"linear-gradient(180deg,#141428 0%,#0d0d1f 100%)",padding:"clamp(16px,4vw,24px) clamp(14px,4vw,20px) clamp(14px,3.5vw,18px)",flexShrink:0,borderRadius:"0 0 clamp(20px,6vw,32px) clamp(20px,6vw,32px)",boxShadow:"0 6px 30px rgba(13,13,31,0.25)",position:"relative",zIndex:10}},
         React.createElement("div",{style:{display:"flex",alignItems:"center",gap:"clamp(10px,3vw,14px)",marginBottom:"clamp(12px,3.5vw,18px)"}},
