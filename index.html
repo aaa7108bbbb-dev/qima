@@ -7551,40 +7551,47 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
       </div>
 
       {/* رصيد بداية الصندوق */}
-      <div style={{...styles.card,marginBottom:16,background:"#fffbf0",border:"1px solid "+C.gold}}>
+      <div style={{...styles.card,marginBottom:16,background:"#fffbf0",border:"2px solid #141428"}}>
         {base && !editingBase ? (
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}>
-            <div>
-              <span style={{fontSize:14,fontWeight:800,color:"#8a6200"}}>💰 رصيد بداية الصندوق: </span>
-              <span style={{fontSize:18,fontWeight:900,color:C.ink}}>{SAR(baseAmount)}</span>
-              <span style={{fontSize:13,color:"#1f2937",marginRight:8}}>({baseDate})</span>
+          <div>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap",marginBottom:10}}>
+              <div>
+                <span style={{fontSize:14,fontWeight:800,color:"#141428"}}>رصيد بداية الصندوق: </span>
+                <span style={{fontSize:18,fontWeight:900,color:C.ink}}>{SAR(baseAmount)}</span>
+                <span style={{fontSize:13,color:"#1f2937",marginRight:8}}>({baseDate})</span>
+              </div>
+              <button style={styles.btnGold()}
+                onClick={()=>{setBaseInput(String(baseAmount));setBaseDateInput(baseDate);setEditingBase(true);}}>تعديل</button>
             </div>
-            <button style={{...styles.btn("#f3f4f6","#6b7280"),fontSize:13,padding:"5px 12px"}}
-              onClick={()=>{setBaseInput(String(baseAmount));setBaseDateInput(baseDate);setEditingBase(true);}}>✏️ تعديل</button>
+            {/* زر استرجاع البداية السابقة */}
+            {(()=>{
+              const _dox = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
+              const prev = _dox.__prevBase;
+              if(!prev) return null;
+              return (
+                <button style={{...styles.btnGold(),width:"100%",justifyContent:"center",padding:"10px",marginTop:6,background:"#fff",color:"#dc2626",border:"2px solid #dc2626"}}
+                  onClick={()=>{
+                    if(!window.confirm("استرجاع البداية السابقة؟\n\nالتاريخ: "+prev.date+"\nالمبلغ: "+SAR(prev.amount)+"\n\nهذا يرجع اليومية كما كانت قبل الإقفال")) return;
+                    setDailyOpen(p=>{
+                      const np = {...(p&&typeof p==="object"&&!Array.isArray(p)?p:{})};
+                      np.__base = {...prev};
+                      delete np.__prevBase;
+                      return np;
+                    });
+                    toast("✅ تم الاسترجاع — رجعت البداية السابقة");
+                  }}>استرجاع البداية السابقة ({prev.date} — {SAR(prev.amount)})</button>
+              );
+            })()}
           </div>
         ) : (
           <div style={{display:"flex",alignItems:"flex-end",gap:10,flexWrap:"wrap"}}>
             <div>
-              <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>💰 المبلغ</label>
+              <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المبلغ</label>
               <input type="number" placeholder="مثال: 15000" style={{...styles.input,width:150}} value={baseInput} onChange={e=>setBaseInput(e.target.value)}/>
             </div>
             <div>
               <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>التاريخ</label>
-              <input type="date" style={{...styles.input,width:170}} value={baseDateInput} onChange={e=>{
-                const newDate = e.target.value;
-                setBaseDateInput(newDate);
-                // حساب الرصيد التلقائي لنهاية هذا اليوم
-                const _dl = Array.isArray(daily) ? daily : [];
-                const _dox = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
-                const _bx = _dox.__base && typeof _dox.__base==="object" ? _dox.__base : null;
-                const origBaseAmt = _bx ? (+_bx.amount||0) : 0;
-                const origBaseDate = _bx ? _bx.date : "0000-00-00";
-                // صافي الحركات من تاريخ البداية الأصلي حتى نهاية التاريخ المختار
-                const netUpTo = _dl.filter(d=>d.date >= origBaseDate && d.date <= newDate)
-                  .reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
-                const calcBal = origBaseAmt + netUpTo;
-                setBaseInput(String(calcBal));
-              }}/>
+              <input type="date" style={{...styles.input,width:170}} value={baseDateInput} onChange={e=>setBaseDateInput(e.target.value)}/>
             </div>
             <button style={styles.btnGold()}
               onClick={()=>{
