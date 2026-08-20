@@ -7432,7 +7432,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
 }
 
 // ─── Settings Page ───────────────────────────────────────────
-function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,setPayments,dailyOpen,setDailyOpen,setPage,investors,contracts,setInvestors,gsWrite,saveLS,loadLS}) {
+function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,setPayments,dailyOpen,setDailyOpen,setPage,investors,contracts,setInvestors,gsWrite,saveLS,loadLS,daily}) {
   // 🔒 تشفير الرمز السري
   const hashPin = async (pin) => {
     const enc = new TextEncoder().encode(pin+"qima_salt_2024");
@@ -7570,17 +7570,31 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
             </div>
             <div>
               <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>التاريخ</label>
-              <input type="date" style={{...styles.input,width:170}} value={baseDateInput} onChange={e=>setBaseDateInput(e.target.value)}/>
+              <input type="date" style={{...styles.input,width:170}} value={baseDateInput} onChange={e=>{
+                const newDate = e.target.value;
+                setBaseDateInput(newDate);
+                // حساب الرصيد التلقائي لنهاية هذا اليوم
+                const _dl = Array.isArray(daily) ? daily : [];
+                const _dox = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
+                const _bx = _dox.__base && typeof _dox.__base==="object" ? _dox.__base : null;
+                const origBaseAmt = _bx ? (+_bx.amount||0) : 0;
+                const origBaseDate = _bx ? _bx.date : "0000-00-00";
+                // صافي الحركات من تاريخ البداية الأصلي حتى نهاية التاريخ المختار
+                const netUpTo = _dl.filter(d=>d.date >= origBaseDate && d.date <= newDate)
+                  .reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
+                const calcBal = origBaseAmt + netUpTo;
+                setBaseInput(String(calcBal));
+              }}/>
             </div>
-            <button style={{...styles.btn(C.teal,"#fff"),fontSize:14,padding:"9px 20px"}}
+            <button style={styles.btnGold()}
               onClick={()=>{
                 const amt=parseFloat(baseInput);
                 if(isNaN(amt)){toast("أدخل مبلغاً صحيحاً","warn");return;}
                 if(!baseDateInput){toast("اختر التاريخ","warn");return;}
                 setDailyOpen(p=>({...(p&&typeof p==="object"&&!Array.isArray(p)?p:{}), __base:{date:baseDateInput,amount:amt}}));
                 setEditingBase(false); toast("✅ تم الحفظ");
-              }}>💾 حفظ</button>
-            {editingBase && <button style={{...styles.btn(C.red,"#fff"),fontSize:13,padding:"9px 14px"}} onClick={()=>setEditingBase(false)}>إلغاء</button>}
+              }}>حفظ</button>
+            {editingBase && <button style={{...styles.btnGold(),background:"#fff"}} onClick={()=>setEditingBase(false)}>إلغاء</button>}
           </div>
         )}
       </div>
@@ -11672,7 +11686,7 @@ function App() {
         {page==="goods" && <GoodsPage investors={publicInvestors} contracts={publicContracts} toast={toast} gsWrite={gsWrite} goBack={()=>setPage("contracts")}/>}
         {/* البوصلة المالية انتقلت لتبويب داخل المحفظة الشهرية */}
         {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast} setPage={setPage}/>}
-        {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup} payments={publicPayments} setPayments={setPayments} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} setPage={setPage} investors={publicInvestors} contracts={publicContracts} setInvestors={setInvestors} gsWrite={gsWrite} saveLS={saveLS} loadLS={loadLS}/>}
+        {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup} payments={publicPayments} setPayments={setPayments} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} setPage={setPage} investors={publicInvestors} contracts={publicContracts} setInvestors={setInvestors} gsWrite={gsWrite} saveLS={saveLS} loadLS={loadLS} daily={daily}/>}
       </div>
 
       <Toast msg={toastMsg} type={toastType}/>
