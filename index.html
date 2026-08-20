@@ -311,7 +311,7 @@ setInterval(addResizers, 2000);
       '<div style="max-width:640px;margin:0 auto;background:#fff;border:2px solid #dc2626;border-radius:14px;padding:20px;box-shadow:0 4px 18px rgba(0,0,0,0.08)">'+
       '<div style="font-size:22px;font-weight:900;color:#dc2626;margin-bottom:10px">⚠️ '+title+'</div>'+
       '<div style="font-size:15px;color:#334155;margin-bottom:14px;line-height:1.8">بياناتك محفوظة. انسخ النص التالي وأرسله للمطوّر:</div>'+
-      '<div id="diag-box" style="background:#0f172a;color:#fca5a5;padding:12px 14px;border-radius:10px;font-size:13px;font-family:monospace;direction:ltr;text-align:left;white-space:pre-wrap;word-break:break-word;max-height:300px;overflow:auto;margin-bottom:12px">'+detail+'</div>'+
+      '<div id="diag-box" style="background:#0f172a;color:#dc2626;padding:12px 14px;border-radius:10px;font-size:13px;font-family:monospace;direction:ltr;text-align:left;white-space:pre-wrap;word-break:break-word;max-height:300px;overflow:auto;margin-bottom:12px">'+detail+'</div>'+
       '<div style="display:flex;gap:10px;flex-wrap:wrap">'+
       '<button onclick="(function(){try{navigator.clipboard.writeText(document.getElementById(\'diag-box\').innerText);this.textContent=\'✓ تم النسخ\';}catch(e){}}).call(this)" style="flex:1;min-width:130px;padding:12px;border-radius:10px;border:none;background:#c8922a;color:#fff;font-size:15px;font-weight:800;cursor:pointer">📋 نسخ</button>'+
       '<button onclick="location.reload()" style="flex:1;min-width:130px;padding:12px;border-radius:10px;border:none;background:#0d9488;color:#fff;font-size:15px;font-weight:800;cursor:pointer">🔄 إعادة تحميل</button>'+
@@ -3688,9 +3688,9 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
 
       {/* حسابات خاصة */}
       {subTab==="special" && (()=>{
-        const K = {panel:"#16202e",panel2:"#1b2736",line:"rgba(255,255,255,.08)",
-          teal:"#2dd4bf",gold:"#fbbf24",green:"#4ade80",amber:"#fb923c",violet:"#c084fc",
-          blue:"#38bdf8",red:"#fb7185",txt:"#f1f5f9",dim:"#94a3b8",dim2:"#64748b"};
+        const K = {panel:"linear-gradient(140deg,#e8c96a,#c8922a)",panel2:"linear-gradient(140deg,#e0b85c,#c8922a)",line:"#141428",
+          teal:"#141428",gold:"#141428",green:"#16a34a",amber:"#b45309",violet:"#141428",
+          blue:"#141428",red:"#dc2626",txt:"#141428",dim:"#141428",dim2:"#333"};
         const NF = v => (v||0).toLocaleString("en-US",{maximumFractionDigits:0});
         const _now = new Date();
         const specialNames = ["1","2","4","7","8","9","11"];
@@ -5662,7 +5662,7 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
     const arr=[...orderedCards]; const [moved]=arr.splice(dragIdx,1); arr.splice(toIdx,0,moved);
     saveOrder(arr); setDragIdx(null);
   };
-  const th={padding:"10px 8px",textAlign:"center",fontSize:13,fontWeight:800,background:"#1e293b",color:"#fff",whiteSpace:"nowrap"};
+  const th={padding:"10px 8px",textAlign:"center",fontSize:13,fontWeight:800,background:"rgba(20,20,40,0.1)",color:"#fff",whiteSpace:"nowrap"};
   const td={padding:"9px 8px",textAlign:"center",fontSize:14,borderBottom:"1px solid "+C.border};
   const printReport = () => {
     const w=window.open("","_blank"); if(!w){alert("اسمح بالنوافذ");return;}
@@ -6539,7 +6539,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
       <div style={styles.panel}>
         <div style={styles.panelHdr}>
           <h3 style={{margin:0,fontSize:15,fontWeight:700}}>📋 حركات يوم {dLabel(selDay)}</h3>
-          <span style={{fontSize:15,fontWeight:800,background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:closingBalance>=0?"#141428":"#fca5a5",padding:"6px 14px",borderRadius:10,border:"2.5px solid #141428"}}>المتبقي: {SAR(closingBalance)}</span>
+          <span style={{fontSize:15,fontWeight:800,background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:closingBalance>=0?"#141428":"#dc2626",padding:"6px 14px",borderRadius:10,border:"2.5px solid #141428"}}>المتبقي: {SAR(closingBalance)}</span>
         </div>
         <div style={{overflowX:"auto",maxHeight:"70vh",overflowY:"auto",WebkitOverflowScrolling:"touch",position:"relative"}}>
           <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:15}}>
@@ -6911,9 +6911,9 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
       )}
       {(()=>{
         // ═══ ألوان البطاقات ═══
-        const K = {bg:"#0e1621",panel:"#16202e",panel2:"#1b2736",line:"rgba(255,255,255,.08)",
-          teal:"#2dd4bf",gold:"#fbbf24",green:"#4ade80",amber:"#fb923c",violet:"#c084fc",
-          blue:"#38bdf8",red:"#fb7185",txt:"#f1f5f9",dim:"#94a3b8",dim2:"#64748b"};
+        const K = {bg:"#faf6ee",panel:"linear-gradient(140deg,#e8c96a,#c8922a)",panel2:"linear-gradient(140deg,#e0b85c,#c8922a)",line:"#141428",
+          teal:"#141428",gold:"#141428",green:"#16a34a",amber:"#b45309",violet:"#141428",
+          blue:"#141428",red:"#dc2626",txt:"#141428",dim:"#141428",dim2:"#333"};
         const NF = v => (v||0).toLocaleString("en-US",{maximumFractionDigits:0});
         const _now = new Date();
 
@@ -6982,7 +6982,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
         return (<div style={{marginBottom:16}}>
 
           {/* ══════ المربع العلوي ══════ */}
-          <div style={{background:"linear-gradient(140deg,#153040,#101e2b)",border:"2px solid #141428",
+          <div style={{background:"linear-gradient(140deg,#e8c96a,#d4a83a,#c8922a)",border:"2.5px solid #141428",
             borderRadius:18,padding:16,marginBottom:16,position:"relative",overflow:"hidden",maxWidth:1200,marginLeft:"auto",marginRight:"auto"}}>
             <div style={{position:"absolute",left:-30,bottom:-30,width:110,height:110,borderRadius:"50%",
               background:"radial-gradient(circle,rgba(200,146,42,.12),transparent 70%)",pointerEvents:"none"}}/>
@@ -6991,21 +6991,21 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
               <span style={{fontSize:11,color:K.gold,fontWeight:600}}>{list.length} مستثمرين · {T.cons} عقد</span>
             </div>
             <div style={{textAlign:"center",padding:"6px 0 14px"}}>
-              <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:3}}>الإجمالي</div>
+              <div style={{fontSize:11,color:"#141428",fontWeight:600,marginBottom:3}}>الإجمالي</div>
               <div style={{fontSize:"clamp(28px,4vw,42px)",fontWeight:700,color:K.gold,lineHeight:1.1,letterSpacing:"-.5px"}}>{NF(T.grand)}</div>
               <div style={{fontSize:11,color:K.gold,marginTop:5}}>﷼</div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:1,background:K.line,borderRadius:11,overflow:"hidden"}}>
               <div style={{background:K.panel2,padding:"9px 5px",textAlign:"center"}}>
-                <div style={{fontSize:10,color:"#fff",fontWeight:600,marginBottom:4}}>البداية</div>
+                <div style={{fontSize:10,color:"#141428",fontWeight:700,marginBottom:4}}>البداية</div>
                 <div style={{fontSize:13.5,fontWeight:700,color:K.gold}}>{T.bidaya>0?NF(T.bidaya):"—"}</div>
               </div>
               <div style={{background:K.panel2,padding:"9px 5px",textAlign:"center"}}>
-                <div style={{fontSize:10,color:"#fff",fontWeight:600,marginBottom:4}}>النقدي حالياً</div>
+                <div style={{fontSize:10,color:"#141428",fontWeight:700,marginBottom:4}}>النقدي حالياً</div>
                 <div style={{fontSize:13.5,fontWeight:700,color:K.gold}}>{NF(T.netCash)}</div>
               </div>
               <div style={{background:K.panel2,padding:"9px 5px",textAlign:"center"}}>
-                <div style={{fontSize:10,color:"#fff",fontWeight:600,marginBottom:4}}>عند الزبائن</div>
+                <div style={{fontSize:10,color:"#141428",fontWeight:700,marginBottom:4}}>عند الزبائن</div>
                 <div style={{fontSize:13.5,fontWeight:700,color:K.gold}}>{NF(T.left)}</div>
               </div>
             </div>
@@ -7036,7 +7036,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
               <div data-inv-card="" onClick={()=>setOpenId(isOpen?null:inv.id)}
                 style={{padding:"14px 15px",display:"flex",alignItems:"center",gap:11,cursor:"pointer"}}>
                 <div style={{flex:1,minWidth:0}}>
-                  <div data-inv-name="" style={{fontSize:14,fontWeight:800,color:"#c8922a",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{inv.name}</div>
+                  <div data-inv-name="" style={{fontSize:14,fontWeight:800,color:"#141428",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{inv.name}</div>
                   <div data-inv-sub="" style={{fontSize:11,color:K.dim,marginTop:2}}>{r.myCon.length} عقد · آخر سداد {shortDate(r.lastPay)}</div>
                 </div>
                 <div style={{textAlign:"left",flexShrink:0}}>
@@ -10078,16 +10078,16 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
                 : React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
                     invCards.map(g=>(
                     React.createElement("div",{key:g.inv.id,onClick:()=>{setSelInv(g.inv);setColSearch("");setExpanded({});},
-                      style:{background:"#fff",borderRadius:16,padding:"clamp(18px,2.5vw,28px) clamp(16px,2vw,24px)",cursor:"pointer",boxShadow:"0 2px 12px rgba(0,0,0,0.06)",border:"2.5px solid #141428",position:"relative",transition:"transform 0.15s",overflow:"hidden"}},
-                      g.lateCount>0 && React.createElement("span",{style:{position:"absolute",top:10,left:10,background:"#fef2f2",color:"#dc2626",borderRadius:8,padding:"2px 8px",fontSize:11,fontWeight:800}},g.lateCount+" متأخر"),
-                      React.createElement("div",{style:{fontSize:"clamp(18px,2.5vw,26px)",fontWeight:900,color:"#1a1a2e",marginBottom:12}},invLabel(g.inv)),
+                      style:{background:"linear-gradient(140deg,#e8c96a,#d4a83a,#c8922a)",borderRadius:16,padding:"clamp(18px,2.5vw,28px) clamp(16px,2vw,24px)",cursor:"pointer",boxShadow:"0 2px 12px rgba(0,0,0,0.06)",border:"2.5px solid #141428",position:"relative",transition:"transform 0.15s",overflow:"hidden"}},
+                      g.lateCount>0 && React.createElement("span",{style:{position:"absolute",top:10,left:10,background:"#fff",color:"#dc2626",borderRadius:8,padding:"2px 8px",fontSize:11,fontWeight:800,border:"1.5px solid #dc2626"}},g.lateCount+" متأخر"),
+                      React.createElement("div",{style:{fontSize:"clamp(18px,2.5vw,26px)",fontWeight:900,color:"#141428",marginBottom:12}},invLabel(g.inv)),
                       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:4}},
-                        React.createElement("span",{style:{fontSize:"clamp(13px,1.5vw,18px)",color:"#1a1a2e",fontWeight:700}},"العقود"),
-                        React.createElement("span",{style:{fontSize:"clamp(16px,2vw,24px)",fontWeight:900,color:"#c8922a"}},g.items.length)
+                        React.createElement("span",{style:{fontSize:"clamp(13px,1.5vw,18px)",color:"#141428",fontWeight:700}},"العقود"),
+                        React.createElement("span",{style:{fontSize:"clamp(16px,2vw,24px)",fontWeight:900,color:"#141428"}},g.items.length)
                       ),
                       React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
-                        React.createElement("span",{style:{fontSize:"clamp(13px,1.5vw,18px)",color:"#1a1a2e",fontWeight:700}},"الأقساط"),
-                        React.createElement("span",{style:{fontSize:"clamp(14px,1.8vw,22px)",fontWeight:800,color:"#c8922a"}},SAR(g.totalInst))
+                        React.createElement("span",{style:{fontSize:"clamp(13px,1.5vw,18px)",color:"#141428",fontWeight:700}},"الأقساط"),
+                        React.createElement("span",{style:{fontSize:"clamp(14px,1.8vw,22px)",fontWeight:800,color:"#141428"}},SAR(g.totalInst))
                       )
                     )
                   ))
@@ -10106,7 +10106,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
     React.createElement("div",{style:{minHeight:"80vh"}},
       React.createElement(Header,{title:invLabel(selInv)}),
 
-      React.createElement("button",{onClick:()=>setSelInv(null),style:{...styles.btn("#f3f4f6","#374151"),marginBottom:12,fontSize:14,fontWeight:700}},"← رجوع"),
+      React.createElement("button",{onClick:()=>setSelInv(null),style:{...styles.btnGold(),marginBottom:12,fontSize:14,fontWeight:700}},"رجوع"),
 
       React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,alignItems:"center",flexWrap:"wrap"}},
         React.createElement("input",{type:"date",value:colDate,onChange:e=>setColDate(e.target.value),style:{...styles.input,width:"auto"}}),
@@ -10621,7 +10621,7 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
         <div style={{flex:1,borderRadius:14,padding:"14px 12px",textAlign:"center",background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.15)"}}>
           <div style={{fontSize:24,fontWeight:900,color:"#ef4444"}}>{SAR(totalOverdue)}</div>
           <div style={{fontSize:11,color:"#64748b",fontWeight:600,marginTop:2}}>﷼</div>
-          <div style={{fontSize:12,fontWeight:700,color:"#fca5a5",marginTop:6}}>إجمالي المتعثّر</div>
+          <div style={{fontSize:12,fontWeight:700,color:"#dc2626",marginTop:6}}>إجمالي المتعثّر</div>
         </div>
         <div style={{flex:1,borderRadius:14,padding:"14px 12px",textAlign:"center",background:"rgba(251,191,36,0.1)",border:"1px solid rgba(251,191,36,0.15)"}}>
           <div style={{fontSize:24,fontWeight:900,color:"#fbbf24"}}>{clientCount}</div>
@@ -10634,7 +10634,7 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
       ) : (
         <div style={{display:"flex",flexDirection:"column",gap:6}}>
           {top3.map((o,i)=><div key={i} style={{background:"rgba(239,68,68,0.06)",border:"1px solid rgba(239,68,68,0.1)",borderRadius:12,padding:"10px 14px",display:"flex",alignItems:"center",gap:10}}>
-            <div style={{width:36,height:36,borderRadius:10,background:"rgba(239,68,68,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:900,color:"#fca5a5",flexShrink:0}}>{initials(o.name)}</div>
+            <div style={{width:36,height:36,borderRadius:10,background:"rgba(239,68,68,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:900,color:"#dc2626",flexShrink:0}}>{initials(o.name)}</div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:13,fontWeight:700,color:"#141428",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{o.name}</div>
               <div style={{fontSize:11,color:"#64748b",fontWeight:500,marginTop:2}}>{o.monthsLate} قسط متأخر · {o.investor}</div>
@@ -10642,7 +10642,7 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
             <div style={{fontSize:15,fontWeight:900,color:"#ef4444",whiteSpace:"nowrap"}}>{SAR(o.overdue)}</div>
           </div>)}
           {restCount>0 && <div style={{background:"rgba(239,68,68,0.03)",border:"1px dashed rgba(239,68,68,0.1)",borderRadius:12,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,opacity:0.6}}>
-            <div style={{width:36,height:36,borderRadius:10,background:"rgba(239,68,68,0.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:"#fca5a5",flexShrink:0}}>+{restCount}</div>
+            <div style={{width:36,height:36,borderRadius:10,background:"rgba(239,68,68,0.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:"#dc2626",flexShrink:0}}>+{restCount}</div>
             <div style={{flex:1}}>
               <div style={{fontSize:13,fontWeight:700,color:"#64748b"}}>{restCount} عملاء آخرين</div>
             </div>
@@ -10741,14 +10741,14 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
 
       <div style={{display:"flex",flexDirection:"column",gap:16}}>
         {cards.map((card,idx)=>(
-          <div key={card.id} style={{background:"linear-gradient(145deg,#1a2744 0%,#162035 100%)",borderRadius:20,padding:20,border:"1px solid rgba(255,255,255,0.06)",boxShadow:"0 8px 32px rgba(0,0,0,0.3)",position:"relative",overflow:"hidden"}}>
+          <div key={card.id} style={{background:"linear-gradient(140deg,#e8c96a,#d4a83a,#c8922a)",borderRadius:20,padding:20,border:"2.5px solid #141428",boxShadow:"0 2px 12px rgba(0,0,0,0.08)",position:"relative",overflow:"hidden"}}>
             {/* خلفية مائية */}
             <div style={{position:"absolute",top:0,right:0,width:120,height:120,borderRadius:"0 0 0 100%",background:card.color,opacity:0.04}}/>
             {/* الرأس */}
             <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
               <div style={{width:42,height:42,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,background:card.color+"22"}}>{card.icon}</div>
-              <div style={{fontSize:17,fontWeight:900,color:"#fff"}}>{card.q}</div>
-              <div style={{fontSize:13,color:"#475569",fontWeight:800,marginRight:"auto",background:"#1e293b",padding:"2px 10px",borderRadius:20}}>{idx+1}</div>
+              <div style={{fontSize:17,fontWeight:900,color:"#141428"}}>{card.q}</div>
+              <div style={{fontSize:13,color:"#475569",fontWeight:800,marginRight:"auto",background:"rgba(20,20,40,0.1)",padding:"2px 10px",borderRadius:20}}>{idx+1}</div>
             </div>
             {/* المحتوى */}
             {card.component}
@@ -11003,7 +11003,7 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
           : alerts.slice(0,30).map((a,i)=>{
               const dotColor = a.diffDays<=0?"#ef4444":a.diffDays<=2?"#f59e0b":"#22c55e";
               const dayLabel = a.diffDays<0?"متأخر "+Math.abs(a.diffDays)+" يوم":a.diffDays===0?"اليوم!":"بعد "+a.diffDays+" أيام";
-              return React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#1e293b",borderRadius:10,marginBottom:8}},
+              return React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"rgba(20,20,40,0.1)",borderRadius:10,marginBottom:8}},
                 React.createElement("div",{style:{width:8,height:8,borderRadius:"50%",background:dotColor,flexShrink:0}}),
                 React.createElement("div",{style:{flex:1}},
                   React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"#fff"}},a.c.client),
@@ -11018,7 +11018,7 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
             window.open("https://wa.me/"+(a.c.phone||"").replace(/^0/,"966")+"?text="+encodeURIComponent(msg),"_blank");
           });
           toast("📲 تم فتح واتساب للمستحقين");
-        },style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"#1e293b",border:"1.5px solid #c8922a",color:"#c8922a",borderRadius:10,padding:"10px 20px",fontSize:12,fontWeight:700,cursor:"pointer",width:"100%",marginTop:10,fontFamily:"inherit"}},"📲 إرسال تذكير واتساب للمستحقين اليوم")
+        },style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"rgba(20,20,40,0.1)",border:"1.5px solid #c8922a",color:"#c8922a",borderRadius:10,padding:"10px 20px",fontSize:12,fontWeight:700,cursor:"pointer",width:"100%",marginTop:10,fontFamily:"inherit"}},"📲 إرسال تذكير واتساب للمستحقين اليوم")
       )
     ),
 
@@ -11069,7 +11069,7 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
             React.createElement("div",{style:{fontSize:10,color:"#94a3b8"}},"نسخة احتياطية على الجهاز")
           )
         ),
-        React.createElement("div",{style:{background:"#1e293b",borderRadius:10,padding:14,marginTop:14}},
+        React.createElement("div",{style:{background:"rgba(20,20,40,0.1)",borderRadius:10,padding:14,marginTop:14}},
           React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"#c8922a",marginBottom:8}},"📊 إحصائيات البيانات"),
           React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
             React.createElement("div",{style:{background:"#0f172a",borderRadius:8,padding:10,textAlign:"center"}},
@@ -11569,7 +11569,7 @@ function App() {
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6,flexShrink:0}}>
           <button onClick={()=>{if(window.confirm("تسجيل الخروج؟")){window._fbAuth&&window._fbAuth.signOut();location.reload();}}}
             style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(252,165,165,0.3)",borderRadius:9,
-              padding:"6px 13px",fontSize:13,fontWeight:700,color:"#fca5a5",cursor:"pointer",
+              padding:"6px 13px",fontSize:13,fontWeight:700,color:"#dc2626",cursor:"pointer",
               fontFamily:"IBM Plex Sans Arabic,Arial",whiteSpace:"nowrap"}}>خروج</button>
           <div style={{display:"flex",alignItems:"center",gap:4,fontSize:11.5,fontWeight:700,whiteSpace:"nowrap",
             color: syncStatus==="error"?"#ff8080":syncStatus==="saving"?C.gold:syncStatus==="loading"?C.gold:"#5cd98a"}}>
@@ -11776,7 +11776,7 @@ root.render(<ErrorBoundary><LoginGate /></ErrorBoundary>);
       if(box && !appStarted()){
         var msg=(err&&(err.message||String(err)))||"خطأ تحويل غير معروف";
         var stack=(err&&err.stack)||"";
-        box.innerHTML='<div dir="rtl" style="min-height:100vh;background:#fff5f5;padding:24px 16px;font-family:Arial,sans-serif;color:#111"><div style="max-width:640px;margin:0 auto;background:#fff;border:2px solid #dc2626;border-radius:14px;padding:20px"><div style="font-size:22px;font-weight:900;color:#dc2626;margin-bottom:10px">⚠️ خطأ في كود التطبيق</div><div style="font-size:15px;color:#334155;margin-bottom:14px">انسخ النص وأرسله للمطوّر:</div><div id="diag-box" style="background:#0f172a;color:#fca5a5;padding:12px 14px;border-radius:10px;font-size:13px;font-family:monospace;direction:ltr;text-align:left;white-space:pre-wrap;word-break:break-word;max-height:320px;overflow:auto;margin-bottom:12px">'+msg+"\n\n"+stack+'</div><button onclick="try{navigator.clipboard.writeText(document.getElementById(\'diag-box\').innerText);this.textContent=\'✓ تم النسخ\'}catch(e){}" style="width:100%;padding:12px;border-radius:10px;border:none;background:#c8922a;color:#fff;font-size:15px;font-weight:800;cursor:pointer">📋 نسخ نص الخطأ</button></div></div>';
+        box.innerHTML='<div dir="rtl" style="min-height:100vh;background:#fff5f5;padding:24px 16px;font-family:Arial,sans-serif;color:#111"><div style="max-width:640px;margin:0 auto;background:#fff;border:2px solid #dc2626;border-radius:14px;padding:20px"><div style="font-size:22px;font-weight:900;color:#dc2626;margin-bottom:10px">⚠️ خطأ في كود التطبيق</div><div style="font-size:15px;color:#334155;margin-bottom:14px">انسخ النص وأرسله للمطوّر:</div><div id="diag-box" style="background:#0f172a;color:#dc2626;padding:12px 14px;border-radius:10px;font-size:13px;font-family:monospace;direction:ltr;text-align:left;white-space:pre-wrap;word-break:break-word;max-height:320px;overflow:auto;margin-bottom:12px">'+msg+"\n\n"+stack+'</div><button onclick="try{navigator.clipboard.writeText(document.getElementById(\'diag-box\').innerText);this.textContent=\'✓ تم النسخ\'}catch(e){}" style="width:100%;padding:12px;border-radius:10px;border:none;background:#c8922a;color:#fff;font-size:15px;font-weight:800;cursor:pointer">📋 نسخ نص الخطأ</button></div></div>';
       }
       console.error("خطأ تحويل Babel:",err);
     }
