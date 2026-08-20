@@ -557,7 +557,7 @@ const styles = {
   card:{background:C.white,borderRadius:12,padding:"16px 18px",boxShadow:"0 2px 12px rgba(0,0,0,0.07)",border:"1px solid "+C.border},
   panel:{background:C.white,borderRadius:12,boxShadow:"0 2px 12px rgba(0,0,0,0.07)",overflow:"hidden",marginBottom:20},
   panelHdr:{padding:"14px 20px",borderBottom:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"space-between",background:"#fafbfc"},
-  th:{background:C.ink,color:C.white,padding:"10px 12px",textAlign:"start",verticalAlign:"middle",fontWeight:800,fontSize:15,whiteSpace:"nowrap"},
+  th:{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",padding:"10px 12px",textAlign:"start",verticalAlign:"middle",fontWeight:800,fontSize:15,whiteSpace:"nowrap",border:"2px solid #141428"},
   td:{padding:"9px 12px",borderBottom:"2px solid "+C.border,textAlign:"start",verticalAlign:"middle",fontSize:15,fontWeight:600},
   input:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,padding:"9px 12px",border:"2px solid "+C.border,borderRadius:8,color:C.ink,background:C.white,width:"100%",boxSizing:"border-box",textAlign:"right",fontWeight:600},
   select:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,padding:"9px 12px",border:"2px solid "+C.border,borderRadius:8,color:C.ink,background:C.white,width:"100%",textAlign:"right",fontWeight:600},
@@ -1048,7 +1048,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
   return (
     <div style={{maxWidth:1100,margin:"0 auto"}}>
       {/* ═══ Header ═══ */}
-      <div style={{background:"linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)",borderRadius:20,padding:"24px 20px",marginBottom:20,position:"relative",overflow:"hidden"}}>
+      <div style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:20,padding:"24px 20px",marginBottom:20,position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,background:"radial-gradient(circle at 20% 50%,rgba(200,146,42,0.15),transparent 60%)",pointerEvents:"none"}}/>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative"}}>
           <div>
@@ -1303,7 +1303,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
               </div>
             ))}
           </div>
-          <div style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",borderRadius:14,padding:"18px 20px"}}>
+          <div style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:14,padding:"18px 20px",border:"2.5px solid #141428"}}>
             <div style={{fontSize:15,fontWeight:800,color:C.goldLt,marginBottom:12}}>⚡ تفاصيل توزيع الربح</div>
             <CalcRow label="قيمة العقد" value={SAR(amount)}/>
             <CalcRow label="الربح (50%)" value={SAR(r.profit)} color="#5cd98a"/>
@@ -2034,7 +2034,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                       <div style={{marginTop:0,borderTop:"3px solid "+C.border,padding:"12px 16px"}}>
                         <div style={{fontSize:16,fontWeight:900,color:C.ink,marginBottom:10}}>📋 السدادات السابقة ({hist.length})</div>
                         <table style={{width:"100%",borderCollapse:"collapse",border:"3px solid #000"}}>
-                          <thead><tr style={{background:"#1a1a2e"}}>
+                          <thead><tr style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)"}}>
                             <th style={{padding:"10px 8px",fontWeight:900,fontSize:15,color:"#fff",textAlign:"center",border:"2px solid #000"}}>#</th>
                             <th style={{padding:"10px 8px",fontWeight:900,fontSize:15,color:"#fff",textAlign:"center",border:"2px solid #000"}}>التاريخ</th>
                             <th style={{padding:"10px 8px",fontWeight:900,fontSize:15,color:"#fff",textAlign:"center",border:"2px solid #000"}}>المبلغ</th>
@@ -2157,7 +2157,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               var hdrs=isBrief?"<th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>القسط</th><th>المتبقي</th>":"<th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>المحصّل</th><th>المتبقي</th>";
               var ml=isBrief?"مختصر":"مفصل";
               var w=window.open("","_blank");
-              w.document.write("<!DOCTYPE html><html dir='rtl' lang='ar'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>كشف "+invName+"</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box}body{padding:12px;color:#000;margin:0;background:#f8f9fa}h2{font-size:17px;text-align:center;margin:0 0 12px;font-weight:900}table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:2px solid #000}th,td{border:1px solid #000;padding:6px 5px;text-align:center;font-weight:700}th{font-weight:900;border-bottom:2px solid #000;font-size:12px;background:#fff}.btns{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}.btn{flex:1;padding:14px;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;min-width:80px;text-align:center}@media print{.noprint{display:none!important}}</style></head><body><div class='noprint btns'><button class='btn' style='background:#25d366;color:#fff' onclick='doShare()'>📤 مشاركة</button><button class='btn' style='background:#1a1a2e;color:#e0b85c' onclick='window.print()'>🖨️ طباعة</button><button class='btn' style='background:#dc2626;color:#fff' onclick='window.close()'>✕</button></div><h2>كشف المستثمر — "+invName+" ("+ml+")</h2><table><thead><tr>"+hdrs+"</tr></thead><tbody>"+tRows+"</tbody></table><scr"+"ipt>function doShare(){if(navigator.share){navigator.share({title:'كشف "+invName+"',url:location.href});}else{alert('استخدم زر المشاركة بالمتصفح');}}</scr"+"ipt></body></html>");
+              w.document.write("<!DOCTYPE html><html dir='rtl' lang='ar'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>كشف "+invName+"</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box}body{padding:12px;color:#000;margin:0;background:#f8f9fa}h2{font-size:17px;text-align:center;margin:0 0 12px;font-weight:900}table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:2px solid #000}th,td{border:1px solid #000;padding:6px 5px;text-align:center;font-weight:700}th{font-weight:900;border-bottom:2px solid #000;font-size:12px;background:#fff}.btns{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}.btn{flex:1;padding:14px;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;min-width:80px;text-align:center}@media print{.noprint{display:none!important}}</style></head><body><div class='noprint btns'><button class='btn' style='background:#25d366;color:#fff' onclick='doShare()'>📤 مشاركة</button><button class='btn' style='background:linear-gradient(140deg,#e0b85c,#c8922a);color:#141428' onclick='window.print()'>🖨️ طباعة</button><button class='btn' style='background:#dc2626;color:#fff' onclick='window.close()'>✕</button></div><h2>كشف المستثمر — "+invName+" ("+ml+")</h2><table><thead><tr>"+hdrs+"</tr></thead><tbody>"+tRows+"</tbody></table><scr"+"ipt>function doShare(){if(navigator.share){navigator.share({title:'كشف "+invName+"',url:location.href});}else{alert('استخدم زر المشاركة بالمتصفح');}}</scr"+"ipt></body></html>");
               w.document.close();
             }}>
               <svg width="15" height="15" viewBox="0 0 24 24"><g fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></g></svg>
@@ -3671,7 +3671,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
       )}
       
       {/* Sub tabs - only show in privateAccMode */}
-      {privateAccMode && <div style={{display:"flex",gap:0,marginBottom:20,background:"#141428",borderRadius:10,overflow:"hidden",border:"2px solid #c8922a",width:"fit-content",position:"sticky",top:0,zIndex:20}}>
+      {privateAccMode && <div style={{display:"flex",gap:0,marginBottom:20,background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:10,overflow:"hidden",border:"2.5px solid #141428",width:"fit-content",position:"sticky",top:0,zIndex:20}}>
         {subTabs.map(t=>(
           <button key={t.key} onClick={()=>setSubTab(t.key)}
             style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:800,padding:"10px 16px",border:"none",
@@ -3902,7 +3902,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
           setSelInv(newInv.id);
           toast("✅ تم إضافة مستثمر خفي: "+name.trim());
         }}>➕ مستثمر</button>}
-        {privateAccMode && <button style={{background:"linear-gradient(135deg,#065f46,#059669)",color:"#fff",border:"none",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} onClick={()=>{
+        {privateAccMode && <button style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"none",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} onClick={()=>{
           setNewContract({client:"",phone:"",idNum:"",amount:"",totalInst:"",instAmt:"",firstInst:"",goods:"",investorId:selInv});
         }}>📄 عقد جديد</button>}
         {invSubTab==="inv" && inv && null}
@@ -4038,7 +4038,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                         <div style={{marginTop:8,background:"#f0fdf4",borderRadius:8,overflow:"hidden",border:"1px solid #d1fae5"}}>
                           <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
                             <thead>
-                              <tr style={{background:"#065f46"}}>
+                              <tr style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)"}}>
                                 <th style={{padding:"4px 6px",color:"#fff",fontWeight:700,textAlign:"center"}}>#</th>
                                 <th style={{padding:"4px 6px",color:"#fff",fontWeight:700,textAlign:"center"}}>العقد</th>
                                 <th style={{padding:"4px 6px",color:"#fff",fontWeight:700,textAlign:"right"}}>الاسم</th>
@@ -4106,7 +4106,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                             else if(tx.type==="contract"){ goBack(); }
                           }}>تعديل</button>
                         ) : (
-                          <button style={{background:"#1a1a2e",color:"rgba(224,184,92,0.35)",border:"1px solid rgba(200,146,42,0.1)",borderRadius:6,padding:"5px 14px",fontSize:11,fontWeight:800,fontFamily:"IBM Plex Sans Arabic,Arial",cursor:"default"}}>تعديل</button>
+                          <button style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"rgba(224,184,92,0.35)",border:"1px solid rgba(200,146,42,0.1)",borderRadius:6,padding:"5px 14px",fontSize:11,fontWeight:800,fontFamily:"IBM Plex Sans Arabic,Arial",cursor:"default"}}>تعديل</button>
                         )}
                         <button style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:6,padding:"5px 14px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={()=>{
                           if(!tx.auto){ delTx(tx.id); return; }
@@ -4360,7 +4360,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
 
       <div style={styles.panel}>
         {/* Panel header with totals */}
-        <div style={{background:"#1e2235",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+        <div style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
           <div style={{color:"white",fontWeight:900,fontSize:17}}>الجرد — {mLabel(selMonth)}</div>
           <div style={{display:"flex",gap:16,alignItems:"center"}}>
             <div style={{textAlign:"center"}}>
@@ -4471,7 +4471,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
               })}
 
               {/* Total row */}
-              <tr style={{background:"#1e2235"}}>
+              <tr style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)"}}>
                 <td style={{...tdS,color:"white",fontWeight:800}}>المجموع</td>
                 <td style={{...tdS,textAlign:"center",color:"#5cd98a",fontWeight:900,fontSize:17}}>{totalMojab.toLocaleString("en-US")}</td>
                 <td style={{...tdS,textAlign:"center",color:"#ff8080",fontWeight:900,fontSize:17}}>{totalSalib.toLocaleString("en-US")}</td>
@@ -5207,7 +5207,7 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
         <button onClick={()=>setBankView("tx")}
           style={{padding:"13px",borderRadius:13,border:bankView==="tx"?"none":"2px solid #141428",
-            background:bankView==="tx"?"linear-gradient(135deg,#1a1a2e,#16213e)":"#fff",
+            background:bankView==="tx"?"linear-gradient(140deg,#e0b85c,#c8922a)":"#fff",
             color:bankView==="tx"?"#e0b85c":"#64748b",fontWeight:900,fontSize:14,cursor:"pointer",
             fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
           <svg width="17" height="17" viewBox="0 0 24 24"><g fill="none" stroke={bankView==="tx"?"#e0b85c":"#8b93a7"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg>
@@ -5255,13 +5255,13 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
         <>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10,marginBottom:16}}>
             {/* الرصيد الحالي — غير قابل للنقر */}
-            <div style={{...styles.card,textAlign:"center",borderTop:"3px solid #1a1a2e",padding:"12px"}}>
+            <div style={{...styles.card,textAlign:"center",borderTop:"3px solid #c8922a",padding:"12px"}}>
               <div style={{fontSize:13,color:"#1a1a2e",marginBottom:4,fontWeight:700}}>الرصيد الحالي</div>
               <div style={{fontSize:18,fontWeight:900,color:"#c8922a"}}>{SAR(lastBalance)}</div>
             </div>
             {/* الوارد — قابل للنقر */}
             <div onClick={()=>setBankFilter(f=>f==="in"?"all":"in")} title="اضغط لعرض الحركات الواردة"
-              style={{...styles.card,textAlign:"center",borderTop:"3px solid #1a1a2e",padding:"12px",cursor:"pointer",
+              style={{...styles.card,textAlign:"center",borderTop:"3px solid #c8922a",padding:"12px",cursor:"pointer",
                 background: bankFilter==="in"?"#fefbf3":"#fff", outline: bankFilter==="in"?"2px solid #c8922a":"none",transition:"all .12s"}}>
               <div style={{fontSize:13,color:"#1a1a2e",marginBottom:4,fontWeight:700}}>إجمالي الوارد</div>
               <div style={{fontSize:18,fontWeight:900,color:"#c8922a"}}>{SAR(totalDain)}</div>
@@ -5269,14 +5269,14 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
             </div>
             {/* المنصرف — قابل للنقر */}
             <div onClick={()=>setBankFilter(f=>f==="out"?"all":"out")} title="اضغط لعرض الحركات المنصرفة"
-              style={{...styles.card,textAlign:"center",borderTop:"3px solid #1a1a2e",padding:"12px",cursor:"pointer",
+              style={{...styles.card,textAlign:"center",borderTop:"3px solid #c8922a",padding:"12px",cursor:"pointer",
                 background: bankFilter==="out"?"#fefbf3":"#fff", outline: bankFilter==="out"?"2px solid #c8922a":"none",transition:"all .12s"}}>
               <div style={{fontSize:13,color:"#1a1a2e",marginBottom:4,fontWeight:700}}>إجمالي المنصرف</div>
               <div style={{fontSize:18,fontWeight:900,color:"#c8922a"}}>{SAR(totalMadin)}</div>
               <div style={{fontSize:11,color:"#64748b",marginTop:3,fontWeight:700}}>اضغط للعرض</div>
             </div>
             {/* عدد الحركات — غير قابل للنقر */}
-            <div style={{...styles.card,textAlign:"center",borderTop:"3px solid #1a1a2e",padding:"12px"}}>
+            <div style={{...styles.card,textAlign:"center",borderTop:"3px solid #c8922a",padding:"12px"}}>
               <div style={{fontSize:13,color:"#1a1a2e",marginBottom:4,fontWeight:700}}>عدد الحركات</div>
               <div style={{fontSize:18,fontWeight:900,color:"#c8922a"}}>{rows.length}</div>
             </div>
@@ -5292,7 +5292,7 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
               const net = g.dain - g.madin;
               return (
                 <div key={g.key} onClick={()=>setBankFilter(f=>f===g.key?"all":g.key)} title={"اضغط لعرض: "+g.key}
-                  style={{...styles.card,textAlign:"center",borderTop:"3px solid #1a1a2e",padding:"11px 10px",cursor:"pointer",
+                  style={{...styles.card,textAlign:"center",borderTop:"3px solid #c8922a",padding:"11px 10px",cursor:"pointer",
                     background: active ? "#fefbf3" : "#fff", outline: active ? "2px solid #c8922a" : "none",transition:"all .12s"}}>
                   <div style={{fontSize:12.5,color:"#1a1a2e",marginBottom:5,fontWeight:700,lineHeight:1.4,minHeight:34,display:"flex",alignItems:"center",justifyContent:"center"}}>{g.key}</div>
                   <div style={{fontSize:16,fontWeight:900,color:"#c8922a"}}>{net<0?"−":(net>0?"+":"")}{SAR(Math.abs(net))}</div>
@@ -5322,7 +5322,7 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
             <input type="text" placeholder="ابحث باسم شخص أو نوع عملية (تحويل / راتب / إيداع ...)"
               value={bankQuery} onChange={e=>setBankQuery(e.target.value)}
               style={{flex:1,border:"none",outline:"none",background:"transparent",fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:600,color:C.ink}}/>
-            {bankQuery && <button onClick={()=>setBankQuery("")} style={{border:"none",background:"#141428",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:14,fontWeight:700,color:"#475569"}}>✕</button>}
+            {bankQuery && <button onClick={()=>setBankQuery("")} style={{border:"none",background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:14,fontWeight:700,color:"#141428",border:"2px solid #141428"}}>✕</button>}
           </div>
           {_bq && (
             <div style={{fontSize:14,fontWeight:700,color:C.ink2,marginBottom:10}}>
@@ -5575,7 +5575,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
                     </div>
                     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}>
                       {[["عدد العقود",d.count,"#1a1a2e",true],["القيمة النقدية",d.tot.amt,"#c8922a"],["الإجمالي",d.totalWithProfit,"#1a1a2e"],["الأرباح",d.tot.profit,C.green],["ربح المستثمرين",d.tot.profit-d.tot.inst-d.tot.acc,C.green],["المحصّل",d.collected,C.green]].map(([l,v,col,isCount],i)=>(
-                        <div key={i} style={{textAlign:"center",background:"#fff",border:"1px solid "+C.border,borderTop:"3px solid #1a1a2e",borderRadius:8,padding:"8px 6px"}}>
+                        <div key={i} style={{textAlign:"center",background:"#fff",border:"1px solid "+C.border,borderTop:"3px solid #c8922a",borderRadius:8,padding:"8px 6px"}}>
                           <div style={{fontSize:12,color:"#64748b",marginBottom:3,fontWeight:600}}>{l}</div>
                           <div style={{fontSize:15,fontWeight:900,color:col}}>{isCount?v:SAR(v)}</div>
                         </div>
@@ -6489,7 +6489,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                   display:"flex",alignItems:"center",justifyContent:"center",gap:8,
                   height:48,
                   border:active?"2px solid #c8922a":"1.5px solid #e6eaf0",
-                  background:active?"linear-gradient(150deg,#141428,#1a1a2e)":"#fff",
+                  background:active?"linear-gradient(140deg,#e0b85c,#c8922a)":"#fff",
                   color:active?"#c8922a":"#334155",
                   boxShadow:active?"0 3px 12px rgba(200,146,42,0.18)":"none",
                   transition:"all .15s"}}>
@@ -6578,7 +6578,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
               })}
             </tbody>
             <tfoot>
-              <tr style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)"}}>
+              <tr style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)"}}>
                 <td colSpan={2} style={{...styles.td,fontWeight:800,color:"#e0b85c",borderBottom:"none"}}>المتبقي في الصندوق</td>
                 <td style={{...styles.td,fontWeight:900,fontSize:16,color:closingBalance>=0?"#e0b85c":"#fca5a5",borderBottom:"none"}}>{SAR(closingBalance)}</td>
                 <td style={{...styles.td,borderBottom:"none"}}></td>
@@ -6609,17 +6609,17 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
             المصروفات + السحوبات</div>
           <div style={{fontSize:20,fontWeight:800,color:"#dc2626"}}>{SAR(sumByType("masroof")+sumByType("sahb")+sumByType("estilam"))}</div>
         </div>
-        <div style={{...styles.card,borderRight:"3px solid #c8922a",background:"linear-gradient(150deg,#1a1a2e,#0f3460)",border:"1px solid rgba(200,146,42,0.25)"}}>
-          <div style={{fontSize:12,color:"#e0b85c",marginBottom:6,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>
-            <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g><circle cx="16.9" cy="15.1" r="1.4" fill="#e0b85c"/></svg>
+        <div style={{...styles.card,borderRight:"3px solid #141428",background:"linear-gradient(140deg,#e0b85c,#c8922a)",border:"2.5px solid #141428"}}>
+          <div style={{fontSize:12,color:"#141428",marginBottom:6,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>
+            <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g><circle cx="16.9" cy="15.1" r="1.4" fill="#141428"/></svg>
             المتبقي في الصندوق</div>
-          <div style={{fontSize:22,fontWeight:900,color:closingBalance>=0?"#f5d799":"#fca5a5"}}>{SAR(closingBalance)}</div>
+          <div style={{fontSize:22,fontWeight:900,color:closingBalance>=0?"#141428":"#dc2626"}}>{SAR(closingBalance)}</div>
         </div>
       </div>
 
       {/* حساب المدير والمحاسب */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginBottom:16}}>
-        <div style={{...styles.card,borderTop:"3px solid #1a1a2e"}}>
+        <div style={{...styles.card,borderTop:"3px solid #c8922a"}}>
           <div style={{fontSize:14,fontWeight:800,color:"#1a1a2e",marginBottom:10,display:"flex",alignItems:"center",gap:7}}>
             <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#1a1a2e" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></g><circle cx="12" cy="8" r="1.1" fill="#c8922a"/></svg>
             الرئيس التنفيذي</div>
@@ -6627,7 +6627,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
           <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:5}}><span style={{color:"#64748b",fontWeight:600}}>المستلم</span><span style={{fontWeight:800,color:C.red}}>{SAR(mgrTakenAll)}</span></div>
           <div style={{display:"flex",justifyContent:"space-between",fontSize:14,marginTop:8,paddingTop:8,borderTop:"1px dashed "+C.border}}><span style={{fontWeight:800,color:"#1a1a2e"}}>الباقي له</span><span style={{fontWeight:800,color:mgrLeft>=0?"#c8922a":C.red}}>{SAR(mgrLeft)}</span></div>
         </div>
-        <div style={{...styles.card,borderTop:"3px solid #1a1a2e"}}>
+        <div style={{...styles.card,borderTop:"3px solid #c8922a"}}>
           <div style={{fontSize:14,fontWeight:800,color:"#1a1a2e",marginBottom:10,display:"flex",alignItems:"center",gap:7}}>
             <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#1a1a2e" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></g></svg>
             المدير المباشر</div>
@@ -6717,7 +6717,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
             <input type="text" placeholder="ابحث باسم شخص أو وصف (سداد / مصروف / سحب ...)"
               value={stmtQuery} onChange={e=>setStmtQuery(e.target.value)}
               style={{flex:1,border:"none",outline:"none",background:"transparent",fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:600,color:C.ink}}/>
-            {stmtQuery && <button onClick={()=>setStmtQuery("")} style={{border:"none",background:"#141428",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:14,fontWeight:700,color:"#475569"}}>✕</button>}
+            {stmtQuery && <button onClick={()=>setStmtQuery("")} style={{border:"none",background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:14,fontWeight:700,color:"#141428",border:"2px solid #141428"}}>✕</button>}
           </div>
 
           {/* بطاقات الإجماليات لكل نوع (انقر لعرض تفاصيل النوع) */}
@@ -6833,7 +6833,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                 )}
               </tbody>
               <tfoot>
-                <tr style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)"}}>
+                <tr style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)"}}>
                   <td style={{...styles.td,fontWeight:800,color:"#e0b85c",borderBottom:"none"}}>الداخل: {SAR(stmtIn+(baseAmount||0))} · الخارج: {SAR(stmtOut)}</td>
                   <td style={{...styles.td,fontWeight:800,color:"#e0b85c",borderBottom:"none"}}>الصافي</td>
                   <td style={{...styles.td,fontWeight:900,fontSize:16,color:(stmtNet+(baseAmount||0))>=0?"#f5d799":"#fca5a5",borderBottom:"none"}}>{SAR(stmtNet+(baseAmount||0))}</td>
@@ -7743,7 +7743,7 @@ function PrivateNotes({toast, gsWrite, saveLS, loadLS}){
             onKeyDown={e=>{if(e.key==="Enter")checkPvt();}}
             style={{width:"100%",padding:12,fontSize:20,textAlign:"center",border:"2px solid "+(pvtErr?"#dc2626":"#d1d5db"),borderRadius:10,fontWeight:800,letterSpacing:6,fontFamily:"monospace",outline:"none",boxSizing:"border-box",marginBottom:10}}/>
           {pvtErr && <div style={{color:"#dc2626",fontSize:13,fontWeight:700,marginBottom:8}}>رمز خاطئ</div>}
-          <button onClick={checkPvt} style={{width:"100%",padding:12,fontSize:15,fontWeight:800,background:"#1a1a2e",color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontFamily:"inherit"}}>فتح</button>
+          <button onClick={checkPvt} style={{width:"100%",padding:12,fontSize:15,fontWeight:800,background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"none",borderRadius:10,cursor:"pointer",fontFamily:"inherit"}}>فتح</button>
         </div>
       )}
       {pvtOpen && pvtUnlocked && (
@@ -7754,7 +7754,7 @@ function PrivateNotes({toast, gsWrite, saveLS, loadLS}){
           </div>
 
           {/* الإجماليات */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1,background:"#141428",borderRadius:11,overflow:"hidden",marginBottom:16}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1,background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:11,overflow:"hidden",marginBottom:16}}>
             <div style={{background:"#f0fdf4",padding:"10px 8px",textAlign:"center"}}>
               <div style={{fontSize:11,color:"#16a34a",fontWeight:600}}>إجمالي السلف</div>
               <div style={{fontSize:16,fontWeight:800,color:"#16a34a"}}>{NF(totalGiven)}</div>
@@ -7803,7 +7803,7 @@ function PrivateNotes({toast, gsWrite, saveLS, loadLS}){
                   <div><div style={{fontSize:10,color:"#6b7280"}}>المتبقي</div><div style={{fontSize:15,fontWeight:700,color:left>0?"#dc2626":"#16a34a"}}>{NF(left)}</div></div>
                 </div>
                 {/* شريط التقدم */}
-                <div style={{height:6,background:"#141428",borderRadius:4,overflow:"hidden",marginBottom:8}}>
+                <div style={{height:6,background:"#e5e7eb",borderRadius:4,overflow:"hidden",marginBottom:8}}>
                   <div style={{height:"100%",width:Math.min(100,l.amount>0?(paid/l.amount*100):0)+"%",borderRadius:4,background:done?"#16a34a":"#c8922a"}}/>
                 </div>
                 {/* الدفعات */}
@@ -9049,7 +9049,7 @@ body{padding:24px;font-size:13px;line-height:1.85;color:#1a1a2e;max-width:900px;
 hr{border:none;border-top:1px solid #ddd;margin:10px 0}
 b{font-weight:800;color:#0d6b5e}
 table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px}
-th{background:#1a1a2e;color:#e0b85c;padding:8px 6px;text-align:right;font-weight:800;border:1px solid #333}
+th{background:linear-gradient(140deg,#e0b85c,#c8922a);color:#141428;padding:8px 6px;text-align:right;font-weight:800;border:1px solid #333}
 td{padding:7px 6px;border:1px solid #ddd;text-align:right}
 tbody tr:nth-child(even){background:#f7f9fb}
 .ft{margin-top:26px;border-top:1px solid #ddd;padding-top:10px;font-size:11px;color:#777;text-align:center}
@@ -9353,7 +9353,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
             React.createElement("table",{style:{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:12.5,minWidth:Math.max(280,head.length*95)}},
               React.createElement("thead",null,
                 React.createElement("tr",null,
-                  head.map((h,k)=>React.createElement("th",{key:k,style:{background:"linear-gradient(135deg,#1a1a2e,#16213e)",color:"#e0b85c",padding:"9px 8px",fontWeight:800,textAlign:"right",whiteSpace:"nowrap",position:"sticky",top:0,borderLeft:k<head.length-1?"1px solid rgba(255,255,255,0.08)":"none"}},h))
+                  head.map((h,k)=>React.createElement("th",{key:k,style:{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",padding:"9px 8px",fontWeight:800,textAlign:"right",whiteSpace:"nowrap",position:"sticky",top:0,borderLeft:k<head.length-1?"1px solid rgba(255,255,255,0.08)":"none"}},h))
                 )
               ),
               React.createElement("tbody",null,
@@ -10192,7 +10192,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
 
               // سجل السدادات
               hist.length>0 && React.createElement("div",{style:{background:"#fff",borderRadius:12,border:"3px solid #000",overflow:"hidden"}},
-                React.createElement("div",{style:{background:"#1a1a2e",padding:"10px 14px",fontSize:15,fontWeight:900,color:"#fff"}},"📋 السدادات ("+hist.length+")"),
+                React.createElement("div",{style:{background:"linear-gradient(140deg,#e0b85c,#c8922a)",padding:"10px 14px",fontSize:15,fontWeight:900,color:"#fff"}},"📋 السدادات ("+hist.length+")"),
                 React.createElement("table",{style:{width:"100%",borderCollapse:"collapse"}},
                   React.createElement("thead",null,
                     React.createElement("tr",{style:{background:"#f1f5f9"}},
@@ -10299,17 +10299,17 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
             <svg width="21" height="21" viewBox="0 0 24 24"><g fill="none" stroke="#dc2626" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4.2 21.4 20.4H2.6Z"/><path d="M12 10.2v4.4"/></g><circle cx="12" cy="17.4" r="1.25" fill="#dc2626"/></svg>
             المتعثرون</h2>
           <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:14}}>
-            <div style={{flex:1,minWidth:100,background:"linear-gradient(135deg,#1a1a2e,#0f3460)",borderRadius:10,padding:"12px 14px",textAlign:"center"}}>
-              <div style={{fontSize:13,color:"#fff",fontWeight:700,opacity:0.85}}>عدد المتعثرين</div>
-              <div style={{fontSize:26,fontWeight:900,color:"#fff"}}>{totalDefaulters}</div>
+            <div style={{flex:1,minWidth:100,background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:10,padding:"12px 14px",textAlign:"center",border:"2.5px solid #141428"}}>
+              <div style={{fontSize:13,color:"#141428",fontWeight:700,opacity:1}}>عدد المتعثرين</div>
+              <div style={{fontSize:26,fontWeight:900,color:"#141428"}}>{totalDefaulters}</div>
             </div>
-            <div style={{flex:1,minWidth:100,background:"linear-gradient(135deg,#1a1a2e,#0f3460)",borderRadius:10,padding:"12px 14px",textAlign:"center"}}>
-              <div style={{fontSize:13,color:"#fff",fontWeight:700,opacity:0.85}}>المبالغ المتأخرة</div>
-              <div style={{fontSize:20,fontWeight:900,color:"#e0b85c"}}>{NUM(totalOverdue)}</div>
+            <div style={{flex:1,minWidth:100,background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:10,padding:"12px 14px",textAlign:"center",border:"2.5px solid #141428"}}>
+              <div style={{fontSize:13,color:"#141428",fontWeight:700,opacity:1}}>المبالغ المتأخرة</div>
+              <div style={{fontSize:20,fontWeight:900,color:"#141428"}}>{NUM(totalOverdue)}</div>
             </div>
-            <div style={{flex:1,minWidth:100,background:"linear-gradient(135deg,#1a1a2e,#0f3460)",borderRadius:10,padding:"12px 14px",textAlign:"center"}}>
-              <div style={{fontSize:13,color:"#fff",fontWeight:700,opacity:0.85}}>إجمالي المتبقي</div>
-              <div style={{fontSize:20,fontWeight:900,color:"#fff"}}>{NUM(totalRemaining)}</div>
+            <div style={{flex:1,minWidth:100,background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:10,padding:"12px 14px",textAlign:"center",border:"2.5px solid #141428"}}>
+              <div style={{fontSize:13,color:"#141428",fontWeight:700,opacity:1}}>إجمالي المتبقي</div>
+              <div style={{fontSize:20,fontWeight:900,color:"#141428"}}>{NUM(totalRemaining)}</div>
             </div>
           </div>
           <select style={{...styles.select,marginBottom:0}} value={filterInv} onChange={e=>setFilterInv(e.target.value)}>
@@ -10329,7 +10329,7 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
         const gCash = g.items.reduce((s,x)=>s+(+x.c.amount||0),0);
         return (
         <div key={g.inv?g.inv.id:"x"} style={styles.panel}>
-          <div style={{...styles.panelHdr,background:"#1e2235",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{...styles.panelHdr,background:"linear-gradient(140deg,#e0b85c,#c8922a)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <h3 style={{margin:0,fontSize:16,fontWeight:900,color:"#fff"}}>{g.inv?invLabel(g.inv):"—"}</h3>
             <span style={{background:C.red,color:"#fff",borderRadius:20,padding:"3px 14px",fontSize:14,fontWeight:800}}>{g.items.length} متعثر</span>
           </div>
@@ -10888,7 +10888,7 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
       ),
       cPays.length>0 && React.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:11}},
         React.createElement("thead",null,
-          React.createElement("tr",{style:{background:"#1a1a2e"}},
+          React.createElement("tr",{style:{background:"linear-gradient(140deg,#e0b85c,#c8922a)"}},
             React.createElement("th",{style:{padding:"6px 8px",color:"#fff",fontWeight:700,textAlign:"center"}},"#"),
             React.createElement("th",{style:{padding:"6px 8px",color:"#fff",fontWeight:700,textAlign:"center"}},"التاريخ"),
             React.createElement("th",{style:{padding:"6px 8px",color:"#fff",fontWeight:700,textAlign:"center"}},"المبلغ"),
@@ -10969,7 +10969,7 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
               React.createElement("input",{style:{width:"100%",padding:"14px 16px",borderRadius:12,border:"1.5px solid #141428",fontSize:16,fontFamily:"IBM Plex Sans Arabic,Arial",background:"#fff",boxSizing:"border-box",marginBottom:12},placeholder:"ابحث باسم العميل...",value:stmtSearch,onChange:e=>setStmtSearch(e.target.value)}),
               stmtGrouped.map(g=>
                 React.createElement(React.Fragment,{key:g.inv.id},
-                  React.createElement("div",{style:{fontSize:18,fontWeight:900,color:"#fff",padding:"12px 16px",background:"linear-gradient(135deg,#1a1a2e,#0f3460)",borderRadius:10,marginBottom:10,marginTop:16}},g.inv.name),
+                  React.createElement("div",{style:{fontSize:18,fontWeight:900,color:"#fff",padding:"12px 16px",background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:10,marginBottom:10,marginTop:16,border:"2.5px solid #141428"}},g.inv.name),
                   g.contracts.map(c=>{
                     const cPaid = pays.filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
                     const rem = Math.max(0,(+c.totalInst||0)-cPaid);
