@@ -543,14 +543,14 @@ const C = {
   ink:"#0f1923", ink2:"#2c3e50", gold:"#c8922a", goldLt:"#f5e6c8",
   teal:"#0d7377", tealLt:"#d0f0f0", red:"#c0392b", redLt:"#fdecea",
   green:"#1a7a4a", greenLt:"#e3f5ec", purple:"#7030A0", purpleLt:"#f3e8ff",
-  slate:"#f5f0e4", border:"#dde3ea", white:"#ffffff", gray:"#f2f2f2",
+  slate:"#f4f6f9", border:"#dde3ea", white:"#ffffff", gray:"#f2f2f2",
 };
 
 const styles = {
-  body:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",direction:"rtl",background:"#f5f0e4",minHeight:"100vh",margin:0,fontWeight:500},
-  header:{background:"linear-gradient(135deg,#12192a,#1a2640)",color:"white",padding:"0 14px",display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:66,position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 20px rgba(0,0,0,0.3)",borderBottom:"1px solid rgba(200,146,42,0.2)"},
+  body:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",direction:"rtl",background:C.slate,minHeight:"100vh",margin:0,fontWeight:500},
+  header:{background:"linear-gradient(135deg,#141428,#1a1a2e 55%,#16213e)",color:"white",padding:"0 14px",display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:66,position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 20px rgba(0,0,0,0.3)",borderBottom:"1px solid rgba(200,146,42,0.15)"},
   logo:{width:44,height:44,borderRadius:8,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"},
-  nav:{background:"linear-gradient(160deg,#12192a,#1a2640)",borderBottom:"1px solid rgba(200,146,42,0.2)",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(clamp(66px,17vw,104px),1fr))",gap:"clamp(2px,1vw,10px)",padding:"clamp(10px,2.4vw,18px) clamp(6px,2vw,16px)",justifyItems:"center"},
+  nav:{background:"linear-gradient(160deg,#141428,#1a1a2e 55%,#16213e)",borderBottom:"1px solid rgba(200,146,42,0.18)",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(clamp(66px,17vw,104px),1fr))",gap:"clamp(2px,1vw,10px)",padding:"clamp(10px,2.4vw,18px) clamp(6px,2vw,16px)",justifyItems:"center"},
   navBtn:{padding:"12px 14px",fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,fontWeight:700,color:"#1f2937",background:"none",border:"none",borderBottom:"3px solid transparent",cursor:"pointer",whiteSpace:"nowrap"},
   navBtnActive:{color:C.teal,borderBottomColor:C.teal},
   main:{maxWidth:1600,margin:"0 auto",padding:"20px 12px"},
@@ -2077,33 +2077,33 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     <div>
       {/* ═══ Action Buttons — Premium Grid ═══ */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10,marginBottom:10}}>
-        <button onClick={()=>setShowNew(true)} style={{background:"linear-gradient(135deg,#c8922a,#a87520)",color:"#fff",border:"none",borderRadius:14,padding:"18px 8px",fontSize:15,fontWeight:900,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 16px rgba(200,146,42,0.3)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+        <button onClick={()=>setShowNew(true)} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
           <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 8.4v7.2M8.4 12h7.2"/></g></svg>
           عقد جديد
         </button>
-        <button onClick={()=>setPage("accounts")} style={{background:"#fff",color:"#0f1923",border:"2.5px solid #c8922a",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:900,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 2px 8px rgba(200,146,42,0.12)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+        <button onClick={()=>setPage("accounts")} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
           <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g><circle cx="16.9" cy="15.1" r="1.4" fill="#e0b85c"/></svg>
           الحسابات
         </button>
-        <button onClick={()=>setPage("goods")} style={{background:"#fff",color:"#0f1923",border:"2.5px solid #c8922a",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:900,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 2px 8px rgba(200,146,42,0.12)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+        <button onClick={()=>setPage("goods")} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
           <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.6 7.6h16.8v12H3.6Z"/><path d="M3.6 11.6h16.8M12 7.6v12"/></g></svg>
           البضاعة
         </button>
-        <button onClick={()=>setPage("collect")} style={{background:"#fff",color:"#0f1923",border:"2.5px solid #c8922a",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:900,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 2px 8px rgba(200,146,42,0.12)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+        <button onClick={()=>setPage("collect")} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
           <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></g></svg>
           التحصيل
         </button>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
-        <button onClick={()=>setShowDeduct(true)} style={{background:"#fff",color:"#0f1923",border:"2.5px solid #c8922a",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:900,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 2px 8px rgba(200,146,42,0.12)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+        <button onClick={()=>setShowDeduct(true)} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
           <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2v6h6M18 22v-6h-6"/><path d="M21 11.5A8.5 8.5 0 0 0 6.7 4.4L2 8M3 12.5a8.5 8.5 0 0 0 14.3 7.1L22 16"/></g></svg>
           الطباعة
         </button>
-        <button onClick={()=>setPage("investorsList")} style={{background:"#fff",color:"#0f1923",border:"2.5px solid #c8922a",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:900,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 2px 8px rgba(200,146,42,0.12)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+        <button onClick={()=>setPage("investorsList")} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
           <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></g></svg>
           المستثمرون
         </button>
-        <button onClick={()=>setPage("overdue")} style={{background:"#fff",color:"#0f1923",border:"2.5px solid #c8922a",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:900,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 2px 8px rgba(200,146,42,0.12)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+        <button onClick={()=>setPage("overdue")} style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",color:"#e0b85c",border:"none",borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 14px rgba(26,26,46,0.22)",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
           <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></g></svg>
           المتعثرون
         </button>
