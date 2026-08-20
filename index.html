@@ -5506,10 +5506,43 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
       cycleReset:true, openingCarried:boxNow
     }}));
 
-    // 4) تحريك نقطة بداية الصندوق لليوم بمبلغ المتبقي
-    setDailyOpen(p=>({...(p&&typeof p==="object"&&!Array.isArray(p)?p:{}), __base:{date:todayStr, amount:boxNow}}));
+    // 4) حفظ البداية القديمة للتراجع
+    const prevBase = _do.__base ? {..._do.__base} : null;
+    const prevBaseKey = "__prevBase";
+
+    // 5) تحريك نقطة بداية الصندوق لليوم بمبلغ المتبقي
+    setDailyOpen(p=>({...(p&&typeof p==="object"&&!Array.isArray(p)?p:{}), __base:{date:todayStr, amount:boxNow}, [prevBaseKey]:prevBase}));
 
     toast("✅ تم إقفال الدورة — بدأ شهر جديد برصيد "+SAR(boxNow));
+  };
+
+  // ── التراجع عن الإقفال ──
+  const undoCloseCycle = () => {
+    const _do = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
+    const prev = _do.__prevBase;
+    if(!prev){
+      toast("⚠️ لا يوجد إقفال سابق للتراجع عنه","warn");
+      return;
+    }
+    if(!window.confirm("هل تريد التراجع عن إقفال الدورة وإرجاع البداية السابقة؟\n\nالبداية السابقة: "+prev.date+" — "+SAR(prev.amount))) return;
+
+    // إرجاع البداية القديمة
+    setDailyOpen(p=>{
+      const np = {...(p&&typeof p==="object"&&!Array.isArray(p)?p:{})};
+      np.__base = {...prev};
+      delete np.__prevBase;
+      return np;
+    });
+
+    // حذف آخر شهر مقفل من الأرشيف
+    const curYM = fiscalYM(new Date());
+    setMonthClose(p=>{
+      const np = {...(p||{})};
+      delete np[curYM];
+      return np;
+    });
+
+    toast("✅ تم التراجع — رجعت الدورة السابقة");
   };
 
   const printAll = (rows, title) => {
@@ -5557,6 +5590,9 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
               <button style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"2.5px solid #141428",borderRadius:10,fontSize:13,fontWeight:800,padding:"7px 12px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}} onClick={closeCycleAndReset}>
                 <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></g></svg>
                 إقفال الدورة وبدء شهر جديد</button>
+              {(()=>{const _dox=(dailyOpen&&typeof dailyOpen==="object"&&!Array.isArray(dailyOpen))?dailyOpen:{};return _dox.__prevBase;})() &&
+              <button style={{background:"#fff",color:"#dc2626",border:"2.5px solid #dc2626",borderRadius:10,fontSize:13,fontWeight:800,padding:"7px 12px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}} onClick={undoCloseCycle}>
+                تراجع عن الإقفال</button>}
               <button style={{...styles.btn(C.gold),fontSize:13,padding:"7px 12px",display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>printAll(months.map(ym=>({ym,d:calcMonth(ym)})),"المؤشرات الشهرية")}>
                 <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9V4h10v5M6 18H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1M7 15h10v5H7Z"/></g></svg>
                 طباعة</button>
