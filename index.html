@@ -549,9 +549,9 @@ const C = {
 
 const styles = {
   body:{fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",direction:"rtl",background:C.slate,minHeight:"100vh",margin:0,fontWeight:500},
-  header:{background:"linear-gradient(135deg,#141428,#1a1a2e 55%,#16213e)",color:"white",padding:"0 14px",display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:66,position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 20px rgba(0,0,0,0.3)",borderBottom:"1px solid rgba(200,146,42,0.15)"},
+  header:{background:"#000000",color:"white",padding:"0 14px",display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:66,position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 20px rgba(0,0,0,0.5)",borderBottom:"2px solid #c8922a"},
   logo:{width:44,height:44,borderRadius:8,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"},
-  nav:{background:"linear-gradient(160deg,#141428,#1a1a2e 55%,#16213e)",borderBottom:"1px solid rgba(200,146,42,0.18)",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(clamp(66px,17vw,104px),1fr))",gap:"clamp(2px,1vw,10px)",padding:"clamp(10px,2.4vw,18px) clamp(6px,2vw,16px)",justifyItems:"center"},
+  nav:{background:"#000000",borderBottom:"2px solid #c8922a",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(clamp(66px,17vw,104px),1fr))",gap:"clamp(2px,1vw,10px)",padding:"clamp(10px,2.4vw,18px) clamp(6px,2vw,16px)",justifyItems:"center"},
   navBtn:{padding:"12px 14px",fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",fontSize:15,fontWeight:700,color:"#1f2937",background:"none",border:"none",borderBottom:"3px solid transparent",cursor:"pointer",whiteSpace:"nowrap"},
   navBtnActive:{color:C.teal,borderBottomColor:C.teal},
   main:{maxWidth:1600,margin:"0 auto",padding:"20px 12px"},
@@ -11599,7 +11599,7 @@ function App() {
               fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",opacity:dragTab===idx?0.4:1,
               WebkitTapHighlightColor:"transparent"}}>
             <div style={{width:"clamp(52px,14vw,78px)",aspectRatio:"1",borderRadius:"clamp(13px,3vw,20px)",
-              background:on?"#0d0d1f":"linear-gradient(140deg,#e8c96a,#d4a83a,#c8922a)",
+              background:on?"#000000":"linear-gradient(140deg,#e8c96a,#d4a83a,#c8922a)",
               display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s",
               padding:"clamp(11px,2.8vw,17px)",
               border:on?"2.5px solid #e0b85c":"2.5px solid #141428",
