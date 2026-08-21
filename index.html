@@ -359,22 +359,56 @@
   .qimat-hero-tab.active{background:linear-gradient(155deg,#183654,#0a1d30)!important;border-color:#f6d985!important;box-shadow:0 0 0 2px rgba(246,217,133,.72),0 15px 34px rgba(0,0,0,.36),0 0 28px rgba(214,167,62,.3)!important}
 }
 
-/* Contracts desktop command center: 9 strong navy/gold modules */
-.qimat-contract-module-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:4px 0 18px}
-.qimat-contract-module{position:relative;min-height:112px!important;padding:18px 18px 16px!important;display:grid!important;grid-template-columns:auto 52px 1fr auto;align-items:center;gap:13px;text-align:right!important;overflow:hidden;background:linear-gradient(145deg,#0b1f33 0%,#0e2b45 56%,#123652 100%)!important;color:#fff!important;border:1px solid rgba(224,184,92,.72)!important;border-radius:18px!important;box-shadow:0 10px 24px rgba(7,23,39,.20),inset 0 1px 0 rgba(255,255,255,.07)!important;isolation:isolate}
-.qimat-contract-module::before{content:"";position:absolute;inset:auto -28px -42px auto;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(224,184,92,.22),rgba(224,184,92,0) 68%);z-index:-1}
-.qimat-contract-module::after{content:"";position:absolute;right:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,#f4d889,#c8922a);box-shadow:0 0 18px rgba(224,184,92,.45)}
-.qimat-contract-module:hover{transform:translateY(-3px)!important;border-color:#f2d17c!important;box-shadow:0 16px 32px rgba(7,23,39,.27),0 0 0 1px rgba(242,209,124,.28)!important}
-.qimat-contract-module.active{background:linear-gradient(135deg,#f0cf79 0%,#d7a43b 55%,#bd8421 100%)!important;color:#111827!important;border-color:#a87520!important;box-shadow:0 12px 28px rgba(190,134,31,.28),inset 0 1px 0 rgba(255,255,255,.45)!important}
-.qimat-contract-module.active::after{background:#0b1f33;box-shadow:none}
-.qcm-index{font-size:12px;font-weight:900;letter-spacing:.6px;color:#f2d17c;border:1px solid rgba(242,209,124,.42);padding:5px 7px;border-radius:9px;background:rgba(255,255,255,.04)}
-.qimat-contract-module.active .qcm-index{color:#0b1f33;border-color:rgba(11,31,51,.25);background:rgba(255,255,255,.30)}
-.qcm-icon{width:48px;height:48px;display:grid;place-items:center;border-radius:15px;background:linear-gradient(145deg,rgba(242,209,124,.18),rgba(200,146,42,.06));border:1px solid rgba(242,209,124,.40);color:#f2d17c;font-size:27px;font-weight:900;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
-.qimat-contract-module.active .qcm-icon{background:rgba(11,31,51,.10);border-color:rgba(11,31,51,.25);color:#0b1f33}
-.qcm-copy{display:flex;flex-direction:column;gap:4px;min-width:0}.qcm-copy strong{font-size:18px;font-weight:900;line-height:1.25}.qcm-copy small{font-size:12.5px;font-weight:650;color:#cbd7e3;white-space:normal}.qimat-contract-module.active .qcm-copy small{color:#3b3426}
-.qcm-arrow{font-size:26px;line-height:1;color:#f2d17c;transition:transform .16s ease}.qimat-contract-module:hover .qcm-arrow{transform:translateX(-3px)}.qimat-contract-module.active .qcm-arrow{color:#0b1f33}
-@media(max-width:900px){.qimat-contract-module-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.qimat-contract-module{min-height:88px!important;padding:12px 11px!important;grid-template-columns:38px 1fr auto;gap:9px}.qcm-index{display:none}.qcm-icon{width:38px;height:38px;border-radius:11px;font-size:21px}.qcm-copy strong{font-size:14px}.qcm-copy small{font-size:10px}.qcm-arrow{font-size:21px}}
-@media(max-width:430px){.qimat-contract-module-grid{grid-template-columns:1fr 1fr}.qimat-contract-module{min-height:82px!important}.qcm-copy small{display:none}}
+/* Contracts command center — REAL UI, shared by desktop and mobile */
+.qimat-contract-module-grid{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:16px!important;margin:8px 0 22px!important;padding:2px!important;
+  --qcm-navy:#071b2d;--qcm-navy2:#0d304d;--qcm-gold:#d29b2f;--qcm-gold2:#f0cf79;
+}
+.qimat-contract-module{
+  position:relative!important;min-height:138px!important;padding:19px 18px!important;
+  display:grid!important;grid-template-columns:42px 58px minmax(0,1fr) 34px!important;
+  align-items:center!important;gap:13px!important;text-align:right!important;overflow:hidden!important;
+  background:linear-gradient(145deg,#071b2d 0%,#0a2740 54%,#0e3553 100%)!important;
+  color:#fff!important;border:1px solid rgba(240,207,121,.70)!important;border-radius:20px!important;
+  box-shadow:0 12px 28px rgba(5,22,37,.23),inset 0 1px 0 rgba(255,255,255,.07)!important;
+  isolation:isolate!important;touch-action:manipulation!important;-webkit-tap-highlight-color:transparent!important;
+}
+.qimat-contract-module::before{
+  content:""!important;position:absolute!important;inset:0!important;z-index:-1!important;pointer-events:none!important;
+  background:linear-gradient(110deg,transparent 0 66%,rgba(240,207,121,.09) 66% 100%)!important;
+  width:auto!important;height:auto!important;border-radius:0!important;
+}
+.qimat-contract-module::after{
+  content:""!important;position:absolute!important;right:0!important;top:18px!important;bottom:18px!important;width:4px!important;
+  border-radius:99px!important;background:linear-gradient(180deg,#f6df9e,#d29b2f,#a96f16)!important;
+  box-shadow:0 0 14px rgba(240,207,121,.35)!important;
+}
+.qimat-contract-module:hover{transform:translateY(-3px)!important;border-color:#f5dc94!important;box-shadow:0 18px 38px rgba(5,22,37,.29),0 0 0 1px rgba(240,207,121,.18)!important}
+.qimat-contract-module.active{
+  background:linear-gradient(145deg,#09243a 0%,#103b5b 100%)!important;color:#fff!important;
+  border:2px solid #f0cf79!important;box-shadow:0 15px 34px rgba(5,22,37,.27),0 0 0 3px rgba(210,155,47,.12),0 0 25px rgba(210,155,47,.18)!important;
+}
+.qcm-index{height:31px;min-width:36px;padding:0 7px;display:grid;place-items:center;border-radius:9px;font-size:12px;font-weight:900;color:#0a1c2b;background:linear-gradient(135deg,#f4d884,#d29b2f);border:1px solid #b77d1d;box-shadow:0 4px 10px rgba(183,125,29,.18)}
+.qcm-icon{width:56px;height:56px;display:grid;place-items:center;border-radius:16px;background:rgba(240,207,121,.10);border:1px solid rgba(240,207,121,.55);color:#f0cf79;font-size:29px;font-weight:900;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.qcm-copy{display:flex;flex-direction:column;gap:5px;min-width:0}.qcm-copy strong{font-size:20px;font-weight:900;line-height:1.2;color:#fff}.qcm-copy small{font-size:12.5px;font-weight:650;line-height:1.45;color:#c7d3df;white-space:normal}
+.qcm-arrow{width:32px;height:32px;display:grid;place-items:center;border-radius:50%;border:1px solid rgba(240,207,121,.55);background:rgba(0,0,0,.14);font-size:23px;line-height:1;color:#f0cf79;transition:transform .16s ease}
+.qimat-contract-module:hover .qcm-arrow{transform:translateX(-3px)}
+@media(min-width:1350px){
+  .qimat-contract-module-grid{gap:18px!important}.qimat-contract-module{min-height:154px!important;padding:23px 22px!important;grid-template-columns:44px 64px minmax(0,1fr) 36px!important}.qcm-icon{width:62px;height:62px;font-size:32px}.qcm-copy strong{font-size:22px}.qcm-copy small{font-size:13.5px}
+}
+@media(max-width:900px){
+  .qimat-contract-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;margin:8px 10px 18px!important}
+  .qimat-contract-module{min-height:104px!important;padding:12px 11px!important;grid-template-columns:39px minmax(0,1fr) 26px!important;gap:8px!important;border-radius:15px!important}
+  .qimat-contract-module::before{background:linear-gradient(112deg,transparent 0 76%,rgba(240,207,121,.08) 76% 100%)!important}
+  .qimat-contract-module::after{top:12px!important;bottom:12px!important;width:3px!important}
+  .qcm-index{display:none!important}.qcm-icon{width:39px;height:39px;border-radius:11px;font-size:21px}.qcm-copy strong{font-size:15px}.qcm-copy small{font-size:10.5px;line-height:1.25}.qcm-arrow{width:25px;height:25px;font-size:18px}
+}
+@media(max-width:430px){
+  .qimat-contract-module-grid{grid-template-columns:1fr 1fr!important;gap:9px!important;margin-inline:8px!important}
+  .qimat-contract-module{min-height:92px!important;padding:10px 9px!important;grid-template-columns:34px minmax(0,1fr) 21px!important;gap:6px!important}
+  .qcm-icon{width:34px;height:34px;font-size:19px}.qcm-copy strong{font-size:13.5px}.qcm-copy small{display:none!important}.qcm-arrow{width:21px;height:21px;font-size:16px}
+}
 
 /* Dashboard quick actions: navy by default, gold only while selected/pressed */
 .qimat-quick-action{
@@ -665,92 +699,7 @@ function printStatement(elementId) {
       .print-only-header{display:block !important}
       @page{size:A4 landscape;margin:10mm}
     </style></head><body>${el.innerHTML}
-<!-- QIMAT CONTRACTS SERIOUS UI PASS 2026-08-22 -->
-<style id="qimat-contracts-serious-ui-pass">
-/* Visual-only pass. Scoped to the existing 9 real contract actions. No business logic is changed. */
-.qimat-contract-module-grid{
-  --cq-navy:#081d31; --cq-navy2:#103553; --cq-gold:#d3a238; --cq-gold2:#f0cf79;
-  --cq-line:rgba(240,207,121,.72);
-}
-@media (min-width: 1024px){
-  .qimat-contract-module-grid{
-    display:grid!important;
-    grid-template-columns:repeat(3,minmax(0,1fr))!important;
-    gap:18px!important;
-    margin:10px 0 26px!important;
-    padding:2px!important;
-  }
-  .qimat-contract-module{
-    min-height:150px!important;
-    padding:22px 22px 20px!important;
-    grid-template-columns:46px 64px minmax(0,1fr) 36px!important;
-    gap:16px!important;
-    border-radius:22px!important;
-    background:
-      radial-gradient(circle at 91% 12%,rgba(240,207,121,.16),transparent 25%),
-      linear-gradient(138deg,#071a2d 0%,#0b2a44 56%,#103b5c 100%)!important;
-    border:1px solid var(--cq-line)!important;
-    color:#fff!important;
-    box-shadow:0 14px 34px rgba(4,20,34,.22),inset 0 1px 0 rgba(255,255,255,.075)!important;
-    transform:none!important;
-  }
-  .qimat-contract-module::before{
-    width:170px!important;height:170px!important;right:-52px!important;bottom:-78px!important;
-    background:radial-gradient(circle,rgba(240,207,121,.28),rgba(211,162,56,.07) 42%,transparent 70%)!important;
-  }
-  .qimat-contract-module::after{
-    width:5px!important;right:0!important;top:18px!important;bottom:18px!important;border-radius:99px!important;
-    background:linear-gradient(180deg,#f5dda1,#d3a238,#a96f16)!important;
-    box-shadow:0 0 18px rgba(240,207,121,.42)!important;
-  }
-  .qimat-contract-module:hover{
-    transform:translateY(-5px)!important;
-    border-color:#f4d98f!important;
-    box-shadow:0 22px 46px rgba(4,20,34,.30),0 0 0 1px rgba(240,207,121,.20),0 0 28px rgba(211,162,56,.16)!important;
-  }
-  .qimat-contract-module.active{
-    background:
-      radial-gradient(circle at 91% 12%,rgba(240,207,121,.22),transparent 27%),
-      linear-gradient(138deg,#071a2d 0%,#0b2a44 54%,#123f61 100%)!important;
-    color:#fff!important;
-    border:2px solid #f0cf79!important;
-    box-shadow:0 18px 40px rgba(4,20,34,.28),0 0 0 3px rgba(211,162,56,.10),0 0 32px rgba(211,162,56,.20)!important;
-  }
-  .qimat-contract-module.active::after{background:linear-gradient(180deg,#fff0bd,#e0b85c,#bd8421)!important;box-shadow:0 0 20px rgba(240,207,121,.55)!important}
-  .qcm-index{
-    min-width:42px!important;height:34px!important;padding:0 8px!important;display:grid!important;place-items:center!important;
-    border-radius:10px!important;color:#071a2d!important;background:linear-gradient(135deg,#f5d98c,#d3a238)!important;
-    border:1px solid #b67c1b!important;box-shadow:0 5px 12px rgba(184,128,29,.22)!important;font-size:13px!important;
-  }
-  .qcm-icon{
-    width:62px!important;height:62px!important;border-radius:18px!important;font-size:31px!important;
-    color:#f4d98f!important;background:linear-gradient(145deg,rgba(240,207,121,.16),rgba(255,255,255,.025))!important;
-    border:1px solid rgba(240,207,121,.62)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 18px rgba(0,0,0,.18)!important;
-  }
-  .qimat-contract-module.active .qcm-icon,.qimat-contract-module.active .qcm-index{color:#071a2d!important}
-  .qimat-contract-module.active .qcm-icon{background:linear-gradient(135deg,#f5d98c,#d3a238)!important;border-color:#f6e1a8!important;box-shadow:0 8px 20px rgba(211,162,56,.28)!important}
-  .qcm-copy{gap:7px!important}
-  .qcm-copy strong{font-size:22px!important;font-weight:900!important;letter-spacing:-.2px!important;color:#fff!important}
-  .qcm-copy small{font-size:13.5px!important;line-height:1.55!important;color:#c7d5e2!important;font-weight:650!important}
-  .qimat-contract-module.active .qcm-copy small{color:#e6eef5!important}
-  .qcm-arrow{
-    width:34px!important;height:34px!important;border-radius:50%!important;display:grid!important;place-items:center!important;
-    border:1px solid rgba(240,207,121,.60)!important;color:#f0cf79!important;background:rgba(0,0,0,.12)!important;
-    font-size:25px!important;box-shadow:0 0 14px rgba(211,162,56,.13)!important;
-  }
-  .qimat-contract-module:hover .qcm-arrow{transform:translateX(-4px)!important;background:rgba(240,207,121,.12)!important}
-}
-@media (min-width: 1440px){
-  .qimat-contract-module{min-height:164px!important;padding:25px 25px 22px!important}
-  .qcm-copy strong{font-size:24px!important}.qcm-copy small{font-size:14px!important}
-}
-@media (max-width: 900px){
-  .qimat-contract-module.active{background:linear-gradient(145deg,#0b1f33,#0e2b45)!important;color:#fff!important;border-color:#f0cf79!important;box-shadow:0 8px 20px rgba(7,23,39,.22),0 0 0 2px rgba(211,162,56,.12)!important}
-  .qimat-contract-module.active .qcm-copy strong{color:#fff!important}
-  .qimat-contract-module.active .qcm-icon{color:#f2d17c!important;background:linear-gradient(145deg,rgba(242,209,124,.18),rgba(200,146,42,.06))!important}
-  .qimat-contract-module.active .qcm-arrow{color:#f2d17c!important}
-}
-</style>
+
 
 </body></html>`);
   win.document.close();
