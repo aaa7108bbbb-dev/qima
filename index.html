@@ -6079,13 +6079,8 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
             const profitAmt=totalAmt-cashAmt;
             const paidAmt=ic.reduce((s,c)=>s+_getPaid(payments,c.id),0);
             const remAmt=Math.max(0,totalAmt-paidAmt);
-            const overdue=ic.reduce((s,c)=>{
-              const inst=+c.instAmt||0,tt=+c.totalInst||+c.amount||0;
-              if(inst<=0||!c.firstInst||c.contractType==="defer"||_doneIds.includes(c.id)) return s;
-              const sD=new Date(c.firstInst);
-              const mEl=Math.max(0,Math.floor((_now-sD)/(30.44*86400000)));
-              const od=Math.min(tt,inst*mEl)-_getPaid(payments,c.id);
-              return s+(od>0?od:0);
+            const overdue=ic.filter(c=>c.defaulter&&!_doneIds.includes(c.id)).reduce((s,c)=>{
+              return s+Math.max(0,(+c.totalInst||+c.amount||0)-_getPaid(payments,c.id));
             },0);
             const _auto=ic.filter(c=>!c.isOldContract&&c.contractType!=="migrated")
               .reduce((s,c)=>{const rr=calcC(c,settings);return s-(c.amount+rr.acc+rr.inst+rr.admin);},0);
