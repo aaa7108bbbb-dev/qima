@@ -324,6 +324,40 @@
  .qimat-hero-tab{border-radius:10px}
  .qimat-hero-tab:hover{transform:none}
 }
+
+/* ===== Desktop hero: 7 real tabs in one row ===== */
+@media (min-width: 900px){
+  .qimat-top-hero{
+    width:min(1600px,calc(100% - 24px))!important;
+    height:clamp(300px,28vw,430px)!important;
+    aspect-ratio:auto!important;
+    background-size:cover!important;
+    background-position:center 25%!important;
+    border-radius:26px!important;
+  }
+  .qimat-top-hero::before{
+    content:"";position:absolute;z-index:2;left:0;right:0;bottom:0;height:49%;
+    background:linear-gradient(180deg,rgba(7,23,39,0),rgba(7,23,39,.72) 32%,rgba(7,23,39,.94));
+    pointer-events:none;
+  }
+  .qimat-hero-tab{
+    top:auto!important;bottom:5.5%!important;height:37%!important;width:12.2%!important;
+    display:flex!important;align-items:flex-end!important;justify-content:center!important;
+    padding:0 7px 14px!important;
+    background:linear-gradient(155deg,rgba(20,42,65,.96),rgba(6,20,34,.97))!important;
+    border:1px solid rgba(242,209,124,.72)!important;border-radius:19px!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 12px 26px rgba(0,0,0,.28)!important;
+    color:#f2d17c!important;font-family:'IBM Plex Sans Arabic',Arial,sans-serif!important;
+    font-size:clamp(12px,1vw,16px)!important;font-weight:900!important;
+  }
+  .qimat-hero-tab::after{content:attr(data-label);position:relative;z-index:3;white-space:nowrap}
+  .qimat-hero-tab::before{position:absolute;top:17%;left:50%;transform:translateX(-50%);font-size:clamp(24px,2.2vw,38px);line-height:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.35))}
+  .qimat-hero-tab.home::before{content:"⌂"}.qimat-hero-tab.contracts::before{content:"▤"}.qimat-hero-tab.portfolio::before{content:"▥"}.qimat-hero-tab.ai::before{content:"AI";font-size:clamp(18px,1.7vw,29px);border:2px solid #f2d17c;border-radius:8px;padding:3px 5px}.qimat-hero-tab.visits::before{content:"▣"}.qimat-hero-tab.upgrades::before{content:"↑"}.qimat-hero-tab.settings::before{content:"⚙"}
+  .qimat-hero-tab.home{right:4.3%!important;left:auto!important}.qimat-hero-tab.contracts{right:17.7%!important;left:auto!important}.qimat-hero-tab.portfolio{right:31.1%!important;left:auto!important}.qimat-hero-tab.ai{right:44.5%!important;left:auto!important}.qimat-hero-tab.visits{right:57.9%!important;left:auto!important}.qimat-hero-tab.upgrades{right:71.3%!important;left:auto!important}.qimat-hero-tab.settings{right:84.7%!important;left:auto!important}
+  .qimat-hero-tab:hover{transform:translateY(-5px)!important;border-color:#f6d985!important;box-shadow:0 0 0 1px rgba(246,217,133,.65),0 16px 34px rgba(0,0,0,.34),0 0 24px rgba(214,167,62,.22)!important}
+  .qimat-hero-tab.active{background:linear-gradient(155deg,#183654,#0a1d30)!important;border-color:#f6d985!important;box-shadow:0 0 0 2px rgba(246,217,133,.72),0 15px 34px rgba(0,0,0,.36),0 0 28px rgba(214,167,62,.3)!important}
+}
+
 @media print{.qimat-top-hero{display:none!important}}
 body{background:#faf6ee!important;background-image:none!important;}
 
@@ -11829,13 +11863,13 @@ function App() {
       </div>
 
       <section className="qimat-top-hero noprint" aria-label="قائمة التنقل الرئيسية">
-        <button className={"qimat-hero-tab visits "+(page==="pastclients"?"active":"")} aria-label="الزيارات" title="الزيارات" onClick={()=>setPage("pastclients")}></button>
-        <button className={"qimat-hero-tab ai "+(page==="qimaai"?"active":"")} aria-label="قمة AI" title="قمة AI" onClick={()=>setPage("qimaai")}></button>
-        <button className={"qimat-hero-tab portfolio "+(page==="portfolio"?"active":"")} aria-label="المحفظة الشهرية" title="المحفظة الشهرية" onClick={()=>setPage("portfolio")}></button>
-        <button className={"qimat-hero-tab contracts "+(page==="contracts"?"active":"")} aria-label="العقود" title="العقود" onClick={()=>setPage("contracts")}></button>
-        <button className={"qimat-hero-tab home "+(page==="dashboard"?"active":"")} aria-label="الرئيسية" title="الرئيسية" onClick={()=>setPage("dashboard")}></button>
-        <button className={"qimat-hero-tab settings "+(page==="settings"?"active":"")} aria-label="الإعدادات" title="الإعدادات" onClick={()=>setPage("settings")}></button>
-        <button className={"qimat-hero-tab upgrades "+(page==="upgrades"?"active":"")} aria-label="التطويرات" title="التطويرات" onClick={()=>setPage("upgrades")}></button>
+        <button className={"qimat-hero-tab visits "+(page==="pastclients"?"active":"")} data-label="الزيارات" aria-label="الزيارات" title="الزيارات" onClick={()=>setPage("pastclients")}></button>
+        <button className={"qimat-hero-tab ai "+(page==="qimaai"?"active":"")} data-label="قمة AI" aria-label="قمة AI" title="قمة AI" onClick={()=>setPage("qimaai")}></button>
+        <button className={"qimat-hero-tab portfolio "+(page==="portfolio"?"active":"")} data-label="المحفظة الشهرية" aria-label="المحفظة الشهرية" title="المحفظة الشهرية" onClick={()=>setPage("portfolio")}></button>
+        <button className={"qimat-hero-tab contracts "+(page==="contracts"?"active":"")} data-label="العقود" aria-label="العقود" title="العقود" onClick={()=>setPage("contracts")}></button>
+        <button className={"qimat-hero-tab home "+(page==="dashboard"?"active":"")} data-label="الرئيسية" aria-label="الرئيسية" title="الرئيسية" onClick={()=>setPage("dashboard")}></button>
+        <button className={"qimat-hero-tab settings "+(page==="settings"?"active":"")} data-label="الإعدادات" aria-label="الإعدادات" title="الإعدادات" onClick={()=>setPage("settings")}></button>
+        <button className={"qimat-hero-tab upgrades "+(page==="upgrades"?"active":"")} data-label="التطويرات" aria-label="التطويرات" title="التطويرات" onClick={()=>setPage("upgrades")}></button>
       </section>
 
       {syncStatus==="error" && (
