@@ -2007,6 +2007,20 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   const deferCount = deferList.length;
   const deletedCount = deletedList.length;
 
+  // مؤشرات عرض فقط لواجهة مركز العقود — لا تغيّر أي منطق أو بيانات
+  const liveContracts = contracts.filter(c=>!c.deleted);
+  const totalContractValue = liveContracts.reduce((s,c)=>s+(+(c.totalInst||c.amount)||0),0);
+  const totalPrincipalValue = liveContracts.reduce((s,c)=>s+(+c.amount||0),0);
+  const totalPaidValue = (payments||[]).filter(p=>liveContracts.some(c=>c.id===p.contractId)).reduce((s,p)=>s+(+p.amount||0),0);
+  const outstandingValue = Math.max(0,totalContractValue-totalPaidValue);
+  const activeInvestorIds = new Set(liveContracts.map(c=>String(c.investorId)).filter(Boolean));
+  const todayContractCount = liveContracts.filter(c=>c.date===todayLocal()).length;
+  const thisMonthKey = todayLocal().slice(0,7);
+  const monthContractCount = liveContracts.filter(c=>(c.date||"").slice(0,7)===thisMonthKey).length;
+  const todayPaidValue = (payments||[]).filter(p=>p.date===todayLocal()).reduce((s,p)=>s+(+p.amount||0),0);
+  const monthPaidValue = (payments||[]).filter(p=>(p.date||"").slice(0,7)===thisMonthKey).reduce((s,p)=>s+(+p.amount||0),0);
+  const deductionCount = liveContracts.filter(c=>c.payType==="deduction" || c.payMethod==="استقطاع").length;
+
   // Investor report
   const invReportContracts = (()=>{
     let list = contracts.filter(c=>!c.deleted && c.contractType!=="defer" && !doneIds.includes(c.id));
@@ -2393,46 +2407,62 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   }
 
   return (
-    <div>
-      {/* ═══ مركز العقود — 9 وحدات تنفيذية ═══ */}
-      <div className="qimat-contract-module-grid" aria-label="مركز إدارة العقود">
-        <button type="button" data-qe-manual="true" className="qimat-contract-module active" onClick={()=>{setStatusTab("active");setTimeout(()=>document.getElementById("contracts-main-list")?.scrollIntoView({behavior:"smooth",block:"start"}),40)}}>
-          <span className="qcm-index">01</span><span className="qcm-icon">▤</span>
-          <span className="qcm-copy"><strong>العقود</strong><small>استعراض وإدارة جميع العقود</small></span><span className="qcm-arrow">‹</span>
-        </button>
-        <button type="button" data-qe-manual="true" className="qimat-contract-module" onClick={()=>setShowNew(true)}>
-          <span className="qcm-index">02</span><span className="qcm-icon">＋</span>
-          <span className="qcm-copy"><strong>عقد جديد</strong><small>إنشاء عقد جديد وحفظ بياناته</small></span><span className="qcm-arrow">‹</span>
-        </button>
-        <button type="button" data-qe-manual="true" className="qimat-contract-module" onClick={()=>setPage("investorsList")}>
-          <span className="qcm-index">03</span><span className="qcm-icon">♙</span>
-          <span className="qcm-copy"><strong>المستثمرون</strong><small>ملفات المستثمرين ومحافظهم</small></span><span className="qcm-arrow">‹</span>
-        </button>
-        <button type="button" data-qe-manual="true" className="qimat-contract-module" onClick={()=>setTimeout(()=>document.getElementById("contracts-investor-report")?.scrollIntoView({behavior:"smooth",block:"start"}),20)}>
-          <span className="qcm-index">04</span><span className="qcm-icon">⌕</span>
-          <span className="qcm-copy"><strong>كشف المستثمر</strong><small>كشف مختصر أو مفصل للمحفظة</small></span><span className="qcm-arrow">‹</span>
-        </button>
-        <button type="button" data-qe-manual="true" className="qimat-contract-module" onClick={()=>setPage("collect")}>
-          <span className="qcm-index">05</span><span className="qcm-icon">◉</span>
-          <span className="qcm-copy"><strong>التحصيل</strong><small>السداد ومتابعة مستحقات العملاء</small></span><span className="qcm-arrow">‹</span>
-        </button>
-        <button type="button" data-qe-manual="true" className="qimat-contract-module" onClick={()=>setShowDeduct(true)}>
-          <span className="qcm-index">06</span><span className="qcm-icon">⇄</span>
-          <span className="qcm-copy"><strong>الاستقطاع</strong><small>كشف الاستقطاعات المرتبطة بالعقود</small></span><span className="qcm-arrow">‹</span>
-        </button>
-        <button type="button" data-qe-manual="true" className="qimat-contract-module" onClick={()=>setPage("overdue")}>
-          <span className="qcm-index">07</span><span className="qcm-icon">!</span>
-          <span className="qcm-copy"><strong>المتعثرون</strong><small>العقود المتأخرة وأولوية المتابعة</small></span><span className="qcm-arrow">‹</span>
-        </button>
-        <button type="button" data-qe-manual="true" className="qimat-contract-module" onClick={()=>setPage("accounts")}>
-          <span className="qcm-index">08</span><span className="qcm-icon">◫</span>
-          <span className="qcm-copy"><strong>الحسابات</strong><small>الحركات المالية وكشوف الحساب</small></span><span className="qcm-arrow">‹</span>
-        </button>
-        <button type="button" data-qe-manual="true" className="qimat-contract-module" onClick={()=>setPage("goods")}>
-          <span className="qcm-index">09</span><span className="qcm-icon">◇</span>
-          <span className="qcm-copy"><strong>البضاعة</strong><small>متابعة السلع المرتبطة بالعقود</small></span><span className="qcm-arrow">‹</span>
-        </button>
-      </div>
+    <div className="contracts-dashboard-page">
+      {/* ═══ لوحة إدارة العقود — واجهة عرض فقط ═══ */}
+      <section className="contracts-command-center" aria-label="لوحة إدارة العقود">
+        <div className="contracts-kpi-strip">
+          <div className="contracts-kpi contracts-kpi-dark"><span>إجمالي قيمة العقود</span><strong>{SAR(totalContractValue)}</strong><small>ريال</small></div>
+          <div className="contracts-kpi"><span>إجمالي العقود</span><strong>{liveContracts.length}</strong><small>عقد</small></div>
+          <div className="contracts-kpi"><span>العقود الفعالة</span><strong>{activeCount}</strong><small>نشطة</small></div>
+          <div className="contracts-kpi contracts-kpi-alert"><span>المؤجلة</span><strong>{deferCount}</strong><small>عقد</small></div>
+          <div className="contracts-kpi"><span>المنتهية</span><strong>{completedCount}</strong><small>عقد</small></div>
+          <div className="contracts-kpi contracts-kpi-dark"><span>إجمالي المحصّل</span><strong>{SAR(totalPaidValue)}</strong><small>ريال</small></div>
+        </div>
+
+        <div className="contracts-dashboard-heading">
+          <div><span className="contracts-eyebrow">مركز إدارة العقود</span><h2>الوصول السريع لكل عمليات العقود</h2></div>
+          <div className="contracts-dashboard-balance"><span>المتبقي على العقود</span><strong>{SAR(outstandingValue)}</strong><small>ريال</small></div>
+        </div>
+
+        <div className="qimat-contract-module-grid" aria-label="مركز إدارة العقود">
+          <button type="button" data-qe-manual="true" className="qimat-contract-module active" onClick={()=>{setStatusTab("active");setTimeout(()=>document.getElementById("contracts-main-list")?.scrollIntoView({behavior:"smooth",block:"start"}),40)}}>
+            <span className="qcm-index">01</span><span className="qcm-icon">▤</span>
+            <span className="qcm-copy"><strong>العقود</strong><small>إدارة ومتابعة جميع العقود</small><span className="qcm-stats"><b>{liveContracts.length}<i>الإجمالي</i></b><b className="ok">{activeCount}<i>الفعالة</i></b><b className="warn">{deferCount}<i>المؤجلة</i></b></span></span><span className="qcm-arrow">‹</span>
+          </button>
+          <button type="button" data-qe-manual="true" className="qimat-contract-module" onClick={()=>setShowNew(true)}>
+            <span className="qcm-index">02</span><span className="qcm-icon">＋</span>
+            <span className="qcm-copy"><strong>عقد جديد</strong><small>إنشاء عقد جديد لمستثمر</small><span className="qcm-stats"><b>{todayContractCount}<i>اليوم</i></b><b>{monthContractCount}<i>هذا الشهر</i></b><b>{liveContracts.length}<i>الإجمالي</i></b></span></span><span className="qcm-arrow">‹</span>
+          </button>
+          <button type="button" data-qe-manual="true" className="qimat-contract-module" onClick={()=>setPage("investorsList")}>
+            <span className="qcm-index">03</span><span className="qcm-icon">♙</span>
+            <span className="qcm-copy"><strong>المستثمرون</strong><small>ملفات المستثمرين ومحافظهم</small><span className="qcm-stats"><b>{investors.length}<i>المستثمرون</i></b><b className="ok">{activeInvestorIds.size}<i>لديهم عقود</i></b><b>{SAR(totalPrincipalValue)}<i>رأس المال</i></b></span></span><span className="qcm-arrow">‹</span>
+          </button>
+          <button type="button" data-qe-manual="true" className="qimat-contract-module" onClick={()=>setTimeout(()=>document.getElementById("contracts-investor-report")?.scrollIntoView({behavior:"smooth",block:"start"}),20)}>
+            <span className="qcm-index">04</span><span className="qcm-icon">⌕</span>
+            <span className="qcm-copy"><strong>كشف المستثمر</strong><small>كشف مختصر أو مفصل للمحفظة</small><span className="qcm-stats"><b>{activeInvestorIds.size}<i>محفظة نشطة</i></b><b>{activeCount}<i>عقد نشط</i></b><b>{SAR(outstandingValue)}<i>متبقي</i></b></span></span><span className="qcm-arrow">‹</span>
+          </button>
+          <button type="button" data-qe-manual="true" className="qimat-contract-module" onClick={()=>setPage("collect")}>
+            <span className="qcm-index">05</span><span className="qcm-icon">◎</span>
+            <span className="qcm-copy"><strong>التحصيل</strong><small>السداد ومتابعة مستحقات العملاء</small><span className="qcm-stats"><b className="ok">{SAR(todayPaidValue)}<i>اليوم</i></b><b>{SAR(monthPaidValue)}<i>هذا الشهر</i></b><b>{SAR(totalPaidValue)}<i>الإجمالي</i></b></span></span><span className="qcm-arrow">‹</span>
+          </button>
+          <button type="button" data-qe-manual="true" className="qimat-contract-module" onClick={()=>setShowDeduct(true)}>
+            <span className="qcm-index">06</span><span className="qcm-icon">⇄</span>
+            <span className="qcm-copy"><strong>الاستقطاع</strong><small>العقود المرتبطة بالاستقطاع</small><span className="qcm-stats"><b>{deductionCount}<i>عقد استقطاع</i></b><b>{SAR(monthPaidValue)}<i>تحصيل الشهر</i></b><b>{activeCount}<i>عقد فعال</i></b></span></span><span className="qcm-arrow">‹</span>
+          </button>
+          <button type="button" data-qe-manual="true" className="qimat-contract-module" onClick={()=>setPage("overdue")}>
+            <span className="qcm-index">07</span><span className="qcm-icon">!</span>
+            <span className="qcm-copy"><strong>المتعثرون</strong><small>العقود المتأخرة وأولوية المتابعة</small><span className="qcm-stats"><b className="danger">{deferCount}<i>مؤجل</i></b><b>{activeCount}<i>تحت المتابعة</i></b><b>{SAR(outstandingValue)}<i>إجمالي متبقي</i></b></span></span><span className="qcm-arrow">‹</span>
+          </button>
+          <button type="button" data-qe-manual="true" className="qimat-contract-module" onClick={()=>setPage("accounts")}>
+            <span className="qcm-index">08</span><span className="qcm-icon">◫</span>
+            <span className="qcm-copy"><strong>الحسابات</strong><small>الحركات المالية وكشوف الحساب</small><span className="qcm-stats"><b>{SAR(totalPaidValue)}<i>المحصّل</i></b><b>{SAR(outstandingValue)}<i>المتبقي</i></b><b>{liveContracts.length}<i>عقد</i></b></span></span><span className="qcm-arrow">‹</span>
+          </button>
+          <button type="button" data-qe-manual="true" className="qimat-contract-module" onClick={()=>setPage("goods")}>
+            <span className="qcm-index">09</span><span className="qcm-icon">◇</span>
+            <span className="qcm-copy"><strong>البضاعة</strong><small>متابعة السلع المرتبطة بالعقود</small><span className="qcm-stats"><b>{liveContracts.filter(c=>c.goods).length}<i>عقد بسلعة</i></b><b>{activeCount}<i>نشط</i></b><b>{SAR(totalContractValue)}<i>قيمة العقود</i></b></span></span><span className="qcm-arrow">‹</span>
+          </button>
+        </div>
+      </section>
 
       {/* ═══ Investor Report — Premium Card ═══ */}
       <div id="contracts-investor-report" style={{background:"rgba(255,255,255,0.9)",backdropFilter:"blur(12px)",borderRadius:18,marginBottom:16,padding:"18px 20px",border:"1px solid #e0d8c6",boxShadow:"0 4px 24px rgba(0,0,0,0.04)"}}>
@@ -12389,69 +12419,26 @@ table tbody tr:last-child td{border-bottom:0!important}
 
 <!-- FORCE REAL CONTRACT MODULE UI 2026-08-22 -->
 <style id="force-real-contract-module-ui-20260822">
-/* This block is intentionally last in the document so the live React UI cannot be restyled by older rules. */
-.qimat-contract-module-grid{
-  display:grid!important;
-  grid-template-columns:repeat(3,minmax(0,1fr))!important;
-  gap:18px!important;
-  margin:16px 0 24px!important;
-  padding:0!important;
-}
-.qimat-contract-module{
-  appearance:none!important;-webkit-appearance:none!important;
-  position:relative!important;
-  min-height:156px!important;
-  padding:22px 20px!important;
-  display:grid!important;
-  grid-template-columns:42px 64px minmax(0,1fr) 38px!important;
-  align-items:center!important;
-  gap:14px!important;
-  overflow:hidden!important;
-  text-align:right!important;
-  direction:rtl!important;
-  background:linear-gradient(145deg,#061827 0%,#0a2942 55%,#0d3553 100%)!important;
-  color:#fff!important;
-  border:1.5px solid rgba(225,176,73,.88)!important;
-  border-radius:22px!important;
-  box-shadow:0 14px 30px rgba(5,20,33,.24),inset 0 1px 0 rgba(255,255,255,.06)!important;
-  transform:none!important;
-}
-.qimat-contract-module::before{
-  content:""!important;position:absolute!important;inset:0!important;pointer-events:none!important;z-index:0!important;
-  background:radial-gradient(circle at 92% 10%,rgba(242,199,101,.16),transparent 27%),linear-gradient(115deg,transparent 0 72%,rgba(219,167,56,.08) 72% 100%)!important;
-}
-.qimat-contract-module::after{
-  content:""!important;position:absolute!important;right:0!important;top:16px!important;bottom:16px!important;width:5px!important;
-  border-radius:10px!important;background:linear-gradient(180deg,#f5d983,#d29a2f,#9e6713)!important;box-shadow:0 0 18px rgba(224,174,72,.38)!important;
-}
-.qimat-contract-module>*{position:relative!important;z-index:1!important}
-.qimat-contract-module.active{
-  background:linear-gradient(145deg,#0a2a43 0%,#10466b 100%)!important;
-  border:2px solid #f2cf77!important;
-  box-shadow:0 16px 34px rgba(5,20,33,.28),0 0 0 3px rgba(210,154,47,.13),0 0 28px rgba(210,154,47,.18)!important;
-}
-.qcm-index{display:grid!important;place-items:center!important;min-width:38px!important;height:34px!important;padding:0 7px!important;border-radius:10px!important;background:linear-gradient(135deg,#f4d986,#d29a2f)!important;border:1px solid #a66c16!important;color:#071827!important;font-size:12px!important;font-weight:900!important;box-shadow:0 5px 12px rgba(185,124,28,.22)!important}
-.qcm-icon{display:grid!important;place-items:center!important;width:62px!important;height:62px!important;border-radius:17px!important;background:rgba(242,207,121,.08)!important;border:1px solid rgba(242,207,121,.62)!important;color:#f3cd70!important;font-size:32px!important;font-weight:900!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important}
-.qcm-copy{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:7px!important;min-width:0!important}
-.qcm-copy strong{display:block!important;color:#fff!important;font-size:22px!important;font-weight:900!important;line-height:1.15!important}
-.qcm-copy small{display:block!important;color:#c9d5df!important;font-size:13px!important;font-weight:650!important;line-height:1.35!important}
-.qcm-arrow{display:grid!important;place-items:center!important;width:34px!important;height:34px!important;border-radius:50%!important;background:rgba(0,0,0,.15)!important;border:1px solid rgba(242,207,121,.68)!important;color:#f3cd70!important;font-size:23px!important;line-height:1!important}
-@media(hover:hover){.qimat-contract-module:hover{transform:translateY(-4px)!important;border-color:#f5d984!important;box-shadow:0 20px 40px rgba(5,20,33,.32),0 0 0 1px rgba(242,207,121,.18)!important}}
-@media(max-width:900px){
-  .qimat-contract-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;margin:10px 8px 20px!important}
-  .qimat-contract-module{min-height:112px!important;padding:12px 11px!important;grid-template-columns:31px 42px minmax(0,1fr) 25px!important;gap:8px!important;border-radius:16px!important;background:linear-gradient(145deg,#071a2b 0%,#0a2a44 100%)!important}
-  .qimat-contract-module::after{top:11px!important;bottom:11px!important;width:4px!important}
-  .qcm-index{display:grid!important;min-width:29px!important;width:29px!important;height:28px!important;padding:0!important;border-radius:8px!important;font-size:10px!important}
-  .qcm-icon{width:40px!important;height:40px!important;border-radius:11px!important;font-size:21px!important}
-  .qcm-copy{gap:3px!important}.qcm-copy strong{font-size:14.5px!important}.qcm-copy small{font-size:10px!important;white-space:normal!important}
-  .qcm-arrow{width:24px!important;height:24px!important;font-size:17px!important}
-}
-@media(max-width:430px){
-  .qimat-contract-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;margin:9px 7px 18px!important}
-  .qimat-contract-module{min-height:104px!important;padding:10px 8px!important;grid-template-columns:27px 37px minmax(0,1fr) 20px!important;gap:5px!important;border-radius:14px!important}
-  .qcm-index{display:grid!important;width:26px!important;min-width:26px!important;height:25px!important;font-size:9px!important}
-  .qcm-icon{width:36px!important;height:36px!important;font-size:19px!important}
-  .qcm-copy strong{font-size:13px!important}.qcm-copy small{display:none!important}.qcm-arrow{width:20px!important;height:20px!important;font-size:15px!important}
-}
+/* Contract command center — final live UI. Presentation only; React handlers/data are unchanged. */
+.contracts-dashboard-page{background:linear-gradient(180deg,#fbf8f2 0%,#f5efe4 100%)!important;border-radius:22px;padding:18px!important;color:#10243a}
+.contracts-command-center{display:block;margin-bottom:18px}
+.contracts-kpi-strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:0 0 18px}
+.contracts-kpi{min-height:110px;background:#fff;border:1px solid #e4d7c2;border-radius:16px;padding:16px 14px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;box-shadow:0 6px 18px rgba(14,39,61,.06)}
+.contracts-kpi span{font-size:12px;color:#637084;font-weight:800}.contracts-kpi strong{font-size:24px;color:#10243a;font-weight:950;line-height:1.25;margin:5px 0}.contracts-kpi small{font-size:11px;color:#8c96a4;font-weight:700}
+.contracts-kpi-dark{background:linear-gradient(145deg,#071a2b,#0e3553);border-color:#c7922d}.contracts-kpi-dark span,.contracts-kpi-dark small{color:#cbd6df}.contracts-kpi-dark strong{color:#f1c866}.contracts-kpi-alert strong{color:#c83a38}
+.contracts-dashboard-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin:2px 0 14px;padding:0 4px}.contracts-eyebrow{display:block;font-size:12px;color:#b17b20;font-weight:900;margin-bottom:3px}.contracts-dashboard-heading h2{margin:0!important;font-size:21px!important;color:#10243a!important}.contracts-dashboard-balance{text-align:left;background:#fff;border:1px solid #e3d5bf;border-radius:13px;padding:10px 14px;min-width:210px}.contracts-dashboard-balance span{display:block;font-size:11px;color:#6c7787;font-weight:800}.contracts-dashboard-balance strong{display:block;font-size:20px;color:#10243a;font-weight:950}.contracts-dashboard-balance small{font-size:10px;color:#9aa2ad}
+.qimat-contract-module-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:16px!important;margin:0!important;padding:0!important}
+.qimat-contract-module{appearance:none!important;-webkit-appearance:none!important;position:relative!important;min-height:190px!important;padding:18px 18px 16px!important;display:grid!important;grid-template-columns:36px 62px minmax(0,1fr) 32px!important;align-items:start!important;gap:12px!important;text-align:right!important;direction:rtl!important;overflow:hidden!important;background:linear-gradient(145deg,#061827 0%,#0a2942 54%,#0d3553 100%)!important;color:#fff!important;border:1.5px solid rgba(224,174,72,.92)!important;border-radius:20px!important;box-shadow:0 13px 28px rgba(6,24,39,.22),inset 0 1px 0 rgba(255,255,255,.06)!important;transform:none!important;touch-action:manipulation!important;-webkit-tap-highlight-color:transparent!important}
+.qimat-contract-module::before{content:""!important;position:absolute!important;inset:0!important;pointer-events:none!important;background:radial-gradient(circle at 82% 8%,rgba(242,201,105,.16),transparent 25%),linear-gradient(115deg,transparent 0 70%,rgba(221,169,59,.08) 70% 100%)!important}
+.qimat-contract-module::after{content:""!important;position:absolute!important;right:0!important;top:16px!important;bottom:16px!important;width:4px!important;border-radius:20px!important;background:linear-gradient(180deg,#f5d986,#d29a2f,#9d6816)!important;box-shadow:0 0 16px rgba(225,175,73,.38)!important}
+.qimat-contract-module>*{position:relative!important;z-index:1!important}.qimat-contract-module.active{background:linear-gradient(145deg,#0a2c47,#10476b)!important;border:2px solid #f1cd72!important;box-shadow:0 15px 34px rgba(5,22,37,.28),0 0 0 3px rgba(210,154,47,.12),0 0 28px rgba(210,154,47,.16)!important}
+.qcm-index{display:grid!important;place-items:center!important;width:36px!important;height:32px!important;border-radius:9px!important;background:linear-gradient(135deg,#f4d986,#d39a2f)!important;border:1px solid #a66d17!important;color:#071827!important;font-size:11px!important;font-weight:950!important;box-shadow:0 5px 12px rgba(185,124,28,.22)!important}
+.qcm-icon{display:grid!important;place-items:center!important;width:60px!important;height:60px!important;border-radius:16px!important;background:rgba(242,207,121,.08)!important;border:1px solid rgba(242,207,121,.58)!important;color:#f3cd70!important;font-size:31px!important;font-weight:900!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important}
+.qcm-copy{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:5px!important;min-width:0!important}.qcm-copy strong{display:block!important;color:#fff!important;font-size:20px!important;font-weight:950!important;line-height:1.15!important}.qcm-copy small{display:block!important;color:#c8d3dd!important;font-size:12px!important;font-weight:650!important;line-height:1.35!important}.qcm-arrow{align-self:center!important;display:grid!important;place-items:center!important;width:31px!important;height:31px!important;border-radius:50%!important;background:rgba(0,0,0,.16)!important;border:1px solid rgba(242,207,121,.66)!important;color:#f3cd70!important;font-size:21px!important;line-height:1!important}
+.qcm-stats{grid-column:1/-1!important;width:100%!important;margin-top:10px!important;padding-top:10px!important;border-top:1px solid rgba(255,255,255,.14)!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important}.qcm-stats b{display:flex!important;flex-direction:column!important;gap:2px!important;color:#f1c866!important;font-size:15px!important;font-weight:950!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important}.qcm-stats b i{font-style:normal!important;color:#aebdca!important;font-size:9.5px!important;font-weight:700!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}.qcm-stats b.ok{color:#3bc47a!important}.qcm-stats b.warn{color:#f1c866!important}.qcm-stats b.danger{color:#ff5a57!important}
+@media(hover:hover){.qimat-contract-module:hover{transform:translateY(-4px)!important;border-color:#f5d984!important;box-shadow:0 20px 40px rgba(5,20,33,.31),0 0 0 1px rgba(242,207,121,.18)!important}.qimat-contract-module:hover .qcm-arrow{transform:translateX(-3px)!important}}
+@media(max-width:1100px){.contracts-kpi-strip{grid-template-columns:repeat(3,minmax(0,1fr))}.qimat-contract-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:700px){.contracts-dashboard-page{padding:9px!important;border-radius:16px}.contracts-kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.contracts-kpi{min-height:84px;padding:10px}.contracts-kpi strong{font-size:18px}.contracts-dashboard-heading{align-items:stretch;flex-direction:column}.contracts-dashboard-balance{text-align:right;min-width:0}.qimat-contract-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}.qimat-contract-module{min-height:138px!important;padding:11px 9px!important;grid-template-columns:28px 38px minmax(0,1fr) 21px!important;gap:6px!important;border-radius:14px!important}.qcm-index{width:27px!important;height:25px!important;font-size:9px!important}.qcm-icon{width:37px!important;height:37px!important;border-radius:10px!important;font-size:19px!important}.qcm-copy strong{font-size:13.5px!important}.qcm-copy small{display:none!important}.qcm-arrow{width:20px!important;height:20px!important;font-size:15px!important}.qcm-stats{margin-top:7px!important;padding-top:7px!important;gap:4px!important}.qcm-stats b{font-size:11px!important}.qcm-stats b i{font-size:7.5px!important}}
+@media(max-width:390px){.contracts-kpi-strip{grid-template-columns:1fr 1fr}.qimat-contract-module-grid{grid-template-columns:1fr 1fr!important}.qcm-stats{grid-template-columns:1fr 1fr!important}.qcm-stats b:nth-child(3){display:none!important}}
 </style>
 </body></html>
