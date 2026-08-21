@@ -5630,7 +5630,7 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
   );
 }
 
-function MonthlyPortfolio({contracts, investors, settings, payments, monthClose, setMonthClose, JardComp, toast, BankComp, CashComp, daily, dailyOpen, setDailyOpen}) {
+function MonthlyPortfolio({contracts, investors, settings, payments, monthClose, setMonthClose, JardComp, toast, BankComp, CashComp, daily, dailyOpen, setDailyOpen, doneIds, txList}) {
   const [tab, setTab] = React.useState("ind");
   const [openMonth, setOpenMonth] = React.useState(null);
   const _cd = settings.cycleDay||21;
@@ -6059,37 +6059,88 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
           </table>
         </div>
         <div style={{fontSize:17,fontWeight:900,color:C.ink,borderRight:"4px solid #2563eb",paddingRight:12,marginTop:28,marginBottom:12}}>إجمالي المتبقي لكل مستثمر</div>
-        <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",borderRadius:10,overflow:"hidden"}}>
-            <thead><tr>
-              <th style={th}>المستثمر</th><th style={th}>عدد العقود</th><th style={th}>رأس المال</th>
-              <th style={th}>الإجمالي بالفائدة</th><th style={th}>المحصّل</th>
-              <th style={th}>المتبقي</th><th style={th}>نسبة التحصيل</th>
-            </tr></thead>
-            <tbody>
-              {sortedInvestors(investors).map((iv,i)=>{
-                const ic=allC.filter(c=>String(c.investorId)===String(iv.id));
-                const cash=ic.reduce((s,c)=>s+(+c.amount||0),0);
-                const total=ic.reduce((s,c)=>s+(+c.totalInst||+c.amount||0),0);
-                const paid=ic.reduce((s,c)=>s+_getPaid(payments,c.id),0);
-                const rem=Math.max(0,total-paid);
-                const pct=total>0?Math.round((paid/total)*100):0;
-                return(<tr key={i} style={{background:i%2?"#fafafa":"#fff"}}>
-                  <td style={{...td,textAlign:"right",fontWeight:800}}>{invLabel(iv)}</td>
-                  <td style={{...td,fontWeight:700}}>{ic.length}</td>
-                  <td style={td}>{SAR(cash)}</td>
-                  <td style={{...td,color:"#7c3aed"}}>{SAR(total)}</td>
-                  <td style={{...td,color:C.green,fontWeight:700}}>{SAR(paid)}</td>
-                  <td style={{...td,color:rem>0?C.red:C.green,fontWeight:800}}>{SAR(rem)}</td>
-                  <td style={{...td,fontWeight:700}}><div style={{background:"#e5e7eb",borderRadius:6,overflow:"hidden",height:18,position:"relative"}}><div style={{background:pct>=80?"#34d399":pct>=50?"#fbbf24":"#f87171",height:"100%",width:pct+"%",borderRadius:6,transition:"width 0.5s"}}/><span style={{position:"absolute",top:0,right:0,left:0,textAlign:"center",fontSize:11,lineHeight:"18px",fontWeight:800}}>{pct}%</span></div></td>
-                </tr>);
-              })}
-            </tbody>
-            <tfoot><tr style={{background:"#f1f5f9"}}>
-              {(()=>{const tc=allC,cash=tc.reduce((s,c)=>s+(+c.amount||0),0),total=tc.reduce((s,c)=>s+(+c.totalInst||+c.amount||0),0),paid=tc.reduce((s,c)=>s+_getPaid(payments,c.id),0),rem=Math.max(0,total-paid),pct=total>0?Math.round((paid/total)*100):0;return(<><td style={{...td,fontWeight:900}}>المجموع</td><td style={{...td,fontWeight:900}}>{tc.length}</td><td style={{...td,fontWeight:900}}>{SAR(cash)}</td><td style={{...td,fontWeight:900,color:"#7c3aed"}}>{SAR(total)}</td><td style={{...td,fontWeight:900,color:C.green}}>{SAR(paid)}</td><td style={{...td,fontWeight:900,color:rem>0?C.red:C.green}}>{SAR(rem)}</td><td style={{...td,fontWeight:900}}>{pct}%</td></>);})()}
-            </tr></tfoot>
-          </table>
-        </div>
+        {(()=>{
+          const _doneIds=doneIds||[];
+          const _now=new Date();
+          const thSticky={...th,position:"sticky",right:0,zIndex:3,background:"#1a1a2e",minWidth:100};
+          const tdSticky=(bg)=>({...td,position:"sticky",right:0,zIndex:1,background:bg,textAlign:"right",fontWeight:800});
+          const thG1={...th,background:"#115e59"};
+          const thG2={...th,background:"#78350f"};
+          const thG3={...th,background:"#1e3a5f"};
+          const thG4={...th,background:"#581c87"};
+          const rows2=sortedInvestors(investors).map(iv=>{
+            const ic=allC.filter(c=>String(c.investorId)===String(iv.id));
+            const activeN=ic.filter(c=>!_doneIds.includes(c.id)&&c.contractType!=="defer").length;
+            const deferN=ic.filter(c=>c.contractType==="defer"&&!_doneIds.includes(c.id)).length;
+            const doneN=ic.filter(c=>_doneIds.includes(c.id)).length;
+            const cashAmt=ic.reduce((s,c)=>s+(+c.amount||0),0);
+            const totalAmt=ic.reduce((s,c)=>s+(+c.totalInst||+c.amount||0),0);
+            const profitAmt=totalAmt-cashAmt;
+            const paidAmt=ic.reduce((s,c)=>s+_getPaid(payments,c.id),0);
+            const remAmt=Math.max(0,totalAmt-paidAmt);
+            const overdue=ic.reduce((s,c)=>{
+              const inst=+c.instAmt||0,tt=+c.totalInst||+c.amount||0;
+              if(inst<=0||!c.firstInst||c.contractType==="defer"||_doneIds.includes(c.id)) return s;
+              const sD=new Date(c.firstInst);
+              const mEl=Math.max(0,Math.floor((_now-sD)/(30.44*86400000)));
+              const od=Math.min(tt,inst*mEl)-_getPaid(payments,c.id);
+              return s+(od>0?od:0);
+            },0);
+            const _auto=ic.filter(c=>!c.isOldContract&&c.contractType!=="migrated")
+              .reduce((s,c)=>{const rr=calcC(c,settings);return s-(c.amount+rr.acc+rr.inst+rr.admin);},0);
+            const manualSum=((txList&&txList[iv.id])||[]).reduce((s,t)=>s+(+t.amount||0),0);
+            const invCash=(+iv.capital||0)+_auto+paidAmt+manualSum;
+            const pct=totalAmt>0?Math.round((paidAmt/totalAmt)*100):0;
+            const grand=invCash+remAmt;
+            return{name:invLabel(iv),activeN,deferN,doneN,cashAmt,totalAmt,profitAmt,paidAmt,invCash,remAmt,overdue,pct,grand};
+          });
+          const sm=rows2.reduce((a,r)=>({activeN:a.activeN+r.activeN,deferN:a.deferN+r.deferN,doneN:a.doneN+r.doneN,cashAmt:a.cashAmt+r.cashAmt,totalAmt:a.totalAmt+r.totalAmt,profitAmt:a.profitAmt+r.profitAmt,paidAmt:a.paidAmt+r.paidAmt,invCash:a.invCash+r.invCash,remAmt:a.remAmt+r.remAmt,overdue:a.overdue+r.overdue,grand:a.grand+r.grand}),{activeN:0,deferN:0,doneN:0,cashAmt:0,totalAmt:0,profitAmt:0,paidAmt:0,invCash:0,remAmt:0,overdue:0,grand:0});
+          const smPct=sm.totalAmt>0?Math.round((sm.paidAmt/sm.totalAmt)*100):0;
+          return(<div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",borderRadius:10,overflow:"hidden",minWidth:1050}}>
+              <thead><tr>
+                <th style={thSticky}>المستثمر</th>
+                <th style={thG1}>نشط</th><th style={thG1}>مؤجل</th><th style={thG1}>منتهي</th>
+                <th style={thG2}>النقدية</th><th style={thG2}>الإجمالية</th><th style={thG2}>الربح</th><th style={thG2}>المحصّل</th>
+                <th style={thG3}>النقدي</th><th style={thG3}>المتبقي</th><th style={thG3}>المتعثر</th>
+                <th style={thG4}>التحصيل</th><th style={thG4}>الإجمالي</th>
+              </tr></thead>
+              <tbody>
+                {rows2.map((r,i)=>{const bg=i%2?"#fafafa":"#fff";return(
+                  <tr key={i} style={{background:bg}}>
+                    <td style={tdSticky(bg)}>{r.name}</td>
+                    <td style={{...td,fontWeight:700,color:"#0d9488"}}>{r.activeN||"—"}</td>
+                    <td style={{...td,fontWeight:700,color:"#d97706"}}>{r.deferN||"—"}</td>
+                    <td style={{...td,fontWeight:700,color:"#6b7280"}}>{r.doneN||"—"}</td>
+                    <td style={td}>{SAR(r.cashAmt)}</td>
+                    <td style={{...td,color:"#7c3aed"}}>{SAR(r.totalAmt)}</td>
+                    <td style={{...td,color:"#059669"}}>{SAR(r.profitAmt)}</td>
+                    <td style={{...td,color:C.green,fontWeight:700}}>{SAR(r.paidAmt)}</td>
+                    <td style={{...td,fontWeight:700,color:r.invCash>=0?"#2563eb":"#dc2626"}}>{SAR(r.invCash)}</td>
+                    <td style={{...td,color:r.remAmt>0?C.red:C.green,fontWeight:800}}>{SAR(r.remAmt)}</td>
+                    <td style={{...td,color:r.overdue>0?"#dc2626":"#9ca3af",fontWeight:r.overdue>0?800:400}}>{SAR(r.overdue)}</td>
+                    <td style={{...td,fontWeight:700}}><div style={{background:"#e5e7eb",borderRadius:6,overflow:"hidden",height:18,position:"relative"}}><div style={{background:r.pct>=80?"#34d399":r.pct>=50?"#fbbf24":"#f87171",height:"100%",width:r.pct+"%",borderRadius:6,transition:"width 0.5s"}}/><span style={{position:"absolute",top:0,right:0,left:0,textAlign:"center",fontSize:11,lineHeight:"18px",fontWeight:800}}>{r.pct}%</span></div></td>
+                    <td style={{...td,fontWeight:900,color:"#581c87"}}>{SAR(r.grand)}</td>
+                  </tr>);})}
+              </tbody>
+              <tfoot><tr style={{background:"#f1f5f9"}}>
+                <td style={{...tdSticky("#f1f5f9"),fontWeight:900}}>المجموع</td>
+                <td style={{...td,fontWeight:900,color:"#0d9488"}}>{sm.activeN}</td>
+                <td style={{...td,fontWeight:900,color:"#d97706"}}>{sm.deferN}</td>
+                <td style={{...td,fontWeight:900,color:"#6b7280"}}>{sm.doneN}</td>
+                <td style={{...td,fontWeight:900}}>{SAR(sm.cashAmt)}</td>
+                <td style={{...td,fontWeight:900,color:"#7c3aed"}}>{SAR(sm.totalAmt)}</td>
+                <td style={{...td,fontWeight:900,color:"#059669"}}>{SAR(sm.profitAmt)}</td>
+                <td style={{...td,fontWeight:900,color:C.green}}>{SAR(sm.paidAmt)}</td>
+                <td style={{...td,fontWeight:900,color:sm.invCash>=0?"#2563eb":"#dc2626"}}>{SAR(sm.invCash)}</td>
+                <td style={{...td,fontWeight:900,color:sm.remAmt>0?C.red:C.green}}>{SAR(sm.remAmt)}</td>
+                <td style={{...td,fontWeight:900,color:sm.overdue>0?"#dc2626":"#9ca3af"}}>{SAR(sm.overdue)}</td>
+                <td style={{...td,fontWeight:900}}>{smPct}%</td>
+                <td style={{...td,fontWeight:900,color:"#581c87"}}>{SAR(sm.grand)}</td>
+              </tr></tfoot>
+            </table>
+          </div>);
+        })()}
       </div>
     </div>
   );
@@ -11978,7 +12029,7 @@ function App() {
         {page==="collect" && <CollectionPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="collect" goBack={()=>setPage("contracts")}/>}
         {page==="overdue" && <CollectionPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="overdue" goBack={()=>setPage("contracts")}/>}
         {page==="contracts" && <ContractsPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={publicPayments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);addPastClientFromContract(c);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
-        {page==="portfolio" && <MonthlyPortfolio contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={publicContracts} investors={publicInvestors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={publicPayments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>}/>}
+        {page==="portfolio" && <MonthlyPortfolio contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={publicContracts} investors={publicInvestors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={publicPayments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>} doneIds={doneIds} txList={invTxList}/>}
         {page==="accounts" && <AccountsPage contracts={privateAccMode?activeContracts:publicContracts} investors={privateAccMode?investors:publicInvestors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={privateAccMode?payments:publicPayments} setPayments={setPayments} setContracts={setContracts} toast={toast} goBack={()=>{setPage(privateAccMode?"dashboard":"contracts");setPrivateAccMode(false);}} privateAccMode={privateAccMode} initialSubTab="inv" gsWrite={gsWrite}/>}
         {page==="investorsList" && <AccountsPage contracts={publicContracts} investors={publicInvestors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={publicPayments} setPayments={setPayments} setContracts={setContracts} toast={toast} goBack={()=>setPage("contracts")} privateAccMode={false} initialSubTab="list" gsWrite={gsWrite}/>}
         {page==="goods" && <GoodsPage investors={publicInvestors} contracts={publicContracts} toast={toast} gsWrite={gsWrite} goBack={()=>setPage("contracts")}/>}
