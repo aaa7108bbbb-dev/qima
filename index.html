@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-21-freeze3-desktop -->
+<!-- build: 2026-08-21-freeze-accounts -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -168,6 +168,16 @@
     table.freeze3 thead th:nth-child(3),
     table.freeze3 tbody td:not([colspan]):nth-child(3) { right: 178px; border-left: 2px solid #c8922a; }
     table.freeze3 tbody tr:hover td:not([colspan]):nth-child(-n+3) { background: #faf6ee; }
+    /* تثبيت عمودين: رقم العقد + الاسم */
+    table.freeze2 thead th:nth-child(-n+2),
+    table.freeze2 tbody td:not([colspan]):nth-child(-n+2) { position: -webkit-sticky; position: sticky; background: inherit; }
+    table.freeze2 thead th:nth-child(-n+2) { z-index: 14; }
+    table.freeze2 tbody td:not([colspan]):nth-child(-n+2) { z-index: 4; }
+    table.freeze2 thead th:nth-child(1),
+    table.freeze2 tbody td:not([colspan]):nth-child(1) { right: 0; width: 58px; min-width: 58px; max-width: 58px; }
+    table.freeze2 thead th:nth-child(2),
+    table.freeze2 tbody td:not([colspan]):nth-child(2) { right: 58px; white-space: nowrap; border-left: 2px solid #c8922a; }
+    table.freeze2 tbody tr:hover td:not([colspan]):nth-child(-n+2) { background: #faf6ee; }
   }
   /* رأس الجدول ثابت: يلتصق بأعلى الشاشة عند تمرير الصفحة وبأعلى الحاوية عند التمرير الداخلي */
   table thead th { position: -webkit-sticky; position: sticky; top: 0; z-index: 5; }
@@ -7339,7 +7349,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
 
               {/* Table */}
               <div style={{overflowX:"auto"}}>
-                <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
+                <table className="freeze2" style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14}}>
                   <thead>
                     {stmtType==="brief" ? (
                       <tr>{["#","العميل","قيمة العقد","الإجمالي","القسط","محصّل","متبقي","الحالة"].map(h=>(
