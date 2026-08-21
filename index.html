@@ -5838,6 +5838,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
       {tab==="ind" && (openMonth ? (
         <MonthDetail ym={openMonth} calcMonth={calcMonth} mLabel={mLabel}
           investors={investors} allC={allC} payments={payments} invLabel={invLabel}
+          doneIds={doneIds} txList={txList} settings={settings}
           isClosed={!!(monthClose&&monthClose[openMonth])}
           onBack={()=>setOpenMonth(null)}
           onClose={()=>{const d=calcMonth(openMonth);setMonthClose(p=>({...(p||{}),[openMonth]:{closedAt:new Date().toISOString(),collected:d.collected,amt:d.tot.amt,profit:d.tot.profit,admin:d.tot.admin,acc:d.tot.acc,inst:d.tot.inst,net:d.tot.net,count:d.count}}));toast("🔒 تم إقفال الشهر");}}
@@ -5928,7 +5929,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
   );
 }
 
-function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen, investors, allC, payments, invLabel}) {
+function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen, investors, allC, payments, invLabel, doneIds, txList, settings}) {
   const d = calcMonth(ym);
   const [cardDetail,setCardDetail] = React.useState(null);
   const [cardOrder,setCardOrder] = React.useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_cardorder")||"null");}catch{return null;}});
