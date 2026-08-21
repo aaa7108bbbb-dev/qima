@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-21-cycleday-softui-1a -->
+<!-- build: 2026-08-21-freeze3-desktop -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -156,6 +156,19 @@
   /* خطوط أفقية فقط — بدون شبكة عمودية (أريح للعين وأوضح للقراءة) */
   table th, table td { border: none; border-bottom: 1px solid #e0d8c6; }
   table tbody tr:hover td { background: #faf6ee; }
+  /* تثبيت التاريخ + رقم العقد + الاسم — على شاشات الكمبيوتر فقط (الجوال ضيّق) */
+  @media (min-width: 1024px) {
+    table.freeze3 thead th:nth-child(-n+3),
+    table.freeze3 tbody td:not([colspan]):nth-child(-n+3) { position: -webkit-sticky; position: sticky; background: inherit; }
+    table.freeze3 tbody td:not([colspan]):nth-child(-n+3) { z-index: 4; }
+    table.freeze3 thead th:nth-child(1),
+    table.freeze3 tbody td:not([colspan]):nth-child(1) { right: 0;     width: 112px; min-width: 112px; max-width: 112px; }
+    table.freeze3 thead th:nth-child(2),
+    table.freeze3 tbody td:not([colspan]):nth-child(2) { right: 112px; width: 66px;  min-width: 66px;  max-width: 66px; }
+    table.freeze3 thead th:nth-child(3),
+    table.freeze3 tbody td:not([colspan]):nth-child(3) { right: 178px; border-left: 2px solid #c8922a; }
+    table.freeze3 tbody tr:hover td:not([colspan]):nth-child(-n+3) { background: #faf6ee; }
+  }
   /* رأس الجدول ثابت: يلتصق بأعلى الشاشة عند تمرير الصفحة وبأعلى الحاوية عند التمرير الداخلي */
   table thead th { position: -webkit-sticky; position: sticky; top: 0; z-index: 5; }
   /* شريط تمرير واضح */
@@ -2343,12 +2356,10 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       </div>
       <div style={{background:"rgba(255,255,255,0.92)",backdropFilter:"blur(12px)",borderRadius:18,border:"1px solid rgba(200,146,42,0.1)",boxShadow:"0 4px 24px rgba(0,0,0,0.04)",overflow:"hidden"}}>
         <div style={{overflowX:"auto",maxHeight:"75vh",overflowY:"auto",position:"relative"}}>
-          <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14}}>
+          <table className="freeze3" style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14}}>
             <thead>
-              <tr>{["#","التاريخ","العميل","الهوية","العمل","الكفيل","البضاعة","العدد","المستثمر","القيمة","الإجمالي","القسط","أول قسط","الربح",""].map((h,hi)=>(
-                <th key={h} style={{...styles.th,position:"sticky",top:0,zIndex:hi===2?12:10,
-                  ...(hi===2?{position:"sticky",right:0,zIndex:12}:{})
-                }}>{h}</th>
+              <tr>{["التاريخ","#","العميل","الهوية","العمل","الكفيل","البضاعة","العدد","المستثمر","القيمة","الإجمالي","القسط","أول قسط","الربح",""].map((h,hi)=>(
+                <th key={h} style={{...styles.th,position:"sticky",top:0,zIndex:hi<3?14:10}}>{h}</th>
               ))}</tr>
             </thead>
             <tbody>
@@ -2361,7 +2372,6 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                 const prev = i>0 ? arr[i-1] : null;
                 const showSep = baseDateC!=="0000-00-00" && isOld && (i===0 || !prev || (prev.date||"9999") >= baseDateC);
                 const bg = isOld ? "#f8fafc" : (i%2===0?C.white:C.gray);
-                const stickyCell = {position:"sticky",right:0,background:bg,zIndex:5,borderLeft:"2px solid "+C.border};
                 return (
                   <React.Fragment key={c.id}>
                     {showSep && (
@@ -2372,9 +2382,9 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                       </tr>
                     )}
                     <tr style={{background:bg,opacity:isOld?0.65:1}}>
-                    <td style={{...styles.td,color:"#1f2937"}}>{c.num||i+1}</td>
                     <td style={{...styles.td,color:"#1f2937"}}>{c.date}</td>
-                    <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",...stickyCell}}><span onClick={()=>setCardModal(c)} style={{color:"#0f1923",cursor:"pointer",textDecoration:"underline",fontWeight:900}}>{c.client}</span></td>
+                    <td style={{...styles.td,color:"#1f2937"}}>{c.num||i+1}</td>
+                    <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}><span onClick={()=>setCardModal(c)} style={{color:"#0f1923",cursor:"pointer",textDecoration:"underline",fontWeight:900}}>{c.client}</span></td>
                     <td style={{...styles.td,color:"#0f1923"}}>{c.idNum||"—"}</td>
                     <td style={styles.td}>{c.job||"—"}</td>
                     <td style={{...styles.td,color:"#0f1923",fontWeight:700,whiteSpace:"nowrap"}}>{c.gName||"—"}</td>
