@@ -303,6 +303,27 @@
   .qimat-top-hero{width:calc(100% - 10px);height:155px;margin:6px auto 7px;border-radius:16px;background-position:center 38%;}
   .qimat-top-hero-badge{right:10px;bottom:9px;font-size:10px;padding:6px 10px;border-radius:10px}
 }
+
+/* الصورة نفسها هي قائمة التنقل — لا يوجد صف تبويبات مكرر */
+.qimat-top-hero{height:auto!important;aspect-ratio:3/2;background-size:100% 100%!important;background-position:center!important;max-height:none!important}
+.qimat-top-hero-badge{display:none!important}
+.qimat-hero-tab{position:absolute;z-index:4;background:transparent;border:0;border-radius:22px;cursor:pointer;padding:0;outline:none;-webkit-tap-highlight-color:transparent;transition:box-shadow .18s ease,transform .18s ease,background .18s ease}
+.qimat-hero-tab:hover{box-shadow:0 0 0 3px rgba(242,209,124,.78),0 0 30px rgba(214,167,62,.38);background:rgba(242,209,124,.035);transform:translateY(-2px)}
+.qimat-hero-tab.active{box-shadow:0 0 0 3px rgba(242,209,124,.95),0 0 36px rgba(214,167,62,.58);background:rgba(242,209,124,.05)}
+.qimat-hero-tab:focus-visible{box-shadow:0 0 0 4px #fff,0 0 0 7px #d6a73e}
+/* مواضع البطاقات مطابقة للصورة الأصلية 1536×1024 */
+.qimat-hero-tab.visits{left:14.8%;top:32.2%;width:13.7%;height:32.8%}
+.qimat-hero-tab.ai{left:29.6%;top:32.2%;width:13.8%;height:32.8%}
+.qimat-hero-tab.portfolio{left:44.5%;top:32.2%;width:13.5%;height:32.8%}
+.qimat-hero-tab.contracts{left:59.1%;top:32.2%;width:14.0%;height:32.8%}
+.qimat-hero-tab.home{left:74.5%;top:32.2%;width:13.5%;height:32.8%}
+.qimat-hero-tab.settings{left:28.9%;top:67.0%;width:21.6%;height:24.0%}
+.qimat-hero-tab.upgrades{left:51.3%;top:67.0%;width:20.4%;height:24.0%}
+@media(max-width:768px){
+ .qimat-top-hero{width:calc(100% - 8px)!important;height:auto!important;aspect-ratio:3/2!important;margin:5px auto 8px!important;border-radius:14px!important;background-size:100% 100%!important}
+ .qimat-hero-tab{border-radius:10px}
+ .qimat-hero-tab:hover{transform:none}
+}
 @media print{.qimat-top-hero{display:none!important}}
 body{background:#faf6ee!important;background-image:none!important;}
 
@@ -11807,8 +11828,14 @@ function App() {
         </div>
       </div>
 
-      <section className="qimat-top-hero noprint" aria-label="واجهة قمة الفرصة">
-        <div className="qimat-top-hero-badge">قمة الفرصة • نحو مستقبل من الفرص والنجاحات</div>
+      <section className="qimat-top-hero noprint" aria-label="قائمة التنقل الرئيسية">
+        <button className={"qimat-hero-tab visits "+(page==="pastclients"?"active":"")} aria-label="الزيارات" title="الزيارات" onClick={()=>setPage("pastclients")}></button>
+        <button className={"qimat-hero-tab ai "+(page==="qimaai"?"active":"")} aria-label="قمة AI" title="قمة AI" onClick={()=>setPage("qimaai")}></button>
+        <button className={"qimat-hero-tab portfolio "+(page==="portfolio"?"active":"")} aria-label="المحفظة الشهرية" title="المحفظة الشهرية" onClick={()=>setPage("portfolio")}></button>
+        <button className={"qimat-hero-tab contracts "+(page==="contracts"?"active":"")} aria-label="العقود" title="العقود" onClick={()=>setPage("contracts")}></button>
+        <button className={"qimat-hero-tab home "+(page==="dashboard"?"active":"")} aria-label="الرئيسية" title="الرئيسية" onClick={()=>setPage("dashboard")}></button>
+        <button className={"qimat-hero-tab settings "+(page==="settings"?"active":"")} aria-label="الإعدادات" title="الإعدادات" onClick={()=>setPage("settings")}></button>
+        <button className={"qimat-hero-tab upgrades "+(page==="upgrades"?"active":"")} aria-label="التطويرات" title="التطويرات" onClick={()=>setPage("upgrades")}></button>
       </section>
 
       {syncStatus==="error" && (
@@ -11817,36 +11844,7 @@ function App() {
         </div>
       )}
 
-      <nav className="noprint" style={{...styles.nav,position:"sticky",top:52,zIndex:100}}>
-        {orderedTabs.map((t,idx)=>{
-          const on = page===t.id;
-          return (
-          <button key={t.id} draggable
-            onDragStart={()=>setDragTab(idx)}
-            onDragOver={e=>e.preventDefault()}
-            onDrop={()=>onTabDrop(idx)}
-            onClick={()=>setPage(t.id)}
-            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"clamp(5px,1.2vw,8px)",
-              padding:"clamp(3px,1vw,7px) 2px",border:"none",cursor:"grab",background:"none",width:"100%",
-              fontFamily:"IBM Plex Sans Arabic,Arial,sans-serif",opacity:dragTab===idx?0.4:1,
-              WebkitTapHighlightColor:"transparent"}}>
-            <div style={{width:"clamp(52px,14vw,78px)",aspectRatio:"1",borderRadius:"clamp(13px,3vw,20px)",
-              background:on?"#000000":"linear-gradient(140deg,#e8c96a,#d4a83a,#c8922a)",
-              display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s",
-              padding:"clamp(11px,2.8vw,17px)",
-              border:on?"2.5px solid #e0b85c":"1px solid #b8862b",
-              boxShadow:on?"0 6px 24px rgba(200,146,42,0.45)":"0 2px 8px rgba(0,0,0,0.12)"}}>
-              <NavIcon id={t.id} on={on}/>
-            </div>
-            <span style={{fontSize:"clamp(12px,3vw,16px)",fontWeight:800,
-              color:on?"#e0b85c":"#c8922a",whiteSpace:"nowrap",lineHeight:1.25,
-              letterSpacing:"0.5px"}}>{t.name}</span>
-            <div style={{width:on?"clamp(14px,3.5vw,20px)":0,height:2.5,borderRadius:2,
-              background:"#e0b85c",transition:"width 0.2s"}}/>
-          </button>
-          );
-        })}
-      </nav>
+      {/* التبويبات السبعة مدمجة داخل الكليشة العلوية نفسها */}
 
       <div style={styles.main}>
         {/* المتعثرون انتقلت لتبويب داخل التحصيل */}
