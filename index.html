@@ -4452,7 +4452,8 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     if(key==="loans") {
       return (loans||[]).reduce((s,l)=>{
         const paid=(l.payments||[]).reduce((ss,p)=>ss+p.amount,0);
-        return s+Math.max(0,(l.amount||0)-paid);
+        const total=(l.amount||0)+((l.additions||[]).reduce((sa,a)=>sa+(a.amount||0),0));
+        return s+Math.max(0,total-paid);
       },0);
     }
     if(key==="zakat")   return (zakatTx||[]).reduce((s,t)=>s+(t.type==="collect"?t.amount:-t.amount),0);
@@ -10837,7 +10838,7 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
   },0);
   const remainingProfit = remaining - remainingCapital;
   // سلف
-  const loansVal = (loans||[]).reduce((s,l)=>{const paid=(l.payments||[]).reduce((ss,p)=>ss+p.amount,0);return s+Math.max(0,(l.amount||0)-paid);},0);
+  const loansVal = (loans||[]).reduce((s,l)=>{const paid=(l.payments||[]).reduce((ss,p)=>ss+p.amount,0);const total=(l.amount||0)+((l.additions||[]).reduce((sa,a)=>sa+(a.amount||0),0));return s+Math.max(0,total-paid);},0);
   // إجمالي الأصول
   const totalAssets = cashBox + cashBank + goodsVal + remaining + loansVal;
   // الفلوس الشغّالة = ذمم + بضاعة
