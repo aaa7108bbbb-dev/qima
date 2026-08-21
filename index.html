@@ -6751,7 +6751,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
               const active=form.type===t.key;
               const dotColor = t.sign>0 ? "#16a34a" : "#dc2626";
               return (
-              <button key={t.key} onClick={()=>set("type",t.key)}
+              <button key={t.key} data-qe-manual="true" onClick={()=>set("type",t.key)}
                 style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:14,fontWeight:700,padding:"14px 10px",borderRadius:8,cursor:"pointer",
                   display:"flex",alignItems:"center",justifyContent:"center",gap:8,
                   height:48,
@@ -6781,7 +6781,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
               {k:"transfer",l:"تحويل",d:"M4 9.4h13.2M14.4 6.6l2.8 2.8-2.8 2.8|M20 14.6H6.8M9.6 11.8 6.8 14.6l2.8 2.8"}].map(ch=>{
               const on = form.channel===ch.k;
               return (
-              <button key={ch.k} onClick={()=>set("channel",ch.k)}
+              <button key={ch.k} data-qe-manual="true" onClick={()=>set("channel",ch.k)}
                 style={{flex:1,fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:14,fontWeight:800,padding:"11px 10px",borderRadius:10,cursor:"pointer",
                   display:"inline-flex",alignItems:"center",justifyContent:"center",gap:7,
                   border:on?"1px solid #b8862b":"1px solid #17324a",
@@ -6907,7 +6907,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
 
       {/* 📲 إرسال ملخص واتساب للمدير */}
       <div style={{marginBottom:16}}>
-        <button style={{width:"100%",justifyContent:"center",fontSize:15.5,padding:"14px",borderRadius:13,fontWeight:800,
+        <button data-qe-manual="true" style={{width:"100%",justifyContent:"center",fontSize:15.5,padding:"14px",borderRadius:13,fontWeight:800,
           border:"none",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:9,
           background:"linear-gradient(145deg,#0b1f33,#0e2b45)",color:"#ffffff",border:"1px solid #17324a",boxShadow:"0 4px 14px rgba(7,23,39,0.25)"}}
           onClick={()=>{
@@ -12253,6 +12253,7 @@ table tbody tr:last-child td{border-bottom:0!important}
    document.querySelectorAll('button:not(.qimat-hero-tab)').forEach(b=>{
      const t=textOf(b);
      b.classList.remove('qe-btn-primary','qe-btn-secondary','qe-btn-ghost','qe-btn-success','qe-btn-danger','qe-btn-info','qe-tab','qe-tab-active');
+     if(b.getAttribute('data-qe-manual')==='true') return;
      if(!t) return;
      if(hasAny(t,['حذف','إلغاء','خروج','إزالة'])) b.classList.add('qe-btn-danger');
      else if(hasAny(t,['اعتماد','تأكيد','حفظ','إرسال','تم السداد','إقفال'])) b.classList.add('qe-btn-success');
