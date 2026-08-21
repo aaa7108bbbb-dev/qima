@@ -10375,16 +10375,25 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
 
   // ─── هيدر مشترك ───
   const Header=({title})=>(
-    React.createElement("div",{style:{background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:16,padding:"16px 18px",marginBottom:16,color:"#141428",border:"1px solid #b8862b"}},
-      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
-        React.createElement("div",{style:{fontSize:11,color:"#141428"}},"\u0642\u0645\u0629 \u0627\u0644\u0641\u0631\u0635\u0629"),
-        React.createElement("div",{style:{fontSize:11,color:"#141428"}},"محصّل الشهر")
-      ),
-      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
-        React.createElement("div",{style:{fontSize:20,fontWeight:900}},title),
-        React.createElement("div",{style:{fontSize:28,fontWeight:900,color:"#141428"}},cntToday)
-      ),
-      sumToday>0 && React.createElement("div",{style:{textAlign:"left",fontSize:13,color:"#141428",fontWeight:700,marginTop:4}},SAR(sumToday)+" ريال")
+    React.createElement("div",{style:{background:"linear-gradient(135deg,#071827 0%,#0b2a43 58%,#123a59 100%)",borderRadius:20,padding:"18px 20px",marginBottom:16,color:"#fff",border:"1px solid rgba(224,184,92,.62)",boxShadow:"0 12px 30px rgba(7,24,39,.18)",position:"relative",overflow:"hidden"}},
+      React.createElement("div",{style:{position:"absolute",inset:0,background:"radial-gradient(circle at 12% 20%,rgba(224,184,92,.18),transparent 30%),linear-gradient(110deg,transparent 55%,rgba(224,184,92,.08))",pointerEvents:"none"}}),
+      React.createElement("div",{style:{position:"relative"}},
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+          React.createElement("div",{style:{fontSize:11.5,color:"#f2d98d",fontWeight:800,letterSpacing:.2}},"قمة الفرصة"),
+          React.createElement("div",{style:{fontSize:11.5,color:"#c9d6e2",fontWeight:700}},"محصّل الدورة")
+        ),
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:12}},
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:22,fontWeight:900,lineHeight:1.15}},title),
+            React.createElement("div",{style:{fontSize:12,color:"#a9bfd0",marginTop:6,fontWeight:600}},"إدارة التحصيل ومتابعة عملاء المستثمر")
+          ),
+          React.createElement("div",{style:{textAlign:"left",minWidth:92}},
+            React.createElement("div",{style:{fontSize:10.5,color:"#9db1c1",fontWeight:700}},"محصّل الدورة"),
+            React.createElement("div",{style:{fontSize:30,fontWeight:900,color:"#f0cf79",lineHeight:1.05}},SAR(sumToday)),
+            React.createElement("div",{style:{fontSize:10.5,color:"#d6e0e8",marginTop:3}},cntToday+" عقد")
+          )
+        )
+      )
     )
   );
 
@@ -10394,7 +10403,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
   if(!selInv){
     return (
       React.createElement("div",{style:{minHeight:"80vh"}},
-        goBack && React.createElement("button",{onClick:goBack,style:{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"1px solid #b8862b",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16}},
+        goBack && React.createElement("button",{onClick:goBack,style:{background:"linear-gradient(145deg,#0b1f33,#0e2b45)",color:"#fff",border:"1px solid rgba(224,184,92,.55)",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16,boxShadow:"0 5px 14px rgba(7,24,39,.12)"}},
           React.createElement("svg",{width:18,height:18,viewBox:"0 0 24 24",fill:"none",stroke:"#141428",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:"M15 18l-6-6 6-6"})),
           "رجوع"
         ),
@@ -10430,25 +10439,39 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
               goCollect:()=>setViewMode("collect"),
               onFlag:(id,val)=>{ setContracts && setContracts(p=>p.map(c=>c.id===id?{...c,defaulter:val}:c)); }})
           : React.createElement(React.Fragment,null,
-              React.createElement("div",{style:{display:"flex",gap:8,marginBottom:14,alignItems:"center",flexWrap:"wrap"}},
-                React.createElement("label",{style:{fontSize:13,fontWeight:700,color:"#374151"}},"📅"),
-                React.createElement("input",{type:"date",value:colDate,onChange:e=>setColDate(e.target.value),style:{...styles.input,width:"auto",flex:1}})
+              React.createElement("div",{style:{display:"flex",gap:10,marginBottom:14,alignItems:"center",background:"#fffdf9",border:"1px solid #e4d7c1",borderRadius:14,padding:"10px 12px",boxShadow:"0 4px 14px rgba(21,37,54,.05)"}},
+                React.createElement("div",{style:{width:34,height:34,borderRadius:10,background:"#0b2439",color:"#f0cf79",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}},"▣"),
+                React.createElement("div",{style:{flex:1}},
+                  React.createElement("div",{style:{fontSize:11,color:"#7b8794",fontWeight:700,marginBottom:3}},"تاريخ التحصيل"),
+                  React.createElement("input",{type:"date",value:colDate,onChange:e=>setColDate(e.target.value),style:{...styles.input,width:"100%",border:"none",padding:0,minHeight:28,boxShadow:"none",fontWeight:800,background:"transparent"}})
+                )
               ),
               invCards.length===0
                 ? React.createElement("div",{style:{...styles.card,textAlign:"center",padding:40,color:"#6b7280"}},"لا يوجد عقود نشطة")
-                : React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
-                    invCards.map(g=>(
+                : React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:12}},
+                    invCards.map((g,gi)=>(
                     React.createElement("div",{key:g.inv.id,onClick:()=>{setSelInv(g.inv);setColSearch("");setExpanded({});},
-                      style:{background:"linear-gradient(140deg,#e8c96a,#d4a83a,#c8922a)",borderRadius:16,padding:"clamp(18px,2.5vw,28px) clamp(16px,2vw,24px)",cursor:"pointer",boxShadow:"0 2px 12px rgba(0,0,0,0.06)",border:"1px solid #b8862b",position:"relative",transition:"transform 0.15s",overflow:"hidden"}},
-                      g.lateCount>0 && React.createElement("span",{style:{position:"absolute",top:10,left:10,background:"#fff",color:"#dc2626",borderRadius:8,padding:"2px 8px",fontSize:11,fontWeight:800,border:"1.5px solid #dc2626"}},g.lateCount+" متأخر"),
-                      React.createElement("div",{style:{fontFamily:"'Amiri','Traditional Arabic',serif",fontSize:"clamp(20px,3vw,30px)",fontWeight:700,color:"#141428",marginBottom:12}},invLabel(g.inv)),
-                      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:4}},
-                        React.createElement("span",{style:{fontSize:"clamp(13px,1.5vw,18px)",color:"#141428",fontWeight:700}},"العقود"),
-                        React.createElement("span",{style:{fontSize:"clamp(16px,2vw,24px)",fontWeight:900,color:"#141428"}},g.items.length)
+                      style:{background:"linear-gradient(150deg,#102d46 0%,#071b2d 78%)",borderRadius:18,padding:"18px 16px",cursor:"pointer",boxShadow:"0 9px 22px rgba(7,24,39,.13)",border:"1px solid rgba(224,184,92,.55)",position:"relative",transition:"transform .15s ease,box-shadow .15s ease",overflow:"hidden",minHeight:160,color:"#fff"}},
+                      React.createElement("div",{style:{position:"absolute",width:86,height:86,borderRadius:"50%",top:-30,right:-22,background:"radial-gradient(circle,rgba(224,184,92,.18),transparent 70%)",pointerEvents:"none"}}),
+                      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:16,position:"relative"}},
+                        React.createElement("div",{style:{width:38,height:38,borderRadius:12,background:"linear-gradient(140deg,#f0cf79,#c8922a)",color:"#081b2b",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:900,boxShadow:"0 5px 12px rgba(200,146,42,.22)"}},String(gi+1)),
+                        g.lateCount>0
+                          ? React.createElement("span",{style:{background:"rgba(220,38,38,.12)",color:"#ffb4b4",borderRadius:999,padding:"4px 9px",fontSize:10.5,fontWeight:900,border:"1px solid rgba(255,180,180,.25)"}},g.lateCount+" متأخر")
+                          : React.createElement("span",{style:{background:"rgba(34,197,94,.10)",color:"#a7f3c1",borderRadius:999,padding:"4px 9px",fontSize:10.5,fontWeight:900,border:"1px solid rgba(167,243,193,.18)"}},"منتظم")
                       ),
-                      React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
-                        React.createElement("span",{style:{fontSize:"clamp(13px,1.5vw,18px)",color:"#141428",fontWeight:700}},"الأقساط"),
-                        React.createElement("span",{style:{fontSize:"clamp(14px,1.8vw,22px)",fontWeight:800,color:"#141428"}},SAR(g.totalInst))
+                      React.createElement("div",{style:{fontFamily:"'Amiri','Traditional Arabic',serif",fontSize:"clamp(19px,2.8vw,27px)",fontWeight:700,color:"#fff",marginBottom:13,lineHeight:1.25,position:"relative"}},invLabel(g.inv)),
+                      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,position:"relative"}},
+                        React.createElement("div",{style:{background:"rgba(255,255,255,.055)",border:"1px solid rgba(255,255,255,.08)",borderRadius:11,padding:"8px 9px"}},
+                          React.createElement("div",{style:{fontSize:10.5,color:"#9fb4c5",fontWeight:700}},"العقود"),
+                          React.createElement("div",{style:{fontSize:18,fontWeight:900,color:"#f0cf79",marginTop:2}},g.items.length)
+                        ),
+                        React.createElement("div",{style:{background:"rgba(255,255,255,.055)",border:"1px solid rgba(255,255,255,.08)",borderRadius:11,padding:"8px 9px"}},
+                          React.createElement("div",{style:{fontSize:10.5,color:"#9fb4c5",fontWeight:700}},"إجمالي الأقساط"),
+                          React.createElement("div",{style:{fontSize:14,fontWeight:900,color:"#fff",marginTop:4}},SAR(g.totalInst))
+                        )
+                      ),
+                      React.createElement("div",{style:{marginTop:11,fontSize:10.5,color:"#a9bfd0",fontWeight:700,display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative"}},
+                        React.createElement("span",null,"عرض العملاء"),React.createElement("span",{style:{color:"#f0cf79",fontSize:16}},"‹")
                       )
                     )
                   ))
@@ -10467,19 +10490,20 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
     React.createElement("div",{style:{minHeight:"80vh"}},
       React.createElement(Header,{title:invLabel(selInv)}),
 
-      React.createElement("button",{onClick:()=>setSelInv(null),style:{...styles.btnGold(),marginBottom:12,fontSize:14,fontWeight:700}},"رجوع"),
-
-      React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,alignItems:"center",flexWrap:"wrap"}},
-        React.createElement("input",{type:"date",value:colDate,onChange:e=>setColDate(e.target.value),style:{...styles.input,width:"auto"}}),
-        React.createElement("input",{placeholder:"🔍 بحث...",value:colSearch,onChange:e=>setColSearch(e.target.value),style:{...styles.input,flex:1}})
+      React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,alignItems:"center"}},
+        React.createElement("button",{onClick:()=>setSelInv(null),style:{background:"linear-gradient(145deg,#0b1f33,#0e2b45)",color:"#fff",border:"1px solid rgba(224,184,92,.55)",borderRadius:12,padding:"10px 15px",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:7,whiteSpace:"nowrap"}},"‹ رجوع"),
+        React.createElement("div",{style:{flex:1,display:"flex",gap:8,background:"#fffdf9",border:"1px solid #e4d7c1",borderRadius:12,padding:"6px 9px"}},
+          React.createElement("input",{type:"date",value:colDate,onChange:e=>setColDate(e.target.value),style:{...styles.input,width:"138px",border:"none",boxShadow:"none",background:"transparent",padding:"6px 4px"}}),
+          React.createElement("input",{placeholder:"ابحث باسم العميل أو الجوال...",value:colSearch,onChange:e=>setColSearch(e.target.value),style:{...styles.input,flex:1,border:"none",boxShadow:"none",background:"transparent",padding:"6px 4px"}})
+        )
       ),
 
       selRows.length===0 && React.createElement("div",{style:{...styles.card,textAlign:"center",padding:30,color:"#6b7280"}},"✅ لا يوجد عقود متبقية"),
 
       // ─── جدول العملاء ───
-      selRows.length>0 && React.createElement("div",{style:{background:"#fff",borderRadius:16,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}},
+      selRows.length>0 && React.createElement("div",{style:{background:"#fffdf9",borderRadius:18,overflow:"hidden",boxShadow:"0 8px 24px rgba(16,34,51,.08)",border:"1px solid #e4d7c1"}},
         // رأس الجدول
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"28px 38px 1fr 90px 60px 30px",padding:"10px 8px",background:"#f8fafc",borderBottom:"2px solid #e5e7eb",fontSize:12,fontWeight:800,color:"#6b7280",gap:2}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"28px 38px 1fr 90px 60px 30px",padding:"10px 8px",background:"linear-gradient(145deg,#0b2439,#081b2d)",borderBottom:"2px solid #c8922a",fontSize:12,fontWeight:800,color:"#fff",gap:2}},
           React.createElement("span",{style:{textAlign:"center"}},"#"),
           React.createElement("span",{style:{textAlign:"center"}},"العقد"),
           React.createElement("span",null,"الاسم"),
@@ -10497,7 +10521,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
           const dotClr=c.lateAmt>0?"#ef4444":pct>=50?"#22c55e":"#f59e0b";
 
           return React.createElement("div",{key:c.id},
-            React.createElement("div",{onClick:()=>toggle(c.id),style:{display:"grid",gridTemplateColumns:"28px 38px 1fr 90px 60px 30px",padding:"10px 8px",alignItems:"center",cursor:"pointer",borderBottom:"1px solid #f1f5f9",background:ci%2===0?"#fff":"#fafbfc",gap:2}},
+            React.createElement("div",{onClick:()=>toggle(c.id),style:{display:"grid",gridTemplateColumns:"28px 38px 1fr 90px 60px 30px",padding:"10px 8px",alignItems:"center",cursor:"pointer",borderBottom:"1px solid #eee3d2",background:ci%2===0?"#fffdf9":"#fbf6ec",gap:2}},
               React.createElement("div",{style:{textAlign:"center",fontSize:13,fontWeight:800,color:"#1f2937"}},(ci+1)),
               React.createElement("div",{style:{textAlign:"center",fontSize:12,fontWeight:800,color:"#1f2937"}},(function(){if(c.num) return c.num; if(c.contractType==="migrated"){var m=String(c.note||"").match(/(\d+)/); if(m) return m[1];} return "—";}())),
               React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
@@ -10512,7 +10536,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
             ),
 
             // ═══ المحتوى الموسّع ═══
-            isExp && React.createElement("div",{style:{background:"#f8fafc",padding:"16px",borderBottom:"2px solid #e5e7eb"}},
+            isExp && React.createElement("div",{style:{background:"linear-gradient(180deg,#fbf7ef,#fffdf9)",padding:"16px",borderBottom:"2px solid #e4d7c1"}},
               // المؤشر الدائري + الأرقام
               React.createElement("div",{style:{display:"flex",alignItems:"center",gap:16,marginBottom:16}},
                 React.createElement(CircleProgress,{pct:pct,size:56,stroke:5}),
@@ -10537,9 +10561,9 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
                 React.createElement("input",{type:"number",placeholder:"المبلغ",value:amtVal,
                   onChange:e=>setColAmts(p=>({...p,[c.id]:e.target.value})),
                   onClick:e=>e.stopPropagation(),
-                  style:{...styles.input,flex:1,minWidth:100,fontWeight:700,fontSize:16,borderColor:"#0d9488",borderWidth:2}}),
+                  style:{...styles.input,flex:1,minWidth:100,fontWeight:700,fontSize:16,borderColor:"#c8922a",borderWidth:1.5,background:"#fff"}}),
                 React.createElement("button",{onClick:e=>{e.stopPropagation();doCollect(c);},
-                  style:{...styles.btn("#0d9488","#fff"),fontSize:14,fontWeight:800,padding:"10px 16px",whiteSpace:"nowrap"}},"💰 سدّد"),
+                  style:{background:"linear-gradient(140deg,#f0cf79,#c8922a)",color:"#111827",border:"1px solid #b8862b",borderRadius:11,fontSize:14,fontWeight:900,padding:"10px 16px",whiteSpace:"nowrap",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"سداد"),
                 React.createElement("button",{onClick:e=>{e.stopPropagation();
                   const amt=parseFloat(colAmts[c.id]||0)||0;
                   if(amt<0){toast("⚠️ مبلغ غير صحيح","warn");return;}
@@ -10548,38 +10572,38 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
                   if(amt>0){setPayments(p=>[...p,{id:Date.now()+Math.floor(Math.random()*1000),contractId:c.id,amount:amt,date:colDate,note:"سداد وإنهاء"}]);}
                   markDone(c.id);setColAmts(p=>{const n={...p};delete n[c.id];return n;});
                   toast("✅ "+c.client+" — تم السداد وإقفال العقد");
-                },style:{...styles.btn("#7c3aed","#fff"),fontSize:13,fontWeight:800,padding:"10px 12px",whiteSpace:"nowrap"}},"📋 سداد وإنهاء")
+                },style:{background:"linear-gradient(145deg,#0b1f33,#0e2b45)",color:"#fff",border:"1px solid rgba(224,184,92,.48)",borderRadius:11,fontSize:13,fontWeight:900,padding:"10px 12px",whiteSpace:"nowrap",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"سداد وإنهاء")
               ),
 
               // سجل السدادات
-              hist.length>0 && React.createElement("div",{style:{background:"#fff",borderRadius:12,border:"3px solid #000",overflow:"hidden"}},
-                React.createElement("div",{style:{background:"linear-gradient(140deg,#e0b85c,#c8922a)",padding:"10px 14px",fontSize:15,fontWeight:900,color:"#fff"}},"📋 السدادات ("+hist.length+")"),
+              hist.length>0 && React.createElement("div",{style:{background:"#fff",borderRadius:14,border:"1px solid #e2d5c0",overflow:"hidden",boxShadow:"0 4px 14px rgba(16,34,51,.05)"}},
+                React.createElement("div",{style:{background:"linear-gradient(145deg,#0b2439,#081b2d)",padding:"10px 14px",fontSize:15,fontWeight:900,color:"#fff",borderBottom:"2px solid #c8922a"}},"📋 السدادات ("+hist.length+")"),
                 React.createElement("table",{style:{width:"100%",borderCollapse:"collapse"}},
                   React.createElement("thead",null,
                     React.createElement("tr",{style:{background:"#f1f5f9"}},
-                      React.createElement("th",{style:{padding:"10px 6px",fontSize:14,fontWeight:900,color:"#000",textAlign:"center",border:"2px solid #000"}},"#"),
-                      React.createElement("th",{style:{padding:"10px 6px",fontSize:14,fontWeight:900,color:"#000",textAlign:"center",border:"2px solid #000"}},"التاريخ"),
-                      React.createElement("th",{style:{padding:"10px 6px",fontSize:14,fontWeight:900,color:"#000",textAlign:"center",border:"2px solid #000"}},"المبلغ"),
-                      React.createElement("th",{style:{padding:"10px 6px",fontSize:14,fontWeight:900,color:"#000",textAlign:"center",border:"2px solid #000"}},"المتبقي"),
-                      React.createElement("th",{style:{padding:"10px 4px",fontSize:14,fontWeight:900,color:"#000",textAlign:"center",border:"2px solid #000"}},"")
+                      React.createElement("th",{style:{padding:"10px 6px",fontSize:14,fontWeight:900,color:"#000",textAlign:"center",border:"1px solid #eadfce"}},"#"),
+                      React.createElement("th",{style:{padding:"10px 6px",fontSize:14,fontWeight:900,color:"#000",textAlign:"center",border:"1px solid #eadfce"}},"التاريخ"),
+                      React.createElement("th",{style:{padding:"10px 6px",fontSize:14,fontWeight:900,color:"#000",textAlign:"center",border:"1px solid #eadfce"}},"المبلغ"),
+                      React.createElement("th",{style:{padding:"10px 6px",fontSize:14,fontWeight:900,color:"#000",textAlign:"center",border:"1px solid #eadfce"}},"المتبقي"),
+                      React.createElement("th",{style:{padding:"10px 4px",fontSize:14,fontWeight:900,color:"#000",textAlign:"center",border:"1px solid #eadfce"}},"")
                     )
                   ),
                   React.createElement("tbody",null,
                     hist.map((p,pi)=>{
                       const running=(c.totalInst||0)-hist.slice(0,pi+1).reduce((s,x)=>s+(+x.amount||0),0);
                       return React.createElement("tr",{key:p.id||pi,style:{background:pi%2===0?"#fff":"#f8fafc"}},
-                        React.createElement("td",{style:{padding:"10px 6px",textAlign:"center",fontWeight:900,fontSize:14,color:"#000",border:"2px solid #000"}},pi+1),
-                        React.createElement("td",{style:{padding:"10px 6px",textAlign:"center",fontWeight:900,fontSize:14,color:"#000",border:"2px solid #000"}},fmtDate(p.date)),
-                        React.createElement("td",{style:{padding:"10px 6px",textAlign:"center",fontWeight:900,fontSize:15,color:"#059669",border:"2px solid #000"}},SAR(p.amount)),
-                        React.createElement("td",{style:{padding:"10px 6px",textAlign:"center",fontWeight:900,fontSize:15,color:Math.max(0,running)>0?"#dc2626":"#059669",border:"2px solid #000"}},SAR(Math.max(0,running))),
-                        React.createElement("td",{style:{padding:"10px 4px",textAlign:"center",border:"2px solid #000"}},
+                        React.createElement("td",{style:{padding:"10px 6px",textAlign:"center",fontWeight:900,fontSize:14,color:"#000",border:"1px solid #eadfce"}},pi+1),
+                        React.createElement("td",{style:{padding:"10px 6px",textAlign:"center",fontWeight:900,fontSize:14,color:"#000",border:"1px solid #eadfce"}},fmtDate(p.date)),
+                        React.createElement("td",{style:{padding:"10px 6px",textAlign:"center",fontWeight:900,fontSize:15,color:"#059669",border:"1px solid #eadfce"}},SAR(p.amount)),
+                        React.createElement("td",{style:{padding:"10px 6px",textAlign:"center",fontWeight:900,fontSize:15,color:Math.max(0,running)>0?"#dc2626":"#059669",border:"1px solid #eadfce"}},SAR(Math.max(0,running))),
+                        React.createElement("td",{style:{padding:"10px 4px",textAlign:"center",border:"1px solid #eadfce"}},
                           React.createElement("button",{onClick:e=>{e.stopPropagation();
                             const v=window.prompt("تعديل مبلغ السداد:",p.amount);
                             if(v===null) return; const n=parseFloat(v);
                             if(isNaN(n)||n<0){toast("⚠️ مبلغ غير صحيح","warn");return;}
                             setPayments(arr=>arr.map(x=>x.id===p.id?{...x,amount:n}:x));
                             toast("✅ تم تعديل السداد");
-                          },style:{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:8,cursor:"pointer",fontSize:13,padding:"4px 10px",color:"#0284c7",fontWeight:700}},"✏️")
+                          },style:{background:"#fff8e8",border:"1px solid #dfc58b",borderRadius:8,cursor:"pointer",fontSize:13,padding:"4px 10px",color:"#8b641b",fontWeight:800}},"✏️")
                         )
                       );
                     })
