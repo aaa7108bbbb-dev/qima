@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-07-26-goods-to-contracts-btn -->
+<!-- build: 2026-08-21-cycle-day-settings -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -466,12 +466,23 @@ function addMonths(dateStr, n) {
   return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 }
 
-// الشهر المالي يبدأ من يوم 21: أي يوم قبل 21 يُحسب على الشهر السابق
-function fiscalYM(dateInput){
+// الشهر المالي: يوم cycleDay (افتراضي 21) — أي يوم قبله يُحسب على الشهر السابق
+function fiscalYM(dateInput, cycleDay){
+  const cd = cycleDay || 21;
   const d = new Date(dateInput);
   const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  if(dd.getDate() < 21){ dd.setMonth(dd.getMonth()-1); }
+  if(dd.getDate() < cd){ dd.setMonth(dd.getMonth()-1); }
   return dd.getFullYear()+"-"+String(dd.getMonth()+1).padStart(2,"0");
+}
+// بداية ونهاية الدورة الحالية بناءً على cycleDay
+function getCycleDates(cycleDay){
+  const cd = cycleDay || 21;
+  const t = new Date(), y = t.getFullYear(), m = t.getMonth(), d = t.getDate();
+  var from, to;
+  if(d >= cd){ from = new Date(y, m, cd); to = new Date(y, m+1, cd-1); }
+  else       { from = new Date(y, m-1, cd); to = new Date(y, m, cd-1); }
+  const fmt = x => x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");
+  return { from:from, to:to, fromStr:fmt(from), toStr:fmt(to) };
 }
 
 function fmtDate(dateStr) {
@@ -3490,8 +3501,9 @@ function DeductionsSheet({contracts, investors, payments}){
 function FundsPanel({investors, contracts, settings, setInvestors, toast}){
   const [editFund,setEditFund] = React.useState(null);
   // عقود الشهر المالي الحالي (لحساب فوائد هذا الشهر)
-  const curYM = fiscalYM(new Date());
-  const mc = contracts.filter(c=>fiscalYM(c.date)===curYM);
+  const _cd = settings.cycleDay||21;
+  const curYM = fiscalYM(new Date(), _cd);
+  const mc = contracts.filter(c=>fiscalYM(c.date, _cd)===curYM);
   return (
     <div>
       <div style={styles.panel}>
@@ -3601,7 +3613,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
     const c = myContracts.find(x=>x.id===p.contractId);
     if(!c) return;
     const d = new Date(p.date);
-    const ym = fiscalYM(d);
+    const ym = fiscalYM(d, settings.cycleDay||21);
     if(!paysByMonth[ym]) paysByMonth[ym]={amount:0, count:0, date:p.date, details:[]};
     if(p.date > paysByMonth[ym].date) paysByMonth[ym].date = p.date;
     paysByMonth[ym].amount += p.amount;
@@ -4145,14 +4157,15 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
 // ─── Monthly Jard ────────────────────────────────────────────
 function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,payments,gsWrite,daily,dailyOpen,bankTx}) {
   const today = new Date();
-  const currentYM = fiscalYM(today);
-  const months = [...new Set(contracts.map(c=>fiscalYM(c.date)))].sort().reverse();
+  const _cd = settings.cycleDay||21;
+  const currentYM = fiscalYM(today, _cd);
+  const months = [...new Set(contracts.map(c=>fiscalYM(c.date, _cd)))].sort().reverse();
   if(!months.includes(currentYM)) months.unshift(currentYM);
   const [selMonth,setSelMonth]=useState(months[0]);
   const [overrides,setOverrides]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_jard_ov")||"{}");}catch{return {};}});
 
   const mLabel=ym=>{const[y,m]=ym.split("-");return"شهر "+parseInt(m)+" - "+y;};
-  const mc = contracts.filter(c=>fiscalYM(c.date)===selMonth);
+  const mc = contracts.filter(c=>fiscalYM(c.date, _cd)===selMonth);
 
   // Goods data for cards balance
   const goodsData = (() => {
@@ -5370,7 +5383,8 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
 function MonthlyPortfolio({contracts, investors, settings, payments, monthClose, setMonthClose, JardComp, toast, BankComp, CashComp, daily, dailyOpen, setDailyOpen}) {
   const [tab, setTab] = React.useState("ind");
   const [openMonth, setOpenMonth] = React.useState(null);
-  const getPeriod = d => fiscalYM(d);
+  const _cd = settings.cycleDay||21;
+  const getPeriod = d => fiscalYM(d, _cd);
   const mLabel = ym => { const [y,m]=ym.split("-"); return "شهر "+parseInt(m)+" - "+y; };
   const allC = contracts.filter(c=>!c.deleted);
   const allMonths = [...new Set(contracts.map(c=>getPeriod(c.date)))].sort().reverse();
@@ -5484,7 +5498,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
 
     // 2) الشهر (الدورة) الحالي حسب السنة المالية
     const nowD = new Date();
-    const curYM = fiscalYM(nowD);
+    const curYM = fiscalYM(nowD, _cd);
     const todayStr = todayLocal();
 
     // تأكيد
@@ -5535,7 +5549,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
     });
 
     // حذف آخر شهر مقفل من الأرشيف
-    const curYM = fiscalYM(new Date());
+    const curYM = fiscalYM(new Date(), _cd);
     setMonthClose(p=>{
       const np = {...(p||{})};
       delete np[curYM];
@@ -5833,8 +5847,9 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
 
 function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dailyOpen,setDailyOpen,toast,setPage,payments,zakatTx,setZakatTx,loans,setLoans,setPrivateAccMode,doneIds}) {
   const [detail,setDetail] = useState(null); // {title, color, rows, mode}
-  // Period: starts 21st of month, ends 20th of next month
-  const getPeriod = (dateStr) => fiscalYM(dateStr);
+  // الدورة المالية: من يوم cycleDay إلى اليوم اللي قبله من الشهر التالي
+  const _cd = settings.cycleDay||21;
+  const getPeriod = (dateStr) => fiscalYM(dateStr, _cd);
   const months=[...new Set(contracts.map(c=>getPeriod(c.date)))].sort().reverse();
   if(!months.length){const now=new Date();months.push(now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0"));}
   const [sel,setSel]=useState(months[0]||"");
@@ -5923,13 +5938,10 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
   const _do = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
   const _base = _do.__base && typeof _do.__base==="object" ? _do.__base : null;
   const cycleStart = _base && _base.date ? _base.date : null; // تاريخ آخر إقفال (بداية الدورة)
-  // تواريخ الدورة: 21 الشهر → 20 الشهر الجاي (مطابق لـ fiscalYM)
-  const cycleFrom = cycleStart ? new Date(cycleStart) : (()=>{
-    const d = new Date(today.getFullYear(), today.getMonth(), 21);
-    if(today.getDate() < 21) d.setMonth(d.getMonth() - 1);
-    return d;
-  })();
-  const cycleTo = new Date(cycleFrom.getFullYear(), cycleFrom.getMonth()+1, 20);
+  // تواريخ الدورة بناءً على cycleDay من الإعدادات
+  const _cyDates = getCycleDates(_cd);
+  const cycleFrom = cycleStart ? new Date(cycleStart) : _cyDates.from;
+  const cycleTo = cycleStart ? new Date(new Date(cycleStart).getFullYear(), new Date(cycleStart).getMonth()+1, new Date(cycleStart).getDate()-1) : _cyDates.to;
   const cycleToStr = cycleTo.getFullYear()+"-"+String(cycleTo.getMonth()+1).padStart(2,"0")+"-"+String(cycleTo.getDate()).padStart(2,"0");
   const arMonths=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
   const fmtCycle = d => d.getDate()+" "+arMonths[d.getMonth()];
@@ -7614,6 +7626,32 @@ function SettingsPage({settings,onSave,toast,exportBackup,importBackup,payments,
             {editingBase && <button style={{...styles.btnGold(),background:"#fff"}} onClick={()=>setEditingBase(false)}>إلغاء</button>}
           </div>
         )}
+      </div>
+
+      {/* 📅 الدورة المالية */}
+      <div style={{...styles.card,marginBottom:16,background:"#f0f4ff",border:"2px solid #6366f1",borderRadius:14}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+          <span style={{fontSize:22}}>📅</span>
+          <span style={{fontSize:16,fontWeight:800,color:"#312e81"}}>الدورة المالية</span>
+        </div>
+        <div style={{fontSize:13,color:"#555",marginBottom:12,lineHeight:1.7}}>
+          حدد يوم بداية الدورة الشهرية — الدورة تبدأ من هذا اليوم وتنتهي اليوم اللي قبله من الشهر التالي.
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+          <div>
+            <label style={{fontSize:13,fontWeight:700,color:"#312e81",display:"block",marginBottom:4}}>يوم بداية الدورة</label>
+            <select style={{...styles.select,width:100,fontWeight:700,fontSize:16,textAlign:"center"}}
+              value={s.cycleDay||21}
+              onChange={e=>{const v=parseInt(e.target.value)||21;const ns={...s,cycleDay:v};setS(ns);onSave(ns);toast("✅ يوم الدورة → "+v);}}>
+              {Array.from({length:28},(_,i)=>i+1).map(d=>(
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{flex:1,background:"#e0e7ff",borderRadius:10,padding:"10px 14px",fontSize:14,fontWeight:700,color:"#312e81"}}>
+            {"من يوم "+(s.cycleDay||21)+" إلى يوم "+((s.cycleDay||21)-1||28)+" من الشهر التالي"}
+          </div>
+        </div>
       </div>
 
       <div style={{...styles.panel,marginBottom:16}}>
@@ -10010,14 +10048,15 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
     })
     .filter(c=>c.left>0);
 
-  // حساب بداية الدورة الحالية (21 ← 20)
+  // حساب بداية الدورة الحالية بناءً على cycleDay
+  var _colCd = settings.cycleDay||21;
   var _td = new Date();
   var _cyStart;
-  if(_td.getDate() >= 21){
-    _cyStart = _td.getFullYear()+"-"+String(_td.getMonth()+1).padStart(2,"0")+"-21";
+  if(_td.getDate() >= _colCd){
+    _cyStart = _td.getFullYear()+"-"+String(_td.getMonth()+1).padStart(2,"0")+"-"+String(_colCd).padStart(2,"0");
   } else {
-    var _pm = new Date(_td.getFullYear(), _td.getMonth()-1, 21);
-    _cyStart = _pm.getFullYear()+"-"+String(_pm.getMonth()+1).padStart(2,"0")+"-21";
+    var _pm = new Date(_td.getFullYear(), _td.getMonth()-1, _colCd);
+    _cyStart = _pm.getFullYear()+"-"+String(_pm.getMonth()+1).padStart(2,"0")+"-"+String(_colCd).padStart(2,"0");
   }
 
   // إحصائيات الدورة (محصّل الشهر)
@@ -10482,7 +10521,7 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
     // fallback: القيمة اليدوية من الجرد
     try{
       const ov=JSON.parse(localStorage.getItem("qimma_jard_ov")||"{}");
-      const ym=fiscalYM(new Date());
+      const ym=fiscalYM(new Date(), settings.cycleDay||21);
       if(ov[ym+"_accounts"]!==undefined) return +ov[ym+"_accounts"]||0;
     }catch{}
     return 0;
