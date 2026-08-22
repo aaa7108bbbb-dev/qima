@@ -585,6 +585,18 @@ button.qhv5-kpi{cursor:pointer}.qhv5-kpi:hover{transform:translateY(-2px);border
 .qimat-home-v5 .qimat-daily-v5>div>button[style*="width: 100%"],.qimat-home-v5 .qimat-daily-v5>div>button[style*="width:\"100%\""]{border:1px solid rgba(212,154,42,.62)!important;background:linear-gradient(145deg,#081e32,#0d304c)!important;color:#f4c65a!important}
 @media(min-width:1200px){.qimat-home-v5{padding:20px 22px}.qhv5-kpis{gap:14px}.qhv5-kpi{min-height:155px}.qimat-home-v5 .qimat-daily-v5{gap:16px}}
 @media(max-width:900px){.qimat-home-v5{padding:10px;border-radius:18px}.qhv5-command{padding:10px;border-radius:17px}.qhv5-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.qhv5-kpi{min-height:112px;border-radius:14px;padding:10px 8px}.qhv5-kpi:nth-child(5){grid-column:1/-1;min-height:94px}.qhv5-kpi strong{font-size:23px}.qhv5-kpi-icon{width:32px;height:32px;font-size:18px}.qhv5-kpi-ring{grid-column:auto}.qhv5-ring{width:62px;height:62px}.qhv5-progress-copy{font-size:11px;gap:5px}.qhv5-progress-copy b{font-size:10.5px}.qimat-home-v5 .qimat-daily-v5{display:block}.qimat-home-v5 .qimat-daily-v5>div:not([style*="position: fixed"]):not([style*="position:fixed"]){margin-bottom:11px!important}}
+/* كشف الحساب: عرض كامل على الكمبيوتر، نوع الحركة يمين والتفاصيل يسار */
+.qimat-home-v5 .qimat-daily-v5>.daily-statement-full{grid-column:1/-1!important;width:100%!important;max-width:none!important;}
+@media(min-width:901px){
+  .daily-statement-full .stmt-side-by-side{display:flex!important;flex-wrap:nowrap!important;width:100%!important;direction:ltr!important;align-items:flex-start!important;}
+  .daily-statement-full .stmt-side-by-side>div:first-child{flex:1 1 72%!important;width:72%!important;max-width:none!important;min-width:0!important;}
+  .daily-statement-full .stmt-side-by-side>.stmt-type-summary{flex:0 0 28%!important;width:28%!important;max-width:28%!important;min-width:300px!important;}
+}
+@media(max-width:900px){
+  .daily-statement-full .stmt-side-by-side{display:block!important;width:100%!important;}
+  .daily-statement-full .stmt-side-by-side>div:first-child,.daily-statement-full .stmt-side-by-side>.stmt-type-summary{width:100%!important;max-width:none!important;min-width:0!important;margin-bottom:12px!important;}
+}
+
 </style>
 
 
@@ -7092,7 +7104,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
       </div>
 
       {/* ═══ كشف حساب شامل ═══ */}
-      <div style={{...styles.panel,marginBottom:16}}>
+      <div className="daily-statement-full" style={{...styles.panel,marginBottom:16}}>
         <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
           <h3 style={{margin:0,fontSize:16,fontWeight:800,display:"flex",alignItems:"center",gap:8}}>
             <svg width="19" height="19" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.6 20.4h16.8"/><path d="M7.2 20.4v-4.6M12 20.4v-8.2M16.8 20.4v-6.4"/></g><circle cx="12" cy="9.2" r="1.35" fill="#141428"/></svg>
@@ -7133,9 +7145,9 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
           </div>
 
           {/* نوع الحركة يمين + التفاصيل يسار على الشاشات الواسعة */}
-          <div className="stmt-side-by-side" style={{display:"flex",direction:"ltr",gap:14,alignItems:"flex-start",flexWrap:"wrap"}}>
+          <div className="stmt-side-by-side" style={{display:"flex",direction:"ltr",gap:14,alignItems:"flex-start",flexWrap:"nowrap",width:"100%"}}>
           {/* 📋 جدول الحركات التفصيلية — مَن وراء كل حركة */}
-          <div style={{...styles.panel,marginBottom:14,boxShadow:"none",border:"1px solid "+C.border,flex:"1 1 620px",minWidth:0,direction:"rtl"}}>
+          <div style={{...styles.panel,marginBottom:14,boxShadow:"none",border:"1px solid "+C.border,flex:"1 1 auto",width:"calc(72% - 7px)",minWidth:0,direction:"rtl"}}>
             <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
               <h4 style={{margin:0,fontSize:15,fontWeight:800}}>
                 📋 التفاصيل {stmtTypeFilter!=="all" ? ("— "+(DAILY_TYPES.find(x=>x.key===stmtTypeFilter)||{}).label) : ""}{_q ? (" — بحث: “"+stmtQuery+"”") : ""}
@@ -7208,7 +7220,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
           </div>
 
           {/* جدول نوع الحركة — يمين التفاصيل */}
-          <div style={{overflowX:"auto",flex:"0 1 360px",minWidth:280,direction:"rtl"}}>
+          <div className="stmt-type-summary" style={{overflowX:"auto",flex:"0 0 calc(28% - 7px)",width:"calc(28% - 7px)",minWidth:300,direction:"rtl"}}>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
               <thead>
                 <tr>{["نوع الحركة","عدد الحركات","الإجمالي"].map(h=>(<th key={h} style={styles.th}>{h}</th>))}</tr>
