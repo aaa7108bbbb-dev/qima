@@ -4700,9 +4700,9 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
   );
 
   return (
-    <div>
+    <div className="qimat-jard-page">
       {/* Month + header */}
-      <div className="noprint" style={{...styles.card,display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}}>
+      <div className="noprint qimat-jard-toolbar" style={{...styles.card,display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}}>
         <label style={{fontWeight:700,fontSize:15,whiteSpace:"nowrap"}}>شهر الجرد:</label>
         <select style={{...styles.select,width:"auto",minWidth:160,borderColor:"#c9bca3",color:"#141428",fontWeight:700,background:"#fef9ef"}}
           value={selMonth} onChange={e=>setSelMonth(e.target.value)}>
@@ -4711,9 +4711,9 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
         <button style={{...styles.btn(C.gold),marginRight:"auto"}} onClick={()=>window.print()}>طباعة</button>
       </div>
 
-      <div style={styles.panel}>
+      <div className="qimat-jard-panel" style={styles.panel}>
         {/* Panel header with totals */}
-        <div style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10,border:"1px solid #b8862b",borderRadius:"12px 12px 0 0"}}>
+        <div className="qimat-jard-summary" style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10,border:"1px solid #b8862b",borderRadius:"12px 12px 0 0"}}>
           <div style={{color:"#141428",fontWeight:900,fontSize:17}}>الجرد — {mLabel(selMonth)}</div>
           <div style={{display:"flex",gap:16,alignItems:"center"}}>
             <div style={{textAlign:"center"}}>
@@ -4736,7 +4736,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
 
         {/* Single unified table */}
         <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
+          <table className="qimat-jard-table" style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
             <thead>
               <tr>
                 <th style={{...thS,width:"45%",textAlign:"right"}}>البند</th>
@@ -5905,6 +5905,20 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
     w.document.close();
   };
 
+  // ═══ لوحة مؤشرات تنفيذية — عرض فقط، لا تغيّر أي بيانات أو حسابات ═══
+  const _indYM = months[0] || null;
+  const _ind = _indYM ? calcMonth(_indYM) : null;
+  const _portfolioTotal = allC.reduce((s,c)=>s+(+c.totalInst||+c.amount||0),0);
+  const _portfolioPaid = (payments||[]).reduce((s,p)=>s+(+p.amount||0),0);
+  const _collectionPct = _portfolioTotal>0 ? Math.min(100,Math.max(0,(_portfolioPaid/_portfolioTotal)*100)) : 0;
+  const _activeCount = allC.filter(c=>Math.max(0,(+c.totalInst||+c.amount||0)-_getPaid(payments,c.id))>0).length;
+  const _doneCount = Math.max(0,allC.length-_activeCount);
+  const _deferCount = allC.filter(c=>c.contractType==="defer").length;
+  const _indProfit = _ind ? _ind.tot.profit : 0;
+  const _indCollected = _ind ? _ind.collected : 0;
+  const _indDue = _ind ? _ind.due : 0;
+  const _indLate = _ind ? _ind.late : 0;
+
   const subTabs=[
     {k:"ind",l:"المؤشرات",icon:'<path d="M3.5 7.5h17v12h-17Z"/><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/>'},
     {k:"jard",l:"الجرد",icon:'<path d="M3.6 7.6h16.8v12H3.6Z"/><path d="M3.6 11.6h16.8M12 7.6v12"/>'},
@@ -5912,12 +5926,12 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
   ];
 
   return (
-    <div style={styles.main}>
-      <div style={{display:"flex",gap:0,marginBottom:16,background:C.white,borderRadius:12,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",width:"fit-content",flexWrap:"wrap"}}>
+    <div className="qimat-portfolio-shell" style={styles.main}>
+      <div className="qimat-portfolio-tabs" style={{display:"flex",gap:0,marginBottom:16,background:C.white,borderRadius:12,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",width:"fit-content",flexWrap:"wrap"}}>
         {subTabs.map(t=>{
           const on = tab===t.k;
           return (
-          <button key={t.k} onClick={()=>{setTab(t.k);setOpenMonth(null);}}
+          <button className={"qimat-portfolio-tab "+(on?"active":"")} key={t.k} onClick={()=>{setTab(t.k);setOpenMonth(null);}}
             style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:700,padding:"11px 18px",border:"none",cursor:"pointer",background:on?"linear-gradient(140deg,#e0b85c,#c8922a)":C.white,color:on?"#141428":C.ink2,whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:7,transition:"all .15s"}}>
             <svg width="17" height="17" viewBox="0 0 24 24"><g fill="none" stroke={on?"#e0b85c":"#8b93a7"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{__html:t.icon}}/></svg>
             {t.l}</button>
@@ -5933,8 +5947,42 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
           onReopen={()=>{if(window.confirm("فتح الشهر المقفل؟")){setMonthClose(p=>{const n={...(p||{})};delete n[openMonth];return n;});toast("🔓 تم فتح الشهر");}}}
         />
       ) : (
-        <div style={styles.panel}>
-          <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+        <div className="qimat-indicators-wrap">
+          <section className="qimat-indicator-cockpit" aria-label="ملخص مؤشرات المحفظة">
+            <div className="qic-kpis">
+              <div className="qic-kpi"><span>إجمالي المتبقي</span><strong>{SAR(totalRemaining)}</strong><small>ريال سعودي</small></div>
+              <div className="qic-kpi"><span>إجمالي العقود</span><strong>{allC.length}</strong><small>{_activeCount} عقد نشط</small></div>
+              <div className="qic-kpi"><span>المحصّل الكلي</span><strong>{SAR(_portfolioPaid)}</strong><small>{_collectionPct.toFixed(1)}% نسبة التحصيل</small></div>
+              <div className="qic-kpi"><span>أرباح أحدث دورة</span><strong>{SAR(_indProfit)}</strong><small>{_indYM?mLabel(_indYM):"لا توجد دورة"}</small></div>
+              <div className="qic-kpi"><span>المتعثر / المتأخر</span><strong className="danger">{SAR(_indLate)}</strong><small>{_deferCount} عقد مؤجل</small></div>
+            </div>
+            <div className="qic-analytics">
+              <div className="qic-chart-card">
+                <h3>نسبة التحصيل</h3>
+                <div className="qic-ring" style={{"--p":_collectionPct.toFixed(1)}}><div><strong>{_collectionPct.toFixed(1)}%</strong><span>تحصيل كلي</span></div></div>
+                <div className="qic-pairs"><span>المحصّل <b>{SAR(_portfolioPaid)}</b></span><span>المتبقي <b>{SAR(totalRemaining)}</b></span></div>
+              </div>
+              <div className="qic-chart-card">
+                <h3>حالة العقود</h3>
+                <div className="qic-bars">
+                  <div><span>نشطة</span><i><em style={{width:(allC.length?(_activeCount/allC.length*100):0)+"%"}}></em></i><b>{_activeCount}</b></div>
+                  <div><span>منتهية</span><i><em className="green" style={{width:(allC.length?(_doneCount/allC.length*100):0)+"%"}}></em></i><b>{_doneCount}</b></div>
+                  <div><span>مؤجلة</span><i><em className="red" style={{width:(allC.length?(_deferCount/allC.length*100):0)+"%"}}></em></i><b>{_deferCount}</b></div>
+                </div>
+              </div>
+              <div className="qic-chart-card">
+                <h3>أحدث دورة</h3>
+                <div className="qic-latest">
+                  <div><span>المحصّل</span><b className="green">{SAR(_indCollected)}</b></div>
+                  <div><span>المستحق</span><b>{SAR(_indDue)}</b></div>
+                  <div><span>المتأخر</span><b className="red">{SAR(_indLate)}</b></div>
+                  <div><span>عدد العقود</span><b>{_ind?_ind.count:0}</b></div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <div className="qimat-indicators-panel" style={styles.panel}>
+          <div className="qimat-indicators-head" style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
             <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink,display:"flex",alignItems:"center",gap:8}}>
               <svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.5 7.5h17v12h-17Z"/><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/></g></svg>
               مؤشرات المحفظة الشهرية</h2>
@@ -5953,11 +6001,11 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
           </div>
           <div style={{padding:14}}>
             <div style={{fontSize:13,color:"#6b7280",marginBottom:10}}>اضغط أي شهر لعرض تفاصيله الكاملة</div>
-            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            <div className="qimat-month-list" style={{display:"flex",flexDirection:"column",gap:10}}>
               {months.map(ym=>{
                 const d=calcMonth(ym); const closed=!!(monthClose&&monthClose[ym]);
                 return (
-                  <div key={ym} onClick={()=>setOpenMonth(ym)}
+                  <div className={"qimat-month-card "+(closed?"closed":"")} key={ym} onClick={()=>setOpenMonth(ym)}
                     style={{cursor:"pointer",border:"1px solid "+C.border,borderRadius:12,padding:14,background:closed?"#f0fdf4":"#fff",borderRight:"4px solid "+(closed?C.green:"#c8922a")}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:6}}>
                       <div style={{fontSize:16,fontWeight:900,color:C.ink}}>{mLabel(ym)} {closed&&<span style={{fontSize:12,background:C.green,color:"#fff",borderRadius:10,padding:"2px 10px",marginRight:6}}>مقفل</span>}</div>
@@ -5977,6 +6025,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
               {months.length===0 && <div style={{textAlign:"center",padding:30,color:"#1f2937"}}>لا توجد بيانات</div>}
             </div>
           </div>
+        </div>
         </div>
       ))}
 
@@ -12440,5 +12489,14 @@ table tbody tr:last-child td{border-bottom:0!important}
 @media(max-width:1100px){.contracts-kpi-strip{grid-template-columns:repeat(3,minmax(0,1fr))}.qimat-contract-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(max-width:700px){.contracts-dashboard-page{padding:9px!important;border-radius:16px}.contracts-kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.contracts-kpi{min-height:84px;padding:10px}.contracts-kpi strong{font-size:18px}.contracts-dashboard-heading{align-items:stretch;flex-direction:column}.contracts-dashboard-balance{text-align:right;min-width:0}.qimat-contract-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}.qimat-contract-module{min-height:138px!important;padding:11px 9px!important;grid-template-columns:28px 38px minmax(0,1fr) 21px!important;gap:6px!important;border-radius:14px!important}.qcm-index{width:27px!important;height:25px!important;font-size:9px!important}.qcm-icon{width:37px!important;height:37px!important;border-radius:10px!important;font-size:19px!important}.qcm-copy strong{font-size:13.5px!important}.qcm-copy small{display:none!important}.qcm-arrow{width:20px!important;height:20px!important;font-size:15px!important}.qcm-stats{margin-top:7px!important;padding-top:7px!important;gap:4px!important}.qcm-stats b{font-size:11px!important}.qcm-stats b i{font-size:7.5px!important}}
 @media(max-width:390px){.contracts-kpi-strip{grid-template-columns:1fr 1fr}.qimat-contract-module-grid{grid-template-columns:1fr 1fr!important}.qcm-stats{grid-template-columns:1fr 1fr!important}.qcm-stats b:nth-child(3){display:none!important}}
+</style>
+
+<style id="qimat-portfolio-jard-luxury-v1">
+.qimat-portfolio-shell{--qp-navy:#071b2d;--qp-navy2:#0d304d;--qp-gold:#d39d31;--qp-gold2:#f3d37f;--qp-line:rgba(229,181,77,.42)}
+.qimat-portfolio-tabs{width:min(100%,920px)!important;margin:12px auto 22px!important;border:1px solid var(--qp-line)!important;background:linear-gradient(135deg,#081c2e,#0c2b45)!important;border-radius:18px!important;box-shadow:0 14px 32px rgba(4,21,36,.18)!important}.qimat-portfolio-tab{flex:1 1 210px!important;min-height:58px!important;justify-content:center!important;background:transparent!important;color:#fff!important;border-left:1px solid rgba(243,211,127,.12)!important;font-size:16px!important}.qimat-portfolio-tab svg *{stroke:#f0c766!important}.qimat-portfolio-tab.active{background:linear-gradient(135deg,#f0c96e,#c99027)!important;color:#081b2c!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 6px 18px rgba(199,142,39,.28)!important}.qimat-portfolio-tab.active svg *{stroke:#081b2c!important}
+.qimat-indicators-wrap{display:flex;flex-direction:column;gap:16px}.qimat-indicator-cockpit{background:linear-gradient(145deg,#061725,#0a263d 58%,#0d304a);border:1px solid rgba(226,174,61,.72);border-radius:22px;padding:18px;box-shadow:0 18px 42px rgba(5,22,37,.23),inset 0 1px 0 rgba(255,255,255,.05);color:#fff}.qic-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.qic-kpi{background:linear-gradient(160deg,rgba(255,255,255,.055),rgba(255,255,255,.015));border:1px solid rgba(239,198,103,.38);border-radius:16px;padding:16px 14px;text-align:center;min-height:118px;display:flex;flex-direction:column;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}.qic-kpi span{font-size:12px;color:#c7d3de;font-weight:700}.qic-kpi strong{font-size:clamp(20px,2vw,30px);color:#f3cc6b;margin:8px 0 4px;font-weight:900}.qic-kpi small{font-size:11px;color:#9eb0c0}.qic-kpi .danger{color:#ff6b66}.qic-analytics{display:grid;grid-template-columns:1.05fr 1fr 1fr;gap:12px;margin-top:14px}.qic-chart-card{background:rgba(3,16,28,.48);border:1px solid rgba(239,198,103,.32);border-radius:16px;padding:16px}.qic-chart-card h3{margin:0 0 14px;color:#f0c766!important;font-size:16px}.qic-ring{--p:0;position:relative;width:152px;height:152px;border-radius:50%;margin:4px auto 12px;background:conic-gradient(#e4aa38 calc(var(--p)*1%),#17354d 0);display:grid;place-items:center;box-shadow:0 0 0 1px rgba(239,198,103,.28)}.qic-ring:before{content:"";width:112px;height:112px;border-radius:50%;background:#071b2d;position:absolute}.qic-ring>div{position:relative;z-index:1;text-align:center;display:flex;flex-direction:column}.qic-ring strong{font-size:28px;color:#f3cc6b}.qic-ring span{font-size:11px;color:#9eb0c0}.qic-pairs{display:grid;grid-template-columns:1fr 1fr;gap:8px}.qic-pairs span,.qic-latest>div{background:#0c2a43;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:9px;color:#bfcbd7;font-size:11px}.qic-pairs b{display:block;color:#fff;margin-top:4px;font-size:13px}.qic-bars{display:flex;flex-direction:column;gap:15px}.qic-bars>div{display:grid;grid-template-columns:52px 1fr 35px;gap:8px;align-items:center;font-size:12px;color:#d6dee6}.qic-bars i{height:9px;background:#132f47;border-radius:99px;overflow:hidden}.qic-bars em{display:block;height:100%;background:linear-gradient(90deg,#d8a035,#f0cf79);border-radius:99px}.qic-bars em.green{background:linear-gradient(90deg,#137c52,#31b875)}.qic-bars em.red{background:linear-gradient(90deg,#a62e35,#e55359)}.qic-bars b{text-align:center;color:#fff}.qic-latest{display:grid;grid-template-columns:1fr 1fr;gap:9px}.qic-latest span{display:block;color:#aebcca;margin-bottom:5px}.qic-latest b{font-size:15px;color:#f3cc6b}.qic-latest .green{color:#45c986}.qic-latest .red{color:#ff6868}.qimat-indicators-panel{border:1px solid rgba(213,160,54,.33)!important;border-radius:18px!important;overflow:hidden!important;box-shadow:0 12px 30px rgba(13,33,50,.09)!important}.qimat-indicators-head{background:linear-gradient(90deg,#fffdf9,#fbf3e3)!important;border-bottom:1px solid #ead8b6!important}.qimat-month-list{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}.qimat-month-card{background:linear-gradient(145deg,#fff,#fbf6ed)!important;border:1px solid #e4d2b2!important;border-right:4px solid #d39d31!important;box-shadow:0 8px 20px rgba(16,31,45,.06)!important;transition:.18s ease!important}.qimat-month-card:hover{transform:translateY(-2px);box-shadow:0 12px 25px rgba(16,31,45,.10)!important}.qimat-month-card.closed{background:linear-gradient(145deg,#f7fff9,#eefaf2)!important;border-right-color:#1b9a63!important}
+.qimat-jard-page{--qj-navy:#071b2d;--qj-navy2:#0e304d;--qj-gold:#d39d31;--qj-gold2:#f0cf79}.qimat-jard-toolbar{background:linear-gradient(145deg,#071b2d,#0d304c)!important;border:1px solid rgba(240,207,121,.55)!important;color:#fff!important;border-radius:17px!important;box-shadow:0 12px 28px rgba(5,22,37,.20)!important;padding:14px 16px!important}.qimat-jard-toolbar label{color:#f2d17a!important}.qimat-jard-toolbar select{background:#0b2740!important;color:#fff!important;border:1px solid rgba(240,207,121,.55)!important}.qimat-jard-panel{border:1px solid rgba(240,207,121,.48)!important;border-radius:20px!important;overflow:hidden!important;box-shadow:0 16px 38px rgba(5,22,37,.16)!important;background:#071b2d!important}.qimat-jard-summary{background:linear-gradient(135deg,#c88922,#e9b84a 56%,#b87b19)!important;padding:18px 22px!important;border:0!important;border-radius:0!important}.qimat-jard-summary>div:first-child{font-size:20px!important}.qimat-jard-summary>div:last-child{gap:10px!important}.qimat-jard-summary>div:last-child>div{background:rgba(7,27,45,.92)!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:12px!important;padding:10px 16px!important}.qimat-jard-summary>div:last-child>div div:first-child{color:#e8dcbf!important}.qimat-jard-summary>div:last-child>div div:nth-child(2){color:#f2cf75!important}.qimat-jard-table{background:#071b2d!important;color:#fff!important}.qimat-jard-table thead th{background:linear-gradient(180deg,#10324f,#081d30)!important;color:#f1cb6d!important;border-bottom:2px solid #c8922a!important}.qimat-jard-table tbody td{background:#0a2339!important;color:#f4f6f8!important;border-bottom:1px solid rgba(240,207,121,.12)!important}.qimat-jard-table tbody tr:nth-child(even) td{background:#0c2942!important}.qimat-jard-table tbody tr:hover td{background:#123654!important}.qimat-jard-table tbody tr td:first-child{color:#fff!important}.qimat-jard-table input{background:#071b2d!important;color:#fff!important}
+@media(max-width:900px){.qic-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.qic-analytics{grid-template-columns:1fr}.qimat-month-list{grid-template-columns:1fr!important}.qimat-portfolio-tabs{width:100%!important;border-radius:14px!important}.qimat-portfolio-tab{flex:1 1 30%!important;min-width:0!important;padding:10px 8px!important;font-size:13px!important}.qimat-jard-summary{align-items:stretch!important}.qimat-jard-summary>div:last-child{display:grid!important;grid-template-columns:1fr 1fr 1fr!important;width:100%}.qimat-jard-summary>div:last-child>div{padding:9px 6px!important}.qimat-jard-panel{border-radius:15px!important}.qic-kpi{min-height:96px;padding:12px 9px}.qic-kpi strong{font-size:21px}.qic-ring{width:135px;height:135px}.qic-ring:before{width:98px;height:98px}}
+@media(max-width:520px){.qic-kpis{grid-template-columns:1fr 1fr}.qic-kpi:last-child{grid-column:1/-1}.qimat-indicator-cockpit{padding:11px;border-radius:16px}.qimat-portfolio-tab{font-size:12px!important}.qimat-portfolio-tab svg{display:none}.qimat-jard-toolbar{gap:8px!important}.qimat-jard-toolbar button{width:100%!important;margin:0!important}.qimat-jard-toolbar select{flex:1!important;min-width:0!important}}
 </style>
 </body></html>
