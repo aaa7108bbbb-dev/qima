@@ -2439,7 +2439,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
 
       {/* ═══ Investor Report — Premium Card ═══ */}
       <div style={{background:"rgba(255,255,255,0.9)",backdropFilter:"blur(12px)",borderRadius:18,marginBottom:16,padding:"18px 20px",border:"1px solid #e0d8c6",boxShadow:"0 4px 24px rgba(0,0,0,0.04)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,paddingBottom:10,borderBottom:"2px solid rgba(200,146,42,0.15)"}}>
+        <div className="q-contracts-report-heading" style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,paddingBottom:10,borderBottom:"2px solid rgba(200,146,42,0.15)"}}>
           <svg width="18" height="18" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-4-4"/></g></svg>
           <span className="q-contracts-report-title" style={{fontSize:17,fontWeight:900,color:"#141428"}}>كشف المستثمر</span>
         </div>
@@ -2633,7 +2633,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         {filterInv && <button style={{padding:"8px 12px",borderRadius:10,border:"none",background:"#fee2e2",color:"#dc2626",fontWeight:800,fontSize:14,cursor:"pointer"}} onClick={()=>setFilterInv("")}>✕</button>}
       </div>
       <div style={{marginBottom:16}}>
-        <div style={{fontSize:13,fontWeight:700,color:"#4a5568",marginBottom:8}}>اختار نوع العقود:</div>
+        <div className="q-contracts-type-label" style={{fontSize:13,fontWeight:700,color:"#4a5568",marginBottom:8}}>اختار نوع العقود:</div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
         {[
           {id:"active",label:"مستمرة",count:activeCount},
@@ -2643,12 +2643,12 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         ].map(t=>{
           const on = statusTab===t.id;
           return (
-          <button key={t.id} onClick={()=>setStatusTab(t.id)} style={{padding:"10px 20px",borderRadius:10,
+          <button key={t.id} type="button" data-qe-manual="true" aria-pressed={on} className={"q-contracts-status-tab "+(on?"is-active":"")} onClick={()=>setStatusTab(t.id)} style={{padding:"10px 20px",borderRadius:10,
             border:on?"1px solid #b8862b":"1px solid #b8862b",
             background:on?"linear-gradient(140deg,#e0b85c,#c8922a)":"#fff",
             cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6,transition:"all 0.15s"}}>
-            <span style={{fontSize:15,fontWeight:900,color:"#141428"}}>{t.label}</span>
-            <span style={{fontSize:14,fontWeight:800,color:on?"#141428":"#64748b"}}>({t.count})</span>
+            <span className="q-contracts-status-label" style={{fontSize:15,fontWeight:900,color:"#141428"}}>{t.label}</span>
+            <span className="q-contracts-status-count" style={{fontSize:14,fontWeight:800,color:on?"#141428":"#64748b"}}>({t.count})</span>
           </button>
         );})}
         </div>
@@ -14044,6 +14044,64 @@ body .contracts-lux .q-contract-action:hover{
 }
 @media (prefers-reduced-motion:reduce){
   body .contracts-lux .q-contract-action{transition:none!important}
+}
+</style>
+<!-- ═══ QIMAT CONTRACTS · TARGETED TEXT CONTRAST v5 ═══ -->
+<style id="qimat-contracts-contrast-v5">
+/* العناصر التي ظهرت باهتة على Safari والجوال — لا تغيير خارج هذا القسم */
+body .contracts-lux .q-contracts-report-heading,
+body .contracts-lux .q-contracts-list-title,
+body .contracts-lux .q-contracts-type-label,
+body .contracts-lux button.q-contracts-status-tab{
+  opacity:1!important;filter:none!important;
+}
+body .contracts-lux .q-contracts-report-title{
+  color:#071d30!important;-webkit-text-fill-color:#071d30!important;
+  opacity:1!important;font-size:21px!important;font-weight:900!important;text-shadow:none!important;
+}
+body .contracts-lux .q-contracts-report-heading>svg *{
+  stroke:#9b6c18!important;opacity:1!important;
+}
+body .contracts-lux .q-contracts-list-title-main{
+  color:#071d30!important;-webkit-text-fill-color:#071d30!important;
+  opacity:1!important;font-weight:900!important;text-shadow:none!important;
+}
+body .contracts-lux .q-contracts-list-title-count{
+  color:#40566a!important;-webkit-text-fill-color:#40566a!important;
+  opacity:1!important;font-weight:900!important;
+}
+body .contracts-lux .q-contracts-type-label{
+  color:#243e54!important;-webkit-text-fill-color:#243e54!important;
+  opacity:1!important;font-size:14.5px!important;font-weight:900!important;
+}
+body .contracts-lux button.q-contracts-status-tab{
+  min-height:43px!important;padding:10px 20px!important;
+  background:#fffdf9!important;color:#102a40!important;
+  border:1.5px solid #b8862b!important;box-shadow:0 3px 10px rgba(18,38,58,.05)!important;
+}
+body .contracts-lux button.q-contracts-status-tab .q-contracts-status-label{
+  color:#102a40!important;-webkit-text-fill-color:#102a40!important;
+  opacity:1!important;font-size:15.5px!important;font-weight:900!important;text-shadow:none!important;
+}
+body .contracts-lux button.q-contracts-status-tab .q-contracts-status-count{
+  color:#3d566b!important;-webkit-text-fill-color:#3d566b!important;
+  opacity:1!important;font-size:14.5px!important;font-weight:900!important;text-shadow:none!important;
+}
+body .contracts-lux button.q-contracts-status-tab.is-active{
+  background:linear-gradient(140deg,#e4bc61,#c8922a)!important;
+  color:#0b2235!important;border-color:#a87520!important;
+  box-shadow:0 6px 15px rgba(168,117,32,.19)!important;
+}
+body .contracts-lux button.q-contracts-status-tab.is-active .q-contracts-status-label,
+body .contracts-lux button.q-contracts-status-tab.is-active .q-contracts-status-count{
+  color:#0b2235!important;-webkit-text-fill-color:#0b2235!important;opacity:1!important;
+}
+@media (max-width:700px){
+  body .contracts-lux .q-contracts-report-title{font-size:20px!important}
+  body .contracts-lux .q-contracts-type-label{font-size:14px!important}
+  body .contracts-lux button.q-contracts-status-tab{padding:9px 17px!important}
+  body .contracts-lux button.q-contracts-status-tab .q-contracts-status-label{font-size:15px!important}
+  body .contracts-lux button.q-contracts-status-tab .q-contracts-status-count{font-size:14px!important}
 }
 </style>
 <script id="qimat-full-enterprise-ui-behavior">
