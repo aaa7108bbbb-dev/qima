@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-21-totals-light -->
+<!-- build: 2026-08-22-home-desktop-v15 -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -544,6 +544,37 @@ h1,h2,h3,h4{color:#10263a;letter-spacing:-.15px}h2,h3{font-weight:850!important}
 /* accessibility/reduced motion */
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 @media print{button{box-shadow:none!important}.qimat-top-hero{display:none!important}table thead th{background:#eee!important;color:#000!important}}
+</style>
+
+
+<style id="qimat-home-pixelmatch-v14">
+:root{--qm0:#020a11;--qm1:#03131f;--qm2:#061a2a;--qm3:#09283f;--qgold:#d49c28;--qgold2:#efbd4f;--qline:rgba(212,156,40,.46);--qtext:#f6f4ec;--qmuted:#9daab4;--qgreen:#54c95c;--qred:#ff4b4b}
+body{background:linear-gradient(180deg,#020911,#03131f 48%,#020911)!important}
+.qimat-home-v5.qimat-home-v6{color:var(--qtext)!important;background:transparent!important}
+.qimat-home-v6 .daily-entry-panel,.qimat-home-v6 .daily-today-panel,.qimat-home-v6 .daily-summary-grid>div,.qimat-home-v6 .daily-management-grid>div,.qimat-home-v6 .daily-statement-full{background:linear-gradient(155deg,var(--qm2),var(--qm1))!important;border:1px solid var(--qline)!important;color:var(--qtext)!important;box-shadow:0 8px 22px rgba(0,0,0,.18)!important}
+.qimat-home-v6 .daily-entry-panel>div:first-child,.qimat-home-v6 .daily-today-panel>div:first-child,.qimat-home-v6 .daily-statement-full>div:first-child{background:linear-gradient(180deg,var(--qm3),#061927)!important;border-bottom:1px solid rgba(212,156,40,.28)!important;color:var(--qgold2)!important}
+.qimat-home-v6 input,.qimat-home-v6 select,.qimat-home-v6 textarea{background:#061826!important;color:var(--qtext)!important;border-color:rgba(212,156,40,.35)!important}.qimat-home-v6 input::placeholder,.qimat-home-v6 textarea::placeholder{color:#7e8b96!important}
+.qimat-home-v6 table,.qhome-investor-contracts table{width:100%!important;border-collapse:collapse!important}.qimat-home-v6 th,.qhome-investor-contracts th{background:linear-gradient(180deg,#0b2d47,#061725)!important;color:var(--qgold2)!important;border-bottom:1px solid rgba(212,156,40,.54)!important}.qimat-home-v6 td,.qhome-investor-contracts td{background:#061b2d!important;color:#edf1f3!important;border-bottom:1px solid rgba(212,156,40,.13)!important}
+
+/* investor/contracts module */
+.qhome-investor-contracts{background:linear-gradient(155deg,var(--qm2),var(--qm1));border:1px solid var(--qline);border-radius:13px;overflow:hidden;box-shadow:0 10px 25px rgba(0,0,0,.18);color:var(--qtext)}
+.qhome-investor-head{padding:13px 16px 10px;border-bottom:1px solid rgba(212,156,40,.22)}.qhome-investor-head h3{margin:0 0 10px;color:var(--qgold2);font-size:18px}.qhome-investor-tools{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.qhome-investor-tools select,.qhome-contracts-filters input,.qhome-contracts-filters select{height:42px;border-radius:8px;border:1px solid rgba(212,156,40,.38);background:#061826;color:var(--qtext);padding:0 12px;font-family:inherit;font-weight:700;outline:none}.qhome-view-switch{display:flex;border:1px solid rgba(212,156,40,.35);border-radius:8px;overflow:hidden}.qhome-view-switch button{height:40px;min-width:92px;border:0;background:#071b2b;color:#a7b2bb;font-family:inherit;font-weight:800}.qhome-view-switch button.active{background:linear-gradient(145deg,#dda93e,#b77a16);color:#07131e}
+.qhome-contracts-title{display:flex;align-items:center;gap:8px;padding:12px 16px 5px;color:var(--qgold2)}.qhome-contracts-title b{font-size:17px}.qhome-contracts-title span{font-size:11px;color:#b7c0c7}.qhome-contracts-filters{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 16px}.qhome-type-tabs{display:flex;gap:7px;justify-content:flex-start;padding:0 16px 10px;flex-wrap:wrap}.qhome-type-tabs button{height:35px;padding:0 14px;border-radius:8px;border:1px solid rgba(212,156,40,.4);background:#071b2b;color:#e8ebed;font-family:inherit;font-weight:800;cursor:pointer}.qhome-type-tabs button.active{background:linear-gradient(145deg,#dda93e,#b77a16);color:#07131e;border-color:#e9bd52}.qhome-contracts-tablewrap{padding:0 16px 5px;overflow-x:auto}.qhome-investor-contracts th,.qhome-investor-contracts td{padding:9px 10px;font-size:12px}.qhome-contracts-foot{display:flex;align-items:center;justify-content:space-between;padding:9px 16px 12px;border-top:1px solid rgba(212,156,40,.18);color:#aeb9c1}.qhome-contracts-foot b{color:var(--qgold2)}.qhome-contracts-foot button{border:1px solid rgba(212,156,40,.58);background:transparent;color:var(--qgold2);border-radius:8px;padding:7px 12px;font-family:inherit;font-weight:900;cursor:pointer}
+
+@media (min-width:1000px){
+  .qimat-home-v5.qimat-home-v6{width:min(calc(100% - 28px),1600px)!important;max-width:1600px!important;margin:0 auto!important;padding:10px 0 24px!important;display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:10px!important}.qimat-home-v6>.qhv6-daily,.qimat-home-v6>.qhv6-daily>.qimat-daily-v5{display:contents!important}
+  .qimat-top-hero{width:min(calc(100% - 28px),1600px)!important;max-width:1600px!important;height:185px!important;min-height:185px!important;max-height:185px!important;margin:9px auto!important;border-radius:15px!important;background:radial-gradient(circle at 50% -45%,rgba(24,76,108,.28),transparent 47%),linear-gradient(135deg,#020a12,#041a2b 58%,#051421)!important;background-image:radial-gradient(circle at 50% -45%,rgba(24,76,108,.28),transparent 47%),linear-gradient(135deg,#020a12,#041a2b 58%,#051421)!important;border:1px solid rgba(212,156,40,.55)!important;box-shadow:0 14px 34px rgba(0,0,0,.3)!important}.qimat-hero-quote{display:none!important}.qimat-hero-brand-live{top:9px!important;left:26%!important;right:26%!important;background:transparent!important;box-shadow:none!important}.qimat-hero-brand-title{font-size:29px!important;color:var(--qgold2)!important}.qimat-hero-brand-sub{font-size:11px!important;color:#d9a63b!important}
+  .qimat-hero-tab{top:auto!important;bottom:8px!important;height:68px!important;width:calc((100% - 48px)/7)!important;border-radius:9px!important;background:linear-gradient(180deg,#08243a,#041522)!important;border:1px solid rgba(212,156,40,.4)!important}.qimat-hero-tab.home{right:8px!important;left:auto!important}.qimat-hero-tab.contracts{right:calc(8px + (100% - 48px)/7 + 5px)!important;left:auto!important}.qimat-hero-tab.portfolio{right:calc(8px + 2*((100% - 48px)/7 + 5px))!important;left:auto!important}.qimat-hero-tab.ai{right:calc(8px + 3*((100% - 48px)/7 + 5px))!important;left:auto!important}.qimat-hero-tab.visits{right:calc(8px + 4*((100% - 48px)/7 + 5px))!important;left:auto!important}.qimat-hero-tab.upgrades{right:calc(8px + 5*((100% - 48px)/7 + 5px))!important;left:auto!important}.qimat-hero-tab.settings{right:calc(8px + 6*((100% - 48px)/7 + 5px))!important;left:auto!important}.qimat-hero-tab.active{border-color:#efbd4f!important;box-shadow:0 0 0 1px rgba(239,189,79,.45),0 0 20px rgba(212,156,40,.2)!important}
+  .qimat-home-v6>.qhv5-command{grid-column:1/9!important;grid-row:1!important;width:100%!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}.qimat-home-v6 .qhv5-cycle{width:56%!important;max-width:560px!important;min-height:31px!important;margin:0 auto 7px!important;background:#07151f!important;border:1px solid rgba(212,156,40,.5)!important;border-radius:7px!important;color:var(--qgold2)!important}.qimat-home-v6 .qhv5-kpis{display:grid!important;grid-template-columns:1.15fr 1.2fr 1.2fr .95fr .85fr!important;gap:7px!important}.qimat-home-v6 .qhv5-kpi{min-height:106px!important;padding:8px!important;border-radius:10px!important;background:linear-gradient(160deg,#08263d,#041522)!important;border:1px solid rgba(212,156,40,.44)!important}.qimat-home-v6 .qhv5-kpi-icon{background:transparent!important;color:var(--qgold2)!important;box-shadow:none!important}.qimat-home-v6 .qhv5-kpi strong{color:var(--qgold2)!important;font-size:23px!important}.qimat-home-v6 .qhv5-kpi small{color:#d9dee2!important}.qimat-home-v6 .qhv5-kpi em{color:#9aa6b0!important}.qimat-home-v6 .qhv5-ring{width:68px!important;height:68px!important}.qimat-home-v6 .qhv5-progress-row{margin-top:6px!important;background:#03131f!important;border:1px solid rgba(212,156,40,.25)!important;border-radius:7px!important}
+  .qimat-home-v6 .daily-entry-panel{grid-column:9/13!important;grid-row:1/4!important;width:100%!important;height:100%!important;margin:0!important;border-radius:12px!important;overflow:hidden!important}.qimat-home-v6 .daily-today-panel{grid-column:1/5!important;grid-row:2/4!important;width:100%!important;height:100%!important;margin:0!important}.qimat-home-v6 .daily-summary-grid{grid-column:5/9!important;grid-row:2!important;width:100%!important;margin:0!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}.qimat-home-v6 .daily-management-grid{grid-column:5/9!important;grid-row:3!important;width:100%!important;margin:0!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}.qimat-home-v6 .daily-summary-grid>div,.qimat-home-v6 .daily-management-grid>div{min-height:76px!important}
+  .qimat-home-v6 .daily-statement-full{grid-column:1/9!important;grid-row:4!important;width:100%!important;margin:0!important;border-radius:12px!important;overflow:hidden!important}.qimat-home-v6 .daily-send-summary{position:relative!important;grid-column:9/13!important;grid-row:4!important;width:100%!important;height:100%!important;margin:0!important;padding:12px!important;border-radius:12px!important;background:linear-gradient(155deg,var(--qm2),var(--qm1))!important;border:1px solid var(--qline)!important;display:flex!important;align-items:flex-end!important}.qimat-home-v6 .daily-send-summary:before{content:"إرسال ملخص اليوم للمدير";position:absolute;top:12px;right:14px;color:var(--qgold2);font-size:15px;font-weight:900}.qimat-home-v6 .daily-send-summary button{width:100%!important;min-height:42px!important;background:linear-gradient(145deg,#dda93e,#b77a16)!important;color:#07131e!important;border-radius:8px!important}
+  .qhome-investor-contracts{grid-column:1/13!important;grid-row:5!important;width:100%!important;margin:0!important}
+  .qimat-home-v6 .daily-statement-full .stmt-side-by-side{display:grid!important;grid-template-columns:minmax(0,72fr) minmax(260px,28fr)!important;direction:ltr!important;gap:8px!important}.qimat-home-v6 .daily-statement-full .stmt-side-by-side>div:first-child{grid-column:1!important;width:100%!important;min-width:0!important;direction:rtl!important}.qimat-home-v6 .daily-statement-full .stmt-type-summary{grid-column:2!important;width:100%!important;min-width:0!important;direction:rtl!important}
+  .qimat-home-v6 th,.qimat-home-v6 td{padding:6px 7px!important;font-size:10.5px!important}.qimat-home-v6 *{min-inline-size:0}
+}
+@media (max-width:999px){
+  body{background:#020b13!important}.qimat-home-v5.qimat-home-v6{width:100%!important;max-width:none!important;padding:7px!important;background:#020b13!important}.qimat-home-v6>.qhv5-command{background:transparent!important;border:0!important;padding:0!important}.qimat-home-v6 .qhv5-cycle{background:#07151f!important;color:var(--qgold2)!important;border:1px solid rgba(212,156,40,.5)!important}.qimat-home-v6 .qhv5-kpi{background:linear-gradient(160deg,#08263d,#041522)!important;border:1px solid rgba(212,156,40,.43)!important;color:var(--qtext)!important}.qimat-home-v6 .qhv5-kpi strong{color:var(--qgold2)!important}.qimat-home-v6 .qhv5-kpi small,.qimat-home-v6 .qhv5-kpi em{color:#b9c2c9!important}.qimat-home-v6 .qhv5-progress-row{background:#03131f!important;border:1px solid rgba(212,156,40,.25)!important}.qimat-home-v6 .daily-entry-panel,.qimat-home-v6 .daily-today-panel,.qimat-home-v6 .daily-summary-grid,.qimat-home-v6 .daily-management-grid,.qimat-home-v6 .daily-send-summary,.qimat-home-v6 .daily-statement-full,.qhome-investor-contracts{width:100%!important;max-width:none!important;margin:0 0 8px!important}.qimat-home-v6 .daily-statement-full .stmt-side-by-side{display:flex!important;flex-direction:column!important;direction:rtl!important;gap:8px!important}.qimat-home-v6 .daily-statement-full .stmt-side-by-side>div:first-child,.qimat-home-v6 .daily-statement-full .stmt-type-summary{width:100%!important;max-width:none!important}.qhome-investor-head h3{font-size:16px}.qhome-investor-tools,.qhome-contracts-filters{grid-template-columns:1fr!important}.qhome-view-switch{width:100%}.qhome-view-switch button{flex:1}.qhome-type-tabs{overflow-x:auto;flex-wrap:nowrap;justify-content:flex-start;padding-bottom:11px}.qhome-type-tabs button{white-space:nowrap;flex:0 0 auto}.qhome-contracts-tablewrap{overflow-x:auto}.qhome-investor-contracts table{min-width:600px!important}
+}
 </style>
 </head>
 <body>
@@ -6176,6 +6207,9 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
   const [homeInvId,setHomeInvId] = useState("");
   const [homeSearch,setHomeSearch] = useState("");
   const [homeContractType,setHomeContractType] = useState("active");
+  const [homePerPage,setHomePerPage] = useState(10);
+  const [homePage,setHomePage] = useState(1);
+  const [homeView,setHomeView] = useState("full");
   // الدورة المالية: من يوم cycleDay إلى اليوم اللي قبله من الشهر التالي
   const _cd = settings.cycleDay||21;
   const getPeriod = (dateStr) => fiscalYM(dateStr, _cd);
@@ -6201,6 +6235,20 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
     const src = type==="deleted" ? contracts.filter(c=>c.deleted) : allC;
     return src.filter(c=> type==="active" ? (!_homeDone(c)&&c.contractType!=="defer") : type==="done" ? _homeDone(c) : type==="defer" ? c.contractType==="defer" : type==="deleted" ? !!c.deleted : true).length;
   };
+  // ترقيم صفحات جدول العقود في الرئيسية
+  const homeTotalPages = Math.max(1, Math.ceil(homePreviewRows.length / homePerPage));
+  const homeCurPage = Math.min(homePage, homeTotalPages);
+  const homePagedRows = homePreviewRows.slice((homeCurPage-1)*homePerPage, homeCurPage*homePerPage);
+  const homePageList = (()=>{
+    const t = homeTotalPages, c = homeCurPage, out = [];
+    if(t<=6){ for(let i=1;i<=t;i++) out.push(i); return out; }
+    out.push(1);
+    if(c>3) out.push("…");
+    for(let i=Math.max(2,c-1); i<=Math.min(t-1,c+1); i++) out.push(i);
+    if(c<t-2) out.push("…");
+    out.push(t);
+    return out;
+  })();
   // ١. المحصّل هذا الشهر: مجموع الدفعات اللي تقع فترتها المالية = الشهر المختار
   const collectedThisMonth = (payments||[]).filter(p=>p.date && getPeriod(p.date)===sel).reduce((s,p)=>s+(+p.amount||0),0);
   // ٢. إجمالي المتبقي على الزبائن: (إجمالي كل عقد − المحصّل منه)
@@ -6365,24 +6413,32 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
       <section className="qhv5-command" aria-label="ملخص الدورة">
         <div className="qhv5-cycle"><span>دورة الشهر</span><strong>{cycleLabel}</strong><span className="qhv5-cal">▣</span></div>
         <div className="qhv5-kpis">
+          <button type="button" className="qhv5-kpi qhv5-kpi-alert" onClick={()=>setPage&&setPage("overdue")}>
+            <span className="qhv5-kpi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3.8 2.6 20.2h18.8Z"/><path d="M12 10v4.2"/><circle cx="12" cy="17.4" r=".9" fill="currentColor" stroke="none"/></svg>
+            </span><small>المتعثرون</small><strong>{troubled.length}</strong><em>عميل</em>
+          </button>
+          <div className="qhv5-kpi qhv5-kpi-ring">
+            <span className="qhv5-ring" style={{'--pct':donePct}}><b>{donePct}%</b></span><small>نسبة الإنجاز</small>
+          </div>
+          <div className="qhv5-kpi">
+            <span className="qhv5-kpi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3.2 8.6A2.4 2.4 0 0 1 5.6 6.2h13.2a1.8 1.8 0 0 1 1.8 1.8v9a1.8 1.8 0 0 1-1.8 1.8H5.6a2.4 2.4 0 0 1-2.4-2.4Z"/><path d="M3.2 8.6V7.2a2 2 0 0 1 2-2h11.4"/><circle cx="16.6" cy="12.9" r="1.15" fill="currentColor" stroke="none"/></svg>
+            </span><small>باقي الأقساط</small><strong>{SARf(remAmount)}</strong><em>{remCount} باقي قسط</em>
+          </div>
           <button type="button" className="qhv5-kpi" onClick={()=>setDetail({mode:"target"})}>
-            <span className="qhv5-kpi-icon">◎</span><small>أقساط الشهر</small><strong>{SARf(targetAmount)}</strong><em>{targetCount} قسط</em>
+            <span className="qhv5-kpi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>
+            </span><small>أقساط الشهر</small><strong>{SARf(targetAmount)}</strong><em>{targetCount} قسط</em>
           </button>
           <button type="button" className="qhv5-kpi" onClick={()=>setDetail({mode:"done"})}>
-            <span className="qhv5-kpi-icon">♛</span><small>المنجز منها</small><strong>{SARf(doneAmount)}</strong><em>{doneCount} قسط</em>
-          </button>
-          <div className="qhv5-kpi">
-            <span className="qhv5-kpi-icon">◫</span><small>باقي الأقساط</small><strong>{SARf(remAmount)}</strong><em>{remCount} قسط</em>
-          </div>
-          <div className="qhv5-kpi qhv5-kpi-ring">
-            <span className="qhv5-ring" style={{'--pct':donePct}}><b>{donePct}%</b></span><small>نسبة الإنجاز</small><em>من هدف الدورة</em>
-          </div>
-          <button type="button" className="qhv5-kpi qhv5-kpi-alert" onClick={()=>setPage&&setPage("overdue")}>
-            <span className="qhv5-kpi-icon">!</span><small>المتعثرون</small><strong>{troubled.length}</strong><em>عميل</em>
+            <span className="qhv5-kpi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M8.2 20.6h7.6"/><path d="M12 16.4v4.2"/><path d="M7 3.9h10v4.7a5 5 0 0 1-10 0Z"/><path d="M7 5.2H4.2v1.7a3 3 0 0 0 3 3"/><path d="M17 5.2h2.8v1.7a3 3 0 0 1-3 3"/></svg>
+            </span><small>المنجز منها</small><strong>{SARf(doneAmount)}</strong><em>{doneCount} قسط</em>
           </button>
         </div>
         <div className="qhv5-progress-row">
-          <div className="qhv5-progress-copy"><strong>{donePct}%</strong><span>من هدف الدورة</span><b>باقي {remCount} قسط · {SARf(remAmount)}</b></div>
+          <div className="qhv5-progress-copy"><span>من هدف الدورة</span><strong>{donePct}%</strong><b>باقي {remCount} قسط · {SARf(remAmount)}</b></div>
           <div className="qhv5-progress"><i style={{width:Math.min(100,donePct)+"%"}}></i></div>
         </div>
       </section>
@@ -6505,47 +6561,88 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
       {/* كشف المستثمر + العقود في الرئيسية — واجهة عرض/تصفية فقط */}
       <section className="qhome-investor-contracts" aria-label="كشف المستثمر والعقود">
         <div className="qhome-investor-head">
-          <h3>كشف المستثمر <span>⌕</span></h3>
+          <div className="qhome-head-row">
+            <span className="qhome-head-contracts">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3.4h8.4L18.6 7.6V20.6H6Z"/><path d="M14.2 3.4v4.4h4.4"/><path d="M9 12.6h6M9 16.2h6"/></svg>
+              <b>العقود</b><i>{homePreviewRows.length} عقد</i>
+            </span>
+            <h3>
+              كشف المستثمر
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="6.4"/><path d="m19.6 19.6-3.9-3.9"/></svg>
+            </h3>
+          </div>
           <div className="qhome-investor-tools">
-            <select value={homeInvId} onChange={e=>setHomeInvId(e.target.value)}>
-              <option value="">-- اختر المستثمر --</option>
-              {sortedInvestors(investors).map(iv=><option key={iv.id} value={iv.id}>{invLabel(iv)}</option>)}
+            <label className="qhome-search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="6.4"/><path d="m19.6 19.6-3.9-3.9"/></svg>
+              <input value={homeSearch} onChange={e=>{setHomeSearch(e.target.value);setHomePage(1);}} placeholder="بحث بالاسم..." />
+            </label>
+            <select value={homeInvId} onChange={e=>{setHomeInvId(e.target.value);setHomePage(1);}}>
+              <option value="">كل المستثمرين</option>
+              {sortedInvestors(investors).map(iv=><option key={"hf_"+iv.id} value={iv.id}>{invLabel(iv)}</option>)}
             </select>
-            <div className="qhome-view-switch"><button className="active">مفصل</button><button>مختصر</button></div>
+            <select value={homeInvId} onChange={e=>{setHomeInvId(e.target.value);setHomePage(1);}}>
+              <option value="">-- اختر المستثمر --</option>
+              {sortedInvestors(investors).map(iv=><option key={"hs_"+iv.id} value={iv.id}>{invLabel(iv)}</option>)}
+            </select>
           </div>
         </div>
 
-        <div className="qhome-contracts-title"><b>العقود</b><span>{homePreviewRows.length} عقد</span></div>
-        <div className="qhome-contracts-filters">
-          <input value={homeSearch} onChange={e=>setHomeSearch(e.target.value)} placeholder="بحث بالاسم..." />
-          <select value={homeInvId} onChange={e=>setHomeInvId(e.target.value)}>
-            <option value="">كل المستثمرين</option>
-            {sortedInvestors(investors).map(iv=><option key={"hf_"+iv.id} value={iv.id}>{invLabel(iv)}</option>)}
-          </select>
-        </div>
+        <div className="qhome-contracts-title"><span>اختار نوع العقود:</span></div>
         <div className="qhome-type-tabs">
-          <button className={homeContractType==="active"?"active":""} onClick={()=>setHomeContractType("active")}>مستمرة ({homeTypeCount("active")})</button>
-          <button className={homeContractType==="done"?"active":""} onClick={()=>setHomeContractType("done")}>منتهية ({homeTypeCount("done")})</button>
-          <button className={homeContractType==="defer"?"active":""} onClick={()=>setHomeContractType("defer")}>المؤجل ({homeTypeCount("defer")})</button>
-          <button className={homeContractType==="deleted"?"active":""} onClick={()=>setHomeContractType("deleted")}>محذوفة ({homeTypeCount("deleted")})</button>
+          <button className={homeContractType==="active"?"active":""} onClick={()=>{setHomeContractType("active");setHomePage(1);}}>مستمرة ({homeTypeCount("active")})</button>
+          <button className={homeContractType==="done"?"active":""} onClick={()=>{setHomeContractType("done");setHomePage(1);}}>منتهية ({homeTypeCount("done")})</button>
+          <button className={homeContractType==="defer"?"active":""} onClick={()=>{setHomeContractType("defer");setHomePage(1);}}>المؤجل ({homeTypeCount("defer")})</button>
+          <button className={homeContractType==="deleted"?"active":""} onClick={()=>{setHomeContractType("deleted");setHomePage(1);}}>محذوفة ({homeTypeCount("deleted")})</button>
+          <div className="qhome-view-switch">
+            <button className={homeView==="full"?"active":""} onClick={()=>setHomeView("full")}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3.4h8.4L18.6 7.6V20.6H6Z"/><path d="M14.2 3.4v4.4h4.4"/></svg>
+              مفصل</button>
+            <button className={homeView==="brief"?"active":""} onClick={()=>setHomeView("brief")}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3.4h8.4L18.6 7.6V20.6H6Z"/><path d="M14.2 3.4v4.4h4.4"/></svg>
+              مختصر</button>
+          </div>
         </div>
 
         <div className="qhome-contracts-tablewrap">
           <table>
-            <thead><tr><th>التاريخ</th><th>#</th><th>العميل</th><th>الهوية</th></tr></thead>
+            <thead><tr>
+              <th><span className="qhome-th-date">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3.6" y="5" width="16.8" height="15.4" rx="2.2"/><path d="M3.6 9.6h16.8M8.4 3.2v3.6M15.6 3.2v3.6"/></svg>
+                التاريخ</span></th>
+              <th>#</th><th>العميل</th>{homeView==="full" && <th>الهوية</th>}<th className="qhome-th-act"></th>
+            </tr></thead>
             <tbody>
-              {homePreviewRows.slice(0,9).map(c=>(
-                <tr key={"homec_"+c.id} onClick={()=>setPage&&setPage("contracts")} style={{cursor:"pointer"}}>
-                  <td>{c.date||"—"}</td><td>{c.num||"—"}</td><td>{c.client||"—"}</td><td>{c.idNum||"—"}</td>
+              {homePagedRows.map(c=>(
+                <tr key={"homec_"+c.id}>
+                  <td>{c.date||"—"}</td><td>{c.num||"—"}</td><td>{c.client||"—"}</td>
+                  {homeView==="full" && <td>{c.idNum||"—"}</td>}
+                  <td className="qhome-td-act">
+                    <button type="button" title="فتح صفحة العقود" onClick={()=>setPage&&setPage("contracts")}>•••</button>
+                  </td>
                 </tr>
               ))}
-              {homePreviewRows.length===0 && <tr><td colSpan="4" style={{textAlign:"center"}}>لا توجد عقود مطابقة</td></tr>}
+              {homePreviewRows.length===0 && <tr><td colSpan={homeView==="full"?5:4} style={{textAlign:"center"}}>لا توجد عقود مطابقة</td></tr>}
             </tbody>
           </table>
         </div>
         <div className="qhome-contracts-foot">
-          <span>عرض <b>{Math.min(9,homePreviewRows.length)}</b> من <b>{homePreviewRows.length}</b> عقد</span>
-          <button type="button" onClick={()=>setPage&&setPage("contracts")}>فتح صفحة العقود ←</button>
+          <div className="qhome-foot-show">
+            <span>عرض</span>
+            <select value={homePerPage} onChange={e=>{setHomePerPage(+e.target.value);setHomePage(1);}}>
+              <option value={10}>10</option><option value={25}>25</option><option value={50}>50</option>
+            </select>
+            <span>من {homePreviewRows.length} عقد</span>
+          </div>
+          <div className="qhome-pager">
+            <button type="button" disabled={homeCurPage<=1} onClick={()=>setHomePage(1)}>«</button>
+            <button type="button" disabled={homeCurPage<=1} onClick={()=>setHomePage(homeCurPage-1)}>‹</button>
+            {homePageList.map((p,i)=> p==="…"
+              ? <span key={"gap"+i} className="qhome-pg-gap">…</span>
+              : <button key={"pg"+p} type="button" className={p===homeCurPage?"active":""} onClick={()=>setHomePage(p)}>{p}</button>
+            )}
+            <button type="button" disabled={homeCurPage>=homeTotalPages} onClick={()=>setHomePage(homeCurPage+1)}>›</button>
+            <button type="button" disabled={homeCurPage>=homeTotalPages} onClick={()=>setHomePage(homeTotalPages)}>»</button>
+          </div>
         </div>
       </section>
 
@@ -6870,24 +6967,25 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
       <div className="daily-entry-panel" style={{...styles.panel,marginBottom:16}}>
         <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
           <h3 style={{margin:0,fontSize:16,fontWeight:800,display:"flex",alignItems:"center",gap:8}}>
-            <svg width="19" height="19" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h13v16H7a2 2 0 0 1-2-2Z"/><path d="M5 17h13"/></g><circle cx="9" cy="8.5" r="1.3" fill="#141428"/></svg>
+            <svg width="19" height="19" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3.6" y="5" width="16.8" height="15.4" rx="2.2"/><path d="M3.6 9.6h16.8M8.4 3.2v3.6M15.6 3.2v3.6"/></g></svg>
             دفتر اليومية</h3>
-          <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-            <div style={{display:"flex",alignItems:"center",gap:6,background:"#fff",border:"2px solid "+C.gold,borderRadius:10,padding:"6px 12px",boxShadow:"0 2px 6px rgba(0,0,0,0.08)"}}>
-              <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M8 3v4M16 3v4"/></g></svg>
-              <input type="date" style={{border:"none",outline:"none",fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:700,color:C.ink,background:"transparent",cursor:"pointer"}} value={selDay} onChange={e=>setSelDay(e.target.value)}/>
-            </div>
-            <button style={{...styles.btnGold(),fontSize:15,padding:"8px 16px",borderRadius:10}} onClick={()=>printDailyReport(selDay,dayRows,openingBalance,closingBalance,sumByType)}>طباعة اليوم</button>
-            {isPastDay && <span style={{background:"#fef2f2",color:"#dc2626",padding:"6px 12px",borderRadius:8,fontSize:13,fontWeight:700}}>🔒 يوم مقفل</span>}
-          </div>
         </div>
         <div style={{padding:"14px 18px"}}>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:12}}>
+          <div className="qdaily-daterow" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap",marginBottom:12}}>
+            <span className="qdaily-datelabel" style={{fontSize:14,fontWeight:800}}>تاريخ اليوم</span>
+            <div className="qdaily-datebox" style={{display:"flex",alignItems:"center",gap:6,background:"#fff",border:"2px solid "+C.gold,borderRadius:10,padding:"6px 12px",boxShadow:"0 2px 6px rgba(0,0,0,0.08)"}}>
+              <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M8 3v4M16 3v4"/></g></svg>
+              <input type="date" style={{border:"none",outline:"none",fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:700,color:C.ink,background:"transparent",cursor:"pointer"}} value={selDay} onChange={e=>setSelDay(e.target.value)}/>
+            </div>
+            <button className="qdaily-printday" style={{...styles.btnGold(),fontSize:14,padding:"7px 14px",borderRadius:10}} onClick={()=>printDailyReport(selDay,dayRows,openingBalance,closingBalance,sumByType)}>طباعة اليوم</button>
+            {isPastDay && <span style={{background:"#fef2f2",color:"#dc2626",padding:"6px 12px",borderRadius:8,fontSize:13,fontWeight:700}}>🔒 يوم مقفل</span>}
+          </div>
+          <div className="qdaily-types" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:12}}>
             {DAILY_TYPES.map(t=>{
               const active=form.type===t.key;
               const dotColor = t.sign>0 ? "#16a34a" : "#dc2626";
               return (
-              <button key={t.key} data-qe-manual="true" onClick={()=>set("type",t.key)}
+              <button key={t.key} data-qe-manual="true" className={"qdt"+(active?" on":"")} onClick={()=>set("type",t.key)}
                 style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:14,fontWeight:700,padding:"14px 10px",borderRadius:8,cursor:"pointer",
                   display:"flex",alignItems:"center",justifyContent:"center",gap:8,
                   height:48,
@@ -6901,23 +6999,23 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
               </button>
             );})}
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:12}}>
+          <div className="qdaily-fields" style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:12}}>
             <div>
               <label style={{fontSize:15,fontWeight:800,color:"#141428",display:"block",marginBottom:5}}>المبلغ (ر.س)</label>
-              <input style={styles.input} type="number" placeholder="مثال: 1000" value={form.amount} onChange={e=>set("amount",e.target.value)}/>
+              <input style={styles.input} type="number" placeholder="المبلغ (ر.س)" value={form.amount} onChange={e=>set("amount",e.target.value)}/>
             </div>
             <div>
               <label style={{fontSize:15,fontWeight:800,color:"#141428",display:"block",marginBottom:5}}>الوصف / الاسم</label>
-              <input style={styles.input} type="text" placeholder="اسم الشخص أو نوع المصروف" value={form.desc} onChange={e=>set("desc",e.target.value)}/>
+              <input style={styles.input} type="text" placeholder="اسم الشخص / نوع البند" value={form.desc} onChange={e=>set("desc",e.target.value)}/>
             </div>
           </div>
           {/* نقدي أو تحويل */}
-          <div style={{display:"flex",gap:8,marginBottom:12}}>
+          <div className="qdaily-channel" style={{display:"flex",gap:8,marginBottom:12}}>
             {[{k:"cash",l:"نقدي",d:"M3.6 6.8h16.8v10.4H3.6Z|M8.4 12h.01M15.6 12h.01"},
               {k:"transfer",l:"تحويل",d:"M4 9.4h13.2M14.4 6.6l2.8 2.8-2.8 2.8|M20 14.6H6.8M9.6 11.8 6.8 14.6l2.8 2.8"}].map(ch=>{
               const on = form.channel===ch.k;
               return (
-              <button key={ch.k} data-qe-manual="true" onClick={()=>set("channel",ch.k)}
+              <button key={ch.k} data-qe-manual="true" className={"qdc"+(on?" on":"")} onClick={()=>set("channel",ch.k)}
                 style={{flex:1,fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:14,fontWeight:800,padding:"11px 10px",borderRadius:10,cursor:"pointer",
                   display:"inline-flex",alignItems:"center",justifyContent:"center",gap:7,
                   border:on?"1.5px solid #a97316":"1.5px solid #c8922a",
@@ -6931,7 +7029,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
               </button>);
             })}
           </div>
-          <button onClick={addRow}
+          <button className="qdaily-add" onClick={addRow}
             style={{width:"100%",padding:"14px",borderRadius:12,border:"1px solid #b8862b",cursor:"pointer",
               background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",
               fontSize:15,fontWeight:800,fontFamily:"IBM Plex Sans Arabic,Arial",
@@ -6942,8 +7040,10 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
       {/* جدول حركات اليوم */}
       <div className="daily-today-panel" style={styles.panel}>
         <div style={styles.panelHdr}>
-          <h3 style={{margin:0,fontSize:15,fontWeight:700}}>📋 حركات يوم {dLabel(selDay)}</h3>
-          <span style={{fontSize:15,fontWeight:800,background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:closingBalance>=0?"#141428":"#dc2626",padding:"6px 14px",borderRadius:10,border:"1px solid #b8862b"}}>المتبقي: {SAR(closingBalance)}</span>
+          <h3 style={{margin:0,fontSize:15,fontWeight:700,display:"flex",alignItems:"center",gap:8}}>
+            <svg width="18" height="18" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3.6" y="5" width="16.8" height="15.4" rx="2.2"/><path d="M3.6 9.6h16.8M8.4 3.2v3.6M15.6 3.2v3.6"/></g></svg>
+            حركات اليوم</h3>
+          <span className="qdaily-todaydate" style={{fontSize:14,fontWeight:800,background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",padding:"6px 14px",borderRadius:10,border:"1px solid #b8862b"}}>{dLabel(selDay)}</span>
         </div>
         <div style={{overflowX:"auto",maxHeight:"70vh",overflowY:"auto",WebkitOverflowScrolling:"touch",position:"relative"}}>
           <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:15}}>
@@ -7043,6 +7143,24 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
 
       {/* 📲 إرسال ملخص واتساب للمدير */}
       <div className="daily-send-summary" style={{marginBottom:16}}>
+        <div className="qsend-head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 3.6 3 11l6.2 2.1L11.3 20l3.9-8Z"/></svg>
+          <b>إرسال ملخص اليوم للمدير — {selDay===today?"اليوم":dLabel(selDay)}</b>
+        </div>
+        <div className="qsend-total">
+          <span>إجمالي اليوم</span>
+          <strong className={dayNet<0?"neg":""}>{dayNet<0?"− ":"+ "}{SAR(Math.abs(dayNet))}</strong>
+        </div>
+        <div className="qsend-rows">
+          <div className="qsend-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3.2 8.6A2.4 2.4 0 0 1 5.6 6.2h13.2a1.8 1.8 0 0 1 1.8 1.8v9a1.8 1.8 0 0 1-1.8 1.8H5.6a2.4 2.4 0 0 1-2.4-2.4Z"/><path d="M3.2 8.6V7.2a2 2 0 0 1 2-2h11.4"/></svg>
+            <span>المتبقي في الصندوق</span><b>{SAR(closingBalance)}</b>
+          </div>
+          <div className="qsend-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>
+            <span>المدفوع للمدير</span><b>{SAR(sumByType("mgr"))}</b>
+          </div>
+        </div>
         <button data-qe-manual="true" style={{width:"100%",justifyContent:"center",fontSize:15.5,padding:"14px",borderRadius:13,fontWeight:800,
           border:"none",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:9,
           background:"linear-gradient(145deg,#0b1f33,#0e2b45)",color:"#ffffff",border:"1px solid #17324a",boxShadow:"0 4px 14px rgba(7,23,39,0.25)"}}
@@ -7099,7 +7217,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
             window.open("https://wa.me/"+mgrNum+"?text="+encodeURIComponent(msg),"_blank");
           }}>
           <svg width="18" height="18" viewBox="0 0 24 24" style={{flexShrink:0}}><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 4 3 11l6 2 2 6 4-8Z"/></g></svg>
-          إرسال ملخص اليوم للمدير — {selDay===today?"اليوم":selDay}
+          إرسال الآن
         </button>
       </div>
 
@@ -7116,7 +7234,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
         </div>
         <div style={{padding:"14px 18px"}}>
           {/* 🔍 بحث عن شخص/وصف داخل اليومية */}
-          <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:12,background:"#f8fafc",border:"2px solid "+C.border,borderRadius:12,padding:"8px 12px"}}>
+          <div className="stmt-search" style={{display:"flex",gap:8,alignItems:"center",marginBottom:12,background:"#f8fafc",border:"2px solid "+C.border,borderRadius:12,padding:"8px 12px"}}>
             <svg width="17" height="17" viewBox="0 0 24 24" style={{flexShrink:0}}><g fill="none" stroke="#94a3b8" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-4-4"/></g></svg>
             <input type="text" placeholder="ابحث باسم شخص أو وصف (سداد / مصروف / سحب ...)"
               value={stmtQuery} onChange={e=>setStmtQuery(e.target.value)}
@@ -7127,7 +7245,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
           {/* نوع الحركة يمين + التفاصيل يسار على الشاشات الواسعة */}
           <div className="stmt-side-by-side" style={{display:"flex",direction:"ltr",gap:14,alignItems:"flex-start",flexWrap:"nowrap",width:"100%"}}>
           {/* 📋 جدول الحركات التفصيلية — مَن وراء كل حركة */}
-          <div style={{...styles.panel,marginBottom:14,boxShadow:"none",border:"1px solid "+C.border,flex:"1 1 auto",width:"calc(65% - 7px)",minWidth:0,direction:"rtl"}}>
+          <div className={"stmt-details-pane "+((stmtTypeFilter==="all" && !stmtQuery.trim())?"is-idle":"")} style={{...styles.panel,marginBottom:14,boxShadow:"none",border:"1px solid "+C.border,flex:"1 1 auto",width:"calc(65% - 7px)",minWidth:0,direction:"rtl"}}>
             <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
               <h4 style={{margin:0,fontSize:15,fontWeight:800}}>
                 📋 التفاصيل {stmtTypeFilter!=="all" ? ("— "+(DAILY_TYPES.find(x=>x.key===stmtTypeFilter)||{}).label) : ""}{_q ? (" — بحث: “"+stmtQuery+"”") : ""}
@@ -7202,7 +7320,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
           {/* جدول نوع الحركة — يمين التفاصيل */}
           <div className="stmt-type-summary" style={{flex:"0 0 calc(35% - 7px)",width:"calc(35% - 7px)",minWidth:280,direction:"rtl"}}>
             {/* بطاقات الإجماليات لكل نوع (انقر لعرض تفاصيل النوع) */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+            <div className="stmt-tiles" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
               {stmtTotals.map(t=>{
                 const dir = t.sign<0 ? "#dc2626" : "#16a34a";
                 const sel = stmtTypeFilter===t.key;
@@ -7220,7 +7338,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                 </div>
               );})}
             </div>
-            <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
+            <table className="stmt-type-table" style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
               <thead>
                 <tr>{["نوع الحركة","عدد الحركات","الإجمالي"].map(h=>(<th key={h} style={styles.th}>{h}</th>))}</tr>
               </thead>
@@ -12465,6 +12583,503 @@ table tbody tr:last-child td{border-bottom:0!important}
 @media(max-width:430px){.qimat-top-hero{height:360px!important;min-height:360px!important}.qimat-hero-tab{height:96px!important;font-size:8.5px!important}.qimat-hero-tab.upgrades,.qimat-hero-tab.settings{height:88px!important}.qimat-hero-brand-title{font-size:17px!important}.qimat-hero-brand-sub{display:none}}
 
 </style>
+<!-- ═══ QIMAT HOME · DESKTOP PIXEL MATCH v15 ═══ -->
+<style id="qimat-home-desktop-v15">
+:root{
+  --q15-bg0:#02080f; --q15-bg1:#03121e; --q15-p1:#04131f; --q15-p2:#071f31;
+  --q15-line:rgba(212,156,40,.40); --q15-line2:rgba(212,156,40,.22);
+  --q15-gold:#d8a636; --q15-gold2:#e9bb52; --q15-text:#f2eee2; --q15-muted:#a9b5bf;
+  --q15-green:#4ec96a; --q15-red:#ff5b5b;
+}
+
+/* ══════════ 1 · شريط التنقّل العلوي (نفس الصورة) ══════════ */
+@media (min-width:1000px){
+  .qimat-top-hero{
+    position:relative!important;
+    width:min(1600px,calc(100% - 30px))!important; max-width:1600px!important;
+    height:118px!important; min-height:118px!important; max-height:118px!important;
+    aspect-ratio:auto!important; margin:9px auto 10px!important;
+    border-radius:16px!important; overflow:hidden!important; padding:0!important;
+    background-image:none!important;
+    background:linear-gradient(150deg,#0a1c2b 0%,#061421 55%,#081a2b 100%)!important;
+    border:1px solid var(--q15-line)!important;
+    box-shadow:0 14px 32px rgba(0,0,0,.30)!important;
+    --tabgap:7px; --tabpad:8px;
+    --tabw:calc((100% - (2*var(--tabpad)) - (6*var(--tabgap)))/7);
+  }
+  .qimat-top-hero::before,.qimat-top-hero::after{display:none!important;content:none!important}
+  .qimat-hero-brand-live,.qimat-hero-mark,.qimat-hero-quote,.qimat-top-hero-badge{display:none!important}
+
+  /* خروج + حالة المزامنة: شريط رفيع أعلى اليسار */
+  .qimat-hero-live-controls{
+    position:absolute!important; top:2px!important; left:9px!important; right:auto!important; bottom:auto!important;
+    display:flex!important; align-items:center!important; gap:6px!important; z-index:70!important;
+    background:transparent!important; padding:0!important; box-shadow:none!important;
+    transform:scale(.78); transform-origin:top left;
+  }
+  .qimat-hero-live-controls *{font-size:12px!important}
+  .qimat-hero-logout{padding:2px 10px!important;min-height:0!important;height:20px!important;border-radius:7px!important}
+
+  .qimat-hero-tab{
+    position:absolute!important; top:22px!important; bottom:9px!important; height:auto!important;
+    width:var(--tabw)!important;
+    display:flex!important; flex-direction:column!important; align-items:center!important; justify-content:center!important;
+    gap:8px!important; padding:0!important; border-radius:13px!important;
+    background:transparent!important; border:1.6px solid transparent!important; box-shadow:none!important;
+    color:#e2ba5e!important; font-family:'IBM Plex Sans Arabic','Tajawal',Arial,sans-serif!important;
+    font-size:clamp(11px,.92vw,14.5px)!important; font-weight:800!important; letter-spacing:0!important;
+    transition:background .15s ease,border-color .15s ease,transform .15s ease!important;
+  }
+  .qimat-hero-tab::after{content:attr(data-label)!important;position:static!important;white-space:nowrap;line-height:1}
+  .qimat-hero-tab::before{
+    position:static!important; transform:none!important; content:""!important;
+    width:27px!important; height:27px!important; display:block!important;
+    background-repeat:no-repeat; background-position:center; background-size:contain;
+    filter:none!important; font-size:0!important;
+  }
+  .qimat-hero-tab.home::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e2ba5e' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.6 10.4 12 3.6l8.4 6.8V20a.9.9 0 0 1-.9.9h-15a.9.9 0 0 1-.9-.9Z'/%3E%3Cpath d='M9.4 20.9v-6.2h5.2v6.2'/%3E%3C/svg%3E")}
+  .qimat-hero-tab.contracts::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e2ba5e' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3.4h8.4L18.6 7.6V20.6H6Z'/%3E%3Cpath d='M14.2 3.4v4.4h4.4'/%3E%3Cpath d='M9 12.6h6M9 16.2h6'/%3E%3C/svg%3E")}
+  .qimat-hero-tab.portfolio::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e2ba5e' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20.4h16'/%3E%3Cpath d='M7.4 20.4v-6.4M12 20.4v-10.6M16.6 20.4v-4.2'/%3E%3C/svg%3E")}
+  .qimat-hero-tab.ai::before{
+    background-image:none!important; content:"AI"!important; font-size:12.5px!important; font-weight:900!important;
+    display:flex!important; align-items:center; justify-content:center; color:#e2ba5e;
+    border:1.7px solid #e2ba5e; border-radius:7px; width:29px!important; height:24px!important;
+  }
+  .qimat-hero-tab.visits::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e2ba5e' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='8' r='3.6'/%3E%3Cpath d='M5.2 20.4a6.8 6.8 0 0 1 13.6 0'/%3E%3C/svg%3E")}
+  .qimat-hero-tab.upgrades::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e2ba5e' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20.4h16'/%3E%3Cpath d='m5.6 16.6 4-4.6 3.2 2.9 5.6-6.6'/%3E%3Cpath d='M14.6 8.3h3.8v3.8'/%3E%3C/svg%3E")}
+  .qimat-hero-tab.settings::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e2ba5e' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3.1'/%3E%3Cpath d='m19.1 14.6.9.5a1.6 1.6 0 0 1 .6 2.2l-.7 1.2a1.6 1.6 0 0 1-2.2.6l-.9-.5a7.4 7.4 0 0 1-1.9 1.1v1a1.6 1.6 0 0 1-1.6 1.6h-1.4a1.6 1.6 0 0 1-1.6-1.6v-1a7.4 7.4 0 0 1-1.9-1.1l-.9.5a1.6 1.6 0 0 1-2.2-.6l-.7-1.2a1.6 1.6 0 0 1 .6-2.2l.9-.5a7.5 7.5 0 0 1 0-2.2l-.9-.5a1.6 1.6 0 0 1-.6-2.2l.7-1.2a1.6 1.6 0 0 1 2.2-.6l.9.5a7.4 7.4 0 0 1 1.9-1.1v-1A1.6 1.6 0 0 1 11.9 2h1.4a1.6 1.6 0 0 1 1.6 1.6v1a7.4 7.4 0 0 1 1.9 1.1l.9-.5a1.6 1.6 0 0 1 2.2.6l.7 1.2a1.6 1.6 0 0 1-.6 2.2l-.9.5a7.5 7.5 0 0 1 0 2.2Z'/%3E%3C/svg%3E")}
+
+  .qimat-hero-tab.home{right:var(--tabpad)!important;left:auto!important}
+  .qimat-hero-tab.contracts{right:calc(var(--tabpad) + 1*(var(--tabw) + var(--tabgap)))!important;left:auto!important}
+  .qimat-hero-tab.portfolio{right:calc(var(--tabpad) + 2*(var(--tabw) + var(--tabgap)))!important;left:auto!important}
+  .qimat-hero-tab.ai{right:calc(var(--tabpad) + 3*(var(--tabw) + var(--tabgap)))!important;left:auto!important}
+  .qimat-hero-tab.visits{right:calc(var(--tabpad) + 4*(var(--tabw) + var(--tabgap)))!important;left:auto!important}
+  .qimat-hero-tab.upgrades{right:calc(var(--tabpad) + 5*(var(--tabw) + var(--tabgap)))!important;left:auto!important}
+  .qimat-hero-tab.settings{right:calc(var(--tabpad) + 6*(var(--tabw) + var(--tabgap)))!important;left:auto!important}
+  .qimat-hero-tab:hover{background:rgba(226,186,94,.07)!important;transform:none!important;box-shadow:none!important;border-color:rgba(226,186,94,.35)!important}
+  .qimat-hero-tab.active{
+    background:rgba(226,186,94,.06)!important;
+    border-color:#e9c164!important;
+    box-shadow:0 0 0 1px rgba(233,193,100,.35),0 0 22px rgba(212,156,40,.20)!important;
+  }
+}
+
+/* ══════════ 2 · خلفية الصفحة (الرئيسية فقط) ══════════ */
+@media (min-width:1000px){
+  html:has(.qimat-home-v6){background:var(--q15-bg0)!important}
+  body:has(.qimat-home-v6){
+    background:radial-gradient(1100px 460px at 50% -8%,rgba(24,76,108,.20),transparent 62%),
+               linear-gradient(180deg,#020a12 0%,#03121e 46%,#02080f 100%)!important;
+    background-attachment:fixed!important;
+  }
+}
+
+/* ══════════ 3 · شبكة الرئيسية 12 عمود ══════════ */
+@media (min-width:1000px){
+  .qimat-home-v5.qimat-home-v6{
+    width:min(1600px,calc(100% - 30px))!important; max-width:1600px!important; margin:0 auto!important;
+    padding:0 0 24px!important; background:transparent!important; color:var(--q15-text)!important;
+    display:grid!important; grid-template-columns:repeat(12,minmax(0,1fr))!important;
+    grid-auto-rows:min-content; gap:10px!important; align-items:stretch!important;
+  }
+  .qimat-home-v6>.qhv6-daily,.qimat-home-v6>.qhv6-daily>.qimat-daily-v5{display:contents!important}
+
+  .qimat-home-v6 .daily-entry-panel   {grid-column:1/5!important;  grid-row:1/4!important}
+  .qimat-home-v6>.qhv5-command        {grid-column:5/13!important; grid-row:1!important}
+  .qimat-home-v6 .daily-summary-grid  {grid-column:5/9!important;  grid-row:2!important}
+  .qimat-home-v6 .daily-management-grid{grid-column:5/9!important; grid-row:3!important}
+  .qimat-home-v6 .daily-today-panel   {grid-column:9/13!important; grid-row:2/4!important}
+  .qimat-home-v6 .daily-send-summary  {grid-column:1/5!important;  grid-row:4!important}
+  .qimat-home-v6 .daily-statement-full{grid-column:5/13!important; grid-row:4!important}
+  .qimat-home-v6 .qhome-investor-contracts{grid-column:1/13!important;grid-row:5!important}
+  .qimat-home-v6 .daily-entry-panel,.qimat-home-v6 .daily-today-panel,.qimat-home-v6 .daily-summary-grid,
+  .qimat-home-v6 .daily-management-grid,.qimat-home-v6 .daily-send-summary,.qimat-home-v6 .daily-statement-full,
+  .qimat-home-v6 .qhome-investor-contracts,.qimat-home-v6>.qhv5-command{
+    width:100%!important; max-width:none!important; margin:0!important; height:100%!important;
+  }
+}
+
+/* ══════════ 3.5 · تحييد مصنّف الأزرار التلقائي داخل الرئيسية ══════════ */
+@media (min-width:1000px){
+  .qimat-home-v6 .qe-btn-ghost,.qimat-home-v6 .qe-btn-secondary,
+  .qimat-home-v6 .qe-btn-info,.qimat-home-v6 .qe-btn-success{
+    background:#07202f!important;color:#e8ebee!important;border:1px solid rgba(212,156,40,.38)!important;box-shadow:none!important;
+  }
+  .qimat-home-v6 .qe-btn-primary,.qimat-home-v6 .qe-btn-danger{
+    background:linear-gradient(145deg,#e6b954,#c08d24)!important;color:#07131e!important;border:1px solid #b8862b!important;
+  }
+  .qimat-home-v6 .qe-surface{background:transparent!important;border:0!important;box-shadow:none!important}
+  .qimat-home-v6 .qe-section-title::after{display:none!important}
+}
+
+/* ══════════ 4 · بطاقات المؤشرات + شريط التقدّم ══════════ */
+@media (min-width:1000px){
+  .qimat-home-v6 .qhv5-cycle{display:none!important}
+  .qimat-home-v6>.qhv5-command{
+    background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;
+    display:flex!important;flex-direction:column!important;gap:9px!important;
+  }
+  .qimat-home-v6 .qhv5-kpis{
+    display:grid!important; grid-template-columns:1.05fr .78fr .95fr 1.02fr .85fr!important;
+    gap:9px!important; flex:1 1 auto!important;
+  }
+  .qimat-home-v6 .qhv5-kpi{
+    display:grid!important; grid-template-columns:auto auto; grid-template-rows:auto auto auto;
+    justify-content:center!important; align-content:center!important; gap:5px 8px!important;
+    min-height:142px!important; padding:12px 10px!important; border-radius:13px!important;
+    background:linear-gradient(158deg,#0a2438 0%,#04121e 100%)!important;
+    border:1px solid var(--q15-line)!important; box-shadow:0 8px 20px rgba(0,0,0,.26)!important;
+    text-align:center!important; cursor:pointer; font-family:inherit!important; color:var(--q15-text)!important;
+    transition:border-color .15s ease,transform .15s ease!important;
+  }
+  .qimat-home-v6 .qhv5-kpi:hover{border-color:rgba(233,187,82,.7)!important;transform:translateY(-2px)}
+  .qimat-home-v6 .qhv5-kpi small{grid-column:1;grid-row:1;align-self:center;font-size:13.5px!important;font-weight:800!important;color:#e6c98a!important}
+  .qimat-home-v6 .qhv5-kpi-icon{
+    grid-column:2;grid-row:1;align-self:center;justify-self:center;
+    width:24px!important;height:24px!important;display:block!important;
+    background:transparent!important;box-shadow:none!important;border:0!important;color:var(--q15-gold2)!important;
+  }
+  .qimat-home-v6 .qhv5-kpi-icon svg{width:24px;height:24px;display:block}
+  .qimat-home-v6 .qhv5-kpi strong{grid-column:1/3;grid-row:2;font-size:clamp(20px,1.85vw,31px)!important;font-weight:900!important;color:var(--q15-gold2)!important;line-height:1.1;letter-spacing:-.5px}
+  .qimat-home-v6 .qhv5-kpi em{grid-column:1/3;grid-row:3;font-style:normal!important;font-size:12.5px!important;font-weight:700!important;color:#c8b489!important}
+
+  .qimat-home-v6 .qhv5-kpi-ring{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:7px!important;background:linear-gradient(158deg,#09202f 0%,#04111c 100%)!important}
+  .qimat-home-v6 .qhv5-ring{
+    position:relative!important; display:flex!important; align-items:center!important; justify-content:center!important;
+    width:92px!important; height:92px!important; border-radius:50%!important;
+    background:conic-gradient(var(--q15-gold) calc(var(--pct,0)*1%), rgba(255,255,255,.085) 0)!important;
+  }
+  .qimat-home-v6 .qhv5-ring::after{content:"";position:absolute;inset:12px;border-radius:50%;background:#07192a}
+  .qimat-home-v6 .qhv5-ring b{position:relative;z-index:2;font-size:23px;font-weight:900;color:var(--q15-gold2)}
+  .qimat-home-v6 .qhv5-kpi-ring small{grid-column:auto!important;grid-row:auto!important;font-size:13px!important;color:#d3a94f!important}
+
+  .qimat-home-v6 .qhv5-progress-row{
+    display:flex!important;flex-direction:column!important;gap:8px!important;margin:0!important;
+    background:#04121e!important;border:1px solid var(--q15-line2)!important;border-radius:9px!important;padding:9px 14px 12px!important;
+  }
+  .qimat-home-v6 .qhv5-progress-copy{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:8px!important}
+  .qimat-home-v6 .qhv5-progress-copy span{font-size:13.5px;font-weight:800;color:#e6e2d6}
+  .qimat-home-v6 .qhv5-progress-copy strong{font-size:13.5px;font-weight:900;color:#ffffff}
+  .qimat-home-v6 .qhv5-progress-copy b{margin-inline-start:auto;font-size:12.5px;font-weight:800;color:var(--q15-gold2)}
+  .qimat-home-v6 .qhv5-progress{position:relative;display:block;height:10px;border-radius:99px;background:#052030;border:1px solid rgba(126,196,214,.34);overflow:hidden}
+  .qimat-home-v6 .qhv5-progress i{display:block;height:100%;background:linear-gradient(90deg,#eac265,#c08d24);border-radius:99px}
+}
+
+/* ══════════ 5 · الثيم الغامق لكل لوحات الرئيسية ══════════ */
+@media (min-width:1000px){
+  .qimat-home-v6 .daily-entry-panel,.qimat-home-v6 .daily-today-panel,.qimat-home-v6 .daily-statement-full,
+  .qimat-home-v6 .daily-send-summary,.qimat-home-v6 .qhome-investor-contracts{
+    background:linear-gradient(157deg,#07202f 0%,#04131f 100%)!important;
+    border:1px solid var(--q15-line)!important; border-radius:13px!important;
+    box-shadow:0 10px 26px rgba(0,0,0,.26)!important; overflow:hidden!important;
+    color:var(--q15-text)!important;
+  }
+  .qimat-home-v6 .daily-summary-grid,.qimat-home-v6 .daily-management-grid{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;background:transparent!important;border:0!important;box-shadow:none!important;
+  }
+  .qimat-home-v6 .daily-summary-grid>div,.qimat-home-v6 .daily-management-grid>div{
+    background:linear-gradient(157deg,#07202f 0%,#04131f 100%)!important;
+    border:1px solid var(--q15-line)!important;border-right:1px solid var(--q15-line)!important;border-top:1px solid var(--q15-line)!important;
+    border-radius:11px!important;box-shadow:0 7px 18px rgba(0,0,0,.22)!important;
+    padding:11px 12px!important;min-height:0!important;
+    display:flex!important;flex-direction:column!important;justify-content:center!important;
+    color:var(--q15-text)!important;
+  }
+  /* عناوين اللوحات */
+  .qimat-home-v6 .daily-entry-panel>div:first-child,
+  .qimat-home-v6 .daily-today-panel>div:first-child,
+  .qimat-home-v6 .daily-statement-full>div:first-child{
+    background:linear-gradient(180deg,#0a2942,#061a29)!important;
+    border-bottom:1px solid var(--q15-line2)!important;
+    padding:11px 15px!important;
+  }
+  .qimat-home-v6 .daily-entry-panel>div:first-child h3,
+  .qimat-home-v6 .daily-today-panel>div:first-child h3,
+  .qimat-home-v6 .daily-statement-full>div:first-child h3{color:var(--q15-gold2)!important;font-size:16px!important}
+  .qimat-home-v6 .daily-entry-panel>div:first-child h3 svg *,
+  .qimat-home-v6 .daily-today-panel>div:first-child h3 svg *,
+  .qimat-home-v6 .daily-statement-full>div:first-child h3 svg *{stroke:var(--q15-gold2)!important;fill:none!important}
+  /* عنوان دفتر اليومية وكشف الحساب في المنتصف */
+  .qimat-home-v6 .daily-entry-panel>div:first-child{justify-content:center!important}
+  .qimat-home-v6 .daily-statement-full>div:first-child{position:relative!important;justify-content:center!important}
+  .qimat-home-v6 .daily-statement-full>div:first-child>button{position:absolute!important;left:15px!important;top:50%!important;transform:translateY(-50%)!important}
+
+  /* نصوص عامة */
+  .qimat-home-v6, .qimat-home-v6 h3,.qimat-home-v6 h4,.qimat-home-v6 span,.qimat-home-v6 div,.qimat-home-v6 label{color:var(--q15-text)}
+  .qimat-home-v6 .daily-summary-grid>div>div:first-child,
+  .qimat-home-v6 .daily-management-grid>div>div:first-child{
+    color:#e6c98a!important;font-size:12.5px!important;font-weight:800!important;
+    justify-content:center!important;gap:6px!important;margin-bottom:5px!important;
+  }
+  .qimat-home-v6 .daily-summary-grid>div>div:first-child svg *,
+  .qimat-home-v6 .daily-management-grid>div>div:first-child svg *{stroke:var(--q15-gold2)!important}
+  .qimat-home-v6 .daily-summary-grid>div>div:first-child circle[fill],
+  .qimat-home-v6 .daily-management-grid>div>div:first-child circle[fill]{fill:var(--q15-gold2)!important}
+  .qimat-home-v6 .daily-summary-grid>div>div:nth-child(2){text-align:center!important;font-size:21px!important;font-weight:900!important;color:var(--q15-gold2)!important}
+  .qimat-home-v6 .daily-summary-grid>div>div:nth-child(3){text-align:center!important;font-size:11.5px!important;color:#c8b489!important;margin-top:3px!important}
+  .qimat-home-v6 .daily-management-grid>div>div:first-child{flex-direction:column!important;line-height:1.35}
+  .qimat-home-v6 .daily-management-grid>div>div:not(:first-child){font-size:12.5px!important}
+  .qimat-home-v6 .daily-management-grid>div>div:not(:first-child) span:first-child{color:#c3ccd4!important;font-weight:700!important}
+  .qimat-home-v6 .daily-management-grid>div>div:not(:first-child) span:last-child{color:var(--q15-gold2)!important}
+  .qimat-home-v6 .daily-management-grid>div>div:last-child{border-top:1px dashed var(--q15-line2)!important}
+
+  /* حقول الإدخال */
+  .qimat-home-v6 input,.qimat-home-v6 select,.qimat-home-v6 textarea{
+    background:#06202f!important;color:var(--q15-text)!important;border:1px solid rgba(212,156,40,.34)!important;border-radius:9px!important;
+  }
+  .qimat-home-v6 input::placeholder,.qimat-home-v6 textarea::placeholder{color:#8a97a2!important}
+  .qimat-home-v6 input:focus,.qimat-home-v6 select:focus{border-color:var(--q15-gold)!important;box-shadow:0 0 0 3px rgba(212,156,40,.14)!important;background:#06202f!important}
+  .qimat-home-v6 input[type="date"]{color-scheme:dark}
+
+  /* جداول */
+  .qimat-home-v6 table{background:transparent!important;border-collapse:collapse!important;width:100%!important}
+  .qimat-home-v6 table thead th,.qimat-home-v6 th{
+    background:linear-gradient(180deg,#0b2c46,#06192a)!important;color:var(--q15-gold2)!important;
+    border-bottom:1px solid rgba(212,156,40,.46)!important;text-shadow:none!important;
+    font-size:12.5px!important;padding:9px 10px!important;font-weight:800!important;text-align:center!important;
+  }
+  .qimat-home-v6 table tbody tr{background:transparent!important}
+  .qimat-home-v6 table tbody td,.qimat-home-v6 td{
+    background:#05192a!important;color:#e9edf0!important;border-bottom:1px solid rgba(212,156,40,.12)!important;
+    font-size:12.5px!important;padding:9px 10px!important;text-align:center!important;
+  }
+  .qimat-home-v6 table tbody tr:nth-child(even) td{background:#061e30!important}
+  .qimat-home-v6 table tfoot td{background:#082438!important;color:var(--q15-gold2)!important;border-top:1px solid rgba(212,156,40,.42)!important}
+
+}
+
+/* ══════════ 6 · دفتر اليومية (اللوحة اليمنى) ══════════ */
+@media (min-width:1000px){
+  .qimat-home-v6 .daily-entry-panel>div:nth-child(2){padding:12px 14px 14px!important;display:flex!important;flex-direction:column!important;height:calc(100% - 46px)!important;box-sizing:border-box!important}
+  .qimat-home-v6 .qdaily-daterow{margin-bottom:11px!important}
+  .qimat-home-v6 .qdaily-datelabel{color:#c9d2d9!important;font-size:13.5px!important}
+  .qimat-home-v6 .qdaily-datebox{background:#06202f!important;border:1px solid rgba(212,156,40,.45)!important;box-shadow:none!important;order:2}
+  .qimat-home-v6 .qdaily-datebox svg *{stroke:var(--q15-gold2)!important}
+  .qimat-home-v6 .qdaily-datebox input{background:transparent!important;border:0!important;color:var(--q15-text)!important;font-size:14px!important;padding:0!important;min-height:0!important}
+  .qimat-home-v6 .qdaily-printday{order:3;font-size:12.5px!important;padding:6px 12px!important;min-height:0!important}
+
+  .qimat-home-v6 .qdaily-types{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:8px!important;margin-bottom:11px!important}
+  .qimat-home-v6 .qdaily-types>button{grid-column:span 2!important}
+  .qimat-home-v6 .qdaily-types>button:nth-child(1),.qimat-home-v6 .qdaily-types>button:nth-child(2){grid-column:span 3!important}
+  .qimat-home-v6 .qdaily-types>button.qdt{
+    height:auto!important;min-height:46px!important;padding:10px 6px!important;border-radius:9px!important;
+    background:#06202f!important;color:#e7dcc3!important;border:1px solid rgba(212,156,40,.40)!important;
+    box-shadow:none!important;font-size:13px!important;font-weight:800!important;
+  }
+  .qimat-home-v6 .qdaily-types>button.qdt>span{background:var(--q15-gold2)!important}
+  .qimat-home-v6 .qdaily-types>button.qdt.on{
+    background:linear-gradient(145deg,#e6b954,#c08d24)!important;color:#07131e!important;border-color:#e0b85c!important;
+    box-shadow:0 5px 14px rgba(168,112,17,.28)!important;
+  }
+  .qimat-home-v6 .qdaily-types>button.qdt.on>span{background:#07131e!important}
+
+  .qimat-home-v6 .qdaily-fields{grid-template-columns:1fr!important;gap:9px!important;margin-bottom:11px!important}
+  .qimat-home-v6 .qdaily-fields label{display:none!important}
+  .qimat-home-v6 .qdaily-fields input{min-height:48px!important;font-size:14px!important;text-align:right!important}
+
+  .qimat-home-v6 .qdaily-channel{margin-bottom:11px!important;margin-top:auto!important}
+  .qimat-home-v6 .qdaily-channel>button.qdc{
+    background:#06202f!important;color:#e7dcc3!important;border:1px solid rgba(212,156,40,.40)!important;
+    box-shadow:none!important;min-height:48px!important;border-radius:10px!important;
+  }
+  .qimat-home-v6 .qdaily-channel>button.qdc svg *{stroke:var(--q15-gold2)!important}
+  .qimat-home-v6 .qdaily-channel>button.qdc.on{
+    background:linear-gradient(145deg,#e6b954,#c08d24)!important;color:#07131e!important;border-color:#e0b85c!important;
+  }
+  .qimat-home-v6 .qdaily-channel>button.qdc.on svg *{stroke:#07131e!important}
+  .qimat-home-v6 .qdaily-add{
+    background:linear-gradient(145deg,#e6b954,#c08d24)!important;color:#07131e!important;border:1px solid #b8862b!important;
+    min-height:52px!important;border-radius:11px!important;font-size:15px!important;
+  }
+}
+
+/* ══════════ 7 · حركات اليوم ══════════ */
+@media (min-width:1000px){
+  .qimat-home-v6 .daily-today-panel>div:nth-child(2){max-height:none!important;overflow:auto!important;padding:0 0 8px!important}
+  .qimat-home-v6 .daily-today-panel .qdaily-todaydate{background:transparent!important;border:1px solid rgba(212,156,40,.45)!important;color:var(--q15-gold2)!important;font-size:12.5px!important;padding:5px 11px!important}
+  .qimat-home-v6 .daily-today-panel table thead th:last-child{width:0!important;padding:0!important}
+  .qimat-home-v6 .daily-today-panel table td:last-child{white-space:nowrap!important}
+  .qimat-home-v6 .daily-today-panel table td:nth-child(2){position:static!important;background:inherit!important}
+  .qimat-home-v6 .daily-today-panel table td span[style*="linear-gradient"]{background:transparent!important;color:var(--q15-gold2)!important;border:0!important;padding:0!important;font-weight:800!important}
+  .qimat-home-v6 .daily-today-panel tfoot td{font-size:14px!important;font-weight:900!important}
+  .qimat-home-v6 .daily-today-panel table td button{background:#07202f!important;border:1px solid rgba(212,156,40,.4)!important;border-radius:7px!important;min-height:0!important;padding:4px 7px!important}
+  .qimat-home-v6 .daily-today-panel table td button svg *{stroke:var(--q15-gold2)!important}
+}
+
+/* ══════════ 8 · إرسال ملخص اليوم للمدير ══════════ */
+@media (min-width:1000px){
+  .qimat-home-v6 .daily-send-summary{
+    display:flex!important;flex-direction:column!important;gap:11px!important;padding:14px!important;justify-content:flex-start!important;
+  }
+  .qimat-home-v6 .daily-send-summary::before{display:none!important;content:none!important}
+  .qimat-home-v6 .qsend-head{display:flex;align-items:center;gap:8px;color:var(--q15-gold2);font-size:14.5px;font-weight:900}
+  .qimat-home-v6 .qsend-head svg{width:20px;height:20px;flex:0 0 auto}
+  .qimat-home-v6 .qsend-total{
+    border:1px solid rgba(212,156,40,.38);border-radius:10px;padding:11px 12px;text-align:center;background:#051a29;
+  }
+  .qimat-home-v6 .qsend-total span{display:block;font-size:13px;font-weight:800;color:#e6c98a;margin-bottom:5px}
+  .qimat-home-v6 .qsend-total strong{font-size:23px;font-weight:900;color:var(--q15-green)}
+  .qimat-home-v6 .qsend-total strong.neg{color:var(--q15-red)}
+  .qimat-home-v6 .qsend-rows{border:1px solid rgba(212,156,40,.30);border-radius:10px;overflow:hidden;background:#051a29}
+  .qimat-home-v6 .qsend-row{display:flex;align-items:center;gap:9px;padding:11px 12px;font-size:13px}
+  .qimat-home-v6 .qsend-row+.qsend-row{border-top:1px solid rgba(212,156,40,.18)}
+  .qimat-home-v6 .qsend-row svg{width:19px;height:19px;flex:0 0 auto;color:var(--q15-gold2)}
+  .qimat-home-v6 .qsend-row span{color:#d6dee4;font-weight:700}
+  .qimat-home-v6 .qsend-row b{margin-inline-start:auto;color:var(--q15-gold2);font-weight:900}
+  .qimat-home-v6 .daily-send-summary>button{
+    margin-top:auto!important;width:100%!important;min-height:48px!important;border-radius:10px!important;
+    background:linear-gradient(145deg,#e6b954,#c08d24)!important;color:#07131e!important;border:1px solid #b8862b!important;
+  }
+  .qimat-home-v6 .daily-send-summary>button svg *{stroke:#07131e!important}
+}
+
+/* ══════════ 9 · كشف حساب شامل ══════════ */
+@media (min-width:1000px){
+  .qimat-home-v6 .daily-statement-full>div:nth-child(2){display:flex!important;flex-direction:column!important;padding:13px 15px 15px!important}
+  .qimat-home-v6 .daily-statement-full .stmt-side-by-side{order:1!important;display:flex!important;flex-direction:column!important;direction:rtl!important;width:100%!important;gap:0!important}
+  .qimat-home-v6 .daily-statement-full .stmt-type-summary{order:1!important}
+  .qimat-home-v6 .daily-statement-full .stmt-details-pane{order:2!important}
+  .qimat-home-v6 .daily-statement-full .stmt-search{
+    order:2!important;background:#06202f!important;border:1px solid rgba(212,156,40,.30)!important;border-radius:9px!important;
+    padding:5px 11px!important;margin:2px 0 0!important;
+  }
+  .qimat-home-v6 .daily-statement-full .stmt-search input{background:transparent!important;border:0!important;min-height:30px!important;font-size:13px!important}
+  .qimat-home-v6 .daily-statement-full .stmt-search svg *{stroke:#8fa0ad!important}
+  .qimat-home-v6 .stmt-type-summary{width:100%!important;max-width:none!important;min-width:0!important;flex:none!important;direction:rtl!important}
+  .qimat-home-v6 .stmt-type-table{display:none!important}
+  .qimat-home-v6 .stmt-tiles{
+    display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:9px!important;margin-bottom:0!important;
+  }
+  .qimat-home-v6 .stmt-tiles>div{
+    background:linear-gradient(158deg,#0a2438,#04121e)!important;border:1px solid var(--q15-line)!important;
+    border-right:1px solid var(--q15-line)!important;border-radius:11px!important;padding:11px 8px!important;
+    text-align:center!important;box-shadow:0 6px 16px rgba(0,0,0,.22)!important;
+  }
+  .qimat-home-v6 .stmt-tiles>div>div:nth-child(1){color:#ecebe4!important;font-size:13px!important;font-weight:800!important;margin-bottom:5px!important}
+  .qimat-home-v6 .stmt-tiles>div>div:nth-child(2){font-size:20px!important;font-weight:900!important}
+  .qimat-home-v6 .stmt-tiles>div>div:nth-child(3){font-size:11px!important;color:#a6b1ba!important}
+  .qimat-home-v6 .stmt-details-pane{width:100%!important;max-width:none!important;flex:none!important;margin:11px 0 0!important;background:linear-gradient(157deg,#07202f,#04131f)!important;border:1px solid var(--q15-line2)!important;border-radius:11px!important;overflow:hidden!important}
+  .qimat-home-v6 .stmt-details-pane.is-idle{display:none!important}
+  .qimat-home-v6 .stmt-details-pane>div:first-child{background:linear-gradient(180deg,#0a2942,#061a29)!important;border-bottom:1px solid var(--q15-line2)!important}
+  .qimat-home-v6 .stmt-details-pane h4{color:var(--q15-gold2)!important;font-size:13.5px!important}
+}
+
+/* ══════════ 10 · كشف المستثمر + العقود ══════════ */
+@media (min-width:1000px){
+  .qimat-home-v6 .qhome-investor-contracts{padding:0 0 4px!important}
+  .qimat-home-v6 .qhome-investor-head{padding:12px 16px 0!important;border-bottom:0!important}
+  .qimat-home-v6 .qhome-head-row{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;margin-bottom:11px!important}
+  .qimat-home-v6 .qhome-head-contracts{display:inline-flex!important;align-items:center!important;gap:8px!important;color:var(--q15-gold2)!important}
+  .qimat-home-v6 .qhome-head-contracts svg{width:20px;height:20px}
+  .qimat-home-v6 .qhome-head-contracts b{font-size:15px;font-weight:900}
+  .qimat-home-v6 .qhome-head-contracts i{font-style:normal;font-size:12.5px;color:#c8b489}
+  .qimat-home-v6 .qhome-investor-head h3{display:inline-flex!important;align-items:center!important;gap:8px!important;margin:0!important;color:var(--q15-gold2)!important;font-size:17px!important;font-weight:900!important}
+  .qimat-home-v6 .qhome-investor-head h3 svg{width:19px;height:19px}
+  .qimat-home-v6 .qhome-investor-tools{display:grid!important;grid-template-columns:1fr 1fr 1.4fr!important;gap:10px!important;align-items:center!important}
+  .qimat-home-v6 .qhome-search{display:flex!important;align-items:center!important;gap:8px!important;background:#f4f1ea!important;border:1px solid rgba(212,156,40,.35)!important;border-radius:9px!important;height:44px!important;padding:0 12px!important}
+  .qimat-home-v6 .qhome-search svg{width:17px;height:17px;flex:0 0 auto;color:#6b7683}
+  .qimat-home-v6 .qhome-search input{background:transparent!important;border:0!important;color:#14202c!important;min-height:0!important;height:42px!important;width:100%!important;font-size:13.5px!important;font-weight:700!important}
+  .qimat-home-v6 .qhome-search input::placeholder{color:#7d8894!important}
+  .qimat-home-v6 .qhome-investor-tools select{height:44px!important;background:#f4f1ea!important;color:#14202c!important;border:1px solid rgba(212,156,40,.35)!important;font-weight:800!important;font-size:13.5px!important;text-align:center!important}
+
+  .qimat-home-v6 .qhome-contracts-title{padding:11px 16px 0!important;display:block!important;color:#d9c99f!important}
+  .qimat-home-v6 .qhome-contracts-title span{font-size:12.5px!important;font-weight:800!important;color:#d9c99f!important}
+  .qimat-home-v6 .qhome-type-tabs{display:flex!important;align-items:center!important;gap:8px!important;padding:7px 16px 11px!important;flex-wrap:wrap!important}
+  .qimat-home-v6 .qhome-type-tabs>button{
+    height:40px!important;min-height:0!important;padding:0 16px!important;border-radius:9px!important;
+    background:#f4f1ea!important;color:#1a2735!important;border:1px solid rgba(212,156,40,.35)!important;
+    font-size:13px!important;font-weight:800!important;box-shadow:none!important;
+  }
+  .qimat-home-v6 .qhome-type-tabs>button.active{background:linear-gradient(145deg,#e6b954,#c08d24)!important;color:#07131e!important;border-color:#e0b85c!important}
+  .qimat-home-v6 .qhome-view-switch{display:flex!important;gap:8px!important;margin-inline-start:auto!important;border:0!important;overflow:visible!important}
+  .qimat-home-v6 .qhome-view-switch button{
+    height:40px!important;min-height:0!important;min-width:98px!important;padding:0 14px!important;border-radius:9px!important;
+    display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;
+    background:#f4f1ea!important;color:#1a2735!important;border:1px solid rgba(212,156,40,.35)!important;
+    font-size:13px!important;font-weight:800!important;box-shadow:none!important;
+  }
+  .qimat-home-v6 .qhome-view-switch button svg{width:16px;height:16px}
+  .qimat-home-v6 .qhome-view-switch button.active{background:linear-gradient(145deg,#e6b954,#c08d24)!important;color:#07131e!important;border-color:#e0b85c!important}
+
+  .qimat-home-v6 .qhome-contracts-tablewrap{padding:0 16px!important;overflow:visible!important}
+  .qimat-home-v6 .qhome-investor-contracts table{border-radius:10px!important;overflow:hidden!important}
+  .qimat-home-v6 .qhome-investor-contracts th{font-size:13px!important;padding:11px 10px!important}
+  .qimat-home-v6 .qhome-investor-contracts td{font-size:13px!important;padding:11px 10px!important;border-bottom:1px solid rgba(212,156,40,.10)!important}
+  .qimat-home-v6 .qhome-th-date{display:inline-flex;align-items:center;gap:7px}
+  .qimat-home-v6 .qhome-th-date svg{width:16px;height:16px}
+  .qimat-home-v6 .qhome-th-act{width:56px!important}
+  .qimat-home-v6 .qhome-td-act{width:56px!important}
+  .qimat-home-v6 .qhome-td-act button{
+    background:#07202f!important;color:var(--q15-gold2)!important;border:1px solid rgba(212,156,40,.45)!important;
+    border-radius:7px!important;min-height:0!important;height:26px!important;padding:0 9px!important;font-size:11px!important;letter-spacing:1px;
+  }
+
+  .qimat-home-v6 .qhome-contracts-foot{
+    display:flex!important;align-items:center!important;justify-content:space-between!important;
+    padding:12px 16px 14px!important;border-top:0!important;gap:12px!important;
+  }
+  .qimat-home-v6 .qhome-foot-show{display:flex;align-items:center;gap:9px;color:#cfd7de;font-size:13px;font-weight:700}
+  .qimat-home-v6 .qhome-foot-show select{height:38px!important;min-width:78px!important;background:#f4f1ea!important;color:#14202c!important;text-align:center!important;font-weight:800!important}
+  .qimat-home-v6 .qhome-pager{display:flex;align-items:center;gap:7px}
+  .qimat-home-v6 .qhome-pager button{
+    min-width:40px!important;height:40px!important;min-height:0!important;padding:0 8px!important;border-radius:9px!important;
+    background:#07202f!important;color:#e6ebef!important;border:1px solid rgba(212,156,40,.35)!important;
+    font-size:14px!important;font-weight:800!important;box-shadow:none!important;
+  }
+  .qimat-home-v6 .qhome-pager button.active{background:transparent!important;color:var(--q15-gold2)!important;border-color:#e9c164!important}
+  .qimat-home-v6 .qhome-pager button:disabled{opacity:.38!important;cursor:not-allowed!important}
+  .qimat-home-v6 .qhome-pg-gap{color:#9fabb5;padding:0 4px;font-weight:800}
+}
+
+/* ══════════ 11 · الجوال: يبقى كما هو (عمود واحد) ══════════ */
+@media (max-width:999px){
+  .qimat-home-v6 .qhome-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+  .qimat-home-v6 .qhome-head-contracts{display:inline-flex;align-items:center;gap:7px;color:var(--q15-gold2)}
+  .qimat-home-v6 .qhome-head-contracts svg{width:18px;height:18px}
+  .qimat-home-v6 .qhome-head-contracts i{font-style:normal;font-size:11.5px;color:#b7c0c7}
+  .qimat-home-v6 .qhome-investor-head h3 svg{width:17px;height:17px;vertical-align:-3px}
+  .qimat-home-v6 .qhome-investor-tools{display:grid;grid-template-columns:1fr;gap:8px}
+  .qimat-home-v6 .qhome-search{display:flex;align-items:center;gap:8px;background:#061826;border:1px solid rgba(212,156,40,.38);border-radius:8px;height:42px;padding:0 11px}
+  .qimat-home-v6 .qhome-search svg{width:16px;height:16px;flex:0 0 auto;color:#8b98a3}
+  .qimat-home-v6 .qhome-search input{background:transparent;border:0;color:var(--q15-text);width:100%;font-weight:700}
+  .qimat-home-v6 .qhome-view-switch{display:flex;gap:7px;width:100%}
+  .qimat-home-v6 .qhome-view-switch button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+  .qimat-home-v6 .qhome-view-switch button svg{width:15px;height:15px}
+  .qimat-home-v6 .qhome-contracts-foot{flex-direction:column;align-items:stretch;gap:10px}
+  .qimat-home-v6 .qhome-foot-show{display:flex;align-items:center;gap:8px;justify-content:center}
+  .qimat-home-v6 .qhome-pager{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+  .qimat-home-v6 .qhome-pager button{min-width:36px;height:36px;border-radius:8px;background:#071b2b;color:#e8ebed;border:1px solid rgba(212,156,40,.4);font-weight:800}
+  .qimat-home-v6 .qhome-pager button.active{background:linear-gradient(145deg,#dda93e,#b77a16);color:#07131e}
+  .qimat-home-v6 .qhome-td-act button{background:#071b2b;color:var(--q15-gold2);border:1px solid rgba(212,156,40,.45);border-radius:7px;padding:3px 8px}
+  .qimat-home-v6 .qsend-head{display:flex;align-items:center;gap:8px;color:var(--q15-gold2);font-weight:900;margin-bottom:9px}
+  .qimat-home-v6 .qsend-head svg{width:19px;height:19px}
+  .qimat-home-v6 .qsend-total{border:1px solid rgba(212,156,40,.35);border-radius:10px;padding:10px;text-align:center;margin-bottom:9px}
+  .qimat-home-v6 .qsend-total span{display:block;font-size:12.5px;color:#e6c98a;font-weight:800;margin-bottom:4px}
+  .qimat-home-v6 .qsend-total strong{font-size:21px;font-weight:900;color:var(--q15-green)}
+  .qimat-home-v6 .qsend-total strong.neg{color:var(--q15-red)}
+  .qimat-home-v6 .qsend-rows{border:1px solid rgba(212,156,40,.3);border-radius:10px;overflow:hidden;margin-bottom:10px}
+  .qimat-home-v6 .qsend-row{display:flex;align-items:center;gap:9px;padding:10px 11px;font-size:12.5px}
+  .qimat-home-v6 .qsend-row+.qsend-row{border-top:1px solid rgba(212,156,40,.18)}
+  .qimat-home-v6 .qsend-row svg{width:18px;height:18px;color:var(--q15-gold2)}
+  .qimat-home-v6 .qsend-row b{margin-inline-start:auto;color:var(--q15-gold2)}
+  .qimat-home-v6 .qhv5-kpi{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;min-height:118px;padding:10px 8px;border-radius:11px}
+  .qimat-home-v6 .qhv5-kpi-icon{width:22px;height:22px;color:var(--q15-gold2)}
+  .qimat-home-v6 .qhv5-kpi-icon svg{width:22px;height:22px}
+  .qimat-home-v6 .qhv5-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .qimat-home-v6 .qhv5-kpi strong{font-size:20px;font-weight:900;color:var(--q15-gold2)}
+  .qimat-home-v6 .qhv5-kpi small{font-size:12.5px;font-weight:800;color:#e6c98a}
+  .qimat-home-v6 .qhv5-kpi em{font-style:normal;font-size:11.5px;color:#b9c2c9}
+  .qimat-home-v6 .qhv5-ring{position:relative;display:flex;align-items:center;justify-content:center;width:78px;height:78px;border-radius:50%;background:conic-gradient(var(--q15-gold) calc(var(--pct,0)*1%),rgba(255,255,255,.085) 0)}
+  .qimat-home-v6 .qhv5-ring::after{content:"";position:absolute;inset:10px;border-radius:50%;background:#07192a}
+  .qimat-home-v6 .qhv5-ring b{position:relative;z-index:2;font-size:19px;font-weight:900;color:var(--q15-gold2)}
+  .qimat-home-v6 .qhv5-progress-row{display:flex;flex-direction:column;gap:7px;padding:9px 12px;border-radius:9px}
+  .qimat-home-v6 .qhv5-progress-copy{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .qimat-home-v6 .qhv5-progress-copy b{margin-inline-start:auto;color:var(--q15-gold2)}
+  .qimat-home-v6 .qhv5-progress{display:block;height:9px;border-radius:99px;background:#052030;border:1px solid rgba(126,196,214,.34);overflow:hidden}
+  .qimat-home-v6 .qhv5-progress i{display:block;height:100%;background:linear-gradient(90deg,#eac265,#c08d24)}
+  .qimat-home-v6 .qdaily-types>button.qdt.on{background:linear-gradient(145deg,#e6b954,#c08d24)!important;color:#07131e!important}
+}
+</style>
 <script id="qimat-full-enterprise-ui-behavior">
 (function(){
  const textOf=(el)=>(el.innerText||el.textContent||'').replace(/\\s+/g,' ').trim();
@@ -12499,201 +13114,5 @@ table tbody tr:last-child td{border-bottom:0!important}
  window.addEventListener('load',schedule,{once:true});
 })();
 </script>
-
-
-<style id="qimat-home-v16-rebuild">
-:root{
-  --v16-bg:#02070c;--v16-bg2:#03121e;--v16-panel:#061a2a;--v16-panel-hi:#0a2a43;
-  --v16-gold:#d39b2b;--v16-gold2:#f0c45a;--v16-line:rgba(224,177,65,.34);
-  --v16-line-hi:rgba(240,196,90,.66);--v16-text:#f6f3e9;--v16-muted:#9aa9b5;
-}
-body{
-  background:radial-gradient(circle at 8% -5%,rgba(31,95,132,.20),transparent 29%),
-             radial-gradient(circle at 92% 28%,rgba(211,155,43,.055),transparent 24%),
-             linear-gradient(180deg,#02070c,#03121e 48%,#02070c)!important;
-}
-.qimat-home-v6{color:var(--v16-text)!important}
-.qimat-home-v6 .daily-entry-panel,
-.qimat-home-v6 .daily-today-panel,
-.qimat-home-v6 .daily-summary-grid>div,
-.qimat-home-v6 .daily-management-grid>div,
-.qimat-home-v6 .daily-statement-full,
-.qhome-investor-contracts{
-  background:linear-gradient(145deg,rgba(10,40,63,.98),rgba(3,16,27,.99))!important;
-  border:1px solid var(--v16-line)!important;color:var(--v16-text)!important;
-  box-shadow:0 14px 34px rgba(0,0,0,.19),inset 0 1px 0 rgba(255,255,255,.025)!important;
-}
-.qimat-home-v6 .daily-entry-panel>div:first-child,
-.qimat-home-v6 .daily-today-panel>div:first-child,
-.qimat-home-v6 .daily-statement-full>div:first-child{
-  background:linear-gradient(180deg,rgba(12,48,75,.95),rgba(5,25,40,.98))!important;
-  border-bottom:1px solid rgba(224,177,65,.25)!important;
-}
-.qimat-home-v6 h2,.qimat-home-v6 h3,.qimat-home-v6 h4,.qhome-investor-contracts h3{color:var(--v16-gold2)!important}
-.qimat-home-v6 input,.qimat-home-v6 select,.qimat-home-v6 textarea,.qhome-investor-contracts input,.qhome-investor-contracts select{
-  background:#051827!important;color:var(--v16-text)!important;border:1px solid rgba(224,177,65,.31)!important;box-shadow:none!important
-}
-.qimat-home-v6 input::placeholder,.qimat-home-v6 textarea::placeholder,.qhome-investor-contracts input::placeholder{color:#72828f!important}
-.qimat-home-v6 input:focus,.qimat-home-v6 select:focus,.qimat-home-v6 textarea:focus,.qhome-investor-contracts input:focus,.qhome-investor-contracts select:focus{
-  outline:none!important;border-color:var(--v16-gold2)!important;box-shadow:0 0 0 3px rgba(240,196,90,.09)!important
-}
-
-@media(min-width:1000px){
-  .qimat-home-v5.qimat-home-v6{
-    width:min(calc(100% - 28px),1640px)!important;max-width:1640px!important;margin:0 auto!important;padding:11px 0 28px!important;
-    display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;grid-auto-rows:auto!important;gap:11px!important;
-    align-items:stretch!important;background:transparent!important;border:0!important;box-shadow:none!important
-  }
-  .qimat-home-v6>.qhv6-daily,.qimat-home-v6>.qhv6-daily>.qimat-daily-v5{display:contents!important}
-
-  .qimat-top-hero{
-    width:min(calc(100% - 28px),1640px)!important;max-width:1640px!important;height:192px!important;min-height:192px!important;max-height:192px!important;
-    margin:10px auto!important;border-radius:18px!important;overflow:hidden!important;border:1px solid rgba(224,177,65,.50)!important;
-    background:radial-gradient(circle at 50% -42%,rgba(41,112,151,.27),transparent 47%),
-               radial-gradient(circle at 91% 5%,rgba(240,196,90,.075),transparent 20%),
-               linear-gradient(116deg,#020a12,#061c2e 56%,#04121d)!important;
-    background-image:radial-gradient(circle at 50% -42%,rgba(41,112,151,.27),transparent 47%),
-                     radial-gradient(circle at 91% 5%,rgba(240,196,90,.075),transparent 20%),
-                     linear-gradient(116deg,#020a12,#061c2e 56%,#04121d)!important;
-    box-shadow:0 18px 44px rgba(0,0,0,.30)!important
-  }
-  .qimat-top-hero:before{
-    content:""!important;position:absolute!important;inset:0!important;pointer-events:none!important;
-    background:linear-gradient(112deg,transparent 0 70%,rgba(240,196,90,.13) 70.08%,transparent 70.25%),
-               linear-gradient(112deg,transparent 0 78%,rgba(240,196,90,.05) 78.08%,transparent 78.22%)!important
-  }
-  .qimat-top-hero:after{
-    content:""!important;position:absolute!important;right:-80px!important;bottom:-172px!important;width:430px!important;height:315px!important;
-    border:1px solid rgba(240,196,90,.13)!important;border-radius:50%!important;
-    box-shadow:0 0 0 34px rgba(240,196,90,.016),0 0 0 68px rgba(240,196,90,.010)!important;pointer-events:none!important
-  }
-  .qimat-hero-quote{display:none!important}
-  .qimat-hero-brand-live{top:10px!important;left:27%!important;right:27%!important;padding:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important}
-  .qimat-hero-brand-title{color:var(--v16-gold2)!important;font-size:31px!important;line-height:1.05!important;text-shadow:0 4px 22px rgba(0,0,0,.32)!important}
-  .qimat-hero-brand-sub{color:#d1b272!important;font-size:11px!important}
-  .qimat-hero-brand-line{width:160px!important;height:2px!important;margin:6px auto 4px!important;background:linear-gradient(90deg,transparent,var(--v16-gold2),transparent)!important}
-  .qimat-hero-live-controls{left:17px!important;top:11px!important;width:112px!important;min-width:112px!important;padding:5px!important;border:1px solid rgba(224,177,65,.28)!important;border-radius:11px!important;background:rgba(3,17,28,.74)!important;box-shadow:none!important}
-  .qimat-hero-mark{right:18px!important;top:8px!important}
-
-  .qimat-hero-tab{
-    top:auto!important;bottom:9px!important;height:72px!important;min-height:72px!important;width:calc((100% - 54px)/7)!important;
-    padding:4px 6px 8px!important;border-radius:11px!important;color:#e8bd5e!important;
-    background:linear-gradient(180deg,rgba(10,41,65,.98),rgba(3,18,29,.99))!important;border:1px solid rgba(224,177,65,.33)!important;
-    box-shadow:inset 0 1px rgba(255,255,255,.025)!important;transition:transform .16s ease,border-color .16s ease,background .16s ease!important
-  }
-  .qimat-hero-tab:hover{transform:translateY(-2px)!important;border-color:rgba(240,196,90,.70)!important;background:linear-gradient(180deg,#0c3150,#051a2b)!important}
-  .qimat-hero-tab.active{transform:translateY(-2px)!important;border-color:var(--v16-gold2)!important;background:radial-gradient(circle at 50% 110%,rgba(240,196,90,.22),transparent 52%),linear-gradient(180deg,#0e3858,#061a2a)!important;box-shadow:0 0 0 1px rgba(240,196,90,.38),0 0 24px rgba(211,155,43,.16)!important}
-  .qimat-hero-tab.home{right:8px!important;left:auto!important}
-  .qimat-hero-tab.contracts{right:calc(8px + (100% - 54px)/7 + 6px)!important;left:auto!important}
-  .qimat-hero-tab.portfolio{right:calc(8px + 2*((100% - 54px)/7 + 6px))!important;left:auto!important}
-  .qimat-hero-tab.ai{right:calc(8px + 3*((100% - 54px)/7 + 6px))!important;left:auto!important}
-  .qimat-hero-tab.visits{right:calc(8px + 4*((100% - 54px)/7 + 6px))!important;left:auto!important}
-  .qimat-hero-tab.upgrades{right:calc(8px + 5*((100% - 54px)/7 + 6px))!important;left:auto!important}
-  .qimat-hero-tab.settings{right:calc(8px + 6*((100% - 54px)/7 + 6px))!important;left:auto!important}
-
-  .qimat-home-v6>.qhv5-command{
-    grid-column:1/9!important;grid-row:1!important;width:100%!important;min-width:0!important;margin:0!important;padding:11px!important;
-    border-radius:14px!important;position:relative!important;overflow:hidden!important;
-    background:radial-gradient(circle at 0% 0%,rgba(41,112,151,.10),transparent 25%),linear-gradient(155deg,#071d2f,#03131f)!important;
-    border:1px solid var(--v16-line)!important;box-shadow:0 14px 32px rgba(0,0,0,.17)!important
-  }
-  .qimat-home-v6>.qhv5-command:before{content:"ملخص الدورة الحالية";display:block;margin:0 2px 7px;padding-right:9px;border-right:2px solid var(--v16-gold2);color:#9eacb7;font-size:10px;font-weight:800}
-  .qimat-home-v6 .qhv5-cycle{width:auto!important;max-width:none!important;min-height:34px!important;margin:0 0 8px!important;padding:5px 11px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;border-radius:8px!important;color:#d8b55f!important;background:#051723!important;border:1px solid rgba(224,177,65,.27)!important}
-  .qimat-home-v6 .qhv5-kpis{display:grid!important;grid-template-columns:1.2fr 1.2fr 1.2fr .95fr .95fr!important;gap:8px!important}
-  .qimat-home-v6 .qhv5-kpi{min-height:111px!important;padding:9px 8px!important;border-radius:11px!important;position:relative!important;overflow:hidden!important;background:linear-gradient(160deg,#0a2b45,#041725)!important;border:1px solid rgba(224,177,65,.34)!important;box-shadow:inset 0 1px rgba(255,255,255,.02)!important}
-  .qimat-home-v6 .qhv5-kpi:after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,rgba(240,196,90,.45),transparent)}
-  .qimat-home-v6 button.qhv5-kpi:hover{transform:translateY(-2px)!important;border-color:var(--v16-line-hi)!important}
-  .qimat-home-v6 .qhv5-kpi-icon{width:34px!important;height:34px!important;border-radius:9px!important;background:rgba(240,196,90,.06)!important;border:1px solid rgba(240,196,90,.18)!important;color:var(--v16-gold2)!important;box-shadow:none!important}
-  .qimat-home-v6 .qhv5-kpi small{font-size:10px!important;color:#b7c1c8!important}.qimat-home-v6 .qhv5-kpi strong{font-size:25px!important;color:var(--v16-gold2)!important}.qimat-home-v6 .qhv5-kpi em{font-size:9px!important;color:#84929d!important}
-  .qimat-home-v6 .qhv5-ring{width:70px!important;height:70px!important}
-  .qimat-home-v6 .qhv5-progress-row{margin-top:8px!important;min-height:34px!important;padding:6px 9px!important;border-radius:8px!important;background:#03131f!important;border:1px solid rgba(224,177,65,.20)!important}
-
-  .qimat-home-v6 .daily-entry-panel{grid-column:9/13!important;grid-row:1/4!important;width:100%!important;min-width:0!important;height:100%!important;margin:0!important;border-radius:14px!important;overflow:hidden!important}
-  .qimat-home-v6 .daily-today-panel{grid-column:1/5!important;grid-row:2/4!important;width:100%!important;min-width:0!important;height:100%!important;margin:0!important;border-radius:14px!important}
-  .qimat-home-v6 .daily-summary-grid{grid-column:5/9!important;grid-row:2!important;width:100%!important;margin:0!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
-  .qimat-home-v6 .daily-management-grid{grid-column:5/9!important;grid-row:3!important;width:100%!important;margin:0!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
-  .qimat-home-v6 .daily-summary-grid>div,.qimat-home-v6 .daily-management-grid>div{min-height:82px!important;padding:10px!important;border-radius:11px!important}
-
-  .qimat-home-v6 .daily-statement-full{grid-column:1/9!important;grid-row:4!important;width:100%!important;min-width:0!important;margin:0!important;border-radius:14px!important;overflow:hidden!important}
-  .qimat-home-v6 .daily-send-summary{
-    position:relative!important;grid-column:9/13!important;grid-row:4!important;width:100%!important;min-width:0!important;height:100%!important;
-    min-height:245px!important;margin:0!important;padding:14px!important;border-radius:14px!important;display:flex!important;align-items:flex-end!important;
-    background:radial-gradient(circle at 88% 14%,rgba(240,196,90,.10),transparent 29%),linear-gradient(155deg,#08263c,#03131f)!important;
-    border:1px solid var(--v16-line)!important;box-shadow:0 14px 32px rgba(0,0,0,.17)!important
-  }
-  .qimat-home-v6 .daily-send-summary:before{content:"ملخص الإدارة اليومي";position:absolute;right:16px;top:16px;color:var(--v16-gold2);font-size:17px;font-weight:900}
-  .qimat-home-v6 .daily-send-summary:after{content:"مراجعة سريعة ثم إرسال مباشر للمدير";position:absolute;right:16px;top:47px;color:#8797a4;font-size:10px;font-weight:700}
-  .qimat-home-v6 .daily-send-summary button{width:100%!important;min-height:46px!important;border-radius:9px!important;background:linear-gradient(145deg,#e0ae45,#b77715)!important;color:#07131e!important;border:1px solid #e3b653!important;font-weight:900!important;box-shadow:0 8px 20px rgba(184,119,21,.17)!important}
-
-  .qimat-home-v6 .daily-statement-full>div:nth-child(2){padding:10px!important}
-  .qimat-home-v6 .daily-statement-full>div:nth-child(2)>div:first-child{margin-bottom:9px!important;border-radius:9px!important;background:#041520!important;border:1px solid rgba(224,177,65,.23)!important}
-  .qimat-home-v6 .daily-statement-full .stmt-side-by-side{display:grid!important;grid-template-columns:minmax(0,73fr) minmax(250px,27fr)!important;direction:ltr!important;gap:9px!important;width:100%!important;align-items:start!important;flex-wrap:nowrap!important}
-  .qimat-home-v6 .daily-statement-full .stmt-side-by-side>div:first-child{grid-column:1!important;width:100%!important;min-width:0!important;max-width:none!important;margin:0!important;direction:rtl!important;background:#041622!important;border:1px solid rgba(224,177,65,.23)!important;border-radius:10px!important;overflow:hidden!important}
-  .qimat-home-v6 .daily-statement-full .stmt-type-summary{grid-column:2!important;width:100%!important;min-width:0!important;max-width:none!important;margin:0!important;padding:8px!important;direction:rtl!important;background:#041622!important;border:1px solid rgba(224,177,65,.23)!important;border-radius:10px!important}
-
-  .qhome-investor-contracts{grid-column:1/13!important;grid-row:5!important;width:100%!important;margin:0!important;border-radius:15px!important;overflow:hidden!important}
-  .qhome-investor-head{padding:15px 16px 12px!important;background:linear-gradient(180deg,rgba(10,42,66,.74),rgba(5,22,35,.22))!important;border-bottom:1px solid rgba(224,177,65,.19)!important}
-  .qhome-investor-head h3{margin:0 0 11px!important;font-size:19px!important}
-  .qhome-investor-tools{display:grid!important;grid-template-columns:1fr auto!important;gap:10px!important}
-  .qhome-view-switch{border:1px solid rgba(224,177,65,.28)!important;border-radius:9px!important;overflow:hidden!important}
-  .qhome-view-switch button{height:41px!important;min-width:96px!important;border:0!important;background:#071b2b!important;color:#98a6b1!important;font-weight:900!important}
-  .qhome-view-switch button.active{background:linear-gradient(145deg,#dfad45,#b97917)!important;color:#07131e!important}
-  .qhome-contracts-title{padding:13px 16px 5px!important;color:var(--v16-gold2)!important}
-  .qhome-contracts-filters{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;padding:8px 16px!important}
-  .qhome-type-tabs{display:flex!important;gap:7px!important;flex-wrap:wrap!important;padding:0 16px 11px!important}
-  .qhome-type-tabs button{height:36px!important;padding:0 15px!important;border-radius:8px!important;border:1px solid rgba(224,177,65,.28)!important;background:#061927!important;color:#dce3e7!important;font-weight:900!important}
-  .qhome-type-tabs button.active{background:linear-gradient(145deg,#dfad45,#b97917)!important;color:#07131e!important;border-color:#edc15a!important}
-  .qhome-contracts-tablewrap{padding:0 16px 6px!important;overflow-x:auto!important}
-  .qhome-contracts-foot{padding:10px 16px 13px!important;border-top:1px solid rgba(224,177,65,.15)!important;color:#a8b4bc!important}
-
-  .qimat-home-v6 table,.qhome-investor-contracts table{width:100%!important;min-width:0!important;border-collapse:separate!important;border-spacing:0!important;table-layout:auto!important}
-  .qimat-home-v6 th,.qhome-investor-contracts th{background:linear-gradient(180deg,#0c304c,#061827)!important;color:var(--v16-gold2)!important;border-bottom:1px solid rgba(224,177,65,.44)!important;padding:7px 8px!important;font-size:10.7px!important}
-  .qimat-home-v6 td,.qhome-investor-contracts td{background:rgba(6,27,45,.84)!important;color:#eaf0f3!important;border-bottom:1px solid rgba(224,177,65,.09)!important;padding:7px 8px!important;font-size:10.5px!important}
-  .qimat-home-v6 tbody tr:hover td,.qhome-investor-contracts tbody tr:hover td{background:#0a2942!important}
-
-  .qimat-home-v6 *,.qhome-investor-contracts *{min-inline-size:0}
-}
-
-@media(min-width:1000px) and (max-width:1280px){
-  .qimat-home-v5.qimat-home-v6{width:calc(100% - 16px)!important;gap:9px!important}
-  .qimat-top-hero{width:calc(100% - 16px)!important;height:178px!important;min-height:178px!important;max-height:178px!important}
-  .qimat-hero-brand-title{font-size:25px!important}
-  .qimat-home-v6 .qhv5-kpi strong{font-size:20px!important}
-  .qimat-home-v6 .daily-statement-full .stmt-side-by-side{grid-template-columns:minmax(0,68fr) minmax(235px,32fr)!important}
-  .qimat-home-v6 th,.qimat-home-v6 td,.qhome-investor-contracts th,.qhome-investor-contracts td{font-size:9.8px!important;padding:6px!important}
-}
-
-@media(max-width:999px){
-  body{background:linear-gradient(180deg,#02070c,#03121e)!important}
-  .qimat-home-v5.qimat-home-v6{display:block!important;width:100%!important;max-width:none!important;padding:7px!important;background:transparent!important}
-  .qimat-home-v6>.qhv6-daily,.qimat-home-v6>.qhv6-daily>.qimat-daily-v5{display:block!important}
-
-  .qimat-home-v6>.qhv5-command{width:100%!important;margin:0 0 9px!important;padding:8px!important;border-radius:13px!important;background:linear-gradient(155deg,#071d2f,#03131f)!important;border:1px solid rgba(224,177,65,.33)!important}
-  .qimat-home-v6 .qhv5-cycle{margin:0 0 7px!important;background:#051723!important;color:var(--v16-gold2)!important;border:1px solid rgba(224,177,65,.33)!important}
-  .qimat-home-v6 .qhv5-kpis{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
-  .qimat-home-v6 .qhv5-kpi{min-height:104px!important;background:linear-gradient(155deg,#08263d,#041522)!important;border:1px solid rgba(224,177,65,.34)!important}
-  .qimat-home-v6 .qhv5-kpi:nth-child(5){grid-column:1/-1!important}
-
-  .qimat-home-v6 .daily-entry-panel,.qimat-home-v6 .daily-today-panel,.qimat-home-v6 .daily-summary-grid,.qimat-home-v6 .daily-management-grid,.qimat-home-v6 .daily-send-summary,.qimat-home-v6 .daily-statement-full,.qhome-investor-contracts{
-    width:100%!important;max-width:none!important;margin:0 0 9px!important;border-radius:13px!important
-  }
-  .qimat-home-v6 .daily-summary-grid,.qimat-home-v6 .daily-management-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
-  .qimat-home-v6 .daily-send-summary{position:relative!important;min-height:122px!important;padding:12px!important;display:flex!important;align-items:flex-end!important;background:linear-gradient(155deg,#071d2f,#03131f)!important;border:1px solid rgba(224,177,65,.33)!important}
-  .qimat-home-v6 .daily-send-summary:before{content:"ملخص الإدارة اليومي";position:absolute;top:12px;right:13px;color:var(--v16-gold2);font-weight:900}
-  .qimat-home-v6 .daily-send-summary button{width:100%!important;background:linear-gradient(145deg,#dfad45,#b97917)!important;color:#07131e!important}
-
-  .qimat-home-v6 .daily-statement-full .stmt-side-by-side{display:flex!important;flex-direction:column!important;direction:rtl!important;gap:8px!important}
-  .qimat-home-v6 .daily-statement-full .stmt-side-by-side>div:first-child,.qimat-home-v6 .daily-statement-full .stmt-type-summary{width:100%!important;min-width:0!important;max-width:none!important}
-
-  .qhome-investor-tools,.qhome-contracts-filters{grid-template-columns:1fr!important}
-  .qhome-view-switch{width:100%!important}
-  .qhome-view-switch button{flex:1!important}
-  .qhome-type-tabs{overflow-x:auto!important;flex-wrap:nowrap!important;padding-bottom:10px!important}
-  .qhome-type-tabs button{flex:0 0 auto!important;white-space:nowrap!important}
-  .qhome-contracts-tablewrap{overflow-x:auto!important}
-  .qhome-investor-contracts table{min-width:640px!important}
-}
-</style>
-
 </body>
 </html>
