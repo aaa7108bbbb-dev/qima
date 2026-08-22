@@ -11993,9 +11993,16 @@ function App() {
     <div style={styles.body}>
       <section className="qimat-top-hero noprint" aria-label="قائمة التنقل الرئيسية">
         <div className="qimat-hero-brand-live">
+          <div className="qimat-hero-brand-kicker">QIMAT AL-FORSAH</div>
           <div className="qimat-hero-brand-title">مؤسسة قمة الفرصة التجارية</div>
           <div className="qimat-hero-brand-line"></div>
+          <div className="qimat-hero-brand-sub">نحو مستقبل من الفرص والنجاحات</div>
         </div>
+        <div className="qimat-hero-mark" aria-hidden="true">
+          <span className="qimat-mark-bars"><i></i><i></i><i></i><i></i></span>
+          <strong>قمة الفرصة</strong><small>التجارية</small>
+        </div>
+        <div className="qimat-hero-quote" aria-hidden="true"><b>“</b><span>الفرصة لا تأتي<br/>بل نصنعها<br/>بالتخطيط والإتقان</span></div>
         <div className="qimat-hero-live-controls">
           <button type="button" className="qimat-hero-logout" onClick={()=>{if(window.confirm("تسجيل الخروج؟")){window._fbAuth&&window._fbAuth.signOut();location.reload();}}}>خروج</button>
           <div className={"qimat-hero-sync "+(syncStatus==="error"?"error":syncStatus==="saving"||syncStatus==="loading"?"busy":"online")}>
@@ -12344,6 +12351,54 @@ table tbody tr:last-child td{border-bottom:0!important}
  .qimat-hero-logout{min-height:24px!important;padding:2px 3px!important;font-size:8.5px!important;border-radius:6px!important}
  .qimat-hero-sync{font-size:7.6px;gap:2px}.qimat-hero-sync-dot{font-size:6px}
 }
+
+/* ===== QIMAT 2026 — responsive hero built in HTML/CSS, no background image ===== */
+.qimat-top-hero{
+  background-image:none!important;aspect-ratio:auto!important;
+  background:
+    radial-gradient(circle at 76% 18%,rgba(225,181,75,.18),transparent 20%),
+    radial-gradient(circle at 18% 82%,rgba(31,91,126,.30),transparent 27%),
+    linear-gradient(118deg,#061421 0%,#0a2236 48%,#0d2d46 100%)!important;
+  min-height:360px!important;height:360px!important;isolation:isolate;
+}
+.qimat-top-hero::before{content:""!important;position:absolute!important;inset:0!important;z-index:1!important;height:auto!important;pointer-events:none;background:
+  linear-gradient(115deg,transparent 0 63%,rgba(223,178,69,.09) 63.2% 63.5%,transparent 63.7%),
+  linear-gradient(70deg,transparent 0 18%,rgba(255,255,255,.035) 18.2% 18.5%,transparent 18.7%),
+  repeating-linear-gradient(90deg,rgba(255,255,255,.018) 0 1px,transparent 1px 84px)!important}
+.qimat-top-hero::after{content:""!important;position:absolute;inset:auto -8% -62% auto;width:58%;height:118%;border:1px solid rgba(221,176,68,.24);border-radius:50%;transform:rotate(-18deg);z-index:1;box-shadow:0 0 0 32px rgba(221,176,68,.025),0 0 0 64px rgba(221,176,68,.018);pointer-events:none}
+.qimat-hero-brand-live{top:6%!important;left:24%!important;right:24%!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;padding:0!important;z-index:20!important}
+.qimat-hero-brand-kicker{font:700 10px/1.2 'Poppins',sans-serif;letter-spacing:3px;color:#d9ad4c;opacity:.8;margin-bottom:3px}
+.qimat-hero-brand-title{font-size:clamp(27px,2.65vw,43px)!important;color:#f1c866!important;text-shadow:0 2px 18px rgba(0,0,0,.35);white-space:nowrap}
+.qimat-hero-brand-line{width:150px!important;height:2px!important;margin:7px auto 5px!important;background:linear-gradient(90deg,transparent,#e5b94f,transparent)!important}
+.qimat-hero-brand-sub{font-size:13px;color:#d8c69e;letter-spacing:.2px}
+.qimat-hero-mark{position:absolute;z-index:22;right:3.2%;top:5%;width:150px;text-align:center;color:#e9bd55;display:flex;flex-direction:column;align-items:center;line-height:1.05}
+.qimat-hero-mark strong{font-size:19px;margin-top:5px}.qimat-hero-mark small{font-size:10px;letter-spacing:1.4px;margin-top:4px;color:#cda44d}
+.qimat-mark-bars{height:48px;width:68px;display:flex;align-items:flex-end;justify-content:center;gap:5px;border-bottom:2px solid #dcae45;border-radius:50%;padding:0 10px 6px;transform:skewY(-5deg)}
+.qimat-mark-bars i{display:block;width:8px;border-radius:3px 3px 0 0;background:linear-gradient(#f5d57f,#bd8421);box-shadow:0 0 12px rgba(229,185,79,.18)}
+.qimat-mark-bars i:nth-child(1){height:15px}.qimat-mark-bars i:nth-child(2){height:25px}.qimat-mark-bars i:nth-child(3){height:35px}.qimat-mark-bars i:nth-child(4){height:45px}
+.qimat-hero-quote{position:absolute;z-index:18;left:3.2%;top:33%;color:#ead7a5;text-align:right;font-size:12px;line-height:1.9;padding-right:15px;border-right:1px solid rgba(225,181,75,.42)}
+.qimat-hero-quote b{font:700 34px/1 Georgia,serif;color:#e1b54b;position:absolute;right:-8px;top:-25px}.qimat-hero-quote span{opacity:.9}
+.qimat-hero-live-controls{left:2.2%!important;top:5%!important;width:120px!important;min-width:120px!important;z-index:30!important}
+@media(min-width:900px){
+ .qimat-top-hero{height:360px!important;min-height:360px!important;max-height:360px!important}
+ .qimat-hero-tab{top:auto!important;bottom:7%!important;height:43%!important;width:11.35%!important;padding:0 6px 15px!important}
+ .qimat-hero-tab.home{right:10.0%!important}.qimat-hero-tab.contracts{right:22.0%!important}.qimat-hero-tab.portfolio{right:34.0%!important}.qimat-hero-tab.ai{right:46.0%!important}.qimat-hero-tab.visits{right:58.0%!important}.qimat-hero-tab.upgrades{right:70.0%!important}.qimat-hero-tab.settings{right:82.0%!important}
+}
+@media(max-width:899px){
+ .qimat-top-hero{width:calc(100% - 12px)!important;height:420px!important;min-height:420px!important;margin:6px auto 12px!important;border-radius:18px!important}
+ .qimat-hero-brand-live{top:5%!important;left:20%!important;right:20%!important}
+ .qimat-hero-brand-kicker{display:none}.qimat-hero-brand-title{font-size:clamp(18px,5vw,28px)!important}.qimat-hero-brand-sub{font-size:9px}.qimat-hero-brand-line{width:90px!important}
+ .qimat-hero-mark{right:3%;top:4%;width:72px}.qimat-mark-bars{width:46px;height:34px;gap:3px;padding:0 6px 4px}.qimat-mark-bars i{width:5px}.qimat-mark-bars i:nth-child(1){height:10px}.qimat-mark-bars i:nth-child(2){height:17px}.qimat-mark-bars i:nth-child(3){height:24px}.qimat-mark-bars i:nth-child(4){height:31px}.qimat-hero-mark strong{font-size:10px}.qimat-hero-mark small{font-size:6px}
+ .qimat-hero-live-controls{left:2.5%!important;top:4%!important;width:70px!important;min-width:70px!important;padding:5px!important}.qimat-hero-logout{font-size:9px!important;min-height:27px!important}.qimat-hero-sync{font-size:7px!important}
+ .qimat-hero-quote{display:none}
+ .qimat-hero-tab{display:flex!important;align-items:flex-end!important;justify-content:center!important;height:112px!important;width:17.4%!important;top:30%!important;bottom:auto!important;padding:0 3px 10px!important;background:linear-gradient(155deg,rgba(15,43,66,.98),rgba(5,19,32,.99))!important;border:1px solid rgba(232,190,91,.72)!important;border-radius:14px!important;color:#f0ca70!important;font-size:10px!important;font-weight:900!important;box-shadow:0 8px 20px rgba(0,0,0,.24)!important}
+ .qimat-hero-tab::after{content:attr(data-label);white-space:nowrap}.qimat-hero-tab::before{position:absolute;top:19%;left:50%;transform:translateX(-50%);font-size:27px;line-height:1}.qimat-hero-tab.home::before{content:"⌂"}.qimat-hero-tab.contracts::before{content:"▤"}.qimat-hero-tab.portfolio::before{content:"▥"}.qimat-hero-tab.ai::before{content:"AI";font-size:18px;border:1.5px solid #f0ca70;border-radius:6px;padding:3px}.qimat-hero-tab.visits::before{content:"▣"}.qimat-hero-tab.upgrades::before{content:"↑"}.qimat-hero-tab.settings::before{content:"⚙"}
+ .qimat-hero-tab.home{right:3%!important;left:auto!important}.qimat-hero-tab.contracts{right:22.15%!important;left:auto!important}.qimat-hero-tab.portfolio{right:41.3%!important;left:auto!important}.qimat-hero-tab.ai{right:60.45%!important;left:auto!important}.qimat-hero-tab.visits{right:79.6%!important;left:auto!important}
+ .qimat-hero-tab.upgrades,.qimat-hero-tab.settings{top:61%!important;width:28%!important;height:105px!important}.qimat-hero-tab.upgrades{right:21%!important;left:auto!important}.qimat-hero-tab.settings{right:51%!important;left:auto!important}
+ .qimat-hero-tab.active{box-shadow:0 0 0 2px #f0cf79,0 10px 24px rgba(0,0,0,.28),0 0 20px rgba(224,184,92,.22)!important}
+}
+@media(max-width:430px){.qimat-top-hero{height:360px!important;min-height:360px!important}.qimat-hero-tab{height:96px!important;font-size:8.5px!important}.qimat-hero-tab.upgrades,.qimat-hero-tab.settings{height:88px!important}.qimat-hero-brand-title{font-size:17px!important}.qimat-hero-brand-sub{display:none}}
+
 </style>
 <script id="qimat-full-enterprise-ui-behavior">
 (function(){
