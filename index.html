@@ -13106,6 +13106,346 @@ body:has(.qimat-home-v6){
   .qimat-home-v6 .qdaily-printday{font-size:12.5px!important;padding:7px 12px!important;min-height:0!important}
 }
 </style>
+<!-- ═══ QIMAT EXECUTIVE IVORY · VISUAL LAYER v1 ═══ -->
+<style id="qimat-executive-ivory-v1">
+:root{
+  --qx-canvas:#faf6ee;
+  --qx-surface:#fffdf9;
+  --qx-surface-2:#f6f1e8;
+  --qx-navy:#071d30;
+  --qx-navy-2:#0d2b43;
+  --qx-navy-3:#123a57;
+  --qx-gold:#c9973e;
+  --qx-gold-2:#e2b85f;
+  --qx-ink:#13263a;
+  --qx-muted:#687687;
+  --qx-line:#ded6c9;
+  --qx-green:#16845f;
+  --qx-red:#d94b45;
+}
+
+/* الخلفية العامة: سكري هادئ مع ملمس نقطي بالغ الخفة */
+html{background:var(--qx-canvas)!important}
+body:has(.qimat-home-v6){
+  background-color:var(--qx-canvas)!important;
+  background-image:radial-gradient(circle at 1px 1px,rgba(201,151,62,.075) 1px,transparent 0)!important;
+  background-size:26px 26px!important;
+  background-attachment:fixed!important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   الشريط التنفيذي العلوي
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width:1000px){
+  .qimat-top-hero{
+    --qx-brand-space:clamp(240px,25vw,405px);
+    --qx-control-space:clamp(125px,12vw,190px);
+    --qx-tabw:calc((100% - var(--qx-brand-space) - var(--qx-control-space))/7);
+    position:relative!important;width:100%!important;max-width:none!important;
+    height:78px!important;min-height:78px!important;max-height:78px!important;
+    margin:0 0 20px!important;padding:0!important;border-radius:0!important;
+    overflow:hidden!important;aspect-ratio:auto!important;background-image:none!important;
+    background:linear-gradient(100deg,#061827 0%,#08243a 55%,#071d30 100%)!important;
+    border:0!important;border-bottom:1px solid rgba(226,184,95,.72)!important;
+    box-shadow:0 10px 28px rgba(7,29,48,.16)!important;
+  }
+  .qimat-top-hero::before{
+    display:block!important;content:""!important;position:absolute!important;inset:0!important;
+    background:linear-gradient(90deg,rgba(255,255,255,.025),transparent 38%,rgba(226,184,95,.035))!important;
+    pointer-events:none!important;
+  }
+  .qimat-top-hero::after{display:block!important;content:""!important;position:absolute!important;right:0!important;left:auto!important;top:0!important;bottom:0!important;width:5px!important;background:var(--qx-gold)!important;opacity:.95!important;pointer-events:none!important}
+  .qimat-hero-brand-live{
+    display:block!important;position:absolute!important;z-index:80!important;
+    top:50%!important;right:68px!important;left:auto!important;transform:translateY(-50%)!important;
+    width:calc(var(--qx-brand-space) - 82px)!important;padding:0!important;text-align:right!important;
+    background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;border:0!important;
+  }
+  .qimat-hero-brand-kicker,.qimat-hero-brand-line,.qimat-hero-brand-sub{display:none!important}
+  .qimat-hero-brand-title{
+    font-family:'IBM Plex Sans Arabic','Tajawal',Arial,sans-serif!important;
+    color:#fff!important;font-size:clamp(14px,1.35vw,22px)!important;font-weight:800!important;
+    letter-spacing:0!important;line-height:1.2!important;text-shadow:none!important;white-space:nowrap!important;
+  }
+  .qimat-hero-mark{
+    display:flex!important;position:absolute!important;z-index:82!important;right:15px!important;top:12px!important;
+    width:42px!important;height:54px!important;align-items:center!important;justify-content:center!important;color:var(--qx-gold-2)!important;
+  }
+  .qimat-hero-mark strong,.qimat-hero-mark small{display:none!important}
+  .qimat-mark-bars{
+    width:38px!important;height:38px!important;gap:3px!important;padding:0 5px 4px!important;
+    border:1.5px solid var(--qx-gold-2)!important;border-radius:12px!important;transform:rotate(45deg)!important;
+  }
+  .qimat-mark-bars i{width:4px!important;border-radius:2px!important;transform:rotate(-45deg)!important;background:linear-gradient(#f1d38f,#bd8421)!important;box-shadow:none!important}
+  .qimat-mark-bars i:nth-child(1){height:9px!important}.qimat-mark-bars i:nth-child(2){height:15px!important}.qimat-mark-bars i:nth-child(3){height:21px!important}.qimat-mark-bars i:nth-child(4){height:27px!important}
+  .qimat-hero-live-controls{
+    display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;
+    position:absolute!important;z-index:82!important;left:16px!important;right:auto!important;top:50%!important;bottom:auto!important;
+    width:calc(var(--qx-control-space) - 22px)!important;min-width:0!important;padding:0!important;gap:8px!important;
+    transform:translateY(-50%)!important;background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;
+  }
+  .qimat-hero-sync{order:1!important;font-size:10.5px!important;color:#8ed7b9!important;white-space:nowrap!important}
+  .qimat-hero-logout{
+    order:2!important;height:30px!important;min-height:30px!important;padding:0 11px!important;border-radius:8px!important;
+    background:rgba(255,255,255,.045)!important;color:#e8edf2!important;border:1px solid rgba(255,255,255,.15)!important;
+    font-size:11px!important;font-weight:800!important;box-shadow:none!important;
+  }
+  .qimat-hero-logout:hover{background:rgba(226,184,95,.12)!important;color:var(--qx-gold-2)!important;border-color:rgba(226,184,95,.45)!important}
+
+  .qimat-hero-tab{
+    position:absolute!important;z-index:70!important;top:0!important;bottom:auto!important;height:78px!important;width:var(--qx-tabw)!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;flex-direction:row!important;
+    padding:0 4px!important;border-radius:0!important;border:0!important;border-bottom:3px solid transparent!important;
+    background:transparent!important;box-shadow:none!important;color:#d9e0e6!important;
+    font-family:'IBM Plex Sans Arabic','Tajawal',Arial,sans-serif!important;font-size:clamp(10px,.83vw,14px)!important;font-weight:750!important;
+    transition:color .18s ease,background .18s ease,border-color .18s ease!important;
+  }
+  .qimat-hero-tab::before{display:none!important;content:none!important;background-image:none!important;border:0!important}
+  .qimat-hero-tab::after{content:attr(data-label)!important;position:static!important;white-space:nowrap!important;line-height:1!important}
+  .qimat-hero-tab.home{right:var(--qx-brand-space)!important;left:auto!important}
+  .qimat-hero-tab.contracts{right:calc(var(--qx-brand-space) + var(--qx-tabw))!important;left:auto!important}
+  .qimat-hero-tab.portfolio{right:calc(var(--qx-brand-space) + var(--qx-tabw) + var(--qx-tabw))!important;left:auto!important}
+  .qimat-hero-tab.ai{right:calc(var(--qx-brand-space) + var(--qx-tabw) + var(--qx-tabw) + var(--qx-tabw))!important;left:auto!important}
+  .qimat-hero-tab.visits{right:calc(var(--qx-brand-space) + var(--qx-tabw) + var(--qx-tabw) + var(--qx-tabw) + var(--qx-tabw))!important;left:auto!important}
+  .qimat-hero-tab.upgrades{right:calc(var(--qx-brand-space) + var(--qx-tabw) + var(--qx-tabw) + var(--qx-tabw) + var(--qx-tabw) + var(--qx-tabw))!important;left:auto!important}
+  .qimat-hero-tab.settings{right:calc(var(--qx-brand-space) + var(--qx-tabw) + var(--qx-tabw) + var(--qx-tabw) + var(--qx-tabw) + var(--qx-tabw) + var(--qx-tabw))!important;left:auto!important}
+  .qimat-hero-tab:hover{transform:none!important;background:rgba(255,255,255,.035)!important;color:#fff!important;border-bottom-color:rgba(226,184,95,.35)!important;box-shadow:none!important}
+  .qimat-hero-tab.active{
+    transform:none!important;background:linear-gradient(180deg,transparent 40%,rgba(201,151,62,.11))!important;
+    color:var(--qx-gold-2)!important;border-bottom-color:var(--qx-gold-2)!important;box-shadow:none!important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   الصفحة الرئيسية: الأسطح والبطاقات
+   ═══════════════════════════════════════════════════════════ */
+.qimat-home-v5.qimat-home-v6{color:var(--qx-ink)!important;background:transparent!important}
+.qimat-home-v6 .daily-entry-panel,.qimat-home-v6 .daily-today-panel,.qimat-home-v6 .daily-statement-full,
+.qimat-home-v6 .daily-send-summary,.qimat-home-v6 .qhome-investor-contracts{
+  background:var(--qx-surface)!important;color:var(--qx-ink)!important;border:1px solid var(--qx-line)!important;
+  border-radius:15px!important;box-shadow:0 8px 24px rgba(29,43,55,.065)!important;overflow:hidden!important;
+}
+.qimat-home-v6 .daily-entry-panel>div:first-child,.qimat-home-v6 .daily-today-panel>div:first-child,
+.qimat-home-v6 .daily-statement-full>div:first-child,.qimat-home-v6 .stmt-details-pane>div:first-child{
+  background:linear-gradient(100deg,var(--qx-navy) 0%,var(--qx-navy-2) 100%)!important;
+  color:#fff!important;border-bottom:1px solid rgba(226,184,95,.78)!important;
+}
+.qimat-home-v6 .daily-entry-panel>div:first-child h3,.qimat-home-v6 .daily-today-panel>div:first-child h3,
+.qimat-home-v6 .daily-statement-full>div:first-child h3,.qimat-home-v6 .stmt-details-pane>div:first-child h4,
+.qimat-home-v6 .stmt-details-pane>div:first-child span{color:#fff!important}
+.qimat-home-v6 .daily-entry-panel>div:first-child h3 svg *,.qimat-home-v6 .daily-today-panel>div:first-child h3 svg *,
+.qimat-home-v6 .daily-statement-full>div:first-child h3 svg *{stroke:var(--qx-gold-2)!important}
+
+/* مؤشرات الصف الأول */
+.qimat-home-v6 .qhv5-kpi{
+  background:linear-gradient(180deg,#fffefa 0%,#fbf8f2 100%)!important;color:var(--qx-ink)!important;
+  border:1px solid #d9d1c5!important;border-top:3px solid rgba(201,151,62,.92)!important;
+  box-shadow:0 8px 22px rgba(29,43,55,.065)!important;border-radius:15px!important;
+}
+.qimat-home-v6 .qhv5-kpi:hover{transform:translateY(-2px)!important;border-color:#cdb989!important;box-shadow:0 13px 30px rgba(29,43,55,.10)!important}
+.qimat-home-v6 .qhv5-kpi small{color:var(--qx-ink)!important;font-weight:800!important}
+.qimat-home-v6 .qhv5-kpi strong{color:var(--qx-navy)!important;font-weight:900!important}
+.qimat-home-v6 .qhv5-kpi em{color:var(--qx-muted)!important;font-weight:650!important}
+.qimat-home-v6 .qhv5-kpi-icon{color:var(--qx-gold)!important;background:transparent!important}
+.qimat-home-v6 .qhv5-kpi-alert strong{color:var(--qx-red)!important}
+.qimat-home-v6 .qhv5-kpi-ring{background:linear-gradient(180deg,#fffefa,#f9f5ed)!important}
+.qimat-home-v6 .qhv5-ring{background:conic-gradient(var(--qx-gold) calc(var(--pct,0)*1%),#e9e3da 0)!important}
+.qimat-home-v6 .qhv5-ring::after{background:var(--qx-surface)!important}
+.qimat-home-v6 .qhv5-ring b{color:var(--qx-navy)!important}
+.qimat-home-v6 .qhv5-kpi-ring small{color:var(--qx-ink)!important}
+.qimat-home-v6 .qhv5-progress-row{
+  background:var(--qx-surface)!important;color:var(--qx-ink)!important;border:1px solid var(--qx-line)!important;
+  box-shadow:0 6px 18px rgba(29,43,55,.045)!important;border-radius:12px!important;
+}
+.qimat-home-v6 .qhv5-progress-copy span{color:var(--qx-muted)!important}.qimat-home-v6 .qhv5-progress-copy strong{color:var(--qx-navy)!important}.qimat-home-v6 .qhv5-progress-copy b{color:#9a7027!important}
+.qimat-home-v6 .qhv5-progress{background:#e8e2d8!important;border:0!important}.qimat-home-v6 .qhv5-progress i{background:linear-gradient(90deg,#b9852d,#e2b85f)!important}
+
+/* بطاقات الملخص والإدارة */
+.qimat-home-v6 .daily-summary-grid,.qimat-home-v6 .daily-management-grid{background:transparent!important;border:0!important;box-shadow:none!important}
+.qimat-home-v6 .daily-summary-grid>div,.qimat-home-v6 .daily-management-grid>div{
+  background:linear-gradient(180deg,#fffefa,#fbf8f2)!important;color:var(--qx-ink)!important;
+  border:1px solid var(--qx-line)!important;border-top:2px solid rgba(201,151,62,.82)!important;
+  border-radius:13px!important;box-shadow:0 6px 18px rgba(29,43,55,.055)!important;
+}
+.qimat-home-v6 .daily-summary-grid>div>div,.qimat-home-v6 .daily-management-grid>div>div{color:var(--qx-ink)!important}
+.qimat-home-v6 .daily-summary-grid>div>div:first-child,.qimat-home-v6 .daily-management-grid>div>div:first-child{color:var(--qx-ink)!important}
+.qimat-home-v6 .daily-summary-grid>div>div:first-child svg *,.qimat-home-v6 .daily-management-grid>div>div:first-child svg *{stroke:var(--qx-gold)!important}
+.qimat-home-v6 .daily-summary-grid>div>div:nth-child(2){color:var(--qx-green)!important}
+.qimat-home-v6 .daily-summary-grid>div>div:nth-child(3){color:var(--qx-muted)!important}
+.qimat-home-v6 .daily-management-grid>div>div:not(:first-child) span:first-child{color:var(--qx-muted)!important}
+.qimat-home-v6 .daily-management-grid>div>div:not(:first-child) span:last-child{color:var(--qx-navy)!important}
+.qimat-home-v6 .daily-management-grid>div>div:last-child{border-top:1px dashed var(--qx-line)!important}
+
+/* الحقول وأزرار الإدخال */
+.qimat-home-v6 input,.qimat-home-v6 select,.qimat-home-v6 textarea{
+  background:#fff!important;color:var(--qx-ink)!important;border:1px solid #d7d0c5!important;border-radius:9px!important;
+  box-shadow:inset 0 1px 2px rgba(35,45,55,.025)!important;
+}
+.qimat-home-v6 input::placeholder,.qimat-home-v6 textarea::placeholder{color:#9b9b98!important}
+.qimat-home-v6 input:focus,.qimat-home-v6 select:focus,.qimat-home-v6 textarea:focus{
+  background:#fff!important;border-color:var(--qx-gold)!important;box-shadow:0 0 0 3px rgba(201,151,62,.14)!important;
+}
+.qimat-home-v6 input[type="date"]{color-scheme:light!important}
+.qimat-home-v6 .qdaily-datelabel{color:var(--qx-muted)!important}
+.qimat-home-v6 .qdaily-datebox,.qimat-home-v6 .stmt-search,.qimat-home-v6 .qhome-search{
+  background:#fff!important;border:1px solid #d7d0c5!important;color:var(--qx-ink)!important;
+}
+.qimat-home-v6 .qdaily-datebox svg *,.qimat-home-v6 .stmt-search svg *,.qimat-home-v6 .qhome-search svg *{stroke:#8a7d69!important}
+.qimat-home-v6 .qdaily-types>button.qdt,.qimat-home-v6 .qdaily-channel>button.qdc,
+.qimat-home-v6 .qe-btn-ghost,.qimat-home-v6 .qe-btn-secondary,.qimat-home-v6 .qe-btn-info{
+  background:#fff!important;color:var(--qx-ink)!important;border:1px solid #d6c7aa!important;box-shadow:none!important;
+}
+.qimat-home-v6 .qdaily-types>button.qdt>span{background:var(--qx-gold)!important}
+.qimat-home-v6 .qdaily-types>button.qdt.on,.qimat-home-v6 .qdaily-channel>button.qdc.on{
+  background:var(--qx-navy)!important;color:#fff!important;border-color:var(--qx-navy)!important;
+}
+.qimat-home-v6 .qdaily-types>button.qdt.on>span{background:var(--qx-gold-2)!important}
+.qimat-home-v6 .qdaily-channel>button.qdc svg *{stroke:var(--qx-gold)!important}
+.qimat-home-v6 .qdaily-channel>button.qdc.on svg *{stroke:var(--qx-gold-2)!important}
+.qimat-home-v6 button.qdaily-add,.qimat-home-v6 .daily-send-summary>button,.qimat-home-v6 .qe-btn-primary,.qimat-home-v6 .qe-btn-success{
+  background:linear-gradient(135deg,#e3b95e 0%,#c59135 100%)!important;color:#102235!important;
+  border:1px solid #b47d25!important;box-shadow:0 8px 18px rgba(180,125,37,.18)!important;font-weight:900!important;
+}
+.qimat-home-v6 button.qdaily-add svg *,.qimat-home-v6 .daily-send-summary>button svg *{stroke:#102235!important}
+.qimat-home-v6 .qdaily-todaydate{background:#f6f0e5!important;color:#8f6827!important;border-color:#ddcfb5!important}
+
+/* الجداول */
+.qimat-home-v6 table{background:#fff!important;color:var(--qx-ink)!important;border-collapse:separate!important;border-spacing:0!important}
+.qimat-home-v6 table thead th,.qimat-home-v6 th{
+  background:linear-gradient(100deg,var(--qx-navy),var(--qx-navy-2))!important;color:#fff!important;
+  border-bottom:2px solid var(--qx-gold)!important;text-shadow:none!important;font-weight:800!important;
+}
+.qimat-home-v6 table thead th svg *{stroke:var(--qx-gold-2)!important}
+.qimat-home-v6 table tbody td,.qimat-home-v6 td{
+  background:#fff!important;color:#263648!important;border-bottom:1px solid #e8e2d8!important;
+}
+.qimat-home-v6 table tbody tr:nth-child(even) td{background:#fbf8f2!important}
+.qimat-home-v6 table tbody tr:hover td{background:#f6eddc!important;color:#15283b!important}
+.qimat-home-v6 table tbody td[colspan]{background:#faf5eb!important;color:#8d6728!important}
+.qimat-home-v6 table tfoot td{background:var(--qx-navy)!important;color:#fff!important;border-top:1px solid var(--qx-gold)!important}
+.qimat-home-v6 .daily-today-panel table td span[style*="linear-gradient"]{color:#9a7027!important}
+.qimat-home-v6 .daily-today-panel table td button,.qimat-home-v6 .qhome-td-act button{
+  background:#fff!important;color:var(--qx-gold)!important;border:1px solid #d8c39b!important;box-shadow:none!important;
+}
+
+/* كشف الحساب وإرسال الملخص */
+.qimat-home-v6 .daily-send-summary{padding:15px!important}
+.qimat-home-v6 .qsend-head{color:var(--qx-ink)!important}.qimat-home-v6 .qsend-head svg *{stroke:var(--qx-gold)!important}
+.qimat-home-v6 .qsend-total,.qimat-home-v6 .qsend-rows{background:#f8f3ea!important;border:1px solid var(--qx-line)!important}
+.qimat-home-v6 .qsend-total span,.qimat-home-v6 .qsend-row span{color:var(--qx-muted)!important}
+.qimat-home-v6 .qsend-total strong{color:var(--qx-green)!important}.qimat-home-v6 .qsend-row b{color:var(--qx-navy)!important}
+.qimat-home-v6 .qsend-row svg *{stroke:var(--qx-gold)!important}
+.qimat-home-v6 .stmt-details-pane{background:#fff!important;border:1px solid var(--qx-line)!important}
+.qimat-home-v6 .stmt-tiles>div{
+  background:#fff!important;border:1px solid var(--qx-line)!important;border-top:2px solid rgba(201,151,62,.75)!important;
+  box-shadow:0 4px 13px rgba(29,43,55,.045)!important;
+}
+.qimat-home-v6 .stmt-tiles>div>div:nth-child(1){color:var(--qx-ink)!important}.qimat-home-v6 .stmt-tiles>div>div:nth-child(2){color:var(--qx-navy)!important}.qimat-home-v6 .stmt-tiles>div>div:nth-child(3){color:var(--qx-muted)!important}
+
+/* كشف المستثمر والعقود */
+.qimat-home-v6 .qhome-investor-head{
+  background:linear-gradient(100deg,var(--qx-navy),var(--qx-navy-2))!important;
+  border-bottom:1px solid rgba(226,184,95,.72)!important;
+}
+.qimat-home-v6 .qhome-investor-head h3,.qimat-home-v6 .qhome-head-contracts{color:#fff!important}
+.qimat-home-v6 .qhome-investor-head h3 svg *,.qimat-home-v6 .qhome-head-contracts svg *{stroke:var(--qx-gold-2)!important}
+.qimat-home-v6 .qhome-head-contracts i{color:#d8c49a!important}
+.qimat-home-v6 .qhome-investor-tools select,.qimat-home-v6 .qhome-search{background:#fff!important;color:var(--qx-ink)!important;border-color:rgba(226,184,95,.55)!important}
+.qimat-home-v6 .qhome-search input{color:var(--qx-ink)!important}
+.qimat-home-v6 .qhome-contracts-title{color:var(--qx-muted)!important}.qimat-home-v6 .qhome-contracts-title span{color:var(--qx-muted)!important}
+.qimat-home-v6 .qhome-type-tabs>button,.qimat-home-v6 .qhome-view-switch button,.qimat-home-v6 .qhome-pager button{
+  background:#fff!important;color:var(--qx-ink)!important;border:1px solid #d8cdbb!important;box-shadow:none!important;
+}
+.qimat-home-v6 .qhome-type-tabs>button.active,.qimat-home-v6 .qhome-view-switch button.active,.qimat-home-v6 .qhome-pager button.active{
+  background:var(--qx-navy)!important;color:#fff!important;border-color:var(--qx-navy)!important;
+}
+.qimat-home-v6 .qhome-contracts-foot,.qimat-home-v6 .qhome-foot-show{color:var(--qx-muted)!important}
+.qimat-home-v6 .qhome-pager button:disabled{background:#f0ece5!important;color:#aaa39a!important;border-color:#e3ddd3!important}
+
+/* ═══════════════════════════════════════════════════════════
+   التخطيط المكتبي المطابق للمعاينة
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width:1000px){
+  .qimat-home-v5.qimat-home-v6{
+    width:100%!important;max-width:1600px!important;margin:0 auto!important;padding:0 0 28px!important;
+    display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;
+    grid-auto-rows:min-content!important;gap:14px!important;align-items:stretch!important;
+  }
+  .qimat-home-v6>.qhv6-daily,.qimat-home-v6>.qhv6-daily>.qimat-daily-v5{display:contents!important}
+  .qimat-home-v6>.qhv5-command{grid-column:1/13!important;grid-row:1!important}
+  .qimat-home-v6 .daily-summary-grid{grid-column:1/4!important;grid-row:2!important}
+  .qimat-home-v6 .daily-management-grid{grid-column:1/4!important;grid-row:3!important}
+  .qimat-home-v6 .daily-send-summary{grid-column:1/4!important;grid-row:4!important}
+  .qimat-home-v6 .daily-entry-panel{grid-column:4/7!important;grid-row:2/5!important}
+  .qimat-home-v6 .daily-today-panel{grid-column:7/13!important;grid-row:2/4!important}
+  .qimat-home-v6 .daily-statement-full{grid-column:7/13!important;grid-row:4!important}
+  .qimat-home-v6 .qhome-investor-contracts{grid-column:1/13!important;grid-row:5!important}
+  .qimat-home-v6 .daily-entry-panel,.qimat-home-v6 .daily-today-panel,.qimat-home-v6 .daily-summary-grid,
+  .qimat-home-v6 .daily-management-grid,.qimat-home-v6 .daily-send-summary,.qimat-home-v6 .daily-statement-full,
+  .qimat-home-v6 .qhome-investor-contracts,.qimat-home-v6>.qhv5-command{
+    width:100%!important;max-width:none!important;margin:0!important;height:100%!important;
+  }
+  .qimat-home-v6>.qhv5-command{display:flex!important;flex-direction:column!important;gap:10px!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+  .qimat-home-v6 .qhv5-kpis{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:14px!important}
+  .qimat-home-v6 .qhv5-kpi{min-height:148px!important;padding:15px 13px!important}
+  .qimat-home-v6 .daily-summary-grid,.qimat-home-v6 .daily-management-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+  .qimat-home-v6 .daily-summary-grid>div,.qimat-home-v6 .daily-management-grid>div{padding:13px 11px!important}
+  .qimat-home-v6 .daily-entry-panel>div:nth-child(2){background:var(--qx-surface)!important}
+  .qimat-home-v6 .daily-today-panel>div:nth-child(2){background:var(--qx-surface)!important}
+  .qimat-home-v6 .daily-statement-full>div:nth-child(2){background:var(--qx-surface)!important}
+  .qimat-home-v6 .qhome-investor-head{padding:15px 17px 13px!important}
+}
+
+/* الجوال والتابلت: رأس مضغوط وشريط تبويبات قابل للتمرير */
+@media (max-width:999px){
+  .qimat-top-hero{
+    position:relative!important;width:100%!important;max-width:none!important;height:136px!important;min-height:136px!important;max-height:136px!important;
+    margin:0 0 12px!important;padding:60px 8px 8px!important;border-radius:0!important;aspect-ratio:auto!important;
+    display:flex!important;align-items:flex-end!important;gap:7px!important;direction:rtl!important;
+    overflow-x:auto!important;overflow-y:hidden!important;background-image:none!important;
+    background:linear-gradient(100deg,#061827,#08243a 58%,#071d30)!important;
+    border:0!important;border-bottom:1px solid rgba(226,184,95,.72)!important;box-shadow:0 8px 22px rgba(7,29,48,.16)!important;
+    scrollbar-width:none!important;
+  }
+  .qimat-top-hero::-webkit-scrollbar{display:none!important}
+  .qimat-top-hero::before,.qimat-top-hero::after{display:none!important}
+  .qimat-hero-brand-live{
+    display:block!important;position:absolute!important;top:15px!important;right:14px!important;left:auto!important;width:auto!important;
+    padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;text-align:right!important;
+  }
+  .qimat-hero-brand-kicker,.qimat-hero-brand-line,.qimat-hero-brand-sub{display:none!important}
+  .qimat-hero-brand-title{font-family:'IBM Plex Sans Arabic','Tajawal',Arial,sans-serif!important;font-size:15px!important;font-weight:850!important;color:#fff!important;text-shadow:none!important;white-space:nowrap!important}
+  .qimat-hero-mark{display:none!important}
+  .qimat-hero-live-controls{
+    display:flex!important;flex-direction:row!important;position:absolute!important;left:10px!important;right:auto!important;top:11px!important;bottom:auto!important;
+    width:auto!important;min-width:0!important;padding:0!important;gap:6px!important;background:transparent!important;border:0!important;box-shadow:none!important;transform:none!important;
+  }
+  .qimat-hero-sync{font-size:8px!important}.qimat-hero-logout{height:27px!important;min-height:27px!important;padding:0 8px!important;font-size:9px!important;border-radius:7px!important}
+  .qimat-hero-tab{
+    position:relative!important;inset:auto!important;top:auto!important;right:auto!important;bottom:auto!important;left:auto!important;
+    flex:0 0 auto!important;width:auto!important;min-width:108px!important;height:58px!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;padding:0 13px!important;
+    background:rgba(255,255,255,.035)!important;color:#dbe2e8!important;border:1px solid rgba(255,255,255,.10)!important;border-radius:10px!important;
+    box-shadow:none!important;font-size:11px!important;font-weight:800!important;
+  }
+  .qimat-hero-tab::before{display:none!important;content:none!important}.qimat-hero-tab::after{content:attr(data-label)!important;position:static!important;white-space:nowrap!important}
+  .qimat-hero-tab.home{order:1!important}.qimat-hero-tab.contracts{order:2!important}.qimat-hero-tab.portfolio{order:3!important}.qimat-hero-tab.ai{order:4!important}.qimat-hero-tab.visits{order:5!important}.qimat-hero-tab.upgrades{order:6!important}.qimat-hero-tab.settings{order:7!important}
+  .qimat-hero-tab.active{background:rgba(201,151,62,.14)!important;color:var(--qx-gold-2)!important;border-color:rgba(226,184,95,.65)!important;box-shadow:inset 0 -2px 0 var(--qx-gold-2)!important;transform:none!important}
+  .qimat-home-v5.qimat-home-v6{width:100%!important;max-width:none!important;padding:0 8px 22px!important;background:transparent!important}
+  .qimat-home-v6>.qhv5-command,.qimat-home-v6 .daily-entry-panel,.qimat-home-v6 .daily-today-panel,
+  .qimat-home-v6 .daily-summary-grid,.qimat-home-v6 .daily-management-grid,.qimat-home-v6 .daily-send-summary,
+  .qimat-home-v6 .daily-statement-full,.qimat-home-v6 .qhome-investor-contracts{margin-bottom:12px!important}
+  .qimat-home-v6 .qhv5-kpis{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+  .qimat-home-v6 .qhv5-kpi{min-height:126px!important;padding:11px 8px!important}
+  .qimat-home-v6 .qhv5-kpi:last-child{grid-column:1/3!important}
+  .qimat-home-v6 .daily-summary-grid,.qimat-home-v6 .daily-management-grid{gap:9px!important}
+  .qimat-home-v6 .qhome-investor-head{padding:13px!important}
+  .qimat-home-v6 .qhome-investor-tools{grid-template-columns:1fr!important}
+  .qimat-home-v6 .qhome-contracts-tablewrap{overflow-x:auto!important}
+}
+
+@media (prefers-reduced-motion:reduce){.qimat-home-v6 *,.qimat-hero-tab{transition:none!important;scroll-behavior:auto!important}}
+</style>
 <script id="qimat-full-enterprise-ui-behavior">
 (function(){
  const textOf=(el)=>(el.innerText||el.textContent||'').replace(/\\s+/g,' ').trim();
