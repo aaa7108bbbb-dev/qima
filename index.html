@@ -1342,7 +1342,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
   const fInputFocus = "border-color:#c8922a;box-shadow:0 0 0 3px rgba(200,146,42,0.1)";
 
   return (
-    <div style={{maxWidth:1100,margin:"0 auto"}}>
+    <div className="q-contracts-new" style={{maxWidth:1100,margin:"0 auto"}}>
       {/* ═══ Header ═══ */}
       <div style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:20,padding:"24px 20px",marginBottom:20,position:"relative",overflow:"hidden",border:"1px solid #b8862b"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,background:"radial-gradient(circle at 20% 50%,rgba(200,146,42,0.15),transparent 60%)",pointerEvents:"none"}}/>
@@ -2120,7 +2120,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       setShowMigrated(true);
     };
     return (
-      <div>
+      <div className="q-contracts-shell q-contracts-migrated-shell">
         <button style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",border:"1px solid #b8862b",borderRadius:10,padding:"9px 16px",fontSize:14,fontWeight:800,color:"#141428",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",marginBottom:16,display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>setShowMigrated(false)}>← رجوع للعقود</button>
         <div style={{...styles.panel,padding:20}}>
           <h3 style={{margin:"0 0 16px",fontSize:18,fontWeight:800,color:"#141428",display:"flex",alignItems:"center",gap:8}}>
@@ -2174,7 +2174,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   // ═══ الاستقطاعات — صفحة كاملة ═══
   if(showDeduct){
     return (
-      <div>
+      <div className="q-contracts-shell q-contracts-print-shell">
         <button onClick={()=>setShowDeduct(false)} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"1px solid #b8862b",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16}}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#141428" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           رجوع
@@ -2186,7 +2186,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
 
   if(showNew){
     return (
-      <div>
+      <div className="q-contracts-shell q-contracts-new-shell">
         <button onClick={()=>setShowNew(false)} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"1px solid #b8862b",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16}}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#141428" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           رجوع
@@ -2252,7 +2252,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     };
 
     return (
-      <div>
+      <div className="q-contracts-shell q-contracts-quick-collect">
         {!startCollect && <button style={{...styles.btnGold(),marginBottom:16}} onClick={()=>setShowCollect(false)}>رجوع للعقود</button>}
         <div style={{...styles.card,marginBottom:16,borderTop:"4px solid "+C.green}}>
           {/* تم حذف زر المتأخرون */}
@@ -2395,6 +2395,14 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         @media(min-width:1000px){.contracts-lux{padding:20px 22px}.contracts-lux .qimat-quick-action{font-size:15px!important}.contracts-lux>div:first-of-type{gap:12px!important}}
         @media(max-width:700px){.contracts-lux{padding:10px;border-radius:16px}.contracts-lux>div:first-of-type{grid-template-columns:repeat(2,1fr)!important}.contracts-lux .qimat-quick-action{min-height:66px;padding:12px 6px!important}.contracts-lux table{font-size:12px!important}}
       `}</style>
+      <div className="q-contracts-command-head">
+        <div className="q-contracts-command-copy">
+          <span>قمة الفرصة · العمليات</span>
+          <h2>مركز العقود التنفيذي</h2>
+          <p>إدارة دورة العقد من الإنشاء والتوثيق حتى التحصيل والمتابعة</p>
+        </div>
+        <div className="q-contracts-command-seal"><b>360°</b><small>دورة العقد</small></div>
+      </div>
       {/* ═══ Action Buttons — Premium Grid ═══ */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10,marginBottom:10}}>
         <button type="button" data-qe-manual="true" className={"qimat-quick-action "+(showNew?"active":"")} onClick={()=>setShowNew(true)} style={{borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
@@ -3683,7 +3691,11 @@ function DeductionsSheet({contracts, investors, payments}){
   };
 
   return (
-    <div>
+    <div className="q-contracts-module q-contracts-deductions">
+      <div className="q-contracts-module-head">
+        <div><span>مركز العقود</span><h2>الطباعة والاستقطاعات</h2><p>كشف موحّد قابل للفرز والتصفية والطباعة</p></div>
+        <b>كشف</b>
+      </div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:10}}>
         <div style={{fontSize:18,fontWeight:800,display:"flex",alignItems:"center",gap:8}}>
           <svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg>
@@ -3815,7 +3827,7 @@ function FundsPanel({investors, contracts, settings, setInvestors, toast}){
   const curYM = fiscalYM(new Date(), _cd);
   const mc = contracts.filter(c=>fiscalYM(c.date, _cd)===curYM);
   return (
-    <div>
+    <div className="q-contracts-funds">
       <div style={styles.panel}>
         <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>🏦 الصناديق</h3></div>
         <div style={{padding:"14px 18px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:12}}>
@@ -3984,13 +3996,17 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
   ];
 
   return (
-    <div>
+    <div className="q-contracts-module q-contracts-accounts">
       {goBack && (
         <button onClick={goBack} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"1px solid #b8862b",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16}}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#141428" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           رجوع
         </button>
       )}
+      <div className="q-contracts-module-head">
+        <div><span>مركز العقود</span><h2>الحسابات وكشوف المستثمرين</h2><p>قراءة مالية موحّدة للحركات والأرصدة والمحافظ</p></div>
+        <b>حسابات</b>
+      </div>
       
       {/* Sub tabs - only show in privateAccMode */}
       {privateAccMode && <div style={{display:"flex",gap:0,marginBottom:20,background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:10,overflow:"hidden",border:"1px solid #b8862b",width:"fit-content",position:"sticky",top:0,zIndex:20}}>
@@ -7417,7 +7433,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},onAdd,on
     setForm({name:"",code:"",fund:"",capital:"",bidaya:"",date:""});setShow(false);
   };
   return (
-    <div>
+    <div className="q-contracts-investors">
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
         <div></div>
         <button style={styles.btnGold()} onClick={()=>setShow(s=>!s)}>إضافة مستثمر</button>
@@ -8868,13 +8884,17 @@ function GoodsPage({investors, contracts, toast, gsWrite, goBack}) {
   const display = [...displayAsc].reverse();
 
   return (
-    <div>
+    <div className="q-contracts-module q-contracts-goods">
       {goBack && (
         <button onClick={goBack} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"1px solid #b8862b",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16}}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#141428" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           رجوع
         </button>
       )}
+      <div className="q-contracts-module-head">
+        <div><span>مركز العقود</span><h2>البضاعة والدعم</h2><p>متابعة حركة البطاقات والسلع والأرصدة النقدية</p></div>
+        <b>مخزون</b>
+      </div>
       {/* Header */}
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}}>
         <div></div>
@@ -10638,7 +10658,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
   // ═══════════════════════════════════════
   if(!selInv){
     return (
-      React.createElement("div",{style:{minHeight:"80vh"}},
+      React.createElement("div",{className:"q-contracts-module q-contracts-collection",style:{minHeight:"80vh"}},
         goBack && React.createElement("button",{onClick:goBack,style:{background:"linear-gradient(145deg,#0b1f33,#0e2b45)",color:"#fff",border:"1px solid rgba(224,184,92,.55)",borderRadius:12,padding:"10px 18px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:8,marginBottom:16,boxShadow:"0 5px 14px rgba(7,24,39,.12)"}},
           React.createElement("svg",{width:18,height:18,viewBox:"0 0 24 24",fill:"none",stroke:"#141428",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:"M15 18l-6-6 6-6"})),
           "رجوع"
@@ -10723,7 +10743,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
   const selColor = getInvColor(sortedInvestors(investors).findIndex(i=>String(i.id)===String(selInv.id)));
 
   return (
-    React.createElement("div",{style:{minHeight:"80vh"}},
+    React.createElement("div",{className:"q-contracts-module q-contracts-collection",style:{minHeight:"80vh"}},
       React.createElement(Header,{title:invLabel(selInv)}),
 
       React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,alignItems:"center"}},
@@ -10913,7 +10933,7 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
   const totalContracts = filtered.length;
 
   return (
-    <div style={styles.main}>
+    <div className="q-contracts-overdue" style={styles.main}>
       <div style={{...styles.panel,borderTop:"4px solid "+C.red}}>
         <div style={{padding:"16px 20px"}}>
           <h2 style={{margin:"0 0 14px",fontSize:19,fontWeight:900,color:C.ink,display:"flex",alignItems:"center",gap:8}}>
@@ -13539,6 +13559,334 @@ body:has(.qimat-home-v6){
   .qimat-home-v6 .qhome-investor-contracts thead th{font-size:14px!important}
   .qimat-home-v6 .qhome-investor-contracts tbody td:not(.qhome-td-act){font-size:15px!important}
   .qimat-home-v6 .qhome-investor-contracts tbody td:nth-child(3):not(.qhome-td-act){font-size:16px!important}
+}
+</style>
+<!-- ═══ QIMAT CONTRACTS · EXECUTIVE CONTRACT CENTER v3 ═══ -->
+<style id="qimat-contracts-executive-v3">
+/* هوية موحدة لصفحة العقود وتبويباتها — طبقة عرض فقط */
+body .contracts-lux,
+body .q-contracts-shell,
+body .q-contracts-module,
+body .q-contracts-new,
+body .q-contracts-investors{
+  direction:rtl!important;color:var(--qx-ink)!important;
+  font-family:"IBM Plex Sans Arabic","Tajawal",Arial,sans-serif!important;
+}
+
+/* الغلاف التنفيذي الرئيسي */
+body .contracts-lux{
+  width:100%!important;min-height:80vh!important;padding:0!important;
+  background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+}
+body .contracts-lux>div:not(:first-of-type){color:var(--qx-ink)!important}
+body .q-contracts-command-head,
+body .q-contracts-module-head{
+  position:relative!important;isolation:isolate;overflow:hidden!important;
+  display:flex!important;align-items:center!important;justify-content:space-between!important;gap:24px!important;
+  min-height:112px!important;margin:0 0 16px!important;padding:20px 24px!important;
+  background:
+    radial-gradient(circle at 8% 18%,rgba(226,184,95,.20),transparent 28%),
+    linear-gradient(110deg,var(--qx-navy) 0%,var(--qx-navy-2) 67%,var(--qx-navy-3) 100%)!important;
+  color:#fff!important;border:1px solid rgba(201,151,62,.62)!important;
+  border-right:5px solid var(--qx-gold)!important;border-radius:19px!important;
+  box-shadow:0 13px 32px rgba(7,29,48,.14)!important;
+}
+body .q-contracts-command-head::after,
+body .q-contracts-module-head::after{
+  content:"";position:absolute;z-index:-1;left:-54px;bottom:-78px;width:220px;height:180px;
+  border:1px solid rgba(226,184,95,.17);border-radius:50%;box-shadow:0 0 0 28px rgba(226,184,95,.035);
+}
+body .q-contracts-command-copy,
+body .q-contracts-module-head>div{position:relative;z-index:1;min-width:0}
+body .q-contracts-command-copy>span,
+body .q-contracts-module-head>div>span{
+  display:block!important;margin-bottom:4px!important;color:var(--qx-gold-2)!important;
+  font-size:12px!important;font-weight:900!important;letter-spacing:.25px!important;
+}
+body .q-contracts-command-copy h2,
+body .q-contracts-module-head h2{
+  margin:0!important;color:#fff!important;font-size:clamp(22px,2.2vw,30px)!important;
+  font-weight:900!important;line-height:1.25!important;
+}
+body .q-contracts-command-copy p,
+body .q-contracts-module-head p{
+  margin:7px 0 0!important;color:#bdcbd7!important;font-size:13.5px!important;font-weight:700!important;
+}
+body .q-contracts-command-seal,
+body .q-contracts-module-head>b{
+  position:relative;z-index:1;flex:0 0 auto;min-width:108px;min-height:70px;padding:10px 16px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:var(--qx-gold-2)!important;background:rgba(255,255,255,.055)!important;
+  border:1px solid rgba(226,184,95,.38)!important;border-radius:15px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important;
+}
+body .q-contracts-command-seal b{font-size:24px!important;font-weight:900!important;line-height:1!important}
+body .q-contracts-command-seal small{margin-top:6px;color:#d5dfe6!important;font-size:10.5px!important;font-weight:800!important}
+body .q-contracts-module-head>b{font-size:16px!important;font-style:normal!important;font-weight:900!important}
+
+/* بوابات دورة العقد */
+body .contracts-lux>div:nth-of-type(2),
+body .contracts-lux>div:nth-of-type(3){gap:11px!important;margin-bottom:11px!important}
+body .contracts-lux .qimat-quick-action{
+  position:relative!important;overflow:hidden!important;min-height:102px!important;
+  display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;gap:4px!important;
+  padding:14px 17px!important;text-align:right!important;
+  background:linear-gradient(180deg,#fffefa 0%,#fbf7ef 100%)!important;color:var(--qx-navy)!important;
+  border:1px solid #ddd4c5!important;border-right:3px solid rgba(201,151,62,.68)!important;border-radius:15px!important;
+  box-shadow:0 6px 18px rgba(18,38,58,.065)!important;
+  font-size:15px!important;font-weight:900!important;line-height:1.25!important;
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease!important;
+}
+body .contracts-lux .qimat-quick-action::before{
+  content:"";position:absolute;left:-28px;bottom:-32px;width:82px;height:82px;border-radius:50%;
+  background:radial-gradient(circle,rgba(201,151,62,.12),transparent 67%);pointer-events:none;
+}
+body .contracts-lux .qimat-quick-action::after{
+  display:block!important;color:#788592!important;font-size:10.5px!important;font-weight:750!important;line-height:1.25!important;
+}
+body .contracts-lux>div:nth-of-type(2)>.qimat-quick-action:nth-child(1)::after{content:"إنشاء وتوثيق"}
+body .contracts-lux>div:nth-of-type(2)>.qimat-quick-action:nth-child(2)::after{content:"كشوف وأرصدة"}
+body .contracts-lux>div:nth-of-type(2)>.qimat-quick-action:nth-child(3)::after{content:"دعم ومخزون"}
+body .contracts-lux>div:nth-of-type(2)>.qimat-quick-action:nth-child(4)::after{content:"سداد ومتابعة"}
+body .contracts-lux>div:nth-of-type(3)>.qimat-quick-action:nth-child(1)::after{content:"كشوف جاهزة"}
+body .contracts-lux>div:nth-of-type(3)>.qimat-quick-action:nth-child(2)::after{content:"المحافظ الاستثمارية"}
+body .contracts-lux>div:nth-of-type(3)>.qimat-quick-action:nth-child(3)::after{content:"حالات تستدعي الإجراء"}
+body .contracts-lux .qimat-quick-action svg{
+  width:22px!important;height:22px!important;box-sizing:content-box!important;padding:6px!important;margin-bottom:2px!important;
+  background:#f4eee4!important;border:1px solid #e6d8bd!important;border-radius:10px!important;
+}
+body .contracts-lux .qimat-quick-action svg *{stroke:var(--qx-gold)!important}
+body .contracts-lux .qimat-quick-action:hover{
+  transform:translateY(-3px)!important;border-color:rgba(201,151,62,.78)!important;
+  box-shadow:0 12px 26px rgba(18,38,58,.12)!important;
+}
+body .contracts-lux .qimat-quick-action.active{
+  background:linear-gradient(145deg,var(--qx-navy-2),var(--qx-navy))!important;color:#fff!important;
+  border-color:rgba(226,184,95,.78)!important;box-shadow:0 12px 27px rgba(7,29,48,.20)!important;
+}
+body .contracts-lux .qimat-quick-action.active::after{color:#b8c8d4!important}
+body .contracts-lux .qimat-quick-action.active svg{background:rgba(226,184,95,.10)!important;border-color:rgba(226,184,95,.35)!important}
+
+/* بطاقة البحث والكشوف في الصفحة الرئيسية */
+body .contracts-lux>div:nth-of-type(4){
+  background:linear-gradient(180deg,#fffefa,#fbf8f2)!important;color:var(--qx-ink)!important;
+  border:1px solid var(--qx-line)!important;border-top:2px solid rgba(201,151,62,.78)!important;
+  box-shadow:0 8px 24px rgba(18,38,58,.07)!important;
+}
+body .contracts-lux [style*="background: rgba(255, 255, 255"],
+body .contracts-lux [style*="background:rgba(255,255,255"],
+body .contracts-lux [style*="background: #fff"],
+body .contracts-lux [style*="background:#fff"]{
+  background:#fffdf9!important;color:var(--qx-ink)!important;border-color:var(--qx-line)!important;
+}
+body .contracts-lux [style*="color: rgb(20, 20, 40)"],
+body .contracts-lux [style*="color:#141428"],
+body .contracts-lux [style*="color: #141428"],
+body .contracts-lux [style*="color:#1a1a2e"]{color:var(--qx-navy)!important}
+body .contracts-lux [style*="color:#4a5568"],body .contracts-lux [style*="color: #4a5568"],
+body .contracts-lux [style*="color:#94a3b8"]{color:#667685!important}
+body .contracts-lux [style*="box-shadow"]{box-shadow:0 7px 21px rgba(18,38,58,.075)!important}
+
+/* الحقول — مشتركة بين كل وحدات العقود */
+body .contracts-lux input:not([type="checkbox"]):not([type="radio"]),
+body .contracts-lux select,
+body .contracts-lux textarea,
+body .q-contracts-module input:not([type="checkbox"]):not([type="radio"]),
+body .q-contracts-module select,
+body .q-contracts-module textarea,
+body .q-contracts-new input:not([type="checkbox"]):not([type="radio"]),
+body .q-contracts-new select,
+body .q-contracts-new textarea{
+  min-height:43px!important;box-sizing:border-box!important;
+  background:#fff!important;color:var(--qx-ink)!important;border:1px solid #d8d0c4!important;border-radius:10px!important;
+  box-shadow:inset 0 1px 1px rgba(18,38,58,.025)!important;
+  font-family:"IBM Plex Sans Arabic","Tajawal",Arial,sans-serif!important;font-size:14.5px!important;font-weight:700!important;
+}
+body .contracts-lux input::placeholder,
+body .q-contracts-module input::placeholder,
+body .q-contracts-new input::placeholder,
+body .q-contracts-new textarea::placeholder{color:#9aa5af!important;font-weight:600!important}
+body .contracts-lux input:focus,body .contracts-lux select:focus,body .contracts-lux textarea:focus,
+body .q-contracts-module input:focus,body .q-contracts-module select:focus,body .q-contracts-module textarea:focus,
+body .q-contracts-new input:focus,body .q-contracts-new select:focus,body .q-contracts-new textarea:focus{
+  outline:none!important;border-color:var(--qx-gold)!important;box-shadow:0 0 0 3px rgba(201,151,62,.14)!important;
+}
+body .contracts-lux select option,body .q-contracts-module select option,body .q-contracts-new select option{background:#fff!important;color:var(--qx-ink)!important}
+
+/* الجداول التنفيذية */
+body .contracts-lux table,
+body .q-contracts-module table{
+  width:100%!important;background:#fff!important;color:var(--qx-ink)!important;
+  border:1px solid var(--qx-line)!important;border-collapse:separate!important;border-spacing:0!important;
+  border-radius:13px!important;overflow:hidden!important;box-shadow:0 8px 22px rgba(18,38,58,.06)!important;
+}
+body .contracts-lux thead tr,body .contracts-lux th,
+body .q-contracts-module thead tr,body .q-contracts-module th{
+  background:linear-gradient(180deg,var(--qx-navy-2),var(--qx-navy))!important;
+  color:#fff!important;border-color:rgba(226,184,95,.23)!important;
+}
+body .contracts-lux th,body .q-contracts-module th{
+  min-height:44px!important;padding:11px 10px!important;font-size:13.5px!important;font-weight:900!important;line-height:1.4!important;
+  border-bottom:2px solid var(--qx-gold)!important;white-space:nowrap!important;
+}
+body .contracts-lux td{
+  background:#fff!important;color:var(--qx-ink)!important;border-color:#ebe5dc!important;
+  padding:11px 9px!important;font-size:14px!important;font-weight:720!important;line-height:1.45!important;
+}
+body .q-contracts-module td{
+  border-color:#ebe5dc!important;padding:10px 9px!important;font-size:13.5px!important;line-height:1.45!important;
+}
+body .contracts-lux tbody tr:nth-child(even) td,
+body .q-contracts-module tbody tr:nth-child(even) td{background:#fbf8f2!important}
+body .contracts-lux tbody tr:hover td,
+body .q-contracts-module tbody tr:hover td{background:#fff8e9!important}
+body .contracts-lux tfoot td,body .q-contracts-module tfoot td{
+  background:#f5efe3!important;border-top:2px solid rgba(201,151,62,.62)!important;font-weight:900!important;
+}
+body .contracts-lux td[style*="color: rgb(220, 38, 38)"],body .contracts-lux td[style*="color:#dc2626"]{color:#b42318!important}
+body .contracts-lux td[style*="color: rgb(22, 163, 74)"],body .contracts-lux td[style*="color:#16a34a"]{color:#15803d!important}
+body .contracts-lux td[style*="color: rgb(200, 146, 42)"],body .contracts-lux td[style*="color:#c8922a"]{color:#8b651f!important}
+
+/* أغلفة الصفحات والأزرار الراجعة */
+body .q-contracts-shell,body .q-contracts-module{width:100%!important;max-width:1600px!important;margin:0 auto!important;background:transparent!important}
+body .q-contracts-shell>button:first-child,
+body .q-contracts-module>button:first-child{
+  min-height:41px!important;padding:9px 16px!important;margin-bottom:12px!important;
+  background:#fffdf9!important;color:var(--qx-navy)!important;border:1px solid #d8c9ae!important;border-radius:11px!important;
+  box-shadow:0 4px 12px rgba(18,38,58,.055)!important;font-size:14px!important;font-weight:900!important;
+}
+body .q-contracts-shell>button:first-child:hover,
+body .q-contracts-module>button:first-child:hover{background:#f7f0e3!important;border-color:var(--qx-gold)!important;transform:translateY(-1px)!important}
+body .q-contracts-shell>button:first-child svg *,body .q-contracts-module>button:first-child svg *{stroke:var(--qx-navy)!important}
+
+/* نموذج إنشاء عقد */
+body .q-contracts-new{width:100%!important;max-width:1180px!important}
+body .q-contracts-new>div:first-child{
+  background:
+    radial-gradient(circle at 13% 20%,rgba(226,184,95,.22),transparent 32%),
+    linear-gradient(110deg,var(--qx-navy),var(--qx-navy-2) 66%,var(--qx-navy-3))!important;
+  border:1px solid rgba(201,151,62,.65)!important;border-right:5px solid var(--qx-gold)!important;
+  box-shadow:0 13px 32px rgba(7,29,48,.14)!important;
+}
+body .q-contracts-new>div:first-child>div:last-child>div:first-child>div:first-child{color:var(--qx-gold-2)!important}
+body .q-contracts-new>div:first-child>div:last-child>div:first-child>div:last-child{color:#fff!important;font-size:25px!important}
+body .q-contracts-new>div:first-child>div:last-child>div:last-child{
+  background:rgba(255,255,255,.065)!important;border-color:rgba(226,184,95,.38)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important;
+}
+body .q-contracts-new>div:first-child>div:last-child>div:last-child>div:first-child{color:#cdd8e1!important}
+body .q-contracts-new>div:first-child>div:last-child>div:last-child>div:last-child{color:var(--qx-gold-2)!important}
+body .q-contracts-new>div:not(:first-child):not(:last-child){
+  border-color:var(--qx-line)!important;border-top-color:rgba(201,151,62,.72)!important;
+  box-shadow:0 7px 22px rgba(18,38,58,.055)!important;border-radius:16px!important;
+}
+body .q-contracts-new h3{color:var(--qx-navy)!important;font-weight:900!important}
+body .q-contracts-new h3+span{color:#71808e!important}
+body .q-contracts-new label{color:var(--qx-ink)!important;font-weight:850!important}
+body .q-contracts-new svg *{stroke:var(--qx-gold)!important}
+body .q-contracts-new>div:last-child>button:first-child{
+  background:linear-gradient(145deg,var(--qx-navy-2),var(--qx-navy))!important;color:#fff!important;
+  border:1px solid rgba(226,184,95,.72)!important;box-shadow:0 10px 24px rgba(7,29,48,.16)!important;
+}
+body .q-contracts-new>div:last-child>button:first-child svg *{stroke:var(--qx-gold-2)!important}
+body .q-contracts-new>div:last-child>button:last-child{background:#fff!important;color:#687684!important;border-color:#d9d1c6!important}
+
+/* الحسابات والمستثمرون */
+body .q-contracts-accounts>div[style*="position: sticky"]{
+  padding:4px!important;background:var(--qx-navy)!important;border:1px solid rgba(201,151,62,.55)!important;
+  box-shadow:0 8px 20px rgba(7,29,48,.10)!important;
+}
+body .q-contracts-accounts>div[style*="position: sticky"] button{border-radius:8px!important;color:#d8e1e7!important}
+body .q-contracts-investors [data-inv-card]{border-right:4px solid var(--qx-gold)!important;transition:transform .18s ease,filter .18s ease!important}
+body .q-contracts-investors [data-inv-card]:hover{transform:translateY(-2px)!important;filter:brightness(1.05)!important}
+body .q-contracts-investors [data-inv-name]{font-size:19px!important;font-weight:900!important}
+body .q-contracts-investors [data-inv-total]{font-variant-numeric:tabular-nums!important;letter-spacing:.15px!important}
+body .q-contracts-investors>div:first-child button,
+body .q-contracts-goods>div:nth-of-type(2) button{
+  background:linear-gradient(145deg,var(--qx-navy-2),var(--qx-navy))!important;color:#fff!important;
+  border:1px solid rgba(201,151,62,.68)!important;box-shadow:0 7px 18px rgba(7,29,48,.11)!important;
+}
+
+/* البضاعة والاستقطاعات */
+body .q-contracts-goods>div[style*="overflow-x: auto"],
+body .q-contracts-deductions>div[style*="overflow-x: auto"]{
+  border:1px solid var(--qx-line)!important;border-radius:14px!important;
+  box-shadow:0 8px 22px rgba(18,38,58,.06)!important;background:#fff!important;
+}
+body .q-contracts-deductions>div:nth-of-type(2){
+  padding:13px 15px!important;background:#fffdf9!important;border:1px solid var(--qx-line)!important;
+  border-radius:13px!important;box-shadow:0 5px 16px rgba(18,38,58,.05)!important;
+}
+body .q-contracts-goods td:first-child,body .q-contracts-deductions td:nth-child(2){font-weight:850!important;color:var(--qx-navy)!important}
+
+/* التحصيل */
+body .q-contracts-collection{padding-bottom:26px!important}
+body .q-contracts-collection>div:first-of-type{border-right:5px solid var(--qx-gold)!important}
+body .q-contracts-collection div[style*="min-height: 160px"]{
+  border-right:4px solid var(--qx-gold)!important;box-shadow:0 10px 25px rgba(7,29,48,.15)!important;
+}
+body .q-contracts-collection div[style*="min-height: 160px"]:hover{transform:translateY(-3px)!important;box-shadow:0 15px 30px rgba(7,29,48,.20)!important}
+body .q-contracts-collection div[style*="min-height: 160px"]>div:nth-child(3){font-size:clamp(20px,2.3vw,27px)!important}
+
+/* المتعثرون — أحمر للتنبيه والذهبي للهوية */
+body .q-contracts-overdue h2{color:var(--qx-navy)!important;font-size:21px!important;font-weight:900!important}
+body .q-contracts-overdue h2+div>div{
+  background:linear-gradient(180deg,#fffefa,#fbf8f2)!important;border:1px solid var(--qx-line)!important;
+  border-top:3px solid var(--qx-gold)!important;border-radius:13px!important;
+  box-shadow:0 6px 18px rgba(18,38,58,.06)!important;
+}
+body .q-contracts-overdue h2+div>div:first-child{border-top-color:#d64545!important}
+body .q-contracts-overdue h2+div>div>div:first-child{color:#6d7985!important}
+body .q-contracts-overdue h2+div>div>div:last-child{color:var(--qx-navy)!important;font-variant-numeric:tabular-nums!important}
+body .q-contracts-overdue h2+div>div:first-child>div:last-child{color:#b42318!important}
+body .q-contracts-overdue>div:not(:first-child)>div:first-child{
+  background:linear-gradient(100deg,var(--qx-navy-2),var(--qx-navy))!important;
+  border-bottom:2px solid var(--qx-gold)!important;
+}
+body .q-contracts-overdue>div:not(:first-child)>div:first-child h3{color:#fff!important}
+
+/* قابلية القراءة والاستجابة */
+body .contracts-lux button,body .q-contracts-module button,body .q-contracts-new button{font-family:"IBM Plex Sans Arabic","Tajawal",Arial,sans-serif!important}
+body .q-contracts-module h2,body .q-contracts-module h3{font-weight:900!important}
+body .q-contracts-module [style*="overflow-x: auto"],body .contracts-lux [style*="overflow-x: auto"]{scrollbar-color:var(--qx-gold) #eee7dc;scrollbar-width:thin}
+
+@media (max-width:900px){
+  body .q-contracts-command-head,body .q-contracts-module-head{min-height:104px!important;padding:17px 18px!important}
+  body .q-contracts-command-seal,body .q-contracts-module-head>b{min-width:88px!important;min-height:62px!important}
+  body .contracts-lux>div:nth-of-type(2){grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body .contracts-lux>div:nth-of-type(3){grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  body .contracts-lux .qimat-quick-action{min-height:94px!important}
+  body .contracts-lux table,body .q-contracts-module table{min-width:820px!important}
+}
+@media (max-width:700px){
+  body .q-contracts-command-head,body .q-contracts-module-head{gap:12px!important;min-height:94px!important;padding:15px 14px!important;border-radius:15px!important}
+  body .q-contracts-command-copy h2,body .q-contracts-module-head h2{font-size:20px!important}
+  body .q-contracts-command-copy p,body .q-contracts-module-head p{font-size:11.5px!important;line-height:1.45!important}
+  body .q-contracts-command-seal,body .q-contracts-module-head>b{min-width:72px!important;min-height:56px!important;padding:8px!important;font-size:13px!important}
+  body .q-contracts-command-seal b{font-size:19px!important}
+  body .contracts-lux>div:nth-of-type(2),body .contracts-lux>div:nth-of-type(3){grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  body .contracts-lux>div:nth-of-type(3)>.qimat-quick-action:last-child{grid-column:1/-1!important}
+  body .contracts-lux .qimat-quick-action{min-height:89px!important;padding:12px!important;font-size:14px!important}
+  body .contracts-lux .qimat-quick-action svg{width:19px!important;height:19px!important;padding:5px!important}
+  body .q-contracts-new [style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr!important}
+  body .q-contracts-new>div:first-child{padding:18px 14px!important;border-radius:16px!important}
+  body .q-contracts-new>div:first-child>div:last-child>div:last-child{padding:10px 13px!important}
+  body .q-contracts-new>div:not(:first-child):not(:last-child){padding:15px!important}
+  body .q-contracts-new>div:last-child{grid-template-columns:1fr!important}
+  body .q-contracts-collection>div[style*="minmax"]{grid-template-columns:1fr!important}
+  body .q-contracts-module-head{margin-bottom:12px!important}
+  body .contracts-lux th,body .q-contracts-module th{font-size:13px!important}
+  body .contracts-lux td,body .q-contracts-module td{font-size:13.5px!important}
+}
+@media (max-width:430px){
+  body .q-contracts-command-copy p,body .q-contracts-module-head p{display:none!important}
+  body .q-contracts-command-head,body .q-contracts-module-head{min-height:82px!important}
+  body .contracts-lux .qimat-quick-action::after{font-size:9.5px!important}
+  body .contracts-lux .qimat-quick-action{min-height:84px!important;padding:10px!important}
+  body .q-contracts-command-seal,body .q-contracts-module-head>b{min-width:65px!important}
+}
+@media (prefers-reduced-motion:reduce){
+  body .contracts-lux .qimat-quick-action,body .q-contracts-investors [data-inv-card],body .q-contracts-collection div[style*="min-height: 160px"]{transition:none!important}
 }
 </style>
 <script id="qimat-full-enterprise-ui-behavior">
