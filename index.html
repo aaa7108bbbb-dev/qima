@@ -13446,6 +13446,101 @@ body:has(.qimat-home-v6){
 
 @media (prefers-reduced-motion:reduce){.qimat-home-v6 *,.qimat-hero-tab{transition:none!important;scroll-behavior:auto!important}}
 </style>
+<!-- ═══ QIMAT READABILITY · CARD ORDER & TYPE SCALE v2 ═══ -->
+<style id="qimat-readability-v2">
+/* ترتيب المؤشرات من اليمين إلى اليسار:
+   أقساط الشهر ← باقي الأقساط ← المنجز منها ← نسبة الإنجاز ← المتعثرون */
+.qimat-home-v6 .qhv5-kpis>:nth-child(1){order:5!important}
+.qimat-home-v6 .qhv5-kpis>:nth-child(2){order:4!important}
+.qimat-home-v6 .qhv5-kpis>:nth-child(3){order:2!important}
+.qimat-home-v6 .qhv5-kpis>:nth-child(4){order:1!important}
+.qimat-home-v6 .qhv5-kpis>:nth-child(5){order:3!important}
+
+/* رفع درجة خط بطاقات المؤشرات */
+.qimat-home-v6 .qhv5-kpi small{font-size:15px!important;font-weight:900!important;line-height:1.4!important}
+.qimat-home-v6 .qhv5-kpi strong{font-size:clamp(22px,2vw,33px)!important;font-weight:900!important;line-height:1.15!important}
+.qimat-home-v6 .qhv5-kpi em{font-size:13.5px!important;font-weight:800!important;line-height:1.4!important}
+.qimat-home-v6 .qhv5-ring b{font-size:25px!important;font-weight:900!important}
+.qimat-home-v6 .qhv5-kpi-ring small{font-size:14.5px!important}
+.qimat-home-v6 .qhv5-progress-copy span,
+.qimat-home-v6 .qhv5-progress-copy strong{font-size:14.5px!important}
+.qimat-home-v6 .qhv5-progress-copy b{font-size:13.5px!important}
+
+/* عناوين اللوحات الرئيسية */
+.qimat-home-v6 .daily-entry-panel>div:first-child h3,
+.qimat-home-v6 .daily-today-panel>div:first-child h3,
+.qimat-home-v6 .daily-statement-full>div:first-child h3{
+  font-size:18px!important;font-weight:900!important;line-height:1.45!important;
+}
+.qimat-home-v6 .stmt-details-pane>div:first-child h4{font-size:16px!important;font-weight:900!important}
+.qimat-home-v6 .qsend-head{font-size:16px!important;font-weight:900!important}
+.qimat-home-v6 .qhome-investor-head h3{font-size:19px!important;font-weight:900!important}
+.qimat-home-v6 .qhome-head-contracts b{font-size:17px!important;font-weight:900!important}
+.qimat-home-v6 .qhome-head-contracts i{font-size:13.5px!important;font-weight:800!important}
+.qimat-home-v6 .qhome-contracts-title span{font-size:13.5px!important;font-weight:900!important}
+
+/* رفع درجة خط جميع البطاقات الداخلية */
+.qimat-home-v6 .daily-summary-grid>div>div:first-child{font-size:13.5px!important;font-weight:900!important}
+.qimat-home-v6 .daily-summary-grid>div>div:nth-child(2){font-size:22.5px!important;font-weight:900!important}
+.qimat-home-v6 .daily-summary-grid>div>div:nth-child(3){font-size:12.5px!important;font-weight:750!important}
+.qimat-home-v6 .daily-management-grid>div>div:first-child{font-size:14px!important;font-weight:900!important}
+.qimat-home-v6 .daily-management-grid>div>div:not(:first-child){font-size:13.5px!important;font-weight:750!important}
+.qimat-home-v6 .qsend-total span{font-size:14px!important;font-weight:900!important}
+.qimat-home-v6 .qsend-total strong{font-size:25px!important;font-weight:900!important}
+.qimat-home-v6 .qsend-row{font-size:14px!important}
+.qimat-home-v6 .stmt-tiles>div>div:nth-child(1){font-size:14px!important;font-weight:900!important}
+.qimat-home-v6 .stmt-tiles>div>div:nth-child(2){font-size:22px!important;font-weight:900!important}
+.qimat-home-v6 .stmt-tiles>div>div:nth-child(3){font-size:12px!important;font-weight:700!important}
+
+/* دفتر اليومية والجداول: زيادة خفيفة موحّدة */
+.qimat-home-v6 .qdaily-datelabel{font-size:15px!important;font-weight:900!important}
+.qimat-home-v6 .qdaily-datebox input{font-size:16px!important;font-weight:800!important}
+.qimat-home-v6 .qdaily-types>button.qdt,
+.qimat-home-v6 .qdaily-channel>button.qdc{font-size:14.5px!important;font-weight:850!important}
+.qimat-home-v6 button.qdaily-add,
+.qimat-home-v6 .daily-send-summary>button{font-size:16px!important;font-weight:900!important}
+.qimat-home-v6 .daily-today-panel table th,
+.qimat-home-v6 .daily-today-panel table td,
+.qimat-home-v6 .daily-statement-full table th,
+.qimat-home-v6 .daily-statement-full table td{font-size:14px!important;font-weight:750!important}
+.qimat-home-v6 .daily-today-panel table th,
+.qimat-home-v6 .daily-statement-full table th{font-weight:900!important}
+.qimat-home-v6 .qhome-type-tabs>button,
+.qimat-home-v6 .qhome-view-switch button{font-size:14px!important;font-weight:900!important}
+
+/* جدول العقود في آخر الصفحة: تكبير أوضح وتعريض البيانات الأساسية */
+.qimat-home-v6 .qhome-investor-contracts thead th{
+  font-size:15px!important;font-weight:900!important;line-height:1.45!important;padding-top:13px!important;padding-bottom:13px!important;
+}
+.qimat-home-v6 .qhome-investor-contracts tbody td:not(.qhome-td-act){
+  font-size:16px!important;font-weight:850!important;line-height:1.55!important;
+  padding-top:13px!important;padding-bottom:13px!important;white-space:nowrap!important;
+}
+.qimat-home-v6 .qhome-investor-contracts tbody td:nth-child(3):not(.qhome-td-act){
+  font-size:17px!important;font-weight:900!important;color:var(--qx-navy)!important;
+}
+.qimat-home-v6 .qhome-investor-contracts tbody td:nth-child(1),
+.qimat-home-v6 .qhome-investor-contracts tbody td:nth-child(2),
+.qimat-home-v6 .qhome-investor-contracts tbody td:nth-child(4):not(.qhome-td-act){
+  font-variant-numeric:tabular-nums!important;letter-spacing:.15px!important;
+}
+
+@media (max-width:999px){
+  /* آخر عنصر بصريًا هو المتعثرون؛ يمتد بعرض صف الجوال كاملًا */
+  .qimat-home-v6 .qhv5-kpi:last-child{grid-column:auto!important}
+  .qimat-home-v6 .qhv5-kpis>:nth-child(1){grid-column:1/3!important}
+  .qimat-home-v6 .qhv5-kpi small{font-size:14px!important}
+  .qimat-home-v6 .qhv5-kpi strong{font-size:22px!important}
+  .qimat-home-v6 .qhv5-kpi em{font-size:12.5px!important}
+  .qimat-home-v6 .qhv5-ring b{font-size:23px!important}
+  .qimat-home-v6 .daily-entry-panel>div:first-child h3,
+  .qimat-home-v6 .daily-today-panel>div:first-child h3,
+  .qimat-home-v6 .daily-statement-full>div:first-child h3{font-size:17px!important}
+  .qimat-home-v6 .qhome-investor-contracts thead th{font-size:14px!important}
+  .qimat-home-v6 .qhome-investor-contracts tbody td:not(.qhome-td-act){font-size:15px!important}
+  .qimat-home-v6 .qhome-investor-contracts tbody td:nth-child(3):not(.qhome-td-act){font-size:16px!important}
+}
+</style>
 <script id="qimat-full-enterprise-ui-behavior">
 (function(){
  const textOf=(el)=>(el.innerText||el.textContent||'').replace(/\\s+/g,' ').trim();
