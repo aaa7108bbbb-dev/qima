@@ -650,12 +650,10 @@ function printStatement(elementId) {
       .print-only-header{display:block !important}
       @page{size:A4 landscape;margin:10mm}
     </style></head><body>${el.innerHTML}
-
-
-<style id="qimat-home-pro-layout-v11">
+<style id="qimat-home-balanced-layout-v10">
 /* ==========================================================
-   QIMAT HOME — Professional balanced desktop layout
-   واجهة فقط، لا تغيير في الحسابات أو الحفظ أو Firebase
+   الرئيسية — ترتيب كمبيوتر متوازن ومتكيف
+   واجهة فقط، بدون تغيير الحسابات/البيانات/الحفظ
    ========================================================== */
 
 @media (min-width:1000px){
@@ -664,79 +662,65 @@ function printStatement(elementId) {
     width:100%!important;
     max-width:none!important;
   }
+  body{overflow-x:hidden!important}
 
-  body{
-    overflow-x:hidden!important;
-    background:
-      radial-gradient(circle at 12% 0%,rgba(20,72,105,.20),transparent 25%),
-      linear-gradient(180deg,#020a12 0%,#041522 54%,#020b13 100%)!important;
-  }
-
-  /* الحاوية الرئيسية */
+  /* استغلال عرض شاشة الكمبيوتر */
   .qimat-home-v5.qimat-home-v6{
-    width:min(calc(100% - 24px),1580px)!important;
-    max-width:1580px!important;
+    width:min(100%,1680px)!important;
+    max-width:1680px!important;
     margin:0 auto!important;
-    padding:10px 0 22px!important;
+    padding:12px 18px 22px!important;
     display:grid!important;
     grid-template-columns:repeat(12,minmax(0,1fr))!important;
-    grid-template-rows:auto auto auto auto auto!important;
+    grid-auto-rows:auto!important;
     gap:10px!important;
-    align-items:stretch!important;
-    background:transparent!important;
-    box-shadow:none!important;
-    border:none!important;
+    align-items:start!important;
+    background:
+      radial-gradient(circle at 15% 5%,rgba(21,71,103,.20),transparent 25%),
+      linear-gradient(180deg,#020b13,#041522 55%,#020b13)!important;
   }
 
-  /* أغلفة يومية React تصبح شفافة للتخطيط */
+  /* أغلفة React لا تأخذ مساحة مستقلة */
   .qimat-home-v6>.qhv6-daily,
   .qimat-home-v6>.qhv6-daily>.qimat-daily-v5{
     display:contents!important;
   }
 
-  /* ===================== الكليشة ===================== */
+  /* الكليشة: عريضة ومنخفضة بدل أن تأكل نصف الشاشة */
   .qimat-top-hero{
-    width:min(calc(100% - 24px),1580px)!important;
-    max-width:1580px!important;
-    height:188px!important;
-    min-height:188px!important;
-    max-height:188px!important;
-    margin:10px auto 8px!important;
-    border-radius:15px!important;
-    overflow:hidden!important;
+    width:min(calc(100% - 28px),1640px)!important;
+    max-width:1640px!important;
+    height:205px!important;
+    min-height:205px!important;
+    max-height:205px!important;
+    margin:10px auto!important;
+    border-radius:16px!important;
   }
-
-  .qimat-hero-brand-live{
-    top:10px!important;
-    left:26%!important;
-    right:26%!important;
-  }
-  .qimat-hero-brand-title{
-    font-size:29px!important;
-    line-height:1.05!important;
-  }
-  .qimat-hero-brand-sub{font-size:11px!important}
-  .qimat-hero-quote{display:none!important}
-
   .qimat-hero-tab{
     top:auto!important;
-    bottom:8px!important;
-    height:69px!important;
-    min-height:69px!important;
-    width:calc((100% - 48px)/7)!important;
-    padding:4px 5px 7px!important;
-    border-radius:10px!important;
+    bottom:9px!important;
+    height:72px!important;
+    min-height:72px!important;
+    width:calc((100% - 46px)/7)!important;
+    padding:4px 5px 8px!important;
+    border-radius:11px!important;
   }
   .qimat-hero-tab.home{right:8px!important;left:auto!important}
-  .qimat-hero-tab.contracts{right:calc(8px + (100% - 48px)/7 + 5px)!important;left:auto!important}
-  .qimat-hero-tab.portfolio{right:calc(8px + 2*((100% - 48px)/7 + 5px))!important;left:auto!important}
-  .qimat-hero-tab.ai{right:calc(8px + 3*((100% - 48px)/7 + 5px))!important;left:auto!important}
-  .qimat-hero-tab.visits{right:calc(8px + 4*((100% - 48px)/7 + 5px))!important;left:auto!important}
-  .qimat-hero-tab.upgrades{right:calc(8px + 5*((100% - 48px)/7 + 5px))!important;left:auto!important}
-  .qimat-hero-tab.settings{right:calc(8px + 6*((100% - 48px)/7 + 5px))!important;left:auto!important}
+  .qimat-hero-tab.contracts{right:calc(8px + (100% - 46px)/7 + 5px)!important;left:auto!important}
+  .qimat-hero-tab.portfolio{right:calc(8px + 2*((100% - 46px)/7 + 5px))!important;left:auto!important}
+  .qimat-hero-tab.ai{right:calc(8px + 3*((100% - 46px)/7 + 5px))!important;left:auto!important}
+  .qimat-hero-tab.visits{right:calc(8px + 4*((100% - 46px)/7 + 5px))!important;left:auto!important}
+  .qimat-hero-tab.upgrades{right:calc(8px + 5*((100% - 46px)/7 + 5px))!important;left:auto!important}
+  .qimat-hero-tab.settings{right:calc(8px + 6*((100% - 46px)/7 + 5px))!important;left:auto!important}
+  .qimat-hero-brand-live{
+    top:12px!important;
+    left:25%!important;
+    right:25%!important;
+  }
+  .qimat-hero-brand-title{font-size:31px!important}
+  .qimat-hero-quote{display:none!important}
 
-  /* ===================== الصف العلوي ===================== */
-  /* يسار: مؤشرات الدورة */
+  /* ===== الصف الأول: المؤشرات يسار + اليومية يمين ===== */
   .qimat-home-v6>.qhv5-command{
     grid-column:1 / 9!important;
     grid-row:1!important;
@@ -744,44 +728,33 @@ function printStatement(elementId) {
     min-width:0!important;
     margin:0!important;
     padding:10px!important;
-    border-radius:12px!important;
+    border-radius:13px!important;
+    align-self:stretch!important;
     background:linear-gradient(155deg,#061b2d,#041522)!important;
-    border:1px solid rgba(214,164,56,.44)!important;
-    box-shadow:0 8px 22px rgba(0,0,0,.14)!important;
+    border:1px solid rgba(214,164,56,.45)!important;
   }
 
   .qimat-home-v6 .qhv5-cycle{
-    width:min(100%,520px)!important;
+    max-width:520px!important;
     margin:0 auto 8px!important;
-    min-height:30px!important;
-    padding:4px 12px!important;
-    border-radius:8px!important;
+    padding:5px 14px!important;
+    min-height:32px!important;
   }
 
   .qimat-home-v6 .qhv5-kpis{
     grid-template-columns:repeat(5,minmax(0,1fr))!important;
     gap:7px!important;
   }
-
   .qimat-home-v6 .qhv5-kpi{
-    min-height:102px!important;
-    padding:7px 5px!important;
-    border-radius:9px!important;
+    min-height:106px!important;
+    padding:8px 6px!important;
+    border-radius:10px!important;
   }
-  .qimat-home-v6 .qhv5-kpi-icon{
-    width:29px!important;height:29px!important;font-size:18px!important;
-  }
-  .qimat-home-v6 .qhv5-kpi strong{font-size:22px!important;line-height:1.1!important}
-  .qimat-home-v6 .qhv5-kpi small{font-size:10.5px!important}
+  .qimat-home-v6 .qhv5-kpi strong{font-size:24px!important}
+  .qimat-home-v6 .qhv5-kpi small{font-size:11px!important}
   .qimat-home-v6 .qhv5-kpi em{font-size:10px!important}
-  .qimat-home-v6 .qhv5-ring{width:66px!important;height:66px!important}
-  .qimat-home-v6 .qhv5-progress-row{
-    margin-top:6px!important;
-    min-height:31px!important;
-    padding:5px 8px!important;
-  }
+  .qimat-home-v6 .qhv5-ring{width:68px!important;height:68px!important}
 
-  /* يمين: دفتر اليومية — يحاذي كتلة اليسار كاملة */
   .qimat-home-v6 .daily-entry-panel{
     grid-column:9 / 13!important;
     grid-row:1 / 4!important;
@@ -790,12 +763,9 @@ function printStatement(elementId) {
     height:100%!important;
     margin:0!important;
     align-self:stretch!important;
-    border-radius:12px!important;
-    overflow:hidden!important;
   }
 
-  /* ===================== تحت المؤشرات ===================== */
-  /* حركات اليوم */
+  /* ===== الصفان الثاني والثالث تحت المؤشرات ===== */
   .qimat-home-v6 .daily-today-panel{
     grid-column:1 / 5!important;
     grid-row:2 / 4!important;
@@ -803,26 +773,24 @@ function printStatement(elementId) {
     min-width:0!important;
     height:100%!important;
     margin:0!important;
-    border-radius:12px!important;
-    overflow:hidden!important;
   }
 
-  /* بطاقات الصندوق والحسابات */
   .qimat-home-v6 .daily-summary-grid{
     grid-column:5 / 9!important;
     grid-row:2!important;
     width:100%!important;
+    min-width:0!important;
     margin:0!important;
     display:grid!important;
     grid-template-columns:repeat(2,minmax(0,1fr))!important;
     gap:7px!important;
   }
 
-  /* المدير والمحاسب */
   .qimat-home-v6 .daily-management-grid{
     grid-column:5 / 9!important;
     grid-row:3!important;
     width:100%!important;
+    min-width:0!important;
     margin:0!important;
     display:grid!important;
     grid-template-columns:repeat(2,minmax(0,1fr))!important;
@@ -831,13 +799,12 @@ function printStatement(elementId) {
 
   .qimat-home-v6 .daily-summary-grid>div,
   .qimat-home-v6 .daily-management-grid>div{
-    min-height:76px!important;
-    padding:8px!important;
+    min-height:78px!important;
+    padding:9px!important;
     border-radius:10px!important;
-    overflow:hidden!important;
   }
 
-  /* ===================== إرسال الملخص ===================== */
+  /* زر الملخص بعرض كامل */
   .qimat-home-v6 .daily-send-summary{
     grid-column:1 / 13!important;
     grid-row:4!important;
@@ -846,57 +813,52 @@ function printStatement(elementId) {
   }
   .qimat-home-v6 .daily-send-summary button{
     width:100%!important;
-    min-height:39px!important;
-    height:39px!important;
+    min-height:38px!important;
     margin:0!important;
-    padding:6px 12px!important;
     border-radius:9px!important;
-    font-size:14px!important;
   }
 
-  /* ===================== كشف الحساب ===================== */
+  /* ===== كشف الحساب: بعرض الشاشة كله ===== */
   .qimat-home-v6 .daily-statement-full{
     grid-column:1 / 13!important;
     grid-row:5!important;
     width:100%!important;
     min-width:0!important;
     margin:0!important;
-    border-radius:12px!important;
+    border-radius:13px!important;
     overflow:hidden!important;
     background:linear-gradient(155deg,#061b2d,#041522)!important;
-    border:1px solid rgba(214,164,56,.44)!important;
-    box-shadow:0 10px 24px rgba(0,0,0,.13)!important;
+    border:1px solid rgba(214,164,56,.45)!important;
   }
 
   .qimat-home-v6 .daily-statement-full>div:first-child{
-    min-height:46px!important;
-    padding:8px 12px!important;
+    padding:9px 13px!important;
+    min-height:48px!important;
     background:linear-gradient(180deg,#09283f,#061927)!important;
     border-bottom:1px solid rgba(214,164,56,.28)!important;
   }
 
   .qimat-home-v6 .daily-statement-full>div:nth-child(2){
-    padding:9px!important;
+    padding:10px!important;
   }
 
-  /* البحث بعرض كامل فوق العمودين */
+  /* البحث أعلى الكشف */
   .qimat-home-v6 .daily-statement-full>div:nth-child(2)>div:first-child{
     width:100%!important;
-    min-height:40px!important;
-    margin:0 0 8px!important;
-    padding:7px 10px!important;
-    border-radius:8px!important;
+    min-height:42px!important;
+    margin:0 0 9px!important;
     background:#061927!important;
-    border:1px solid rgba(214,164,56,.32)!important;
+    border:1px solid rgba(214,164,56,.35)!important;
+    border-radius:9px!important;
   }
 
-  /* التفاصيل 70% يسار — نوع الحركة 30% يمين */
+  /* التفاصيل يسار، نوع الحركة يمين — ثابت على الكمبيوتر */
   .qimat-home-v6 .daily-statement-full .stmt-side-by-side{
-    display:grid!important;
-    grid-template-columns:minmax(0,70fr) minmax(300px,30fr)!important;
-    direction:ltr!important;
-    gap:9px!important;
     width:100%!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,72fr) minmax(300px,28fr)!important;
+    direction:ltr!important;
+    gap:10px!important;
     align-items:start!important;
     flex-wrap:nowrap!important;
   }
@@ -908,10 +870,10 @@ function printStatement(elementId) {
     max-width:none!important;
     margin:0!important;
     direction:rtl!important;
-    border-radius:9px!important;
+    border-radius:10px!important;
     overflow:hidden!important;
     background:#061b2d!important;
-    border:1px solid rgba(214,164,56,.34)!important;
+    border:1px solid rgba(214,164,56,.36)!important;
   }
 
   .qimat-home-v6 .daily-statement-full .stmt-type-summary{
@@ -921,26 +883,23 @@ function printStatement(elementId) {
     max-width:none!important;
     margin:0!important;
     direction:rtl!important;
-    border-radius:9px!important;
-    padding:7px!important;
+    border-radius:10px!important;
+    padding:8px!important;
     background:#061b2d!important;
-    border:1px solid rgba(214,164,56,.34)!important;
-    overflow:hidden!important;
+    border:1px solid rgba(214,164,56,.36)!important;
   }
 
+  /* بطاقات نوع الحركة تصبح عموداً واضحاً بدون ازدحام */
   .qimat-home-v6 .daily-statement-full .stmt-type-summary>div:first-child{
     grid-template-columns:repeat(2,minmax(0,1fr))!important;
     gap:6px!important;
-    margin-bottom:8px!important;
   }
-
   .qimat-home-v6 .daily-statement-full .stmt-type-summary>div:first-child>div{
-    min-height:74px!important;
-    padding:7px 6px!important;
-    border-radius:8px!important;
+    min-width:0!important;
+    padding:8px 6px!important;
   }
 
-  /* ===================== شكل موحد ===================== */
+  /* توحيد اللوحات */
   .qimat-home-v6 .daily-entry-panel,
   .qimat-home-v6 .daily-today-panel,
   .qimat-home-v6 .daily-summary-grid>div,
@@ -948,82 +907,47 @@ function printStatement(elementId) {
     background:linear-gradient(155deg,#061b2d,#041522)!important;
     border:1px solid rgba(214,164,56,.42)!important;
     color:#f4f5f3!important;
-    box-shadow:0 7px 18px rgba(0,0,0,.11)!important;
+    box-shadow:none!important;
   }
 
-  .qimat-home-v6 .daily-entry-panel>div:first-child,
-  .qimat-home-v6 .daily-today-panel>div:first-child{
-    min-height:45px!important;
-    padding:8px 11px!important;
-    background:linear-gradient(180deg,#09283f,#061927)!important;
-    border-bottom:1px solid rgba(214,164,56,.25)!important;
-  }
-
-  /* حقول الإدخال */
-  .qimat-home-v6 input,
-  .qimat-home-v6 select,
-  .qimat-home-v6 textarea{
-    min-width:0!important;
-  }
-
-  /* الجداول */
+  /* الجداول: تستغل عرض اللوحة ولا تتضخم */
   .qimat-home-v6 table{
     width:100%!important;
     min-width:0!important;
     table-layout:auto!important;
   }
-
   .qimat-home-v6 th,
   .qimat-home-v6 td{
     padding:6px 7px!important;
-    font-size:10.8px!important;
-    line-height:1.35!important;
+    font-size:11px!important;
   }
-
-  .qimat-home-v6 .daily-today-panel .table-scroll,
-  .qimat-home-v6 .daily-statement-full .table-scroll{
-    width:100%!important;
+  .qimat-home-v6 .daily-statement-full .table-scroll,
+  .qimat-home-v6 .daily-today-panel .table-scroll{
     max-width:100%!important;
   }
 
-  /* لا يسمح لأي عنصر أن يوسّع الصفحة */
+  /* منع أي عنصر من توسيع الصفحة */
   .qimat-home-v6 *{
     min-inline-size:0;
   }
 }
 
-/* لابتوب متوسط */
-@media (min-width:1000px) and (max-width:1280px){
+/* شاشات لابتوب أضيق 1000–1250 */
+@media (min-width:1000px) and (max-width:1250px){
   .qimat-home-v5.qimat-home-v6{
-    width:calc(100% - 16px)!important;
-    padding-top:8px!important;
+    padding:10px 12px 18px!important;
     gap:8px!important;
   }
-
-  .qimat-top-hero{
-    width:calc(100% - 16px)!important;
-    height:176px!important;
-    min-height:176px!important;
-    max-height:176px!important;
-  }
-
-  .qimat-hero-brand-title{font-size:25px!important}
-
-  .qimat-home-v6 .qhv5-kpi strong{font-size:19px!important}
-  .qimat-home-v6 .qhv5-kpi small{font-size:9.8px!important}
-
+  .qimat-home-v6>.qhv5-command{grid-column:1 / 9!important}
+  .qimat-home-v6 .daily-entry-panel{grid-column:9 / 13!important}
+  .qimat-home-v6 .qhv5-kpi strong{font-size:20px!important}
+  .qimat-home-v6 .qhv5-kpi small{font-size:10px!important}
   .qimat-home-v6 .daily-statement-full .stmt-side-by-side{
-    grid-template-columns:minmax(0,68fr) minmax(280px,32fr)!important;
-  }
-
-  .qimat-home-v6 th,
-  .qimat-home-v6 td{
-    font-size:10px!important;
-    padding:5px 6px!important;
+    grid-template-columns:minmax(0,69fr) minmax(285px,31fr)!important;
   }
 }
 
-/* الجوال والتابلت */
+/* الجوال والتابلت: ترتيب عمودي بدون كسر */
 @media (max-width:999px){
   .qimat-home-v5.qimat-home-v6{
     display:block!important;
@@ -1031,12 +955,10 @@ function printStatement(elementId) {
     max-width:none!important;
     padding:8px!important;
   }
-
   .qimat-home-v6>.qhv6-daily,
   .qimat-home-v6>.qhv6-daily>.qimat-daily-v5{
     display:block!important;
   }
-
   .qimat-home-v6 .daily-entry-panel,
   .qimat-home-v6 .daily-today-panel,
   .qimat-home-v6 .daily-summary-grid,
@@ -1047,7 +969,6 @@ function printStatement(elementId) {
     max-width:none!important;
     margin:0 0 9px!important;
   }
-
   .qimat-home-v6 .daily-statement-full .stmt-side-by-side{
     display:flex!important;
     flex-direction:column!important;
@@ -1055,12 +976,310 @@ function printStatement(elementId) {
     width:100%!important;
     gap:8px!important;
   }
-
   .qimat-home-v6 .daily-statement-full .stmt-side-by-side>div:first-child,
   .qimat-home-v6 .daily-statement-full .stmt-type-summary{
     width:100%!important;
     min-width:0!important;
     max-width:none!important;
+  }
+}
+</style>
+
+
+<style id="qimat-summary-tabs-v12">
+/* =========================================================
+   ملخص الدورة في الرئيسية — تحويل المنطقة المحددة إلى تبويبات
+   ========================================================= */
+
+@media (min-width:1000px){
+
+  /* اجعل شريط الملخص بعرض الصفحة كله مباشرة أسفل الكليشة */
+  .qimat-home-v6>.qhv5-command{
+    grid-column:1 / 13!important;
+    grid-row:1!important;
+    display:flex!important;
+    flex-wrap:wrap!important;
+    align-items:stretch!important;
+    gap:7px!important;
+    width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:7px!important;
+    background:linear-gradient(180deg,#041624,#03111d)!important;
+    border:1px solid rgba(214,164,56,.48)!important;
+    border-radius:12px!important;
+    box-shadow:0 8px 20px rgba(0,0,0,.14)!important;
+  }
+
+  /* تبويب دورة الشهر */
+  .qimat-home-v6 .qhv5-cycle{
+    flex:0 0 17%!important;
+    width:auto!important;
+    max-width:none!important;
+    min-width:190px!important;
+    min-height:68px!important;
+    margin:0!important;
+    padding:8px 12px!important;
+    border-radius:9px!important;
+    display:flex!important;
+    flex-direction:column!important;
+    justify-content:center!important;
+    align-items:center!important;
+    gap:2px!important;
+    background:linear-gradient(145deg,#d9aa3e,#b97d18)!important;
+    border:1px solid #e6bd59!important;
+    color:#081522!important;
+    box-shadow:inset 0 1px rgba(255,255,255,.28)!important;
+  }
+  .qimat-home-v6 .qhv5-cycle span{
+    font-size:10px!important;
+    font-weight:800!important;
+    color:#25303a!important;
+  }
+  .qimat-home-v6 .qhv5-cycle strong{
+    font-size:15px!important;
+    font-weight:900!important;
+    color:#07131e!important;
+    white-space:nowrap!important;
+  }
+  .qimat-home-v6 .qhv5-cycle .qhv5-cal{
+    display:none!important;
+  }
+
+  /* بقية الملخصات كتبوبيات متساوية */
+  .qimat-home-v6 .qhv5-kpis{
+    flex:1 1 0!important;
+    min-width:0!important;
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    gap:7px!important;
+  }
+
+  .qimat-home-v6 .qhv5-kpi{
+    min-width:0!important;
+    min-height:68px!important;
+    height:68px!important;
+    padding:7px 8px!important;
+    border-radius:9px!important;
+    display:grid!important;
+    grid-template-columns:34px 1fr!important;
+    grid-template-rows:auto auto!important;
+    column-gap:7px!important;
+    row-gap:0!important;
+    align-items:center!important;
+    text-align:right!important;
+    background:linear-gradient(180deg,#092841,#061927)!important;
+    border:1px solid rgba(214,164,56,.40)!important;
+    color:#f5f3eb!important;
+    box-shadow:inset 0 1px rgba(255,255,255,.025)!important;
+    transition:transform .15s ease,border-color .15s ease,background .15s ease!important;
+  }
+
+  .qimat-home-v6 button.qhv5-kpi{
+    cursor:pointer!important;
+  }
+  .qimat-home-v6 button.qhv5-kpi:hover{
+    transform:translateY(-1px)!important;
+    border-color:#efbd4f!important;
+    background:linear-gradient(180deg,#0b304c,#072239)!important;
+  }
+
+  .qimat-home-v6 .qhv5-kpi-icon{
+    grid-column:1!important;
+    grid-row:1 / 3!important;
+    width:31px!important;
+    height:31px!important;
+    margin:0!important;
+    border-radius:8px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    font-size:18px!important;
+    color:#efbd4f!important;
+    background:rgba(214,164,56,.08)!important;
+    border:1px solid rgba(214,164,56,.24)!important;
+    box-shadow:none!important;
+  }
+
+  .qimat-home-v6 .qhv5-kpi small{
+    grid-column:2!important;
+    grid-row:1!important;
+    display:block!important;
+    margin:0!important;
+    color:#b9c3ca!important;
+    font-size:10px!important;
+    line-height:1.1!important;
+    font-weight:700!important;
+  }
+
+  .qimat-home-v6 .qhv5-kpi strong{
+    grid-column:2!important;
+    grid-row:2!important;
+    display:inline!important;
+    margin:0!important;
+    color:#efbd4f!important;
+    font-size:18px!important;
+    line-height:1.1!important;
+    font-weight:900!important;
+  }
+
+  .qimat-home-v6 .qhv5-kpi em{
+    grid-column:2!important;
+    grid-row:2!important;
+    justify-self:end!important;
+    align-self:end!important;
+    margin:0 0 0 4px!important;
+    color:#8f9ca6!important;
+    font-size:9px!important;
+    font-style:normal!important;
+    transform:translateY(11px)!important;
+  }
+
+  /* نسبة الإنجاز كتَبويب، بدون الحلقة الكبيرة */
+  .qimat-home-v6 .qhv5-kpi-ring{
+    grid-template-columns:1fr!important;
+    grid-template-rows:auto auto auto!important;
+    text-align:center!important;
+    justify-items:center!important;
+  }
+  .qimat-home-v6 .qhv5-kpi-ring .qhv5-ring{
+    grid-row:1!important;
+    width:auto!important;
+    height:auto!important;
+    border:0!important;
+    background:none!important;
+    box-shadow:none!important;
+    margin:0!important;
+  }
+  .qimat-home-v6 .qhv5-kpi-ring .qhv5-ring:before,
+  .qimat-home-v6 .qhv5-kpi-ring .qhv5-ring:after{
+    display:none!important;
+  }
+  .qimat-home-v6 .qhv5-kpi-ring .qhv5-ring b{
+    position:static!important;
+    transform:none!important;
+    font-size:19px!important;
+    color:#efbd4f!important;
+  }
+  .qimat-home-v6 .qhv5-kpi-ring small{
+    grid-column:1!important;
+    grid-row:2!important;
+    font-size:10px!important;
+  }
+  .qimat-home-v6 .qhv5-kpi-ring em{
+    grid-column:1!important;
+    grid-row:3!important;
+    position:static!important;
+    transform:none!important;
+    justify-self:center!important;
+    font-size:8.5px!important;
+  }
+
+  /* شريط التقدم يصبح خطاً نظيفاً أسفل التبويبات */
+  .qimat-home-v6 .qhv5-progress-row{
+    flex:0 0 100%!important;
+    width:100%!important;
+    min-height:28px!important;
+    margin:0!important;
+    padding:4px 8px!important;
+    display:grid!important;
+    grid-template-columns:auto 1fr!important;
+    gap:10px!important;
+    align-items:center!important;
+    border-radius:7px!important;
+    background:#03111d!important;
+    border:1px solid rgba(214,164,56,.18)!important;
+  }
+  .qimat-home-v6 .qhv5-progress-copy{
+    display:flex!important;
+    align-items:center!important;
+    gap:7px!important;
+    white-space:nowrap!important;
+    font-size:9.5px!important;
+  }
+  .qimat-home-v6 .qhv5-progress-copy strong{
+    color:#efbd4f!important;
+    font-size:12px!important;
+  }
+  .qimat-home-v6 .qhv5-progress-copy span,
+  .qimat-home-v6 .qhv5-progress-copy b{
+    color:#aeb8c0!important;
+    font-size:9.5px!important;
+  }
+  .qimat-home-v6 .qhv5-progress{
+    height:5px!important;
+    border-radius:5px!important;
+    background:#0a263c!important;
+    overflow:hidden!important;
+  }
+  .qimat-home-v6 .qhv5-progress i{
+    height:100%!important;
+    background:linear-gradient(90deg,#b87d18,#efbd4f)!important;
+    border-radius:5px!important;
+  }
+
+  /* نزّل بقية الصفحة صفاً واحداً بسبب شريط التبويبات الجديد */
+  .qimat-home-v6 .daily-entry-panel{
+    grid-row:2 / 5!important;
+  }
+  .qimat-home-v6 .daily-today-panel{
+    grid-row:2 / 4!important;
+  }
+  .qimat-home-v6 .daily-summary-grid{
+    grid-row:2!important;
+  }
+  .qimat-home-v6 .daily-management-grid{
+    grid-row:3!important;
+  }
+  .qimat-home-v6 .daily-send-summary{
+    grid-row:5!important;
+  }
+  .qimat-home-v6 .daily-statement-full{
+    grid-row:6!important;
+  }
+}
+
+/* لابتوب متوسط: تبقى التبويبات مرتبة ولا تتكدس */
+@media (min-width:1000px) and (max-width:1280px){
+  .qimat-home-v6 .qhv5-cycle{
+    flex-basis:18%!important;
+    min-width:165px!important;
+  }
+  .qimat-home-v6 .qhv5-kpi{
+    grid-template-columns:28px 1fr!important;
+    padding:6px!important;
+  }
+  .qimat-home-v6 .qhv5-kpi-icon{
+    width:27px!important;height:27px!important;font-size:15px!important;
+  }
+  .qimat-home-v6 .qhv5-kpi strong{font-size:15px!important}
+  .qimat-home-v6 .qhv5-kpi small{font-size:9px!important}
+  .qimat-home-v6 .qhv5-kpi em{font-size:8px!important}
+}
+
+/* الجوال: تبويبات قابلة للتمرير أفقيًا بدلاً من التكدس */
+@media (max-width:999px){
+  .qimat-home-v6>.qhv5-command{
+    display:block!important;
+    width:100%!important;
+    padding:7px!important;
+  }
+  .qimat-home-v6 .qhv5-cycle{
+    width:100%!important;
+    margin:0 0 7px!important;
+    min-height:44px!important;
+  }
+  .qimat-home-v6 .qhv5-kpis{
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    overflow-x:auto!important;
+    gap:7px!important;
+    padding-bottom:3px!important;
+    scrollbar-width:thin!important;
+  }
+  .qimat-home-v6 .qhv5-kpi{
+    flex:0 0 145px!important;
+    min-height:66px!important;
   }
 }
 </style>
