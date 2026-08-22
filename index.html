@@ -589,8 +589,8 @@ button.qhv5-kpi{cursor:pointer}.qhv5-kpi:hover{transform:translateY(-2px);border
 .qimat-home-v5 .qimat-daily-v5>.daily-statement-full{grid-column:1/-1!important;width:100%!important;max-width:none!important;}
 @media(min-width:901px){
   .daily-statement-full .stmt-side-by-side{display:flex!important;flex-wrap:nowrap!important;width:100%!important;direction:ltr!important;align-items:flex-start!important;}
-  .daily-statement-full .stmt-side-by-side>div:first-child{flex:1 1 72%!important;width:72%!important;max-width:none!important;min-width:0!important;}
-  .daily-statement-full .stmt-side-by-side>.stmt-type-summary{flex:0 0 28%!important;width:28%!important;max-width:28%!important;min-width:300px!important;}
+  .daily-statement-full .stmt-side-by-side>div:first-child{flex:1 1 65%!important;width:65%!important;max-width:none!important;min-width:0!important;}
+  .daily-statement-full .stmt-side-by-side>.stmt-type-summary{flex:0 0 35%!important;width:35%!important;max-width:35%!important;min-width:280px!important;}
 }
 @media(max-width:900px){
   .daily-statement-full .stmt-side-by-side{display:block!important;width:100%!important;}
@@ -646,7 +646,7 @@ button.qhv5-kpi{cursor:pointer}.qhv5-kpi:hover{transform:translateY(-2px);border
   .qimat-home-v6 .qimat-daily-v5>.daily-management-grid{grid-column:1 / -1!important;width:100%!important;min-width:0!important;margin:0!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;}
   .qimat-home-v6 .qimat-daily-v5>.daily-send-summary{grid-column:1 / -1!important;width:100%!important;min-width:0!important;margin:0!important;}
   .qimat-home-v6 .qimat-daily-v5>.daily-statement-full{grid-column:1 / -1!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;}
-  .daily-statement-full .stmt-side-by-side{display:grid!important;grid-template-columns:minmax(300px,28%) minmax(0,72%)!important;direction:rtl!important;gap:16px!important;align-items:start!important;width:100%!important;}
+  .daily-statement-full .stmt-side-by-side{display:grid!important;grid-template-columns:minmax(300px,35%) minmax(0,65%)!important;direction:rtl!important;gap:16px!important;align-items:start!important;width:100%!important;}
   .daily-statement-full .stmt-side-by-side>.stmt-type-summary{grid-column:1!important;width:100%!important;max-width:none!important;min-width:0!important;flex:none!important;direction:rtl!important;}
   .daily-statement-full .stmt-side-by-side>div:first-child{grid-column:2!important;width:100%!important;max-width:none!important;min-width:0!important;flex:none!important;direction:rtl!important;}
   .qimat-home-v6 .qimat-daily-v5 table{width:100%!important;}
@@ -7155,30 +7155,10 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
             {stmtQuery && <button onClick={()=>setStmtQuery("")} style={{border:"none",background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:14,fontWeight:700,color:"#141428",border:"1px solid #b8862b"}}>✕</button>}
           </div>
 
-          {/* بطاقات الإجماليات لكل نوع (انقر لعرض تفاصيل النوع) */}
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginBottom:14}}>
-            {stmtTotals.map(t=>{
-              const dir = t.sign<0 ? "#dc2626" : "#16a34a";
-              const sel = stmtTypeFilter===t.key;
-              return (
-              <div key={t.key} onClick={()=>setStmtTypeFilter(f=>f===t.key?"all":t.key)}
-                title="انقر لعرض تفاصيل هذا النوع"
-                style={{...styles.card,borderRight:"3px solid #c8922a",cursor:"pointer",
-                  border: sel ? "1px solid #b8862b" : "1px solid #b8862b",
-                  borderRight:"3px solid #c8922a",
-                  background: sel ? "linear-gradient(150deg,#fefbf3,#fef7e8)" : "#fff",
-                  transition:"all .12s"}}>
-                <div style={{fontSize:14,color:"#334155",marginBottom:6,fontWeight:700}}>{t.label}</div>
-                <div style={{fontSize:20,fontWeight:900,color:dir}}>{t.sign<0?"−":"+"}{SAR(t.total)}</div>
-                <div style={{fontSize:12,color:"#64748b",marginTop:4}}>{t.count} حركة · اضغط للتفصيل</div>
-              </div>
-            );})}
-          </div>
-
           {/* نوع الحركة يمين + التفاصيل يسار على الشاشات الواسعة */}
           <div className="stmt-side-by-side" style={{display:"flex",direction:"ltr",gap:14,alignItems:"flex-start",flexWrap:"nowrap",width:"100%"}}>
           {/* 📋 جدول الحركات التفصيلية — مَن وراء كل حركة */}
-          <div style={{...styles.panel,marginBottom:14,boxShadow:"none",border:"1px solid "+C.border,flex:"1 1 auto",width:"calc(72% - 7px)",minWidth:0,direction:"rtl"}}>
+          <div style={{...styles.panel,marginBottom:14,boxShadow:"none",border:"1px solid "+C.border,flex:"1 1 auto",width:"calc(65% - 7px)",minWidth:0,direction:"rtl"}}>
             <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
               <h4 style={{margin:0,fontSize:15,fontWeight:800}}>
                 📋 التفاصيل {stmtTypeFilter!=="all" ? ("— "+(DAILY_TYPES.find(x=>x.key===stmtTypeFilter)||{}).label) : ""}{_q ? (" — بحث: “"+stmtQuery+"”") : ""}
@@ -7251,7 +7231,26 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
           </div>
 
           {/* جدول نوع الحركة — يمين التفاصيل */}
-          <div className="stmt-type-summary" style={{overflowX:"auto",flex:"0 0 calc(28% - 7px)",width:"calc(28% - 7px)",minWidth:300,direction:"rtl"}}>
+          <div className="stmt-type-summary" style={{flex:"0 0 calc(35% - 7px)",width:"calc(35% - 7px)",minWidth:280,direction:"rtl"}}>
+            {/* بطاقات الإجماليات لكل نوع (انقر لعرض تفاصيل النوع) */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+              {stmtTotals.map(t=>{
+                const dir = t.sign<0 ? "#dc2626" : "#16a34a";
+                const sel = stmtTypeFilter===t.key;
+                return (
+                <div key={t.key} onClick={()=>setStmtTypeFilter(f=>f===t.key?"all":t.key)}
+                  title="انقر لعرض تفاصيل هذا النوع"
+                  style={{...styles.card,cursor:"pointer",padding:"10px 8px",
+                    border: sel ? "2px solid #b8862b" : "1px solid #e0d8c6",
+                    borderRight:"3px solid #c8922a",
+                    background: sel ? "linear-gradient(150deg,#fefbf3,#fef7e8)" : "#fff",
+                    transition:"all .12s"}}>
+                  <div style={{fontSize:13,color:"#334155",marginBottom:4,fontWeight:700}}>{t.label}</div>
+                  <div style={{fontSize:18,fontWeight:900,color:dir}}>{t.sign<0?"−":"+"}{SAR(t.total)}</div>
+                  <div style={{fontSize:11,color:"#64748b",marginTop:3}}>{t.count} حركة</div>
+                </div>
+              );})}
+            </div>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
               <thead>
                 <tr>{["نوع الحركة","عدد الحركات","الإجمالي"].map(h=>(<th key={h} style={styles.th}>{h}</th>))}</tr>
