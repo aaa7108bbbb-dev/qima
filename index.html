@@ -1075,6 +1075,13 @@ function printStatement(elementId) {
     transition:transform .15s ease,border-color .15s ease,background .15s ease!important;
   }
 
+  /* تبويبات المنجز والباقي الفخمة */
+  .qimat-home-v6 .qhv5-duo-tabs{display:flex!important;gap:10px!important;margin-bottom:10px!important;}
+  .qimat-home-v6 .qhv5-duo{border-radius:14px!important;transition:transform .15s ease,box-shadow .15s ease!important;}
+  .qimat-home-v6 .qhv5-duo:hover{transform:translateY(-2px)!important;}
+  .qimat-home-v6 .qhv5-duo.done:hover{box-shadow:0 12px 32px rgba(5,80,60,.45),inset 0 1px rgba(255,255,255,.12)!important;}
+  .qimat-home-v6 .qhv5-duo.rem:hover{box-shadow:0 12px 32px rgba(30,64,175,.45),inset 0 1px rgba(255,255,255,.12)!important;}
+
   .qimat-home-v6 button.qhv5-kpi{
     cursor:pointer!important;
   }
@@ -2976,30 +2983,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   }
 
   return (
-    <div className="contracts-lux">
-      <style>{`
-        .contracts-lux{direction:rtl;background:radial-gradient(circle at 78% 4%,rgba(20,83,132,.38),transparent 32%),linear-gradient(145deg,#020b13 0%,#061a2a 52%,#03111d 100%);color:#f7f1e6;border:1px solid rgba(214,157,48,.55);border-radius:22px;padding:18px;box-shadow:0 20px 55px rgba(0,0,0,.28);min-height:80vh}
-        .contracts-lux .qimat-quick-action{background:linear-gradient(155deg,#0b2b45,#061725)!important;color:#f4bd50!important;border:1px solid rgba(221,163,52,.72)!important;box-shadow:inset 0 1px rgba(255,255,255,.05),0 8px 22px rgba(0,0,0,.22)!important;min-height:76px;transition:.2s ease!important}
-        .contracts-lux .qimat-quick-action:hover,.contracts-lux .qimat-quick-action.active{transform:translateY(-2px);border-color:#f4bd50!important;box-shadow:0 0 0 1px rgba(244,189,80,.22),0 10px 28px rgba(0,0,0,.35)!important}
-        .contracts-lux .qimat-quick-action svg *{stroke:#f4bd50!important}
-        .contracts-lux>div:not(:first-of-type){color:#f7f1e6}
-        .contracts-lux input,.contracts-lux select{background:#071827!important;color:#f8f3ea!important;border-color:rgba(214,157,48,.48)!important;outline:none}
-        .contracts-lux input::placeholder{color:#8493a4!important}
-        .contracts-lux select option{background:#071827;color:#fff}
-        .contracts-lux table{background:#061725!important;color:#f8f3ea!important}
-        .contracts-lux th{background:linear-gradient(180deg,#0d3554,#08243a)!important;color:#f4bd50!important;border-color:rgba(214,157,48,.35)!important}
-        .contracts-lux td{background:#071827!important;color:#eef3f7!important;border-color:rgba(214,157,48,.18)!important}
-        .contracts-lux tbody tr:nth-child(even) td{background:#0a2032!important}
-        .contracts-lux button{font-family:"IBM Plex Sans Arabic",Arial,sans-serif}
-        .contracts-lux h1,.contracts-lux h2,.contracts-lux h3,.contracts-lux span{border-color:rgba(214,157,48,.3)}
-        .contracts-lux [style*="background: rgba(255, 255, 255"],.contracts-lux [style*="background:rgba(255,255,255"],.contracts-lux [style*="background: #fff"],.contracts-lux [style*="background:#fff"]{background:linear-gradient(145deg,#081e31,#051522)!important;color:#f7f1e6!important;border-color:rgba(214,157,48,.42)!important}
-        .contracts-lux [style*="color: rgb(20, 20, 40)"],.contracts-lux [style*="color:#141428"],.contracts-lux [style*="color: #141428"],.contracts-lux [style*="color:#1a1a2e"]{color:#f4bd50!important}
-        .contracts-lux [style*="color:#4a5568"],.contracts-lux [style*="color: #4a5568"]{color:#c4ced8!important}
-        .contracts-lux [style*="color:#94a3b8"]{color:#92a0af!important}
-        .contracts-lux [style*="box-shadow"]{box-shadow:0 10px 28px rgba(0,0,0,.24)!important}
-        @media(min-width:1000px){.contracts-lux{padding:20px 22px}.contracts-lux .qimat-quick-action{font-size:15px!important}.contracts-lux>div:first-of-type{gap:12px!important}}
-        @media(max-width:700px){.contracts-lux{padding:10px;border-radius:16px}.contracts-lux>div:first-of-type{grid-template-columns:repeat(2,1fr)!important}.contracts-lux .qimat-quick-action{min-height:66px;padding:12px 6px!important}.contracts-lux table{font-size:12px!important}}
-      `}</style>
+    <div>
       {/* ═══ Action Buttons — Premium Grid ═══ */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10,marginBottom:10}}>
         <button type="button" data-qe-manual="true" className={"qimat-quick-action "+(showNew?"active":"")} onClick={()=>setShowNew(true)} style={{borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
@@ -6984,16 +6968,45 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
       )}
       <section className="qhv5-command" aria-label="ملخص الدورة">
         <div className="qhv5-cycle"><span>دورة الشهر</span><strong>{cycleLabel}</strong><span className="qhv5-cal">▣</span></div>
-        <div className="qhv5-kpis">
+
+        {/* تبويبتين فخمتين: المنجز + الباقي */}
+        <div className="qhv5-duo-tabs" style={{display:"flex",gap:10,marginBottom:10}}>
+          <button type="button" className="qhv5-duo done" onClick={()=>setDetail({mode:"done"})} style={{flex:1,cursor:"pointer",fontFamily:"inherit",border:"none",borderRadius:14,padding:"14px 14px 12px",position:"relative",overflow:"hidden",textAlign:"right",
+            background:"linear-gradient(135deg,#064e3b,#065f46,#047857)",boxShadow:"0 8px 24px rgba(5,80,60,.35),inset 0 1px rgba(255,255,255,.08)",transition:"transform .15s,box-shadow .15s"}}>
+            <div style={{position:"absolute",left:-20,top:-20,width:90,height:90,borderRadius:"50%",background:"rgba(255,255,255,.06)"}}/>
+            <div style={{position:"absolute",right:12,top:10,fontSize:32,opacity:.12,fontWeight:900}}>♛</div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,.75)",fontWeight:700,marginBottom:4,letterSpacing:.3}}>المنجز منها</div>
+            <div style={{display:"flex",alignItems:"baseline",gap:6}}>
+              <span style={{fontSize:28,fontWeight:900,color:"#fff",lineHeight:1}}>{SARf(doneAmount)}</span>
+              <span style={{fontSize:12,color:"rgba(255,255,255,.7)",fontWeight:700}}>﷼</span>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6}}>
+              <span style={{background:"rgba(255,255,255,.15)",padding:"3px 10px",borderRadius:8,fontSize:11,fontWeight:800,color:"#d1fae5"}}>{doneCount} قسط</span>
+              <span style={{fontSize:11,color:"rgba(255,255,255,.6)",fontWeight:600}}>· {donePct}% من الهدف</span>
+            </div>
+          </button>
+
+          <button type="button" className="qhv5-duo rem" onClick={()=>setDetail({mode:"target"})} style={{flex:1,cursor:"pointer",fontFamily:"inherit",border:"none",borderRadius:14,padding:"14px 14px 12px",position:"relative",overflow:"hidden",textAlign:"right",
+            background:"linear-gradient(135deg,#1e3a5f,#1e40af,#3b82f6)",boxShadow:"0 8px 24px rgba(30,64,175,.35),inset 0 1px rgba(255,255,255,.08)",transition:"transform .15s,box-shadow .15s"}}>
+            <div style={{position:"absolute",left:-20,top:-20,width:90,height:90,borderRadius:"50%",background:"rgba(255,255,255,.06)"}}/>
+            <div style={{position:"absolute",right:12,top:10,fontSize:32,opacity:.12,fontWeight:900}}>◫</div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,.75)",fontWeight:700,marginBottom:4,letterSpacing:.3}}>باقي الأقساط</div>
+            <div style={{display:"flex",alignItems:"baseline",gap:6}}>
+              <span style={{fontSize:28,fontWeight:900,color:"#fff",lineHeight:1}}>{SARf(remAmount)}</span>
+              <span style={{fontSize:12,color:"rgba(255,255,255,.7)",fontWeight:700}}>﷼</span>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6}}>
+              <span style={{background:"rgba(255,255,255,.15)",padding:"3px 10px",borderRadius:8,fontSize:11,fontWeight:800,color:"#bfdbfe"}}>{remCount} قسط</span>
+              <span style={{fontSize:11,color:"rgba(255,255,255,.6)",fontWeight:600}}>· من {targetCount} إجمالي</span>
+            </div>
+          </button>
+        </div>
+
+        {/* المؤشرات المصغرة: أقساط الشهر + نسبة الإنجاز + المتعثرون */}
+        <div className="qhv5-kpis" style={{gridTemplateColumns:"repeat(3,minmax(0,1fr))"}}>
           <button type="button" className="qhv5-kpi" onClick={()=>setDetail({mode:"target"})}>
             <span className="qhv5-kpi-icon">◎</span><small>أقساط الشهر</small><strong>{SARf(targetAmount)}</strong><em>{targetCount} قسط</em>
           </button>
-          <button type="button" className="qhv5-kpi" onClick={()=>setDetail({mode:"done"})}>
-            <span className="qhv5-kpi-icon">♛</span><small>المنجز منها</small><strong>{SARf(doneAmount)}</strong><em>{doneCount} قسط</em>
-          </button>
-          <div className="qhv5-kpi">
-            <span className="qhv5-kpi-icon">◫</span><small>باقي الأقساط</small><strong>{SARf(remAmount)}</strong><em>{remCount} قسط</em>
-          </div>
           <div className="qhv5-kpi qhv5-kpi-ring">
             <span className="qhv5-ring" style={{'--pct':donePct}}><b>{donePct}%</b></span><small>نسبة الإنجاز</small><em>من هدف الدورة</em>
           </div>
