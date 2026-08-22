@@ -13041,6 +13041,34 @@ body:has(.qimat-home-v6){
   .qimat-home-v6 .qhome-foot-show select{height:38px!important}
 }
 
+
+/* ════════════════════════════════════════════════════════════
+   الجزء (د) — صفحة العقود (تبويب العقود): إصلاح النص الأسود
+   الثيم .contracts-lux غامق، لكن ألوان النص المضمّنة بقيت غامقة.
+   القواعد القديمة تطابق صيغة hex فقط، والمتصفح يكتبها rgb().
+   ════════════════════════════════════════════════════════════ */
+.contracts-lux [style*="color: rgb(15, 25, 35)"]:not([style*="background"]),
+.contracts-lux [style*="color: rgb(31, 41, 55)"]:not([style*="background"]),
+.contracts-lux [style*="color: rgb(26, 26, 46)"]:not([style*="background"]),
+.contracts-lux [style*="color: rgb(74, 85, 104)"]:not([style*="background"]),
+.contracts-lux [style*="color: rgb(85, 85, 85)"]:not([style*="background"]),
+.contracts-lux [style*="color: rgb(100, 116, 139)"]:not([style*="background"]),
+.contracts-lux [style*="color: rgb(51, 65, 85)"]:not([style*="background"]),
+.contracts-lux [style*="color: rgb(71, 85, 105)"]:not([style*="background"]),
+.contracts-lux [style*="color: rgb(20, 20, 40)"]:not([style*="background"]){color:#e8eef4!important}
+/* اسم العميل القابل للنقر: ذهبي */
+.contracts-lux td span[style*="underline"][style*="color"]{color:#f4bd50!important}
+/* الأزرار والشارات ذات الخلفية الذهبية: نص غامق */
+.contracts-lux button[style*="linear-gradient"],
+.contracts-lux td span[style*="linear-gradient"],
+.contracts-lux th span[style*="linear-gradient"]{color:#141428!important}
+.contracts-lux button[style*="linear-gradient"] svg *{stroke:#141428!important}
+/* صفوف بعرض الجدول: الفواصل ورسائل الفراغ */
+.contracts-lux td[colspan]{background:#0a2338!important;color:#f4bd50!important}
+/* تمرير الماوس لا يقلب الصف للفاتح */
+.contracts-lux tbody tr:hover td{background:#0d2739!important;color:#f4f8fb!important}
+.contracts-lux table.freeze3 tbody tr:hover td:not([colspan]):nth-child(-n+3){background:#0d2739!important}
+
 /* ════════════════════════════════════════════════════════════
    الجزء (ج) — تعديلات الجوال
    ════════════════════════════════════════════════════════════ */
