@@ -6485,7 +6485,32 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
         </div>);
       })()}
       {/* دفتر اليومية مدمج في الرئيسية */}
-      <div className="qhv6-daily"><DailyPage daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} contracts={contracts} settings={settings} toast={toast} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} investors={investors} payments={payments}/></div>\n\n      {/* معاينة العقود في الرئيسية — عرض فقط */}\n      <section className="qhome-contracts-preview" aria-label="معاينة العقود">\n        <div className="qhome-contracts-head">\n          <div><small>العقود</small><h3>أحدث العقود</h3></div>\n          <button type="button" onClick={()=>setPage&&setPage("contracts")}>فتح صفحة العقود ←</button>\n        </div>\n        <div className="qhome-contracts-tablewrap">\n          <table>\n            <thead><tr><th>التاريخ</th><th>#</th><th>العميل</th><th>الهوية</th></tr></thead>\n            <tbody>\n              {allC.slice().sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))).slice(0,9).map(c=>(\n                <tr key={"homec_"+c.id} onClick={()=>setPage&&setPage("contracts")} style={{cursor:"pointer"}}>\n                  <td>{c.date||"—"}</td><td>{c.num||"—"}</td><td>{c.client||"—"}</td><td>{c.idNum||"—"}</td>\n                </tr>\n              ))}\n              {allC.length===0 && <tr><td colSpan="4" style={{textAlign:"center"}}>لا توجد عقود</td></tr>}\n            </tbody>\n          </table>\n        </div>\n        <div className="qhome-contracts-foot">\n          <span>إجمالي العقود <b>{allC.length}</b></span>\n          <button type="button" onClick={()=>setPage&&setPage("contracts")}>عرض الكل</button>\n        </div>\n      </section>
+      <div className="qhv6-daily"><DailyPage daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} contracts={contracts} settings={settings} toast={toast} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} investors={investors} payments={payments}/></div>
+
+      {/* معاينة العقود في الرئيسية — عرض فقط */}
+      <section className="qhome-contracts-preview" aria-label="معاينة العقود">
+        <div className="qhome-contracts-head">
+          <div><small>العقود</small><h3>أحدث العقود</h3></div>
+          <button type="button" onClick={()=>setPage&&setPage("contracts")}>فتح صفحة العقود ←</button>
+        </div>
+        <div className="qhome-contracts-tablewrap">
+          <table>
+            <thead><tr><th>التاريخ</th><th>#</th><th>العميل</th><th>الهوية</th></tr></thead>
+            <tbody>
+              {allC.slice().sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))).slice(0,9).map(c=>(
+                <tr key={"homec_"+c.id} onClick={()=>setPage&&setPage("contracts")} style={{cursor:"pointer"}}>
+                  <td>{c.date||"—"}</td><td>{c.num||"—"}</td><td>{c.client||"—"}</td><td>{c.idNum||"—"}</td>
+                </tr>
+              ))}
+              {allC.length===0 && <tr><td colSpan="4" style={{textAlign:"center"}}>لا توجد عقود</td></tr>}
+            </tbody>
+          </table>
+        </div>
+        <div className="qhome-contracts-foot">
+          <span>إجمالي العقود <b>{allC.length}</b></span>
+          <button type="button" onClick={()=>setPage&&setPage("contracts")}>عرض الكل</button>
+        </div>
+      </section>
 
     </div>
   );
