@@ -1075,6 +1075,13 @@ function printStatement(elementId) {
     transition:transform .15s ease,border-color .15s ease,background .15s ease!important;
   }
 
+  /* تبويبات المنجز والباقي الفخمة */
+  .qimat-home-v6 .qhv5-duo-tabs{display:flex!important;gap:10px!important;margin-bottom:10px!important;}
+  .qimat-home-v6 .qhv5-duo{border-radius:14px!important;transition:transform .15s ease,box-shadow .15s ease!important;}
+  .qimat-home-v6 .qhv5-duo:hover{transform:translateY(-2px)!important;}
+  .qimat-home-v6 .qhv5-duo.done:hover{box-shadow:0 12px 32px rgba(5,80,60,.45),inset 0 1px rgba(255,255,255,.12)!important;}
+  .qimat-home-v6 .qhv5-duo.rem:hover{box-shadow:0 12px 32px rgba(30,64,175,.45),inset 0 1px rgba(255,255,255,.12)!important;}
+
   .qimat-home-v6 button.qhv5-kpi{
     cursor:pointer!important;
   }
@@ -6961,16 +6968,45 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
       )}
       <section className="qhv5-command" aria-label="ملخص الدورة">
         <div className="qhv5-cycle"><span>دورة الشهر</span><strong>{cycleLabel}</strong><span className="qhv5-cal">▣</span></div>
-        <div className="qhv5-kpis">
+
+        {/* تبويبتين فخمتين: المنجز + الباقي */}
+        <div className="qhv5-duo-tabs" style={{display:"flex",gap:10,marginBottom:10}}>
+          <button type="button" className="qhv5-duo done" onClick={()=>setDetail({mode:"done"})} style={{flex:1,cursor:"pointer",fontFamily:"inherit",border:"none",borderRadius:14,padding:"14px 14px 12px",position:"relative",overflow:"hidden",textAlign:"right",
+            background:"linear-gradient(135deg,#064e3b,#065f46,#047857)",boxShadow:"0 8px 24px rgba(5,80,60,.35),inset 0 1px rgba(255,255,255,.08)",transition:"transform .15s,box-shadow .15s"}}>
+            <div style={{position:"absolute",left:-20,top:-20,width:90,height:90,borderRadius:"50%",background:"rgba(255,255,255,.06)"}}/>
+            <div style={{position:"absolute",right:12,top:10,fontSize:32,opacity:.12,fontWeight:900}}>♛</div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,.75)",fontWeight:700,marginBottom:4,letterSpacing:.3}}>المنجز منها</div>
+            <div style={{display:"flex",alignItems:"baseline",gap:6}}>
+              <span style={{fontSize:28,fontWeight:900,color:"#fff",lineHeight:1}}>{SARf(doneAmount)}</span>
+              <span style={{fontSize:12,color:"rgba(255,255,255,.7)",fontWeight:700}}>﷼</span>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6}}>
+              <span style={{background:"rgba(255,255,255,.15)",padding:"3px 10px",borderRadius:8,fontSize:11,fontWeight:800,color:"#d1fae5"}}>{doneCount} قسط</span>
+              <span style={{fontSize:11,color:"rgba(255,255,255,.6)",fontWeight:600}}>· {donePct}% من الهدف</span>
+            </div>
+          </button>
+
+          <button type="button" className="qhv5-duo rem" onClick={()=>setDetail({mode:"target"})} style={{flex:1,cursor:"pointer",fontFamily:"inherit",border:"none",borderRadius:14,padding:"14px 14px 12px",position:"relative",overflow:"hidden",textAlign:"right",
+            background:"linear-gradient(135deg,#1e3a5f,#1e40af,#3b82f6)",boxShadow:"0 8px 24px rgba(30,64,175,.35),inset 0 1px rgba(255,255,255,.08)",transition:"transform .15s,box-shadow .15s"}}>
+            <div style={{position:"absolute",left:-20,top:-20,width:90,height:90,borderRadius:"50%",background:"rgba(255,255,255,.06)"}}/>
+            <div style={{position:"absolute",right:12,top:10,fontSize:32,opacity:.12,fontWeight:900}}>◫</div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,.75)",fontWeight:700,marginBottom:4,letterSpacing:.3}}>باقي الأقساط</div>
+            <div style={{display:"flex",alignItems:"baseline",gap:6}}>
+              <span style={{fontSize:28,fontWeight:900,color:"#fff",lineHeight:1}}>{SARf(remAmount)}</span>
+              <span style={{fontSize:12,color:"rgba(255,255,255,.7)",fontWeight:700}}>﷼</span>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6}}>
+              <span style={{background:"rgba(255,255,255,.15)",padding:"3px 10px",borderRadius:8,fontSize:11,fontWeight:800,color:"#bfdbfe"}}>{remCount} قسط</span>
+              <span style={{fontSize:11,color:"rgba(255,255,255,.6)",fontWeight:600}}>· من {targetCount} إجمالي</span>
+            </div>
+          </button>
+        </div>
+
+        {/* المؤشرات المصغرة: أقساط الشهر + نسبة الإنجاز + المتعثرون */}
+        <div className="qhv5-kpis" style={{gridTemplateColumns:"repeat(3,minmax(0,1fr))"}}>
           <button type="button" className="qhv5-kpi" onClick={()=>setDetail({mode:"target"})}>
             <span className="qhv5-kpi-icon">◎</span><small>أقساط الشهر</small><strong>{SARf(targetAmount)}</strong><em>{targetCount} قسط</em>
           </button>
-          <button type="button" className="qhv5-kpi" onClick={()=>setDetail({mode:"done"})}>
-            <span className="qhv5-kpi-icon">♛</span><small>المنجز منها</small><strong>{SARf(doneAmount)}</strong><em>{doneCount} قسط</em>
-          </button>
-          <div className="qhv5-kpi">
-            <span className="qhv5-kpi-icon">◫</span><small>باقي الأقساط</small><strong>{SARf(remAmount)}</strong><em>{remCount} قسط</em>
-          </div>
           <div className="qhv5-kpi qhv5-kpi-ring">
             <span className="qhv5-ring" style={{'--pct':donePct}}><b>{donePct}%</b></span><small>نسبة الإنجاز</small><em>من هدف الدورة</em>
           </div>
