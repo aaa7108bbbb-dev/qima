@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-22-home-desktop-v15 -->
+<!-- build: 2026-08-23-qima-ai-os-v10 -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -9285,7 +9285,7 @@ function GoodsPage({investors, contracts, toast, gsWrite, goBack}) {
 // ─── قمة AI — المساعد الذكي (Claude API) ────────────────────
 const AI_MODELS = ["gemini-2.5-flash","gemini-3.5-flash","gemini-3.6-flash","gemini-3.1-flash-lite","gemini-2.5-flash-lite"];
 
-function QimaAI({contracts, investors, payments, setPayments, settings, doneIds, markDone, daily, setDaily, loans, zakatTx, pending, bankTx, invTxList, monthClose, dailyOpen, toast, logAct, goBack}) {
+function QimaAI({contracts, investors, payments, setPayments, settings, doneIds, markDone, daily, setDaily, loans, zakatTx, pending, bankTx, invTxList, monthClose, dailyOpen, toast, logAct, goBack, sourcePage="dashboard", onOpenPage}) {
   const [msgs, setMsgs] = useState(()=>{ try{ return JSON.parse(localStorage.getItem("qimma_ai_chat")||"[]"); }catch(e){ return []; } });
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -9296,7 +9296,7 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
   const [listening, setListening] = useState(false);
   const [lastCost, setLastCost] = useState(null);
   const [imgData, setImgData] = useState([]);
-  const [aiTab, setAiTab] = useState("chat");
+  const [aiTab, setAiTab] = useState("command");
   const [drillDown, setDrillDown] = useState(null);
   const chatEnd = React.useRef(null);
   const recogRef = React.useRef(null);
@@ -9410,6 +9410,119 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
     return {score, level, color, advice, reasons, gapDays, od};
   };
 
+  // ═══════════ قمة AI OS — قراءة تشغيلية شاملة لكل أقسام البرنامج ═══════════
+  const AI_PAGE_LABELS = {
+    dashboard:"الرئيسية", contracts:"العقود", collect:"التحصيل", overdue:"المتعثرون",
+    portfolio:"المحفظة الشهرية", accounts:"رصيد الحسابات", investorsList:"المستثمرون",
+    goods:"البضاعة", activity:"سجل النشاط", pastclients:"الزبائن", settings:"الإعدادات",
+    upgrades:"التطويرات", search:"البحث"
+  };
+  const aiSourceLabel = AI_PAGE_LABELS[sourcePage] || "البرنامج";
+  const aiToday = todayLocal();
+  const aiMonth = aiToday.slice(0,7);
+  const aiAllPayments = _arr(payments);
+  const aiTodayCollected = aiAllPayments.filter(p=>String(p.date||"").slice(0,10)===aiToday).reduce((s,p)=>s+_n(p.amount),0);
+  const aiMonthCollected = aiAllPayments.filter(p=>String(p.date||"").slice(0,7)===aiMonth).reduce((s,p)=>s+_n(p.amount),0);
+  const aiPortfolioTotal = activeC.reduce((s,c)=>s+(_n(c.totalInst)||_n(c.amount)),0);
+  const aiPortfolioPaid = activeC.reduce((s,c)=>s+_paid(c.id),0);
+  const aiPortfolioLeft = activeC.reduce((s,c)=>s+_left(c),0);
+  const aiCollectionRate = aiPortfolioTotal>0 ? Math.round(aiPortfolioPaid/aiPortfolioTotal*100) : 0;
+  const aiExpectedMonthly = activeC.reduce((s,c)=>s+_n(c.instAmt),0);
+  const aiRiskRows = activeC.map(c=>({c,r:riskScore(c)})).sort((a,b)=>b.r.score-a.r.score);
+  const aiHighRisk = aiRiskRows.filter(x=>x.r.score>=45);
+  const aiHighRiskAmount = aiHighRisk.reduce((s,x)=>s+_left(x.c),0);
+
+  const aiMissingRows = activeC.map(c=>{
+    const fields=[];
+    if(!String(c.client||"").trim()) fields.push("اسم العميل");
+    if(!String(c.idNum||"").replace(/\D/g,"")) fields.push("الهوية");
+    if(!String(c.cPhone||"").replace(/\D/g,"")) fields.push("الجوال");
+    if(!String(c.investorId||"").trim()) fields.push("المستثمر");
+    if(!_n(c.instAmt)) fields.push("قيمة القسط");
+    if(!c.firstInst) fields.push("أول قسط");
+    return {c,fields};
+  }).filter(x=>x.fields.length);
+  const aiContractQuality = activeC.length ? Math.max(0,Math.round(100-aiMissingRows.length/activeC.length*100)) : 100;
+
+  const aiDuplicateGroups = (()=>{
+    const out=[];
+    [["الهوية","idNum",v=>String(v||"").replace(/\D/g,"")],
+     ["الجوال","cPhone",v=>String(v||"").replace(/\D/g,"")]].forEach(([label,key,norm])=>{
+      const map={};
+      activeC.forEach(c=>{ const v=norm(c[key]); if(v.length<7) return; (map[v]||(map[v]=[])).push(c); });
+      Object.keys(map).forEach(v=>{ if(map[v].length>1) out.push({label,value:v,items:map[v]}); });
+    });
+    return out;
+  })();
+  const aiAnomalyRows = activeC.map(c=>{
+    const reasons=[], total=_n(c.totalInst)||_n(c.amount), cash=_n(c.amount), paid=_paid(c.id);
+    if(total<=0) reasons.push("إجمالي العقد صفر");
+    if(cash>0 && total>0 && total<cash) reasons.push("الأقساط أقل من النقدي");
+    if(total>0 && paid>total+0.5) reasons.push("السداد أكبر من إجمالي العقد");
+    if(_n(c.instAmt)>total && total>0) reasons.push("القسط أكبر من إجمالي العقد");
+    if(c.date && c.firstInst && new Date(c.firstInst)<new Date(c.date)) reasons.push("أول قسط قبل تاريخ العقد");
+    return {c,reasons};
+  }).filter(x=>x.reasons.length);
+
+  const aiMatchContracts = activeC.map(c=>({...c,__left:_left(c)}));
+  const aiBankRows = React.useMemo(()=>_arr(bankTx).filter(tx=>(+tx.dain||0)>0).map((tx,idx)=>{
+    const m=reconcileOne(tx,aiMatchContracts);
+    const recorded=!!(m.best && aiAllPayments.some(p=>{
+      const gap=Math.abs(new Date(p.date)-new Date(tx.date))/86400000;
+      return p.contractId===m.best.c.id && Math.abs(_n(p.amount)-m.amt)<0.5 && Number.isFinite(gap) && gap<=7;
+    }));
+    return {tx,idx,...m,recorded};
+  }),[bankTx,contracts,payments,doneIds]);
+  const aiBankMatched = aiBankRows.filter(x=>x.conf==="high"||x.conf==="medium");
+  const aiBankReview = aiBankRows.filter(x=>x.conf==="low"||x.conf==="none");
+  const aiBankUnrecorded = aiBankMatched.filter(x=>!x.recorded);
+  const aiBankQuality = aiBankRows.length ? Math.round(aiBankMatched.length/aiBankRows.length*100) : 100;
+
+  const aiMonthKeys = (()=>{
+    const out=[], n=new Date();
+    for(let i=1;i<=6;i++){
+      const d=new Date(n.getFullYear(),n.getMonth()-i,1);
+      out.push(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"));
+    }
+    return out;
+  })();
+  const aiPastMonthTotals = aiMonthKeys.map(m=>aiAllPayments.filter(p=>String(p.date||"").slice(0,7)===m).reduce((s,p)=>s+_n(p.amount),0));
+  const aiRecentAverage = aiPastMonthTotals.length ? Math.round(aiPastMonthTotals.reduce((a,b)=>a+b,0)/aiPastMonthTotals.length) : 0;
+  const aiForecastCoverage = aiExpectedMonthly>0 ? Math.round(aiRecentAverage/aiExpectedMonthly*100) : 0;
+  const aiRiskSafety = activeC.length ? Math.max(0,Math.round(100-aiHighRisk.length/activeC.length*100)) : 100;
+  const aiHealth = Math.round((Math.min(100,aiCollectionRate)+aiContractQuality+aiBankQuality+aiRiskSafety)/4);
+  const aiUnknownGoods = activeC.filter(c=>!String(c.goods||"").trim()).length;
+  const aiInvestorMissing = _arr(investors).filter(i=>i.name && !(_n(i.fund)||_n(i.capital))).length;
+
+  const aiSections = [
+    {id:"contracts",label:"العقود",score:aiContractQuality,note:aiMissingRows.length?aiMissingRows.length+" عقد يحتاج استكمال":"البيانات مكتملة"},
+    {id:"portfolio",label:"المحفظة",score:Math.min(100,aiForecastCoverage),note:"تغطية متوقعة "+aiForecastCoverage+"%"},
+    {id:"portfolio",label:"المطابقة البنكية",score:aiBankQuality,note:aiBankReview.length?aiBankReview.length+" حركة للمراجعة":"المطابقة مستقرة"},
+    {id:"dashboard",label:"اليومية",score:_arr(daily).some(x=>String(x.date||"").slice(0,10)===aiToday)?100:65,note:_arr(daily).filter(x=>String(x.date||"").slice(0,10)===aiToday).length+" حركة اليوم"},
+    {id:"accounts",label:"المستثمرون",score:investors.length?Math.max(0,Math.round(100-aiInvestorMissing/investors.length*100)):100,note:aiInvestorMissing?aiInvestorMissing+" رصيد يحتاج مراجعة":"الأرصدة جاهزة"},
+    {id:"goods",label:"البضاعة",score:activeC.length?Math.max(0,Math.round(100-aiUnknownGoods/activeC.length*100)):100,note:aiUnknownGoods?aiUnknownGoods+" عقد بلا بضاعة":"التصنيف مكتمل"}
+  ];
+
+  const aiDecisions = [];
+  if(aiHighRisk.length) aiDecisions.push({tone:"danger",icon:"!",title:"حماية التحصيل",text:aiHighRisk.length+" عميل عالي المخاطر بمبلغ "+SAR(aiHighRiskAmount),q:"حلّل أعلى العملاء خطراً واعطني خطة تحصيل عملية مرتبة بالأولوية"});
+  if(aiBankUnrecorded.length) aiDecisions.push({tone:"bank",icon:"↔",title:"سدادات غير مسجلة",text:aiBankUnrecorded.length+" تحويل مطابق لم يُسجل كسداد",q:"راجع التحويلات البنكية المطابقة غير المسجلة واعرض أسماء العملاء والمبالغ والتوصية"});
+  if(aiMissingRows.length) aiDecisions.push({tone:"warn",icon:"✓",title:"جودة العقود",text:aiMissingRows.length+" عقد ينقصه حقل مؤثر",q:"راجع العقود الناقصة وحدد الحقول المفقودة مرتبة حسب الأهمية"});
+  if(aiDuplicateGroups.length) aiDecisions.push({tone:"warn",icon:"#",title:"تكرار محتمل",text:aiDuplicateGroups.length+" مجموعة هوية أو جوال مكرر",q:"حلّل التكرارات المحتملة في بيانات العملاء واقترح طريقة آمنة للتدقيق"});
+  if(!aiDecisions.length) aiDecisions.push({tone:"good",icon:"✓",title:"الوضع مستقر",text:"لا توجد مشكلات حرجة؛ ركّز على رفع التحصيل",q:"اعطني أفضل ثلاث فرص عملية لرفع التحصيل هذا الشهر"});
+
+  const aiPromptMap = {
+    dashboard:["لخّص حركة اليوم","ما أهم 3 قرارات الآن؟","هل يوجد رقم غير طبيعي؟"],
+    contracts:["دقّق العقود الناقصة","من العملاء الأعلى خطراً؟","راجع العقود المكررة"],
+    collect:["رتّب تحصيل اليوم","ما السدادات المتوقعة؟","اكتب خطة متابعة المتأخرين"],
+    overdue:["رتّب المتعثرين بالأولوية","اقترح رسائل متابعة","احسب المبلغ المعرض للخطر"],
+    portfolio:["توقع تحصيل الشهر القادم","قارن أداء المستثمرين","حلّل اتجاه المحفظة"],
+    accounts:["راجع أرصدة المستثمرين","اكشف الفروقات المحتملة","لخّص الحركات الكبيرة"],
+    goods:["حلّل ربح البضائع","ما أكثر بضاعة تعثراً؟","قارن هامش الربح"],
+    pastclients:["ابحث عن عميل متكرر","لخّص سجل العميل","حدد أفضل العملاء"],
+    settings:["راجع جاهزية النظام","اقترح تحسينات تشغيلية","ما البيانات التي تحتاج نسخاً احتياطياً؟"]
+  };
+  const aiContextPrompts = aiPromptMap[sourcePage] || ["لخّص وضع البرنامج","ما أهم المخاطر؟","اقترح قرار اليوم"];
+
   // ═══════════ 1) السياق الذكي — يرسل كل البيانات للإجابة الدقيقة ═══════════
   const pickSections = (q) => {
     const s = {core:true, contracts:true, done:true, overdue:true, good:false,
@@ -9457,7 +9570,7 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
   const buildContext = (q) => {
     const sec = pickSections(q);
     const today = todayLocal();
-    let ctx = `=== مؤسسة قمة الفرصة التجارية ===\nتاريخ اليوم: ${today}\n\n`;
+    let ctx = `=== مؤسسة قمة الفرصة التجارية ===\nتاريخ اليوم: ${today}\nالقسم المفتوح الآن: ${aiSourceLabel}\n\n`;
 
     // ── زبون محدد: نرسل ملفه كامل فقط ──
     if(sec.client){
@@ -9962,7 +10075,9 @@ tbody tr:nth-child(even){background:#f7f9fb}
   };
 
   // ═══════════ التعليمات ═══════════
-  const systemPrompt = `أنت "قمة AI" — المساعد الذكي لمؤسسة قمة الفرصة التجارية، مؤسسة تقسيط وتمويل في بريدة، القصيم. صاحبها عبدالله.
+  const systemPrompt = `أنت "قمة AI" — العقل التشغيلي الشامل لمؤسسة قمة الفرصة التجارية، مؤسسة تقسيط وتمويل في بريدة، القصيم. صاحبها عبدالله.
+
+أنت تخدم البرنامج كله، وتفهم القسم المفتوح حالياً من السياق. اربط إجابتك بالقسم الحالي، لكن راجع أثر القرار على العقود والتحصيل والمحفظة والبنك والمستثمرين والبضاعة واليومية عند الحاجة.
 
 عندك وصول لقاعدة بيانات المؤسسة (تُرسل لك حسب السؤال): المستثمرون، العقود النشطة والمنتهية، المتعثرون، **تقييم المخاطر التنبؤي**، سجل السدادات، التحصيل الشهري، دفتر اليومية، السلف والزكاة، الحركات البنكية، تحليل البضائع، إقفالات الشهور.
 
@@ -10126,6 +10241,36 @@ tbody tr:nth-child(even){background:#f7f9fb}
 
   const localQuery = (q) => {
     const ql = String(q||"").trim();
+    if(/أهم.*قرار|قرارات.*الآن|قرارات اليوم/.test(ql)){
+      let t="🧭 **أهم قرارات اليوم**\n\n";
+      aiDecisions.slice(0,4).forEach((d,i)=>{ t+=`${i+1}. **${d.title}** — ${d.text}\n`; });
+      return t;
+    }
+    if(/عقود.*ناقصة|بيانات.*ناقصة|الحقول.*مفقودة|دق.*العقود/.test(ql)){
+      if(!aiMissingRows.length) return "✅ كل العقود النشطة مكتملة في الحقول الأساسية";
+      let t=`🧾 **العقود التي تحتاج استكمال** (${aiMissingRows.length})\n\n`;
+      aiMissingRows.slice(0,40).forEach((x,i)=>{ t+=`${i+1}. **${x.c.client||("عقد #"+(x.c.num||"—"))}** — ${x.fields.join("، ")}\n`; });
+      return t;
+    }
+    if(/تكرار|مكرر|المكررة/.test(ql)){
+      if(!aiDuplicateGroups.length) return "✅ لم يظهر تكرار في الهوية أو الجوال بين العقود النشطة";
+      let t=`🔁 **تكرارات تحتاج تدقيقاً** (${aiDuplicateGroups.length})\n\n`;
+      aiDuplicateGroups.forEach((x,i)=>{ t+=`${i+1}. **${x.label}: ${x.value}** — ${x.items.map(c=>c.client||("#"+c.num)).join("، ")}\n`; });
+      return t;
+    }
+    if(/تحويل|حوال|مطابق|مطابقة|بنكي|البنك/.test(ql)){
+      if(!aiBankRows.length) return "ℹ️ لا توجد تحويلات بنكية واردة مرفوعة للمراجعة";
+      let t=`🏦 **المطابقة البنكية**\n• تم التعرف على: **${aiBankMatched.length}** من ${aiBankRows.length}\n• تحتاج مراجعة: **${aiBankReview.length}**\n• مطابقة غير مسجلة كسداد: **${aiBankUnrecorded.length}**\n\n`;
+      aiBankReview.slice(0,20).forEach((x,i)=>{ t+=`${i+1}. ${x.tx.date||"—"} — **${SAR(x.amt)}** — ${x.tx.name||x.tx.raw||x.tx.note||"بلا اسم"}\n`; });
+      return t;
+    }
+    if(/توقع.*شهر|الشهر.*القادم|الشهر.*الجاي|تغطية.*شهر/.test(ql)){
+      return `🔭 **التوقع التشغيلي للشهر القادم**\n• متوسط تحصيل آخر 6 أشهر: **${SAR(aiRecentAverage)}**\n• الأقساط الشهرية الحالية: **${SAR(aiExpectedMonthly)}**\n• التغطية المتوقعة: **${aiForecastCoverage}%**\n\nهذا تقدير تشغيلي مبني على السجل الفعلي، وليس ضماناً.`;
+    }
+    if(/حركة اليوم|تحصيل اليوم|نبض اليوم/.test(ql)){
+      const todayRows=_arr(daily).filter(x=>String(x.date||"").slice(0,10)===aiToday);
+      return `📍 **نبض اليوم**\n• التحصيل المسجل: **${SAR(aiTodayCollected)}**\n• حركات اليومية: **${todayRows.length}**\n• تحصيل الشهر حتى الآن: **${SAR(aiMonthCollected)}**\n• عملاء عاليّو المخاطر: **${aiHighRisk.length}**`;
+    }
     if(/تقرير|صباح|ملخص|بريف/.test(ql)) return buildBrief();
     if(/خطر|مخاطر|تنبؤ|يتعثر|احتمال/.test(ql)){
       const sc=activeC.map(c=>({c,r:riskScore(c)})).filter(x=>x.r.score>=22).sort((a,b)=>b.r.score-a.r.score);
@@ -10173,6 +10318,12 @@ tbody tr:nth-child(even){background:#f7f9fb}
     const act = parseAction(answer);
     if(act) setPendingAction(act);
     setLoading(false); scrollDown();
+  };
+
+  const askFromOps = (question) => {
+    setAiTab("chat");
+    setDrillDown(null);
+    setTimeout(()=>send(question),80);
   };
 
   const showBrief = () => {
@@ -10254,14 +10405,14 @@ tbody tr:nth-child(even){background:#f7f9fb}
         React.createElement("div",{style:{display:"flex",alignItems:"center",gap:"clamp(10px,3vw,14px)",marginBottom:"clamp(12px,3.5vw,18px)"}},
           /* زر الرجوع */
           goBack && React.createElement("button",{onClick:goBack,style:{width:"clamp(36px,9vw,44px)",height:"clamp(36px,9vw,44px)",borderRadius:"clamp(10px,2.5vw,14px)",background:"rgba(200,146,42,0.08)",border:"1px solid rgba(200,146,42,0.12)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},
-            React.createElement("svg",{width:"clamp(16px,4.5vw,22px)",height:"clamp(16px,4.5vw,22px)",viewBox:"0 0 24 24",fill:"none",stroke:"#141428",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:"M15 18l-6-6 6-6"}))
+            React.createElement("svg",{width:"clamp(16px,4.5vw,22px)",height:"clamp(16px,4.5vw,22px)",viewBox:"0 0 24 24",fill:"none",stroke:"#e0b85c",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:"M15 18l-6-6 6-6"}))
           ),
           React.createElement("div",{style:{width:"clamp(44px,11vw,56px)",height:"clamp(44px,11vw,56px)",borderRadius:"clamp(12px,3vw,18px)",background:"linear-gradient(140deg,#c8922a,#e0b85c)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 20px rgba(200,146,42,0.22)",flexShrink:0}},
             React.createElement("svg",{width:"clamp(22px,6vw,30px)",height:"clamp(22px,6vw,30px)",viewBox:"0 0 24 24",fill:"none",stroke:"#141428",strokeWidth:2.2,strokeLinecap:"round"},React.createElement("path",{d:"M12 2L2 7l10 5 10-5-10-5z"}),React.createElement("path",{d:"M2 17l10 5 10-5"}),React.createElement("path",{d:"M2 12l10 5 10-5"}))
           ),
           React.createElement("div",{style:{flex:1}},
             React.createElement("div",{style:{fontSize:"clamp(24px,6.5vw,32px)",fontWeight:900,color:"#e0b85c",letterSpacing:-0.5,lineHeight:1}},"قمة",React.createElement("span",{style:{color:"rgba(240,240,245,0.5)",fontWeight:500,fontSize:"clamp(14px,4vw,18px)",marginRight:4}}," AI")),
-            React.createElement("div",{style:{fontSize:"clamp(10px,2.8vw,13px)",color:"rgba(240,240,245,0.3)",fontWeight:500,marginTop:4}},new Date().toLocaleDateString("ar-SA",{weekday:"long",day:"numeric",month:"long"}))
+            React.createElement("div",{style:{fontSize:"clamp(10px,2.8vw,13px)",color:"rgba(240,240,245,0.42)",fontWeight:600,marginTop:4}},"يعمل الآن مع: ",React.createElement("b",{style:{color:"#e0b85c"}},aiSourceLabel)," · ",new Date().toLocaleDateString("ar-SA",{weekday:"long",day:"numeric",month:"long"}))
           ),
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:"clamp(4px,1.5vw,8px)"}},
             React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5,background:aiKey?"rgba(18,183,106,0.08)":"rgba(245,158,11,0.06)",border:"1px solid "+(aiKey?"rgba(18,183,106,0.15)":"rgba(245,158,11,0.12)"),borderRadius:20,padding:"clamp(4px,1.2vw,6px) clamp(10px,2.5vw,14px)"}},
@@ -10275,12 +10426,14 @@ tbody tr:nth-child(even){background:#f7f9fb}
           )
         ),
         /* Tab Bar - Gold */
-        React.createElement("div",{style:{display:"flex",gap:3,background:"rgba(200,146,42,0.05)",borderRadius:"clamp(14px,3.5vw,18px)",padding:3,border:"1px solid rgba(200,146,42,0.08)"}},
-          [{id:"insights",l:"الرؤية",d:"M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"},
+        React.createElement("div",{style:{display:"flex",gap:3,background:"rgba(200,146,42,0.05)",borderRadius:"clamp(14px,3.5vw,18px)",padding:3,border:"1px solid rgba(200,146,42,0.08)",overflowX:"auto",scrollbarWidth:"none"}},
+          [{id:"command",l:"القيادة",d:"M4 13h6V4H4v9zM14 20h6V11h-6v9zM4 20h6v-3H4v3zM14 7h6V4h-6v3z"},
+           {id:"insights",l:"الأداء",d:"M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"},
+           {id:"review",l:"المراجعة",d:"M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"},
            {id:"alerts",l:"المخاطر",d:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"},
-           {id:"search",l:"البحث",d:"M21 21l-4.35-4.35M11 3a8 8 0 100 16 8 8 0 000-16z"},
-           {id:"chat",l:"المحادثة",d:"M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"}
-          ].map(t=>React.createElement("button",{key:t.id,onClick:()=>{setAiTab(t.id);setDrillDown(null);},style:{flex:1,padding:"clamp(10px,2.8vw,14px) 4px clamp(8px,2.2vw,11px)",borderRadius:"clamp(12px,3vw,15px)",border:"none",background:aiTab===t.id?"linear-gradient(140deg,#c8922a,#e0b85c)":"transparent",color:aiTab===t.id?"#141428":"rgba(224,184,92,0.4)",fontWeight:aiTab===t.id?800:700,fontSize:"clamp(11px,3vw,13px)",cursor:"pointer",fontFamily:"inherit",transition:"all 0.25s",boxShadow:aiTab===t.id?"0 4px 18px rgba(200,146,42,0.35)":"none",display:"flex",flexDirection:"column",alignItems:"center",gap:"clamp(4px,1.2vw,6px)"}},
+           {id:"search",l:"العملاء",d:"M21 21l-4.35-4.35M11 3a8 8 0 100 16 8 8 0 000-16z"},
+           {id:"chat",l:"المساعد",d:"M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"}
+          ].map(t=>React.createElement("button",{key:t.id,onClick:()=>{setAiTab(t.id);setDrillDown(null);},style:{flex:"1 0 clamp(72px,17vw,100px)",padding:"clamp(10px,2.8vw,14px) 4px clamp(8px,2.2vw,11px)",borderRadius:"clamp(12px,3vw,15px)",border:"none",background:aiTab===t.id?"linear-gradient(140deg,#c8922a,#e0b85c)":"transparent",color:aiTab===t.id?"#141428":"rgba(224,184,92,0.5)",fontWeight:aiTab===t.id?900:700,fontSize:"clamp(11px,3vw,13px)",cursor:"pointer",fontFamily:"inherit",transition:"all 0.25s",boxShadow:aiTab===t.id?"0 4px 18px rgba(200,146,42,0.35)":"none",display:"flex",flexDirection:"column",alignItems:"center",gap:"clamp(4px,1.2vw,6px)"}},
             React.createElement("svg",{width:"clamp(18px,5vw,24px)",height:"clamp(18px,5vw,24px)",viewBox:"0 0 24 24",fill:"none",stroke:aiTab===t.id?"#141428":"rgba(224,184,92,0.4)",strokeWidth:aiTab===t.id?2.2:1.8,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:t.d})),
             t.l
           ))
@@ -10305,6 +10458,82 @@ tbody tr:nth-child(even){background:#f7f9fb}
         React.createElement("div",{style:{display:"flex",gap:8}},
           React.createElement("button",{onClick:()=>{const k=document.getElementById("_aiKey").value.trim();const m=document.getElementById("_aiModel").value;saveKey(k,m);},style:{flex:1,padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#6d28d9,#7c3aed)",color:"#fff",fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"حفظ وتفعيل"),
           aiKey && React.createElement("button",{onClick:()=>saveKey("",""),style:{padding:"12px 16px",borderRadius:10,border:"1px solid #e0d8c6",background:"#fff",color:"#dc2626",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"إلغاء")
+        )
+      ),
+
+      /* ═══ COMMAND CENTER TAB ═══ */
+      aiTab==="command" && React.createElement("div",{style:{flex:1,overflowY:"auto",padding:"clamp(14px,4vw,20px) clamp(12px,3.5vw,18px) 78px",display:"flex",flexDirection:"column",gap:"clamp(12px,3.5vw,16px)"}},
+        React.createElement("div",{style:{background:"radial-gradient(circle at 15% 15%,rgba(224,184,92,.22),transparent 30%),linear-gradient(145deg,#11152e,#172b49 62%,#102137)",borderRadius:"clamp(22px,6vw,32px)",padding:"clamp(20px,5.5vw,30px)",color:"#fff",boxShadow:"0 14px 38px rgba(13,25,47,.2)",position:"relative",overflow:"hidden"}},
+          React.createElement("div",{style:{position:"absolute",left:-35,bottom:-55,width:170,height:170,borderRadius:"50%",border:"1px solid rgba(224,184,92,.12)"}}),
+          React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,position:"relative"}},
+            React.createElement("div",{style:{flex:1}},
+              React.createElement("div",{style:{display:"inline-flex",alignItems:"center",gap:7,padding:"6px 10px",borderRadius:20,background:"rgba(224,184,92,.11)",border:"1px solid rgba(224,184,92,.2)",fontSize:"clamp(10px,2.7vw,12px)",fontWeight:800,color:"#f3cf7b",marginBottom:10}},React.createElement("span",{style:{width:7,height:7,borderRadius:"50%",background:"#57e3a7",boxShadow:"0 0 10px #57e3a7"}}),"قراءة مباشرة لكل الأقسام"),
+              React.createElement("div",{style:{fontSize:"clamp(22px,6vw,32px)",fontWeight:900,lineHeight:1.25}},"مركز القيادة الذكي"),
+              React.createElement("div",{style:{fontSize:"clamp(12px,3.3vw,15px)",color:"rgba(255,255,255,.58)",fontWeight:600,marginTop:6,lineHeight:1.7}},"ملخص تنفيذي، مراجعة تلقائية، وتوصيات قابلة للتنفيذ من صفحة ",React.createElement("b",{style:{color:"#e0b85c"}},aiSourceLabel))
+            ),
+            React.createElement("div",{style:{width:"clamp(86px,23vw,112px)",height:"clamp(86px,23vw,112px)",borderRadius:"50%",padding:7,background:`conic-gradient(#e0b85c ${Math.min(100,aiHealth)*3.6}deg,rgba(255,255,255,.08) 0)`,boxShadow:"0 0 0 1px rgba(224,184,92,.12)",flexShrink:0}},
+              React.createElement("div",{style:{width:"100%",height:"100%",borderRadius:"50%",background:"#14243b",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},
+                React.createElement("strong",{style:{fontSize:"clamp(25px,7vw,36px)",color:"#f2cc72",lineHeight:1,fontWeight:900}},aiHealth),
+                React.createElement("span",{style:{fontSize:"clamp(9px,2.5vw,11px)",color:"rgba(255,255,255,.5)",fontWeight:700,marginTop:4}},"مؤشر الجاهزية")
+              )
+            )
+          ),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"clamp(6px,2vw,10px)",marginTop:"clamp(18px,5vw,26px)",position:"relative"}},
+            [{l:"تحصيل الشهر",v:SAR(aiMonthCollected),c:"#5ee0a4"},{l:"المتوقع شهرياً",v:SAR(aiExpectedMonthly),c:"#f2cc72"},{l:"المعرض للخطر",v:SAR(aiHighRiskAmount),c:aiHighRisk.length?"#ff887d":"#5ee0a4"},{l:"مراجعة البنك",v:aiBankReview.length,c:aiBankReview.length?"#ffbd71":"#5ee0a4"}].map((k,i)=>React.createElement("div",{key:i,style:{background:"rgba(255,255,255,.055)",border:"1px solid rgba(255,255,255,.07)",borderRadius:"clamp(12px,3vw,17px)",padding:"clamp(10px,2.8vw,15px) clamp(7px,2vw,11px)",minWidth:0}},
+              React.createElement("div",{style:{fontSize:"clamp(9px,2.5vw,12px)",color:"rgba(255,255,255,.45)",fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},k.l),
+              React.createElement("div",{style:{fontSize:"clamp(15px,4.2vw,23px)",color:k.c,fontWeight:900,marginTop:5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},k.v)
+            ))
+          )
+        ),
+
+        React.createElement("div",{style:{background:"#fff",borderRadius:"clamp(18px,5vw,26px)",padding:"clamp(17px,4.8vw,24px)",boxShadow:"0 3px 16px rgba(20,20,40,.05)",border:"1px solid rgba(200,146,42,.1)"}},
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,marginBottom:14}},
+            React.createElement("div",null,
+              React.createElement("div",{style:{fontSize:"clamp(17px,4.8vw,22px)",fontWeight:900,color:"#141428"}},"أهم قرارات اليوم"),
+              React.createElement("div",{style:{fontSize:"clamp(11px,3vw,13px)",color:"#8a8aa8",fontWeight:600,marginTop:3}},"مرتبة تلقائياً حسب أثرها المالي")
+            ),
+            React.createElement("span",{style:{background:"#fff7e5",border:"1px solid #f1d899",color:"#9a6a13",borderRadius:20,padding:"6px 10px",fontSize:11,fontWeight:900}},aiDecisions.length+" توصيات")
+          ),
+          React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:9}},
+            aiDecisions.slice(0,4).map((d,i)=>{
+              const pal={danger:["#fff1ef","#d92d20","#ffd3ce"],bank:["#eef7ff","#1877b9","#cbe8fb"],warn:["#fff8e8","#ad7516","#f5dfaa"],good:["#ecfbf4","#138a5a","#c8f1df"]}[d.tone]||["#f5f6fa","#344054","#e4e7ec"];
+              return React.createElement("button",{key:i,onClick:()=>askFromOps(d.q),style:{width:"100%",display:"flex",alignItems:"center",gap:12,textAlign:"right",border:"1px solid "+pal[2],background:pal[0],borderRadius:"clamp(14px,3.8vw,19px)",padding:"clamp(12px,3.5vw,16px)",cursor:"pointer",fontFamily:"inherit"}},
+                React.createElement("span",{style:{width:38,height:38,borderRadius:12,background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",color:pal[1],fontWeight:900,fontSize:18,boxShadow:"0 2px 8px rgba(20,20,40,.06)",flexShrink:0}},d.icon),
+                React.createElement("span",{style:{flex:1,minWidth:0}},React.createElement("b",{style:{display:"block",fontSize:"clamp(14px,4vw,17px)",color:"#141428",fontWeight:900}},d.title),React.createElement("span",{style:{display:"block",fontSize:"clamp(11px,3.2vw,14px)",color:"#667085",fontWeight:650,marginTop:3}},d.text)),
+                React.createElement("span",{style:{fontSize:19,color:pal[1],fontWeight:900}},"‹")
+              );
+            })
+          )
+        ),
+
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"minmax(0,1.15fr) minmax(0,.85fr)",gap:"clamp(10px,3vw,15px)"}},
+          React.createElement("div",{style:{background:"linear-gradient(145deg,#e9f6f2,#f7fbf9)",border:"1px solid #cfe9df",borderRadius:"clamp(18px,5vw,25px)",padding:"clamp(17px,4.8vw,23px)"}},
+            React.createElement("div",{style:{fontSize:"clamp(11px,3vw,13px)",color:"#38836a",fontWeight:800}},"توقع تشغيلي · الشهر القادم"),
+            React.createElement("div",{style:{display:"flex",alignItems:"baseline",gap:6,marginTop:8}},React.createElement("strong",{style:{fontSize:"clamp(27px,7vw,38px)",fontWeight:900,color:"#115c46"}},SAR(aiRecentAverage)),React.createElement("span",{style:{fontSize:11,color:"#629180",fontWeight:700}},"متوسط مرجّح")),
+            React.createElement("div",{style:{height:8,background:"rgba(17,92,70,.1)",borderRadius:8,overflow:"hidden",marginTop:13}},React.createElement("div",{style:{height:"100%",width:Math.min(100,aiForecastCoverage)+"%",background:"linear-gradient(90deg,#19a974,#62d0a4)",borderRadius:8}})),
+            React.createElement("div",{style:{fontSize:"clamp(10px,2.8vw,12px)",color:"#5c7e73",fontWeight:700,marginTop:8,lineHeight:1.5}},"يغطي ",React.createElement("b",{style:{color:"#115c46"}},aiForecastCoverage+"%")," من الأقساط الشهرية الحالية. تقدير مبني على آخر 6 أشهر وليس ضماناً.")
+          ),
+          React.createElement("div",{style:{background:"linear-gradient(145deg,#fff8eb,#fffdf8)",border:"1px solid #f0dfb9",borderRadius:"clamp(18px,5vw,25px)",padding:"clamp(17px,4.8vw,23px)",display:"flex",flexDirection:"column",justifyContent:"space-between"}},
+            React.createElement("div",null,React.createElement("div",{style:{fontSize:"clamp(11px,3vw,13px)",color:"#9a711e",fontWeight:800}},"نبض اليوم"),React.createElement("div",{style:{fontSize:"clamp(28px,8vw,42px)",fontWeight:900,color:"#c8922a",marginTop:7}},SAR(aiTodayCollected)),React.createElement("div",{style:{fontSize:11,color:"#a68d5a",fontWeight:700,marginTop:2}},"تحصيل مسجل اليوم")),
+            React.createElement("button",{onClick:()=>askFromOps("حلّل تحصيل اليوم وقارنه بالمطلوب واقترح ما يجب متابعته قبل نهاية اليوم"),style:{border:"none",background:"#141428",color:"#fff",borderRadius:11,padding:"9px 10px",fontFamily:"inherit",fontWeight:800,fontSize:11,cursor:"pointer",marginTop:12}},"حلّل اليوم")
+          )
+        ),
+
+        React.createElement("div",{style:{background:"#fff",borderRadius:"clamp(18px,5vw,26px)",padding:"clamp(17px,4.8vw,24px)",boxShadow:"0 3px 16px rgba(20,20,40,.05)"}},
+          React.createElement("div",{style:{fontSize:"clamp(17px,4.8vw,22px)",fontWeight:900,color:"#141428",marginBottom:4}},"خريطة جاهزية الأقسام"),
+          React.createElement("div",{style:{fontSize:"clamp(11px,3vw,13px)",color:"#8a8aa8",fontWeight:600,marginBottom:14}},"اضغط على أي قسم للانتقال إليه"),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:9}},
+            aiSections.map((s,i)=>React.createElement("button",{key:i,onClick:()=>onOpenPage&&onOpenPage(s.id),style:{border:"1px solid #ece7dc",background:"#fcfbf8",borderRadius:15,padding:"12px",textAlign:"right",cursor:onOpenPage?"pointer":"default",fontFamily:"inherit"}},
+              React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}},React.createElement("b",{style:{fontSize:"clamp(13px,3.7vw,16px)",color:"#141428",fontWeight:900}},s.label),React.createElement("strong",{style:{fontSize:13,color:s.score>=80?"#14875b":s.score>=55?"#b27718":"#d92d20"}},s.score+"%")),
+              React.createElement("div",{style:{height:5,background:"#eceff2",borderRadius:5,overflow:"hidden",margin:"9px 0 7px"}},React.createElement("div",{style:{height:"100%",width:Math.min(100,s.score)+"%",background:s.score>=80?"#32b47f":s.score>=55?"#e0b85c":"#ef6a61",borderRadius:5}})),
+              React.createElement("div",{style:{fontSize:"clamp(10px,2.8vw,12px)",color:"#7e8192",fontWeight:650,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},s.note)
+            ))
+          )
+        ),
+
+        React.createElement("div",{style:{padding:"2px 2px 8px"}},
+          React.createElement("div",{style:{fontSize:"clamp(13px,3.6vw,16px)",fontWeight:900,color:"#141428",marginBottom:9}},"اسأل حسب الصفحة الحالية"),
+          React.createElement("div",{style:{display:"flex",gap:8,overflowX:"auto",paddingBottom:4}},aiContextPrompts.map((q,i)=>React.createElement("button",{key:i,onClick:()=>askFromOps(q),style:{flex:"0 0 auto",border:"1px solid rgba(200,146,42,.26)",background:"rgba(255,255,255,.75)",color:"#624717",borderRadius:22,padding:"10px 14px",fontFamily:"inherit",fontWeight:800,fontSize:"clamp(11px,3vw,13px)",cursor:"pointer"}},q)))
         )
       ),
 
@@ -10418,6 +10647,53 @@ tbody tr:nth-child(even){background:#f7f9fb}
               )
             )
           )
+        )
+      ),
+
+      /* ═══ SMART REVIEW TAB ═══ */
+      aiTab==="review" && React.createElement("div",{style:{flex:1,overflowY:"auto",padding:"clamp(14px,4vw,20px) clamp(12px,3.5vw,18px) 76px",display:"flex",flexDirection:"column",gap:"clamp(12px,3.5vw,16px)"}},
+        React.createElement("div",{style:{background:"linear-gradient(145deg,#fffdf8,#f5efe3)",border:"1px solid #eadcc0",borderRadius:"clamp(20px,5.5vw,29px)",padding:"clamp(19px,5vw,27px)",position:"relative",overflow:"hidden"}},
+          React.createElement("div",{style:{position:"absolute",left:-20,top:-35,width:120,height:120,borderRadius:"50%",background:"rgba(224,184,92,.12)"}}),
+          React.createElement("div",{style:{position:"relative"}},
+            React.createElement("div",{style:{fontSize:"clamp(21px,5.8vw,29px)",fontWeight:900,color:"#141428"}},"المراجع الذكي"),
+            React.createElement("div",{style:{fontSize:"clamp(11px,3.1vw,14px)",fontWeight:650,color:"#7c7568",lineHeight:1.7,marginTop:4}},"يفحص العقود والتحويلات والبيانات المتكررة دون تعديل أي سجل تلقائياً."),
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:7,marginTop:17}},
+              [{l:"عقود ناقصة",v:aiMissingRows.length,c:"#c57b19"},{l:"تكرارات",v:aiDuplicateGroups.length,c:"#7c5bb5"},{l:"شذوذ حسابي",v:aiAnomalyRows.length,c:"#d14a40"},{l:"حوالات للمراجعة",v:aiBankReview.length,c:"#176da2"}].map((k,i)=>React.createElement("div",{key:i,style:{background:"rgba(255,255,255,.78)",border:"1px solid rgba(20,20,40,.06)",borderRadius:13,padding:"10px 7px",textAlign:"center"}},React.createElement("b",{style:{display:"block",fontSize:"clamp(20px,5.6vw,28px)",color:k.c,fontWeight:900}},k.v),React.createElement("span",{style:{display:"block",fontSize:"clamp(9px,2.4vw,11px)",color:"#777383",fontWeight:750,marginTop:3,lineHeight:1.3}},k.l)))
+            )
+          )
+        ),
+
+        React.createElement("div",{style:{background:"#fff",borderRadius:"clamp(18px,5vw,25px)",padding:"clamp(16px,4.6vw,22px)",boxShadow:"0 2px 12px rgba(20,20,40,.045)"}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:12}},
+            React.createElement("div",null,React.createElement("b",{style:{display:"block",fontSize:"clamp(16px,4.5vw,20px)",fontWeight:900,color:"#141428"}},"المطابقة البنكية"),React.createElement("span",{style:{fontSize:11,color:"#8b8da0",fontWeight:650}},aiBankMatched.length+" من "+aiBankRows.length+" تحويل وارد تم التعرف عليه")),
+            React.createElement("span",{style:{borderRadius:18,padding:"6px 10px",background:aiBankQuality>=80?"#eaf9f2":"#fff4e8",color:aiBankQuality>=80?"#13875a":"#b46718",fontSize:12,fontWeight:900}},aiBankQuality+"%")
+          ),
+          React.createElement("div",{style:{height:7,borderRadius:7,background:"#edf0f3",overflow:"hidden",marginBottom:11}},React.createElement("div",{style:{height:"100%",width:Math.min(100,aiBankQuality)+"%",background:"linear-gradient(90deg,#2774a8,#54b7ca)",borderRadius:7}})),
+          aiBankReview.length===0 ? React.createElement("div",{style:{padding:"15px",borderRadius:13,background:"#effaf5",color:"#12724e",fontWeight:800,fontSize:13}},"✓ لا توجد تحويلات مجهولة تحتاج تدخلاً") :
+          React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:7}},aiBankReview.slice(0,5).map((x,i)=>React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",gap:10,padding:"10px 11px",background:"#f7fafc",border:"1px solid #e7edf2",borderRadius:12}},
+            React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:x.conf==="low"?"#e8a23c":"#e06159",flexShrink:0}}),
+            React.createElement("span",{style:{flex:1,minWidth:0}},React.createElement("b",{style:{display:"block",fontSize:"clamp(12px,3.4vw,14px)",color:"#182238",fontWeight:850,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},x.tx.name||x.tx.raw||x.tx.note||"تحويل بلا اسم"),React.createElement("small",{style:{display:"block",color:"#8991a0",fontWeight:650,marginTop:2}},x.tx.date||"—")),
+            React.createElement("strong",{style:{color:"#176da2",fontSize:13,whiteSpace:"nowrap"}},SAR(x.amt))
+          ))),
+          React.createElement("button",{onClick:()=>askFromOps("اشرح التحويلات البنكية التي لم تتطابق مع العقود، واقترح أفضل مرشح لكل حركة مع سبب المطابقة"),style:{width:"100%",marginTop:11,border:"1px solid #cfe1ec",background:"#eef7fb",color:"#176187",borderRadius:12,padding:"10px",fontFamily:"inherit",fontWeight:850,cursor:"pointer"}},"حلّل الحوالات غير الواضحة")
+        ),
+
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:"clamp(10px,3vw,14px)"}},
+          React.createElement("div",{style:{background:"#fff",borderRadius:"clamp(17px,4.7vw,24px)",padding:"clamp(15px,4.2vw,20px)",boxShadow:"0 2px 12px rgba(20,20,40,.04)"}},
+            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",gap:7,marginBottom:10}},React.createElement("b",{style:{fontSize:"clamp(14px,4vw,18px)",fontWeight:900,color:"#141428"}},"بيانات ناقصة"),React.createElement("span",{style:{fontSize:12,fontWeight:900,color:aiMissingRows.length?"#bd741a":"#168358"}},aiMissingRows.length)),
+            aiMissingRows.length===0 ? React.createElement("div",{style:{fontSize:12,color:"#168358",fontWeight:750,padding:"8px 0"}},"✓ العقود مكتملة") : aiMissingRows.slice(0,5).map((x,i)=>React.createElement("div",{key:i,style:{padding:"9px 0",borderTop:i?"1px solid #f0eee9":"none"}},React.createElement("b",{style:{display:"block",fontSize:"clamp(11px,3.2vw,14px)",color:"#25263a",fontWeight:850,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},x.c.client||"عقد #"+(x.c.num||"—")),React.createElement("span",{style:{display:"block",fontSize:"clamp(9px,2.6vw,11px)",color:"#ae761e",fontWeight:700,marginTop:3}},x.fields.join(" · ")))),
+            aiMissingRows.length>0 && React.createElement("button",{onClick:()=>onOpenPage&&onOpenPage("contracts"),style:{width:"100%",border:"none",background:"#fff5df",color:"#9b6717",borderRadius:10,padding:9,fontFamily:"inherit",fontWeight:850,fontSize:11,cursor:"pointer",marginTop:8}},"فتح العقود")
+          ),
+          React.createElement("div",{style:{background:"#fff",borderRadius:"clamp(17px,4.7vw,24px)",padding:"clamp(15px,4.2vw,20px)",boxShadow:"0 2px 12px rgba(20,20,40,.04)"}},
+            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",gap:7,marginBottom:10}},React.createElement("b",{style:{fontSize:"clamp(14px,4vw,18px)",fontWeight:900,color:"#141428"}},"تكرار محتمل"),React.createElement("span",{style:{fontSize:12,fontWeight:900,color:aiDuplicateGroups.length?"#7651a9":"#168358"}},aiDuplicateGroups.length)),
+            aiDuplicateGroups.length===0 ? React.createElement("div",{style:{fontSize:12,color:"#168358",fontWeight:750,padding:"8px 0"}},"✓ لا يوجد تكرار ظاهر") : aiDuplicateGroups.slice(0,5).map((x,i)=>React.createElement("div",{key:i,style:{padding:"9px 0",borderTop:i?"1px solid #f0eee9":"none"}},React.createElement("b",{style:{display:"block",fontSize:"clamp(11px,3.2vw,14px)",color:"#25263a",fontWeight:850}},x.label+" · "+x.value),React.createElement("span",{style:{display:"block",fontSize:"clamp(9px,2.6vw,11px)",color:"#7c619b",fontWeight:700,marginTop:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},x.items.map(c=>c.client||("#"+c.num)).join("، ")))),
+            aiDuplicateGroups.length>0 && React.createElement("button",{onClick:()=>askFromOps("راجع مجموعات الهوية والجوال المكررة، وفرق بين التكرار الصحيح والخطأ دون حذف أي سجل"),style:{width:"100%",border:"none",background:"#f5effb",color:"#70509a",borderRadius:10,padding:9,fontFamily:"inherit",fontWeight:850,fontSize:11,cursor:"pointer",marginTop:8}},"تدقيق التكرارات")
+          )
+        ),
+
+        React.createElement("div",{style:{background:"#fff",borderRadius:"clamp(18px,5vw,25px)",padding:"clamp(16px,4.6vw,22px)",boxShadow:"0 2px 12px rgba(20,20,40,.045)"}},
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},React.createElement("b",{style:{fontSize:"clamp(15px,4.3vw,19px)",fontWeight:900,color:"#141428"}},"فحص المنطق المالي"),React.createElement("span",{style:{fontSize:12,fontWeight:900,color:aiAnomalyRows.length?"#c4453d":"#168358"}},aiAnomalyRows.length?aiAnomalyRows.length+" تنبيه":"سليم")),
+          aiAnomalyRows.length===0 ? React.createElement("div",{style:{padding:"15px",borderRadius:13,background:"#effaf5",color:"#12724e",fontWeight:800,fontSize:13}},"✓ لم يظهر إجمالي أو قسط أو تاريخ غير منطقي") : React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:7}},aiAnomalyRows.slice(0,6).map((x,i)=>React.createElement("div",{key:i,style:{display:"flex",gap:9,alignItems:"flex-start",padding:"10px 11px",borderRadius:12,background:"#fff5f3",border:"1px solid #f6d9d5"}},React.createElement("span",{style:{color:"#d14a40",fontWeight:900}},"!"),React.createElement("span",null,React.createElement("b",{style:{display:"block",fontSize:13,color:"#27283d",fontWeight:850}},(x.c.client||"عقد")+" #"+(x.c.num||"—")),React.createElement("small",{style:{display:"block",color:"#a34e47",fontWeight:700,marginTop:2}},x.reasons.join(" · "))))))
         )
       ),
 
@@ -12069,6 +12345,7 @@ function NavIcon({id, on}){
 
 function App() {
   const [page,setPage]=useState("dashboard");
+  const [aiReturnPage,setAiReturnPage]=useState("dashboard");
   const [privateAccMode,setPrivateAccMode]=useState(false);
   const [tabOrder,setTabOrder]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_tab_order")||"null");}catch{return null;}});
   const [dragTab,setDragTab]=useState(null);
@@ -12417,6 +12694,15 @@ function App() {
     return () => { if (_unsubSnap) _unsubSnap(); };
   }, []);
 
+  const AI_ORIGIN_LABELS={dashboard:"الرئيسية",contracts:"العقود",collect:"التحصيل",overdue:"المتعثرون",portfolio:"المحفظة الشهرية",accounts:"رصيد الحسابات",investorsList:"المستثمرون",goods:"البضاعة",activity:"سجل النشاط",pastclients:"الزبائن",upgrades:"التطويرات",settings:"الإعدادات",search:"البحث"};
+  const openQimaAI=(origin)=>{
+    const from=(origin&&origin!=="qimaai")?origin:(page!=="qimaai"?page:aiReturnPage);
+    setAiReturnPage(from||"dashboard");
+    setPage("qimaai");
+  };
+  const aiOriginLabel=AI_ORIGIN_LABELS[page]||"البرنامج";
+  const aiFabAlerts=publicContracts.filter(c=>!String(c.client||"").trim()||!String(c.idNum||"").replace(/\D/g,"")||!String(c.cPhone||"").replace(/\D/g,"")||!(+c.instAmt||0)||!c.firstInst).length;
+
   const TABS=[
     {id:"dashboard",label:"🏠",name:"الرئيسية",color:"#1e3a5f"},
     {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
@@ -12463,7 +12749,7 @@ function App() {
           </div>
         </div>
         <button type="button" className={"qimat-hero-tab visits "+(page==="pastclients"?"active":"")} data-label="الزيارات" aria-label="الزيارات" title="الزيارات" onClick={()=>setPage("pastclients")}></button>
-        <button type="button" className={"qimat-hero-tab ai "+(page==="qimaai"?"active":"")} data-label="قمة AI" aria-label="قمة AI" title="قمة AI" onClick={()=>setPage("qimaai")}></button>
+        <button type="button" className={"qimat-hero-tab ai "+(page==="qimaai"?"active":"")} data-label="قمة AI" aria-label="قمة AI" title="قمة AI" onClick={()=>openQimaAI(page)}></button>
         <button type="button" className={"qimat-hero-tab portfolio "+(page==="portfolio"?"active":"")} data-label="المحفظة الشهرية" aria-label="المحفظة الشهرية" title="المحفظة الشهرية" onClick={()=>setPage("portfolio")}></button>
         <button type="button" className={"qimat-hero-tab contracts "+(page==="contracts"?"active":"")} data-label="العقود" aria-label="العقود" title="العقود" onClick={()=>setPage("contracts")}></button>
         <button type="button" className={"qimat-hero-tab home "+(page==="dashboard"?"active":"")} data-label="الرئيسية" aria-label="الرئيسية" title="الرئيسية" onClick={()=>setPage("dashboard")}></button>
@@ -12483,7 +12769,7 @@ function App() {
         {/* المتعثرون انتقلت لتبويب داخل التحصيل */}
         {page==="dashboard" && <Dashboard contracts={publicContracts} investors={publicInvestors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={publicPayments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} setPrivateAccMode={setPrivateAccMode} doneIds={doneIds}/>}
         {page==="search" && <SearchPage contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
-        {page==="qimaai" && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:999,background:"#f4f4f6",overflowY:"auto"}}><QimaAI contracts={contracts} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct} goBack={()=>setPage("dashboard")}/></div>}
+        {page==="qimaai" && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:999,background:"#f4f4f6",overflowY:"auto"}}><QimaAI contracts={contracts} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct} sourcePage={aiReturnPage} onOpenPage={target=>setPage(target)} goBack={()=>setPage(aiReturnPage||"dashboard")}/></div>}
         {page==="pastclients" && <PastClientsPage toast={toast} pastClients={pastClients} setPastClients={setPastClients} contracts={contracts}/>}
         {page==="upgrades" && <UpgradesPage contracts={publicContracts} investors={publicInvestors} payments={publicPayments} activity={activity} settings={settings} toast={toast} setPage={setPage} doneIds={doneIds}/>}
         {page==="collect" && <CollectionPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="collect" goBack={()=>setPage("contracts")}/>}
@@ -12497,6 +12783,21 @@ function App() {
         {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast} setPage={setPage}/>}
         {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup} payments={publicPayments} setPayments={setPayments} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} setPage={setPage} investors={publicInvestors} contracts={publicContracts} setInvestors={setInvestors} gsWrite={gsWrite} saveLS={saveLS} loadLS={loadLS} daily={daily}/>}
       </div>
+
+      {page!=="qimaai" && (
+        <button type="button" className="noprint" onClick={()=>openQimaAI(page)} aria-label={"فتح قمة AI لمساعدة صفحة "+aiOriginLabel}
+          style={{position:"fixed",left:"clamp(12px,3.5vw,24px)",bottom:"clamp(14px,3.8vw,25px)",zIndex:220,border:"1px solid rgba(224,184,92,.55)",borderRadius:22,background:"linear-gradient(145deg,#10152c,#173552)",color:"#fff",padding:"8px 10px 8px 13px",boxShadow:"0 12px 34px rgba(12,24,43,.3)",display:"flex",alignItems:"center",gap:10,cursor:"pointer",fontFamily:"inherit",direction:"rtl",maxWidth:"min(310px,calc(100vw - 24px))"}}>
+          <span style={{width:43,height:43,borderRadius:15,background:"linear-gradient(145deg,#d49e36,#f0ce7c)",color:"#10152c",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:950,boxShadow:"0 4px 14px rgba(212,158,54,.32)",position:"relative",flexShrink:0}}>
+            AI
+            {aiFabAlerts>0 && <span style={{position:"absolute",right:-6,top:-7,minWidth:19,height:19,borderRadius:10,background:"#e8564c",color:"#fff",fontSize:9,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 4px",border:"2px solid #132842"}}>{Math.min(99,aiFabAlerts)}</span>}
+          </span>
+          <span style={{textAlign:"right",minWidth:0}}>
+            <b style={{display:"block",fontSize:"clamp(13px,3.5vw,15px)",fontWeight:900,color:"#f1cb72",whiteSpace:"nowrap"}}>قمة AI</b>
+            <small style={{display:"block",fontSize:"clamp(10px,2.8vw,12px)",fontWeight:650,color:"rgba(255,255,255,.68)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>اسأل عن {aiOriginLabel}</small>
+          </span>
+          <span style={{fontSize:18,color:"#e0b85c",fontWeight:900}}>‹</span>
+        </button>
+      )}
 
       <Toast msg={toastMsg} type={toastType}/>
 
