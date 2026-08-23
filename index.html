@@ -4668,6 +4668,10 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     if(v>=0) totalSalib+=v; else totalMojab+=Math.abs(v);
   });
   const farq = totalSalib - totalMojab;
+  const sortedJardInvestors = [...investors].sort((a,b)=>{
+    const numOf = (nm)=>{ const m=String(nm).match(/(\d+)\s*$/); return m?parseInt(m[1]):9999; };
+    return numOf(a.name)-numOf(b.name);
+  });
 
   const thS = {...styles.th, padding:"10px 14px"};
   const tdS = {...styles.td, padding:"9px 8px", verticalAlign:"middle"};
@@ -4676,7 +4680,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
   const boxRO = (color)=>({display:"inline-block",width:"100%",maxWidth:160,textAlign:"center",border:"2px solid "+color,borderRadius:10,color,fontWeight:800,padding:"12px 10px",fontSize:18,background:"#fafafa"});
 
   const Row = ({name,mojab,salib,onMojab,onSalib,auto,isInv,hint,i,autoSalib,hideMojab}) => (
-    <tr style={{background:i%2===0?C.white:C.gray}}>
+    <tr className="qmp-jard-row" style={{background:i%2===0?C.white:C.gray}}>
       <td style={tdS}>
         <span style={{fontWeight:700}}>{name}</span>
         {hint && <div style={{fontSize:13,color:"#1f2937",marginTop:2}}>{hint}</div>}
@@ -4699,145 +4703,71 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
   );
 
   return (
-    <div>
+    <div className="qmp-jard-page">
       {/* Month + header */}
-      <div className="noprint" style={{...styles.card,display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}}>
+      <div className="noprint qmp-jard-toolbar" style={{...styles.card,display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}}>
         <label style={{fontWeight:700,fontSize:15,whiteSpace:"nowrap"}}>شهر الجرد:</label>
         <select style={{...styles.select,width:"auto",minWidth:160,borderColor:"#c9bca3",color:"#141428",fontWeight:700,background:"#fef9ef"}}
           value={selMonth} onChange={e=>setSelMonth(e.target.value)}>
           {months.map(m=><option key={m} value={m}>{mLabel(m)}</option>)}
         </select>
-        <button style={{...styles.btn(C.gold),marginRight:"auto"}} onClick={()=>window.print()}>طباعة</button>
+        <button className="qmp-action qmp-action-secondary" style={{...styles.btn(C.gold),marginRight:"auto"}} onClick={()=>window.print()}>طباعة</button>
       </div>
 
-      <div style={styles.panel}>
-        {/* Panel header with totals */}
-        <div style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10,border:"1px solid #b8862b",borderRadius:"12px 12px 0 0"}}>
-          <div style={{color:"#141428",fontWeight:900,fontSize:17}}>الجرد — {mLabel(selMonth)}</div>
-          <div style={{display:"flex",gap:16,alignItems:"center"}}>
-            <div style={{textAlign:"center"}}>
-              <div style={{fontSize:13,color:"#141428",fontWeight:700,marginBottom:2}}>له عندي</div>
-              <div style={{fontSize:18,fontWeight:900,color:"#065f46"}}>{totalMojab.toLocaleString("en-US")}</div>
-            </div>
-            <div style={{textAlign:"center"}}>
-              <div style={{fontSize:13,color:"#141428",fontWeight:700,marginBottom:2}}>لي عنده</div>
-              <div style={{fontSize:18,fontWeight:900,color:"#065f46"}}>{totalSalib.toLocaleString("en-US")}</div>
-            </div>
-            <div style={{background:"#fff",borderRadius:10,padding:"8px 16px",textAlign:"center",border:"1px solid #e0d8c6"}}>
-              <div style={{fontSize:13,color:"#141428",fontWeight:700,marginBottom:2}}>الفرق</div>
-              <div style={{fontSize:22,fontWeight:900,color:farq>=0?"#16a34a":"#dc2626"}}>
-                {farq>=0?"":"-"}{Math.abs(farq).toLocaleString("en-US")}
-              </div>
-              <div style={{fontSize:13,fontWeight:800,color:farq>=0?"#16a34a":"#dc2626"}}>{farq>=0?"موجب":"سالب"}</div>
-            </div>
+      <section className="qmp-jard-hero">
+        <div className="qmp-jard-heading"><span>المحفظة الشهرية · {mLabel(selMonth)}</span><h2>مركز الجرد والمطابقة</h2><p>معادلة مباشرة بين الأصول والالتزامات مع توضيح مصدر كل رصيد</p></div>
+        <div className="qmp-jard-equation" aria-label="معادلة الجرد">
+          <div className="qmp-equation-card is-assets"><small>إجمالي الأصول</small><strong>{totalSalib.toLocaleString("en-US")}</strong><span>لي عنده</span></div>
+          <b className="qmp-equation-sign">−</b>
+          <div className="qmp-equation-card is-liabilities"><small>إجمالي الالتزامات</small><strong>{totalMojab.toLocaleString("en-US")}</strong><span>له عندي</span></div>
+          <b className="qmp-equation-sign">=</b>
+          <div className={"qmp-equation-card is-net "+(farq>=0?"is-positive":"is-negative")}><small>صافي الجرد</small><strong>{farq>=0?"":"−"}{Math.abs(farq).toLocaleString("en-US")}</strong><span>{farq===0?"متوازن":farq>0?"فائض":"عجز"}</span></div>
+        </div>
+        <div className="qmp-jard-sources">
+          {[["المستثمرون",investors.length+" حساب","is-ready"],["الصندوق",getVal("cash").toLocaleString("en-US"),"is-ready"],["كشف البنك",_arr(bankTx).length?"مربوط تلقائياً":"بانتظار كشف",_arr(bankTx).length?"is-ready":"is-waiting"],["البضاعة",getVal("cards").toLocaleString("en-US"),"is-ready"]].map(([label,value,state])=><div key={label} className={state}><i/><span><small>{label}</small><strong>{value}</strong></span></div>)}
+        </div>
+      </section>
+
+      <div className="qmp-jard-ledgers">
+        <section className="qmp-jard-ledger is-liabilities">
+          <div className="qmp-ledger-head"><div><span>دفتر الالتزامات</span><small>المبالغ المستحقة للمستثمرين والجهات</small></div><b>{totalMojab.toLocaleString("en-US")}</b></div>
+          <div className="qmp-table-wrap">
+            <table className="qmp-jard-table">
+              <thead><tr><th style={{...thS,width:"45%",textAlign:"right"}}>البند</th><th style={{...thS,textAlign:"center"}}>له عندي</th><th style={{...thS,textAlign:"center"}}>لي عنده</th></tr></thead>
+              <tbody>
+                <tr><td colSpan={3} className="qmp-jard-group-title">أرصدة المستثمرين</td></tr>
+                {sortedJardInvestors.map((inv,i)=>{const cur=getInv(inv.id);return <Row key={inv.id} i={i} name={inv.name} mojab={cur>0?cur:""} salib={cur<0?Math.abs(cur):""} auto={true} isInv onMojab={()=>{}} onSalib={()=>{}}/>;})}
+                <tr><td colSpan={3} className="qmp-jard-group-title">التزامات تشغيلية</td></tr>
+                {invRows.map((row,i)=>{const v=getVal(row.key);return <Row key={row.key} i={i} name={row.name} hint={row.hint} mojab={v>=0?v:""} salib={v<0?Math.abs(v):""} onMojab={()=>{}} onSalib={()=>{}} auto={true} hideMojab={false}/>;})}
+              </tbody>
+            </table>
           </div>
-        </div>
+        </section>
 
-        {/* Single unified table */}
-        <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",fontSize:15}}>
-            <thead>
-              <tr>
-                <th style={{...thS,width:"45%",textAlign:"right"}}>البند</th>
-                <th style={{...thS,color:"#065f46",textAlign:"center",fontWeight:900}}>له عندي</th>
-                <th style={{...thS,color:"#991b1b",textAlign:"center",fontWeight:900}}>لي عنده</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Section: أرصدة المستثمرين */}
-              <tr>
-                <td colSpan={3} style={{background:"#fef9ef",color:"#141428",fontWeight:800,fontSize:15,padding:"8px 14px",borderRight:"4px solid #c8922a"}}>
-                  أرصدة المستثمرين
-                </td>
-              </tr>
-              {[...investors].sort((a,b)=>{
-                // استخرج الرقم من اسم المؤسسة؛ التي بلا رقم (ل.ن، ح.ل) توضع في الآخر
-                const numOf = (nm)=>{ const m=String(nm).match(/(\d+)\s*$/); return m?parseInt(m[1]):9999; };
-                return numOf(a.name)-numOf(b.name);
-              }).map((inv,i)=>{
-                const cur = getInv(inv.id);
-                const mojab = cur>0?cur:0;
-                const salib = cur<0?Math.abs(cur):0;
-                return <Row key={inv.id} i={i} name={inv.name} mojab={mojab||""} salib={salib||""} auto={true} isInv
-                  onMojab={()=>{}}
-                  onSalib={()=>{}}/>;
-              })}
+        <section className="qmp-jard-ledger is-assets">
+          <div className="qmp-ledger-head"><div><span>دفتر الأصول</span><small>الأرصدة والسيولة والموجودات</small></div><b>{totalSalib.toLocaleString("en-US")}</b></div>
+          <div className="qmp-table-wrap">
+            <table className="qmp-jard-table">
+              <thead><tr><th style={{...thS,width:"45%",textAlign:"right"}}>البند</th><th style={{...thS,textAlign:"center"}}>له عندي</th><th style={{...thS,textAlign:"center"}}>لي عنده</th></tr></thead>
+              <tbody>
+                {otherRows.map((row,i)=>{
+                  const v=getVal(row.key), isAuto=row.key==="loans";
+                  if(isAuto) return <Row key={row.key} i={i} name={row.name} hint={row.hint} mojab={""} salib={Math.abs(v)} onMojab={()=>{}} onSalib={()=>{}} autoSalib={true} hideMojab={true}/>;
+                  if(row.key==="cash") return <Row key={row.key} i={i} name={row.name} hint="يُسحب مباشرة من رصيد الصندوق" mojab={""} salib={v} onMojab={()=>{}} onSalib={()=>{}} autoSalib={true} hideMojab={true}/>;
+                  if(row.key==="accounts" && _arr(bankTx).length>0) return <Row key={row.key} i={i} name={row.name} hint="من كشف الراجحي المستورد تلقائياً" mojab={""} salib={v} onMojab={()=>{}} onSalib={()=>{}} autoSalib={true} hideMojab={true}/>;
+                  if(row.key==="cards") return <Row key={row.key} i={i} name={row.name} hint={row.hint} mojab={v<0?Math.abs(v):""} salib={v>=0?v:""} onMojab={()=>{}} onSalib={()=>{}} auto={true}/>;
+                  if(row.key==="missing") return <Row key={row.key} i={i} name={row.name} hint={row.hint} mojab={""} salib={v||""} onMojab={()=>{}} onSalib={v2=>setVal(row.key,parseFloat(v2)||0)} hideMojab={true}/>;
+                  return <Row key={row.key} i={i} name={row.name} hint={row.hint} mojab={v<0?Math.abs(v):""} salib={v>=0?v:""} onMojab={v2=>setVal(row.key,-(parseFloat(v2)||0))} onSalib={v2=>setVal(row.key,parseFloat(v2)||0)}/>;
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
 
-              {/* invRows مع المستثمرين - كلها تلقائية للعرض فقط */}
-              {invRows.map((row,i)=>{
-                const v = getVal(row.key);
-                return <Row key={row.key} i={i} name={row.name} hint={row.hint}
-                  mojab={v>=0?v:""} salib={v<0?Math.abs(v):""}
-                  onMojab={()=>{}} onSalib={()=>{}}
-                  auto={true} hideMojab={false}/>;
-              })}
-
-              {/* Section: لي عنده (أصول) */}
-              <tr>
-                <td colSpan={3} style={{background:"#fef2f2",color:"#991b1b",fontWeight:800,fontSize:15,padding:"8px 14px",borderRight:"4px solid #ef4444"}}>
-                  لي عنده (أصول)
-                </td>
-              </tr>
-              {otherRows.map((row,i)=>{
-                const v = getVal(row.key);
-                const isAuto = row.key==="loans";
-                if(isAuto){
-                  // السلف: ثابتة في خانة السالب فقط (تلقائية)
-                  return <Row key={row.key} i={i} name={row.name} hint={row.hint}
-                    mojab={""} salib={Math.abs(v)}
-                    onMojab={()=>{}} onSalib={()=>{}}
-                    autoSalib={true} hideMojab={true}/>;
-                }
-                if(row.key==="cash"){
-                  // الرصيد النقدي: يظهر في العمود الأيسر فقط (تلقائي، بلا خانة يمين) مثل السلف
-                  return <Row key={row.key} i={i} name={row.name} hint="يُسحب مباشرة من رصيد الصندوق"
-                    mojab={""} salib={v}
-                    onMojab={()=>{}} onSalib={()=>{}}
-                    autoSalib={true} hideMojab={true}/>;
-                }
-                if(row.key==="accounts" && _arr(bankTx).length>0){
-                  // رصيد الحسابات البنكية: يظهر في العمود الأيسر فقط (تلقائي، بلا خانة يمين) مثل السلف
-                  return <Row key={row.key} i={i} name={row.name} hint="من كشف الراجحي المستورد تلقائياً"
-                    mojab={""} salib={v}
-                    onMojab={()=>{}} onSalib={()=>{}}
-                    autoSalib={true} hideMojab={true}/>;
-                }
-                if(row.key==="cards"){
-                  return <Row key={row.key} i={i} name={row.name} hint={row.hint}
-                    mojab={v<0?Math.abs(v):""} salib={v>=0?v:""}
-                    onMojab={()=>{}} onSalib={()=>{}}
-                    auto={true}/>;
-                }
-                if(row.key==="missing"){
-                  return <Row key={row.key} i={i} name={row.name} hint={row.hint}
-                    mojab={""} salib={v||""}
-                    onMojab={()=>{}}
-                    onSalib={v2=>setVal(row.key,parseFloat(v2)||0)}
-                    hideMojab={true}/>;
-                }
-                return <Row key={row.key} i={i} name={row.name} hint={row.hint}
-                  mojab={v<0?Math.abs(v):""}
-                  salib={v>=0?v:""}
-                  onMojab={v2=>setVal(row.key,-(parseFloat(v2)||0))}
-                  onSalib={v2=>setVal(row.key,parseFloat(v2)||0)}/>;
-              })}
-
-              {/* Total row */}
-              <tr style={{background:"#f5eedb"}}>
-                <td style={{...tdS,color:C.thInk,fontWeight:800,borderTop:"2px solid "+C.gold}}>المجموع</td>
-                <td style={{...tdS,textAlign:"center",color:"#16a34a",fontWeight:900,fontSize:17,borderTop:"2px solid "+C.gold}}>{totalMojab.toLocaleString("en-US")}</td>
-                <td style={{...tdS,textAlign:"center",color:"#dc2626",fontWeight:900,fontSize:17,borderTop:"2px solid "+C.gold}}>{totalSalib.toLocaleString("en-US")}</td>
-              </tr>
-              <tr style={{background:farq>=0?"#e3f5ec":C.redLt}}>
-                <td style={{...tdS,fontWeight:800,color:farq>=0?C.green:C.red}}>الفرق</td>
-                <td colSpan={2} style={{...tdS,textAlign:"center",fontWeight:900,fontSize:20,color:farq>=0?C.green:C.red}}>
-                  {farq>=0?"":"-"}{Math.abs(farq).toLocaleString("en-US")} ريال &nbsp;
-                  {farq>=0?"✓":"!"}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div className={"qmp-jard-result "+(farq===0?"is-balanced":farq>0?"is-positive":"is-negative")}>
+        <div><span>{farq===0?"تمت المطابقة":"نتيجة المطابقة"}</span><strong>{farq===0?"الجرد متوازن ولا يوجد فرق":farq>0?"يوجد فائض يحتاج اعتماد مصدره":"يوجد عجز يحتاج مراجعة وتسوية"}</strong></div>
+        <b>{farq>=0?"":"−"}{Math.abs(farq).toLocaleString("en-US")} <small>ريال</small></b>
       </div>
     </div>
   );
@@ -4849,8 +4779,20 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
 // ─── طباعة كشف الحساب البنكي (الراجحي) بالأسماء وآخر رصيد ───
 // ─── تحليل نصوص PDF لكشف الراجحي إلى حركات (يعتمد على مواقع الأعمدة x) ───
 function parseRajhiPDF(items){
-  const num = (s) => { const v=parseFloat(String(s).replace(/,/g,"").replace(/[^0-9.\-]/g,"")); return isNaN(v)?null:v; };
-  const isDate = (s) => /\d{4}\/\d{2}\/\d{2}/.test(String(s));
+  const latinDigits = (s) => String(s||"")
+    .replace(/[\u0660-\u0669]/g,d=>String(d.charCodeAt(0)-0x0660))
+    .replace(/[\u06F0-\u06F9]/g,d=>String(d.charCodeAt(0)-0x06F0))
+    .replace(/\u066C/g,",").replace(/\u066B/g,".").replace(/[−–—]/g,"-");
+  const moneyParts = (s) => {
+    const clean = latinDigits(s)
+      .replace(/(?:20\d{2}[\/-]\d{1,2}[\/-]\d{1,2}|\d{1,2}[\/-]\d{1,2}[\/-]20\d{2})/g," ");
+    return clean.match(/-?(?:\d{1,3}(?:,\d{3})+|\d+)\.\d{1,2}/g)||[];
+  };
+  const num = (s) => { const v=parseFloat(latinDigits(s).replace(/,/g,"").replace(/[^0-9.\-]/g,"")); return isNaN(v)?null:v; };
+  const dateOf = (s) => {
+    const m=latinDigits(s).match(/(?:20\d{2}[\/-]\d{1,2}[\/-]\d{1,2}|\d{1,2}[\/-]\d{1,2}[\/-]20\d{2})/);
+    return m?m[0]:"";
+  };
   const rev = (s) => s.split("").reverse().join("");
   // تطبيع الحروف العربية من أشكال العرض (Presentation Forms) إلى الأساسية
   const norm = (s) => { try{ return s.normalize("NFKC"); }catch(e){ return s; } };
@@ -4901,22 +4843,33 @@ function parseRajhiPDF(items){
   rowsY.forEach(r=>{ r.cells.sort((a,b)=>a.x-b.x); r.text = r.cells.map(c=>c.str).join(" "); });
   rowsY.sort((a,b)=> a.page-b.page || a.y-b.y);
 
-  // دالة: هل هذا صف مبالغ؟ (فيه SAR مرتين+ أو 3 أرقام عشرية)
+  // دالة: هل هذا صف مبالغ؟ يدعم الرقم منفصلاً أو ملتصقاً بعملة SAR
   const moneyRow = (r) => {
     const sar = (r.text.match(/SAR/g)||[]).length;
-    const nums = r.cells.filter(c=>/^[\d,]+\.\d{2}$/.test(c.str.trim())).length;
+    const nums = r.cells.reduce((n,c)=>n+moneyParts(c.str).length,0);
     return sar>=2 || nums>=2;
   };
-  // استخرج المبالغ الثلاثة من صف مبالغ حسب x: رصيد(x<130) دائن(130-215) مدين(215-310)
+  // استخرج المبالغ الثلاثة من اليسار: الرصيد ثم الدائن ثم المدين.
+  // إذا جمع PDF أكثر من مبلغ في عنصر نص واحد نوزّعها بحسب عرض العنصر.
   const extractMoney = (r) => {
     let bal=null, dain=0, madin=0;
+    const vals=[];
     r.cells.forEach(c=>{
-      const v = num(c.str);
-      if(v===null || !/^[\d,]+\.\d{2}$/.test(c.str.trim())) return;
-      if(c.x < 130) bal = v;
-      else if(c.x < 215) dain = v;
-      else if(c.x < 320) madin = v;
+      const parts=moneyParts(c.str);
+      parts.forEach((part,j)=>{
+        const v=num(part);
+        if(v===null) return;
+        const step=parts.length>1 && (+c.width||0)>0 ? (+c.width)/(parts.length-1) : 0;
+        vals.push({v:Math.abs(v),x:(+c.x||0)+(step*j)});
+      });
     });
+    vals.sort((a,b)=>a.x-b.x);
+    if(vals.length>=3){ bal=vals[0].v; dain=vals[1].v; madin=vals[2].v; }
+    else if(vals.length===2){
+      bal=vals[0].v;
+      const pageWidth=Math.max(1,...r.cells.map(c=>(+c.pageWidth||0)),...r.cells.map(c=>(+c.x||0)+(+c.width||0)));
+      if(vals[1].x/pageWidth<0.39) dain=vals[1].v; else madin=vals[1].v;
+    }
     return {bal, dain, madin};
   };
 
@@ -4929,7 +4882,7 @@ function parseRajhiPDF(items){
 
     // التاريخ: في نفس الصف (x>480) أو الصفوف القريبة
     let date = "";
-    const findDate = (rr)=>{ rr && rr.cells.forEach(c=>{ const m=String(c.str).match(/\d{4}\/\d{2}\/\d{2}/); if(m && !date) date=m[0]; }); };
+    const findDate = (rr)=>{ rr && rr.cells.forEach(c=>{ const d=dateOf(c.str); if(d && !date) date=d; }); };
     findDate(r);
     for(let k=1;k<=2 && !date;k++){ findDate(rowsY[i-k]); findDate(rowsY[i+k]); }
 
@@ -4938,7 +4891,8 @@ function parseRajhiPDF(items){
     let typeText = "";
     const collectType = (rr)=>{
       if(!rr || typeText) return;
-      const midCells = rr.cells.filter(c=> c.x>=350 && c.x<=500 && hasArabic(c.str));
+      const pageWidth=Math.max(1,...rr.cells.map(c=>(+c.pageWidth||0)),...rr.cells.map(c=>(+c.x||0)+(+c.width||0)));
+      const midCells = rr.cells.filter(c=> c.x>=pageWidth*.54 && c.x<=pageWidth*.86 && hasArabic(c.str));
       if(midCells.length===0) return;
       const joined = midCells.map(c=>c.str).join("");
       // تجاهل سطر الملاحظة (فيه ملاحظة/الوقت أو أرقام طويلة)
@@ -5174,6 +5128,11 @@ function BankReconcile({bankTx, contracts, investors, payments, setPayments, don
 
   const nUn=analysis.unrecorded.length, nRev=analysis.review.length, nUnk=analysis.unknown.length;
   const sumUn=analysis.unrecorded.reduce((s,i)=>s+i.amt,0);
+  const reconcileRows = _arr(bankTx);
+  const reconcileBalance = reconcileRows.length ? (+reconcileRows[reconcileRows.length-1].balance||0) : 0;
+  const reconcileResolved = analysis.matched.length + analysis.expense.length;
+  const reconcileTotal = analysis.matched.length + analysis.unrecorded.length + analysis.review.length + analysis.unknown.length + analysis.expense.length;
+  const reconcilePct = reconcileTotal>0 ? Math.round((reconcileResolved/reconcileTotal)*100) : 0;
 
   const TABS=[
     {id:"alert", label:"لم تُسجّل", n:nUn, icon:'<path d="M12 4.2 21.4 20.4H2.6Z"/><path d="M12 10.2v4.4"/>',dot:'<circle cx="12" cy="17.4" r="1.25"/>'},
@@ -5184,7 +5143,7 @@ function BankReconcile({bankTx, contracts, investors, payments, setPayments, don
   ];
 
   const Card = ({item, kind}) => (
-    <div style={{background:"#fff",border:"1px solid #e0d8c6",borderRadius:12,padding:"12px 14px",marginBottom:8}}>
+    <div className="qmp-match-card" style={{background:"#fff",border:"1px solid #e0d8c6",borderRadius:12,padding:"12px 14px",marginBottom:8}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10,flexWrap:"wrap"}}>
         <div style={{flex:1,minWidth:180}}>
           <div style={{fontSize:12,color:"#94a3b8",fontWeight:600}}>{item.tx.date}</div>
@@ -5195,7 +5154,7 @@ function BankReconcile({bankTx, contracts, investors, payments, setPayments, don
         </div>
       </div>
       {item.best && (
-        <div style={{marginTop:10,background:kind==="alert"?"#fef2f2":"#f0fdf4",borderRadius:10,padding:"9px 12px",border:"1px solid "+(kind==="alert"?"#fecaca":"#bbf7d0")}}>
+        <div className="qmp-match-evidence" style={{marginTop:10,background:kind==="alert"?"#fef2f2":"#f0fdf4",borderRadius:10,padding:"9px 12px",border:"1px solid "+(kind==="alert"?"#fecaca":"#bbf7d0")}}>
           <div style={{fontSize:13,fontWeight:800,color:kind==="alert"?"#b91c1c":"#15803d"}}>
             {kind==="alert"?"⚠️ ":"✅ "}{item.best.c.client}
             <span style={{fontSize:11,fontWeight:600,opacity:0.7,marginRight:6}}>
@@ -5217,7 +5176,7 @@ function BankReconcile({bankTx, contracts, investors, payments, setPayments, don
           </div>
         </div>
       )}
-      <div style={{display:"flex",gap:6,marginTop:10,flexWrap:"wrap"}}>
+      <div className="qmp-match-actions" style={{display:"flex",gap:6,marginTop:10,flexWrap:"wrap"}}>
         {kind==="alert" && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"1px solid #b8862b",background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}} onClick={()=>recordPay(item)}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7 10 17l-5-5"/></g></svg>سجّل السداد</button>}
         {(kind==="unknown"||kind==="exp") && item.cls && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"1px solid #b8862b",background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}} onClick={()=>recordExpense(item)}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h13v16H7a2 2 0 0 1-2-2Z"/><path d="M5 17h13"/></g></svg>أضف لليومية</button>}
         {kind==="review" && item.best && <button style={{flex:1,minWidth:130,padding:"10px",borderRadius:9,border:"1px solid #b8862b",background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}} onClick={()=>{ if(window.confirm("تأكيد ربط "+SAR(item.amt)+" بـ "+item.best.c.client+"؟\n\nالأدلة ضعيفة — تأكد بنفسك.")) recordPay(item); }}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></g></svg>اربط يدوياً</button>}
@@ -5230,19 +5189,29 @@ function BankReconcile({bankTx, contracts, investors, payments, setPayments, don
             : tab==="unknown"?analysis.unknown : tab==="ok"?analysis.matched : analysis.expense;
 
   return (
-    <div>
+    <div className="qmp-bank-reconcile">
+      <div className="qmp-reconcile-hero">
+        <section className="qmp-reconcile-balance">
+          <span>الرصيد بعد آخر حركة</span><strong>{SAR(reconcileBalance)}</strong><small>{reconcileRows.length} حركة مستوردة من كشف البنك</small>
+        </section>
+        <section className="qmp-reconcile-progress">
+          <div><span>جاهزية المطابقة</span><b>{reconcilePct}%</b></div>
+          <div className="qmp-reconcile-track"><i style={{width:reconcilePct+"%"}}/></div>
+          <p>{reconcileResolved} حركة تم تصنيفها أو مطابقتها · {nUn+nRev+nUnk} حركة تحتاج إجراء</p>
+        </section>
+      </div>
       {nUn>0 && (
-        <div style={{background:"linear-gradient(135deg,#7f1d1d,#991b1b)",borderRadius:16,padding:"16px 18px",marginBottom:14,color:"#fff"}}>
+        <div className="qmp-reconcile-alert" style={{background:"linear-gradient(135deg,#7f1d1d,#991b1b)",borderRadius:16,padding:"16px 18px",marginBottom:14,color:"#fff"}}>
           <div style={{fontSize:16,fontWeight:900}}>⚠️ {nUn} إيداع دخل البنك ولم يُسجّل في النظام</div>
           <div style={{fontSize:22,fontWeight:900,marginTop:6}}>{SAR(sumUn)}</div>
           <div style={{fontSize:12,opacity:0.85,marginTop:4}}>مطابَقة بأدلة قاطعة (اسم/حساب/جوال) — راجعها وسجّلها</div>
         </div>
       )}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:5,marginBottom:14}}>
+      <div className="qmp-reconcile-kpis" style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:5,marginBottom:14}}>
         {TABS.map(t=>{
           const on = tab===t.id;
           return (
-          <button key={t.id} onClick={()=>setTab(t.id)}
+          <button key={t.id} onClick={()=>setTab(t.id)} className={"qmp-reconcile-kpi "+(on?"is-active":"")}
             style={{padding:"10px 4px",borderRadius:11,border:on?"none":"1px solid #b8862b",
               background:on?"linear-gradient(140deg,#e0b85c,#c8922a)":"#fff",color:on?"#141428":"#64748b",
               fontWeight:800,fontSize:11,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",textAlign:"center",
@@ -5259,9 +5228,11 @@ function BankReconcile({bankTx, contracts, investors, payments, setPayments, don
           <button style={{padding:"5px 10px",borderRadius:8,border:"1px solid #e0d8c6",background:"#fff",color:"#6d28d9",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}} onClick={unIgn}>استرجاع الكل</button>
         </div>
       )}
-      {cur.length===0
-        ? <div style={{textAlign:"center",padding:"40px 20px",color:"#94a3b8",fontSize:14}}>لا يوجد شيء هنا 👌</div>
-        : cur.slice(0,120).map(it=><Card key={it.key} item={it} kind={tab}/>)}
+      <div className="qmp-reconcile-list">
+        {cur.length===0
+          ? <div style={{textAlign:"center",padding:"40px 20px",color:"#94a3b8",fontSize:14}}>لا يوجد شيء هنا 👌</div>
+          : cur.slice(0,120).map(it=><Card key={it.key} item={it} kind={tab}/>)}
+      </div>
       {cur.length>120 && <div style={{textAlign:"center",color:"#94a3b8",fontSize:12,padding:10}}>... و{cur.length-120} حركة أخرى</div>}
     </div>
   );
@@ -5425,16 +5396,22 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
   };
 
   const parseRajhiText = (lines) => {
-    const num = (s)=>{ const v=parseFloat(String(s).replace(/[,،\s]/g,"").replace(/[^0-9.\-]/g,"")); return isNaN(v)?null:v; };
+    const latinDigits = (s) => String(s||"")
+      .replace(/[\u0660-\u0669]/g,d=>String(d.charCodeAt(0)-0x0660))
+      .replace(/[\u06F0-\u06F9]/g,d=>String(d.charCodeAt(0)-0x06F0))
+      .replace(/\u066C/g,",").replace(/\u066B/g,".").replace(/[−–—]/g,"-");
+    const num = (s)=>{ const v=parseFloat(latinDigits(s).replace(/[,،\s]/g,"").replace(/[^0-9.\-]/g,"")); return isNaN(v)?null:v; };
     const parsed = [];
     let currentDate = "";
     let pendingType = "";
     for(let i=0;i<lines.length;i++){
-      const line = lines[i].trim();
+      const line = latinDigits(lines[i]).trim();
       if(!line) continue;
-      const dateMatch = line.match(/(\d{4}[\/-]\d{2}[\/-]\d{2})/);
+      const dateMatch = line.match(/(20\d{2}[\/-]\d{1,2}[\/-]\d{1,2}|\d{1,2}[\/-]\d{1,2}[\/-]20\d{2})/);
       if(dateMatch) currentDate = dateMatch[1];
-      const amounts = line.match(/[\d,]+\.\d{2}/g);
+      const amounts = line
+        .replace(/(?:20\d{2}[\/-]\d{1,2}[\/-]\d{1,2}|\d{1,2}[\/-]\d{1,2}[\/-]20\d{2})/g," ")
+        .match(/-?(?:\d{1,3}(?:,\d{3})+|\d+)\.\d{1,2}/g);
       if(amounts && amounts.length>=2){
         const nums = amounts.map(a=>Math.abs(num(a)||0));
         let bal=nums[0],madin=0,dain=0;
@@ -5459,46 +5436,106 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
     return parsed;
   };
 
-  const readPDF = async (file) => {
-    toast&&toast("⏳ جارٍ قراءة الـ PDF...");
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const buf = e.target.result;
-      // نسخة بايت مستقلة — pdf.js يفصل الـ ArrayBuffer عند القراءة،
-      // فنعطي كل محاولة نسخة خاصة بها حتى لا يحدث "Buffer is already detached"
-      const bytesFor = () => new Uint8Array(buf.slice(0));
+  // ينتظر اكتمال تحميل PDF.js؛ كان الرفع سابقاً يبدأ قبل جهوزية المكتبة فيفشل بصمت.
+  const waitForPdfJs = (timeoutMs=10000) => new Promise(resolve=>{
+    const started=Date.now();
+    const check=()=>{
+      const lib=window.pdfjsLib || window["pdfjs-dist/build/pdf"];
+      if(lib && typeof lib.getDocument==="function"){ resolve(lib); return; }
+      if(String(window._pdfjsStatus||"").indexOf("فشل")===0){ resolve(null); return; }
+      if(Date.now()-started>=timeoutMs){ resolve(null); return; }
+      setTimeout(check,100);
+    };
+    check();
+  });
 
-      // أولاً: جرّب المكتبة الخارجية لو موجودة
-      const lib = window.pdfjsLib || window["pdfjs-dist/build/pdf"];
+  const readFileBuffer = (file) => {
+    if(file && typeof file.arrayBuffer==="function") return file.arrayBuffer();
+    return new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=e=>resolve(e.target.result);
+      reader.onerror=()=>reject(reader.error||new Error("تعذرت قراءة الملف"));
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  // يحوّل عناصر PDF.js إلى أسطر مرتبة؛ هذا مسار احتياطي إذا تغيّرت مواقع أعمدة كشف البنك.
+  const pdfItemsToLines = (items) => {
+    const rows=[];
+    _arr(items).filter(it=>it && String(it.str||"").trim()).forEach(it=>{
+      let row=rows.find(r=>r.page===it.page && Math.abs(r.y-it.y)<=5);
+      if(!row){ row={page:it.page,y:it.y,cells:[]}; rows.push(row); }
+      row.cells.push(it);
+    });
+    rows.sort((a,b)=>a.page-b.page||a.y-b.y);
+    return rows.map(r=>r.cells.sort((a,b)=>a.x-b.x).map(c=>String(c.str||"").trim()).filter(Boolean).join(" ")).filter(Boolean);
+  };
+
+  const readPDF = async (file) => {
+    toast&&toast("⏳ جارٍ تحليل كشف PDF...");
+    let buf=null, lib=null, pdfError=null, extractedItems=[];
+    try{
+      buf=await readFileBuffer(file);
+      const sig=new TextDecoder("latin1").decode(new Uint8Array(buf.slice(0,5)));
+      if(sig.indexOf("%PDF-")!==0){ toast&&toast("الملف المختار ليس ملف PDF صالحاً","error"); return; }
+      const bytesFor=()=>new Uint8Array(buf.slice(0));
+      lib=await waitForPdfJs();
+
       if(lib){
+        let pdf=null;
         try{
           try{ if(lib.GlobalWorkerOptions && !lib.GlobalWorkerOptions.workerSrc) lib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.worker.min.js"; }catch(x){}
-          const pdf = await lib.getDocument({data:bytesFor()}).promise;
-          let items = [];
+          try{
+            pdf=await lib.getDocument({data:bytesFor()}).promise;
+          }catch(firstErr){
+            // إعادة المحاولة بدون عامل منفصل تفيد في بعض متصفحات الجوال والشبكات المقيدة.
+            pdf=await lib.getDocument({data:bytesFor(),disableWorker:true}).promise;
+          }
           for(let p=1;p<=pdf.numPages;p++){
             const page=await pdf.getPage(p);
-            const tc=await page.getTextContent();
+            const tc=await page.getTextContent({disableCombineTextItems:false});
             const vp=page.getViewport({scale:1});
-            tc.items.forEach(it=>{ const tx=it.transform; items.push({str:it.str,x:tx[4],y:vp.height-tx[5],page:p}); });
+            tc.items.forEach(it=>{
+              const tx=it.transform||[1,0,0,1,0,0];
+              extractedItems.push({str:it.str||"",x:+tx[4]||0,y:vp.height-(+tx[5]||0),width:+it.width||0,height:+it.height||0,page:p,pageWidth:vp.width,pageHeight:vp.height});
+            });
           }
-          const parsed = parseRajhiPDF(items);
+          const byColumns=parseRajhiPDF(extractedItems);
+          const byLines=parseRajhiText(pdfItemsToLines(extractedItems));
+          const parsed=byLines.length>byColumns.length?byLines:byColumns;
+          try{ if(pdf && pdf.destroy) await pdf.destroy(); }catch(x){}
           if(parsed.length>0){ saveParsed(parsed); return; }
-        }catch(ex){ console.warn("pdfjsLib failed, trying builtin:", ex); }
+        }catch(ex){
+          pdfError=ex;
+          console.warn("PDF.js failed, trying builtin parser:",ex);
+          try{ if(pdf && pdf.destroy) await pdf.destroy(); }catch(x){}
+        }
       }
-      // ثانياً: القارئ المدمج (بنسخة بايت مستقلة)
+
+      // قارئ احتياطي للملفات النصية البسيطة عند تعذر PDF.js.
       try{
-        const textLines = await extractPdfTextBuiltin(buf.slice(0));
-        if(textLines.length===0){ toast&&toast("لم أستطع استخراج نص من الـ PDF — جرّب Excel","error"); return; }
-        const parsed = parseRajhiText(textLines);
+        const textLines=await extractPdfTextBuiltin(buf.slice(0));
+        const parsed=parseRajhiText(textLines);
         if(parsed.length>0){ saveParsed(parsed); return; }
-        const fullText = textLines.join("\n");
-        const allNums = fullText.match(/[\d,]+\.\d{2}/g);
-        toast&&toast("تم استخراج "+textLines.length+" سطر و "+(allNums?allNums.length:0)+" رقم، لكن ما تعرّفت على تنسيق الراجحي — جرّب Excel","error");
+        const errText=String((pdfError&&pdfError.message)||"");
+        const errName=String((pdfError&&pdfError.name)||"");
+        if(/password/i.test(errText+" "+errName)){
+          toast&&toast("ملف PDF محمي بكلمة مرور؛ افتحه واحفظ نسخة غير محمية ثم ارفعها","error");
+        }else if(!lib){
+          toast&&toast("تعذر تشغيل قارئ PDF. أعد تحميل الصفحة وتأكد من اتصال الإنترنت ثم حاول مرة أخرى","error");
+        }else if(extractedItems.length===0 && textLines.length===0){
+          toast&&toast("هذا PDF عبارة عن صور ممسوحة ولا يحتوي نصاً قابلاً للاستخراج؛ ارفع كشف PDF الأصلي من البنك","error");
+        }else{
+          const fullText=pdfItemsToLines(extractedItems).concat(textLines).join("\n");
+          const allNums=fullText.match(/(?:[\d,]+|[\u0660-\u0669\u06F0-\u06F9\u066C]+)[.\u066B]\d{1,2}/g);
+          toast&&toast("قُرئ ملف PDF، لكن لم يتم التعرف على جدول الحركات (وُجد "+(allNums?allNums.length:0)+" مبلغ). ارفع كشف الحساب التفصيلي من البنك","error");
+        }
       }catch(err){
-        toast&&toast("خطأ في قراءة PDF: "+(err&&err.message||"")+" — جرّب Excel","error");
+        toast&&toast("خطأ في قراءة PDF: "+(err&&err.message||"تعذر تحليل الملف"),"error");
       }
-    };
-    reader.readAsArrayBuffer(file);
+    }catch(err){
+      toast&&toast("خطأ في فتح ملف PDF: "+(err&&err.message||"تعذرت قراءة الملف"),"error");
+    }
   };
 
   // موجّه: يفرّق حسب نوع الملف (بالامتداد أو نوع MIME)
@@ -5555,9 +5592,10 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
   const qMadin = shownRows.reduce((s,r)=>s+(+r.madin||0),0);
 
   return (
-    <div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+    <div className="qmp-bank-page">
+      <div className="qmp-bank-view-tabs" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
         <button onClick={()=>setBankView("tx")}
+          className={"qmp-bank-view-tab "+(bankView==="tx"?"is-active":"")}
           style={{padding:"13px",borderRadius:13,border:bankView==="tx"?"none":"1px solid #b8862b",
             background:bankView==="tx"?"linear-gradient(140deg,#e0b85c,#c8922a)":"#fff",
             color:bankView==="tx"?"#e0b85c":"#64748b",fontWeight:900,fontSize:14,cursor:"pointer",
@@ -5565,6 +5603,7 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
           <svg width="17" height="17" viewBox="0 0 24 24"><g fill="none" stroke={bankView==="tx"?"#e0b85c":"#8b93a7"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg>
           الحركات</button>
         <button onClick={()=>setBankView("rc")}
+          className={"qmp-bank-view-tab "+(bankView==="rc"?"is-active":"")}
           style={{padding:"13px",borderRadius:13,border:bankView==="rc"?"none":"1px solid #b8862b",
             background:bankView==="rc"?"linear-gradient(140deg,#e0b85c,#c8922a)":"#fff",
             color:bankView==="rc"?"#e0b85c":"#64748b",fontWeight:900,fontSize:14,cursor:"pointer",
@@ -5574,15 +5613,15 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
       </div>
       {bankView==="rc" && (
         rows.length===0
-          ? <div style={{textAlign:"center",padding:"50px 20px",color:"#94a3b8",fontSize:14}}>ارفع كشف البنك أولاً من تبويب «الحركات»</div>
+          ? <div className="qmp-bank-empty" style={{textAlign:"center",padding:"50px 20px",color:"#94a3b8",fontSize:14}}>ارفع كشف البنك أولاً من تبويب «الحركات»</div>
           : <BankReconcile bankTx={bankTx} contracts={contracts} investors={investors} payments={payments}
               setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} toast={toast} logAct={logAct}/>
       )}
       {bankView==="tx" && (
-      <div>
-      <div style={{...styles.card,marginBottom:16}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12,marginBottom:14}}>
-          <div style={{fontSize:18,fontWeight:800,color:C.ink,display:"flex",alignItems:"center",gap:8}}><svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg>رصيد الحساب البنكي (الراجحي)</div>
+      <div className="qmp-bank-transactions">
+      <div className="qmp-bank-upload-card" style={{...styles.card,marginBottom:16}}>
+        <div className="qmp-bank-upload-head" style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12,marginBottom:14}}>
+          <div className="qmp-bank-title" style={{fontSize:18,fontWeight:800,color:C.ink,display:"flex",alignItems:"center",gap:8}}><svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg><span><small>المحفظة الشهرية</small>رصيد الحساب البنكي (الراجحي)</span></div>
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
             <button style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"1px solid #b8862b",borderRadius:10,padding:"10px 16px",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>fileRef.current&&fileRef.current.click()}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V4M8 8l4-4 4 4M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></g></svg>رفع كشف (Excel أو PDF)</button>
             {rows.length>0 && <button style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"1px solid #b8862b",borderRadius:10,padding:"10px 16px",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>printBankStatement(shownRows,lastBalance,_bq?qDain:totalDain,_bq?qMadin:totalMadin,_bq?("بحث: "+bankQuery):"")}><svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9V4h10v5M6 18H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1M7 15h10v5H7Z"/></g></svg>طباعة الكشف</button>}
@@ -5594,6 +5633,7 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
 
         {/* منطقة السحب والإفلات */}
         <div onDragOver={e=>{e.preventDefault();setDragOver(true);}} onDragLeave={()=>setDragOver(false)}
+          className={"qmp-bank-dropzone "+(dragOver?"is-dragging":"")}
           onDrop={e=>{e.preventDefault();setDragOver(false);const f=e.dataTransfer.files&&e.dataTransfer.files[0];readFile(f);}}
           onClick={()=>fileRef.current&&fileRef.current.click()}
           style={{border:"2px dashed "+(dragOver?"#141428":"#141428"),borderRadius:12,padding:"20px",textAlign:"center",cursor:"pointer",background:dragOver?C.tealLt:"#fafafa",marginBottom:8}}>
@@ -5605,14 +5645,15 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
 
       {rows.length>0 && (
         <>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10,marginBottom:16}}>
+          <div className="qmp-bank-kpi-grid" style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10,marginBottom:16}}>
             {/* الرصيد الحالي — غير قابل للنقر */}
-            <div style={{...styles.card,textAlign:"center",borderTop:"3px solid #c8922a",padding:"12px"}}>
+            <div className="qmp-bank-kpi qmp-bank-kpi-balance" style={{...styles.card,textAlign:"center",borderTop:"3px solid #c8922a",padding:"12px"}}>
               <div style={{fontSize:13,color:"#1a1a2e",marginBottom:4,fontWeight:700}}>الرصيد الحالي</div>
               <div style={{fontSize:18,fontWeight:900,color:"#141428"}}>{SAR(lastBalance)}</div>
             </div>
             {/* الوارد — قابل للنقر */}
             <div onClick={()=>setBankFilter(f=>f==="in"?"all":"in")} title="اضغط لعرض الحركات الواردة"
+              className={"qmp-bank-kpi "+(bankFilter==="in"?"is-active":"")}
               style={{...styles.card,textAlign:"center",borderTop:"3px solid #c8922a",padding:"12px",cursor:"pointer",
                 background: bankFilter==="in"?"#fefbf3":"#fff", outline: bankFilter==="in"?"1px solid #b8862b":"none",transition:"all .12s"}}>
               <div style={{fontSize:13,color:"#1a1a2e",marginBottom:4,fontWeight:700}}>إجمالي الوارد</div>
@@ -5621,6 +5662,7 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
             </div>
             {/* المنصرف — قابل للنقر */}
             <div onClick={()=>setBankFilter(f=>f==="out"?"all":"out")} title="اضغط لعرض الحركات المنصرفة"
+              className={"qmp-bank-kpi "+(bankFilter==="out"?"is-active":"")}
               style={{...styles.card,textAlign:"center",borderTop:"3px solid #c8922a",padding:"12px",cursor:"pointer",
                 background: bankFilter==="out"?"#fefbf3":"#fff", outline: bankFilter==="out"?"1px solid #b8862b":"none",transition:"all .12s"}}>
               <div style={{fontSize:13,color:"#1a1a2e",marginBottom:4,fontWeight:700}}>إجمالي المنصرف</div>
@@ -5628,22 +5670,22 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
               <div style={{fontSize:11,color:"#64748b",marginTop:3,fontWeight:700}}>اضغط للعرض</div>
             </div>
             {/* عدد الحركات — غير قابل للنقر */}
-            <div style={{...styles.card,textAlign:"center",borderTop:"3px solid #c8922a",padding:"12px"}}>
+            <div className="qmp-bank-kpi" style={{...styles.card,textAlign:"center",borderTop:"3px solid #c8922a",padding:"12px"}}>
               <div style={{fontSize:13,color:"#1a1a2e",marginBottom:4,fontWeight:700}}>عدد الحركات</div>
               <div style={{fontSize:18,fontWeight:900,color:"#141428"}}>{rows.length}</div>
             </div>
           </div>
 
           {/* ═══ تبويبات تلقائية: بطاقة لكل نوع حركة موجود في الكشف ═══ */}
-          <div style={{fontSize:13,fontWeight:700,color:C.ink2,marginBottom:8,display:"flex",alignItems:"center",gap:7}}>
+          <div className="qmp-bank-types-title" style={{fontSize:13,fontWeight:700,color:C.ink2,marginBottom:8,display:"flex",alignItems:"center",gap:7}}>
             <svg width="17" height="17" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></g></svg>
             أنواع الحركات (اضغط أي نوع لعرض حركاته)</div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginBottom:16}}>
+          <div className="qmp-bank-type-grid" style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginBottom:16}}>
             {typeGroups.map(g=>{
               const active = bankFilter===g.key;
               const net = g.dain - g.madin;
               return (
-                <div key={g.key} onClick={()=>setBankFilter(f=>f===g.key?"all":g.key)} title={"اضغط لعرض: "+g.key}
+                <div key={g.key} className={"qmp-bank-type-card "+(active?"is-active":"")} onClick={()=>setBankFilter(f=>f===g.key?"all":g.key)} title={"اضغط لعرض: "+g.key}
                   style={{...styles.card,textAlign:"center",borderTop:"3px solid #c8922a",padding:"11px 10px",cursor:"pointer",
                     background: active ? "#fefbf3" : "#fff", outline: active ? "1px solid #b8862b" : "none",transition:"all .12s"}}>
                   <div style={{fontSize:12.5,color:"#1a1a2e",marginBottom:5,fontWeight:700,lineHeight:1.4,minHeight:34,display:"flex",alignItems:"center",justifyContent:"center"}}>{g.key}</div>
@@ -5661,7 +5703,7 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
             else if(bankFilter==="out"){ lbl="الحركات المنصرفة"; col=C.red; bg="#fef2f2"; sum=qMadin; }
             else { lbl=bankFilter; col=colorFor(bankFilter); bg=col+"11"; sum=(qDain-qMadin>=0?qDain:qMadin); }
             return (
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:12,background:bg,border:"2px solid "+col,borderRadius:12,padding:"10px 14px",flexWrap:"wrap"}}>
+              <div className="qmp-bank-filter-badge" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:12,background:bg,border:"2px solid "+col,borderRadius:12,padding:"10px 14px",flexWrap:"wrap"}}>
                 <span style={{fontSize:14,fontWeight:800,color:col}}>{lbl} — {shownRows.length} حركة · وارد {SAR(qDain)} · منصرف {SAR(qMadin)}</span>
                 <button onClick={()=>setBankFilter("all")} style={{border:"none",background:col,color:"#fff",borderRadius:8,padding:"5px 12px",cursor:"pointer",fontSize:13,fontWeight:700}}>إلغاء</button>
               </div>
@@ -5669,7 +5711,7 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
           })()}
 
           {/* 🔍 بحث عن اسم شخص أو نوع عملية */}
-          <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:12,background:"#f8fafc",border:"2px solid "+C.border,borderRadius:12,padding:"8px 12px"}}>
+          <div className="qmp-bank-search" style={{display:"flex",gap:8,alignItems:"center",marginBottom:12,background:"#f8fafc",border:"2px solid "+C.border,borderRadius:12,padding:"8px 12px"}}>
             <svg width="17" height="17" viewBox="0 0 24 24" style={{flexShrink:0}}><g fill="none" stroke="#94a3b8" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-4-4"/></g></svg>
             <input type="text" placeholder="ابحث باسم شخص أو نوع عملية (تحويل / راتب / إيداع ...)"
               value={bankQuery} onChange={e=>setBankQuery(e.target.value)}
@@ -5682,8 +5724,8 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
             </div>
           )}
 
-          <div style={{overflowX:"auto",borderRadius:10,boxShadow:"0 2px 12px rgba(0,0,0,0.08)"}}>
-            <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
+          <div className="qmp-bank-table-wrap" style={{overflowX:"auto",borderRadius:10,boxShadow:"0 2px 12px rgba(0,0,0,0.08)"}}>
+            <table className="qmp-bank-table" style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
               <thead>
                 <tr style={{background:C.thBg,color:C.thInk}}>
                   {["التاريخ","تفاصيل العملية","مدين","دائن","الرصيد"].map(h=>(
@@ -5818,6 +5860,12 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
   };
   const totalRemaining = allC.reduce((s,c)=>s+Math.max(0,(+c.totalInst||+c.amount||0)-_getPaid(payments,c.id)),0);
   const closedMonths = Object.keys(monthClose||{}).sort().reverse();
+  const focusYM = months[0] || null;
+  const focusD = focusYM ? calcMonth(focusYM) : null;
+  const focusCollectionBase = focusD ? (focusD.collected + focusD.due) : 0;
+  const focusPct = focusCollectionBase>0 ? Math.min(100,Math.round((focusD.collected/focusCollectionBase)*100)) : 0;
+  const focusFlowMax = focusD ? Math.max(focusD.collected,focusD.due,focusD.late,1) : 1;
+  const focusLeaders = focusD ? [...focusD.invRows].filter(r=>r.count||r.coll||r.due).sort((a,b)=>b.coll-a.coll).slice(0,5) : [];
 
   // ═══ إقفال الدورة وبدء شهر جديد ═══
   // يحفظ لقطة الشهر بالأرشيف + يحرّك رصيد بداية الصندوق لليوم بمبلغ المتبقي الحالي
@@ -5907,16 +5955,18 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
   const subTabs=[
     {k:"ind",l:"المؤشرات",icon:'<path d="M3.5 7.5h17v12h-17Z"/><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/>'},
     {k:"jard",l:"الجرد",icon:'<path d="M3.6 7.6h16.8v12H3.6Z"/><path d="M3.6 11.6h16.8M12 7.6v12"/>'},
-    {k:"bank",l:"رصيد الحساب",icon:'<path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/>'},
+    {k:"bank",l:"رصيد الحسابات",icon:'<path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/>'},
   ];
 
   return (
-    <div style={styles.main}>
-      <div style={{display:"flex",gap:0,marginBottom:16,background:C.white,borderRadius:12,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",width:"fit-content",flexWrap:"wrap"}}>
+    <div className="qmp-monthly-portfolio" style={styles.main}>
+      <div className="qmp-subtabs" style={{display:"flex",gap:0,marginBottom:16,background:C.white,borderRadius:12,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",width:"fit-content",flexWrap:"wrap"}}>
         {subTabs.map(t=>{
           const on = tab===t.k;
           return (
           <button key={t.k} onClick={()=>{setTab(t.k);setOpenMonth(null);}}
+            className={"qmp-subtab "+(on?"is-active":"")}
+            aria-selected={on}
             style={{fontFamily:"IBM Plex Sans Arabic,Arial",fontSize:15,fontWeight:700,padding:"11px 18px",border:"none",cursor:"pointer",background:on?"linear-gradient(140deg,#e0b85c,#c8922a)":C.white,color:on?"#141428":C.ink2,whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:7,transition:"all .15s"}}>
             <svg width="17" height="17" viewBox="0 0 24 24"><g fill="none" stroke={on?"#e0b85c":"#8b93a7"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{__html:t.icon}}/></svg>
             {t.l}</button>
@@ -5933,49 +5983,98 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
           onReopen={()=>{if(window.confirm("فتح الشهر المقفل؟")){setMonthClose(p=>{const n={...(p||{})};delete n[openMonth];return n;});toast("🔓 تم فتح الشهر");}}}
         />
       ) : (
-        <div style={styles.panel}>
-          <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
-            <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink,display:"flex",alignItems:"center",gap:8}}>
-              <svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.5 7.5h17v12h-17Z"/><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/></g></svg>
-              مؤشرات المحفظة الشهرية</h2>
-            <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-              <span style={{fontSize:13,color:"#1f2937",fontWeight:700}}>المتبقي الكلي: <span style={{color:C.red,fontWeight:900}}>{SAR(totalRemaining)}</span></span>
-              <button style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"1px solid #b8862b",borderRadius:10,fontSize:13,fontWeight:800,padding:"7px 12px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}} onClick={closeCycleAndReset}>
+        <div className="qmp-indicators qmp-surface" style={styles.panel}>
+          <div className="qmp-section-head" style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+            <div className="qmp-heading-copy">
+              <span className="qmp-eyebrow">المحفظة الشهرية</span>
+              <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink,display:"flex",alignItems:"center",gap:8}}>
+                <svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3.5 7.5h17v12h-17Z"/><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/></g></svg>
+                مركز المؤشرات التنفيذي</h2>
+              <p>قراءة سريعة للتحصيل والسيولة وأداء المستثمرين</p>
+            </div>
+            <div className="qmp-head-actions" style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+              <span className="qmp-total-pill" style={{fontSize:13,color:"#1f2937",fontWeight:700}}>المتبقي الكلي <strong>{SAR(totalRemaining)}</strong></span>
+              <button className="qmp-action qmp-action-primary" style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"1px solid #b8862b",borderRadius:10,fontSize:13,fontWeight:800,padding:"7px 12px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}} onClick={closeCycleAndReset}>
                 <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></g></svg>
                 إقفال الدورة وبدء شهر جديد</button>
               {(()=>{const _dox=(dailyOpen&&typeof dailyOpen==="object"&&!Array.isArray(dailyOpen))?dailyOpen:{};return _dox.__prevBase;})() &&
-              <button style={{background:"#fff",color:"#dc2626",border:"2.5px solid #dc2626",borderRadius:10,fontSize:13,fontWeight:800,padding:"7px 12px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}} onClick={undoCloseCycle}>
+              <button className="qmp-action qmp-action-danger" style={{background:"#fff",color:"#dc2626",border:"2.5px solid #dc2626",borderRadius:10,fontSize:13,fontWeight:800,padding:"7px 12px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}} onClick={undoCloseCycle}>
                 تراجع عن الإقفال</button>}
-              <button style={{...styles.btn(C.gold),fontSize:13,padding:"7px 12px",display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>printAll(months.map(ym=>({ym,d:calcMonth(ym)})),"المؤشرات الشهرية")}>
+              <button className="qmp-action qmp-action-secondary" style={{...styles.btn(C.gold),fontSize:13,padding:"7px 12px",display:"inline-flex",alignItems:"center",gap:6}} onClick={()=>printAll(months.map(ym=>({ym,d:calcMonth(ym)})),"المؤشرات الشهرية")}>
                 <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9V4h10v5M6 18H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1M7 15h10v5H7Z"/></g></svg>
                 طباعة</button>
             </div>
           </div>
-          <div style={{padding:14}}>
-            <div style={{fontSize:13,color:"#6b7280",marginBottom:10}}>اضغط أي شهر لعرض تفاصيله الكاملة</div>
-            <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              {months.map(ym=>{
-                const d=calcMonth(ym); const closed=!!(monthClose&&monthClose[ym]);
-                return (
-                  <div key={ym} onClick={()=>setOpenMonth(ym)}
-                    style={{cursor:"pointer",border:"1px solid "+C.border,borderRadius:12,padding:14,background:closed?"#f0fdf4":"#fff",borderRight:"4px solid "+(closed?C.green:"#c8922a")}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:6}}>
-                      <div style={{fontSize:16,fontWeight:900,color:C.ink}}>{mLabel(ym)} {closed&&<span style={{fontSize:12,background:C.green,color:"#fff",borderRadius:10,padding:"2px 10px",marginRight:6}}>مقفل</span>}</div>
-                      <span style={{fontSize:13,color:"#141428",fontWeight:700}}>التفاصيل ›</span>
-                    </div>
-                    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}>
-                      {[["عدد العقود",d.count,"#1a1a2e",true],["القيمة النقدية",d.tot.amt,"#c8922a"],["الإجمالي",d.totalWithProfit,"#1a1a2e"],["الأرباح",d.tot.profit,C.green],["ربح المستثمرين",d.tot.profit-d.tot.inst-d.tot.acc,C.green],["المحصّل",d.collected,C.green]].map(([l,v,col,isCount],i)=>(
-                        <div key={i} style={{textAlign:"center",background:"#fff",border:"1px solid "+C.border,borderTop:"3px solid #c8922a",borderRadius:8,padding:"8px 6px"}}>
-                          <div style={{fontSize:12,color:"#64748b",marginBottom:3,fontWeight:600}}>{l}</div>
-                          <div style={{fontSize:15,fontWeight:900,color:col}}>{isCount?v:SAR(v)}</div>
-                        </div>
-                      ))}
-                    </div>
+          <div className="qmp-overview-body" style={{padding:14}}>
+            {!focusD ? <div className="qmp-empty">لا توجد بيانات</div> : <>
+              <div className="qmp-command-grid">
+                <section className="qmp-cycle-summary" aria-label="ملخص الدورة الحالية">
+                  <div className="qmp-card-kicker">ملخص الدورة الحالية</div>
+                  <div className="qmp-cycle-title">
+                    <div><strong>{mLabel(focusYM)}</strong><span>{focusD.count} عقد في الدورة</span></div>
+                    <div className="qmp-progress-ring" style={{"--qmp-progress":focusPct+"%"}}><span>{focusPct}%</span><small>تحصيل</small></div>
                   </div>
-                );
-              })}
-              {months.length===0 && <div style={{textAlign:"center",padding:30,color:"#1f2937"}}>لا توجد بيانات</div>}
-            </div>
+                  <div className="qmp-balance-label">إجمالي المتبقي في المحفظة</div>
+                  <div className="qmp-balance-value">{SAR(totalRemaining)}</div>
+                  <div className="qmp-cycle-foot">
+                    <span><small>قيمة عقود الشهر</small><strong>{SAR(focusD.tot.amt)}</strong></span>
+                    <span><small>إجمالي الشهر بالفائدة</small><strong>{SAR(focusD.totalWithProfit)}</strong></span>
+                  </div>
+                </section>
+
+                <section className="qmp-flow-panel" aria-label="حركة التحصيل">
+                  <div className="qmp-panel-title"><div><span>حركة التحصيل</span><small>مقارنة مالية للدورة الحالية</small></div><b>{mLabel(focusYM)}</b></div>
+                  {[["المحصّل",focusD.collected,"is-green"],["المستحق",focusD.due,"is-gold"],["المتعثّر",focusD.late,"is-red"]].map(([label,value,tone])=>(
+                    <div className="qmp-flow-row" key={label}>
+                      <div><span>{label}</span><strong>{SAR(value)}</strong></div>
+                      <div className="qmp-flow-track"><i className={tone} style={{width:Math.max(value>0?4:0,Math.round((value/focusFlowMax)*100))+"%"}}/></div>
+                    </div>
+                  ))}
+                  <div className="qmp-flow-note"><span>صافي ربح المستثمرين</span><strong>{SAR(focusD.tot.profit-focusD.tot.inst-focusD.tot.acc)}</strong></div>
+                </section>
+              </div>
+
+              <div className="qmp-kpi-grid">
+                {[["عقود الشهر",focusD.count,"عقد","is-navy",true],["الأقساط الشهرية",focusD.instSum,"ريال","is-gold"],["المستحق الآن",focusD.due,"ريال","is-blue"],["المبالغ المتعثرة",focusD.late,"ريال","is-red"]].map(([label,value,unit,tone,isCount])=>(
+                  <article className={"qmp-kpi "+tone} key={label}>
+                    <span>{label}</span><strong>{isCount?value:SAR(value)}</strong><small>{unit}</small>
+                  </article>
+                ))}
+              </div>
+
+              <div className="qmp-insights-grid">
+                <section className="qmp-ranking-panel">
+                  <div className="qmp-panel-title"><div><span>أداء المستثمرين</span><small>الأعلى تحصيلاً في الدورة</small></div><b>{focusLeaders.length}</b></div>
+                  <div className="qmp-ranking-list">
+                    {focusLeaders.map((r,i)=>{
+                      const maxColl=Math.max(...focusLeaders.map(x=>x.coll),1);
+                      return <div className="qmp-rank-row" key={r.name}>
+                        <em>{i+1}</em><div><strong>{r.name}</strong><span><i style={{width:Math.max(r.coll>0?5:0,Math.round((r.coll/maxColl)*100))+"%"}}/></span></div><b>{SAR(r.coll)}</b>
+                      </div>;
+                    })}
+                    {focusLeaders.length===0 && <div className="qmp-empty-small">لا توجد حركة تحصيل للمستثمرين</div>}
+                  </div>
+                </section>
+
+                <section className="qmp-months-panel">
+                  <div className="qmp-panel-title"><div><span>حركة الأشهر</span><small>اضغط على أي شهر لفتح التقرير الكامل</small></div><b>{months.length}</b></div>
+                  <div className="qmp-month-list">
+                    {months.map(ym=>{
+                      const d=calcMonth(ym), closed=!!(monthClose&&monthClose[ym]);
+                      const base=d.collected+d.due;
+                      const pct=base>0?Math.min(100,Math.round((d.collected/base)*100)):0;
+                      return <button type="button" key={ym} className={"qmp-month-row "+(closed?"is-closed":"")} onClick={()=>setOpenMonth(ym)}>
+                        <span className="qmp-month-status">{closed?"مقفل":"مفتوح"}</span>
+                        <div className="qmp-month-copy"><strong>{mLabel(ym)}</strong><small>{d.count} عقد · أرباح {SAR(d.tot.profit)}</small></div>
+                        <div className="qmp-month-progress"><i style={{width:pct+"%"}}/><span>{pct}%</span></div>
+                        <div className="qmp-month-values"><span><small>المحصّل</small><strong>{SAR(d.collected)}</strong></span><span><small>الإجمالي</small><strong>{SAR(d.totalWithProfit)}</strong></span></div>
+                        <b className="qmp-row-arrow">‹</b>
+                      </button>;
+                    })}
+                  </div>
+                </section>
+              </div>
+            </>}
           </div>
         </div>
       ))}
@@ -6037,6 +6136,10 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
     ["ربح المدير",d.tot.inst,"#9a6a00",false,"inst"],
     ["ربح المحاسب",d.tot.acc,"#4f46e5",false,"acc"],
   ];
+  const detailCollectionBase = d.collected + d.due;
+  const detailPct = detailCollectionBase>0 ? Math.min(100,Math.round((d.collected/detailCollectionBase)*100)) : 0;
+  const detailFlowMax = Math.max(d.collected,d.due,d.late,1);
+  const detailLeaders = [...d.invRows].filter(r=>r.count||r.coll||r.due).sort((a,b)=>b.coll-a.coll).slice(0,5);
   // ترتيب البطاقات حسب المحفوظ (بالمفتاح)، والجديدة تنضاف بالنهاية
   const orderedCards = (()=>{
     if(!cardOrder) return cards;
@@ -6061,32 +6164,60 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
     w.document.close();
   };
   return (
-    <div style={styles.panel}>
-      <div style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+    <div className="qmp-month-detail qmp-surface" style={styles.panel}>
+      <div className="qmp-section-head qmp-detail-head" style={{...styles.panelHdr,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <button onClick={onBack} style={{...styles.btnGold(),fontSize:14,padding:"7px 14px"}}>رجوع</button>
-          <h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>{mLabel(ym)} {isClosed&&<span style={{fontSize:12,background:C.green,color:"#fff",borderRadius:10,padding:"2px 10px",marginRight:6}}>مقفل</span>}</h2>
+          <button className="qmp-action qmp-action-secondary" onClick={onBack} style={{...styles.btnGold(),fontSize:14,padding:"7px 14px"}}>رجوع</button>
+          <div className="qmp-heading-copy"><span className="qmp-eyebrow">تقرير الدورة</span><h2 style={{margin:0,fontSize:18,fontWeight:900,color:C.ink}}>{mLabel(ym)} {isClosed&&<span className="qmp-closed-badge" style={{fontSize:12,background:C.green,color:"#fff",borderRadius:10,padding:"2px 10px",marginRight:6}}>مقفل</span>}</h2></div>
         </div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-          <button onClick={printReport} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"1px solid #b8862b",borderRadius:10,fontSize:14,fontWeight:800,padding:"8px 16px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
+          <button className="qmp-action qmp-action-secondary" onClick={printReport} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"1px solid #b8862b",borderRadius:10,fontSize:14,fontWeight:800,padding:"8px 16px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
             <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9V4h10v5M6 18H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1M7 15h10v5H7Z"/></g></svg>
             طباعة التقرير</button>
           {isClosed
-            ? <button onClick={onReopen} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"1px solid #b8862b",borderRadius:10,fontSize:14,fontWeight:800,padding:"8px 16px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
+            ? <button className="qmp-action qmp-action-primary" onClick={onReopen} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"1px solid #b8862b",borderRadius:10,fontSize:14,fontWeight:800,padding:"8px 16px",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:6}}>
                 <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#e0b85c" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7-2.6"/></g></svg>
                 فتح الشهر</button>
-            : <button onClick={onClose} style={{...styles.btn(C.green,"#fff"),fontSize:14,padding:"8px 16px",display:"inline-flex",alignItems:"center",gap:6}}>
+            : <button className="qmp-action qmp-action-success" onClick={onClose} style={{...styles.btn(C.green,"#fff"),fontSize:14,padding:"8px 16px",display:"inline-flex",alignItems:"center",gap:6}}>
                 <svg width="15" height="15" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></g></svg>
                 إقفال هذا الشهر</button>}
         </div>
       </div>
-      <div style={{padding:16}}>
-        <div style={{fontSize:12,color:"#9ca3af",marginBottom:8}}>اسحب البطاقات لإعادة ترتيبها — يُحفظ الترتيب تلقائياً</div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:24}}>
+      <div className="qmp-detail-body" style={{padding:16}}>
+        <div className="qmp-command-grid qmp-detail-command">
+          <section className="qmp-cycle-summary" aria-label="نتيجة الشهر">
+            <div className="qmp-card-kicker">نتيجة {mLabel(ym)}</div>
+            <div className="qmp-cycle-title">
+              <div><strong>إجمالي المحفظة</strong><span>{d.count} عقد · {d.monthlyCount} عقد شهري</span></div>
+              <div className="qmp-progress-ring" style={{"--qmp-progress":detailPct+"%"}}><span>{detailPct}%</span><small>تحصيل</small></div>
+            </div>
+            <div className="qmp-balance-label">الإجمالي المتبقي بالفائدة</div>
+            <div className="qmp-balance-value">{SAR(d.totalWithProfit)}</div>
+            <div className="qmp-cycle-foot">
+              <span><small>الأرباح</small><strong>{SAR(d.tot.profit)}</strong></span>
+              <span><small>ربح المستثمرين</small><strong>{SAR(d.tot.profit-d.tot.inst-d.tot.acc)}</strong></span>
+            </div>
+          </section>
+          <section className="qmp-flow-panel">
+            <div className="qmp-panel-title"><div><span>ميزان التحصيل</span><small>تفاصيل المبالغ الفعلية</small></div><b>{detailPct}%</b></div>
+            {[["المحصّل",d.collected,"is-green"],["المستحق",d.due,"is-gold"],["المتعثّر",d.late,"is-red"]].map(([label,value,tone])=>(
+              <div className="qmp-flow-row" key={label}><div><span>{label}</span><strong>{SAR(value)}</strong></div><div className="qmp-flow-track"><i className={tone} style={{width:Math.max(value>0?4:0,Math.round((value/detailFlowMax)*100))+"%"}}/></div></div>
+            ))}
+            <div className="qmp-detail-leaders">
+              <span>الأعلى تحصيلاً</span>
+              {detailLeaders.slice(0,3).map((r,i)=><div key={r.name}><em>{i+1}</em><strong>{r.name}</strong><b>{SAR(r.coll)}</b></div>)}
+              {detailLeaders.length===0 && <small>لا توجد حركة تحصيل بعد</small>}
+            </div>
+          </section>
+        </div>
+
+        <div className="qmp-drag-hint" style={{fontSize:12,color:"#9ca3af",marginBottom:8}}>اسحب البطاقات لإعادة ترتيبها — يُحفظ الترتيب تلقائياً</div>
+        <div className="qmp-detail-cards" style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:24}}>
           {orderedCards.map(([l,v,col,isCount,key],i)=>{
             const rows=(d.details&&d.details[key])||[];
             return (
             <div key={key} draggable
+              className="qmp-detail-card"
               onDragStart={()=>setDragIdx(i)}
               onDragOver={e=>e.preventDefault()}
               onDrop={()=>onDrop(i)}
@@ -6122,9 +6253,9 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
           )}
         </Modal>
 
-        <div style={{fontSize:17,fontWeight:900,color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12,marginBottom:12}}>محصلة المستثمرين</div>
-        <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",borderRadius:10,overflow:"hidden"}}>
+        <div className="qmp-table-title" style={{fontSize:17,fontWeight:900,color:C.ink,borderRight:"4px solid "+C.gold,paddingRight:12,marginBottom:12}}>محصلة المستثمرين</div>
+        <div className="qmp-table-wrap" style={{overflowX:"auto"}}>
+          <table className="qmp-data-table" style={{width:"100%",borderCollapse:"collapse",borderRadius:10,overflow:"hidden"}}>
             <thead><tr>
               <th style={th}>المستثمر</th><th style={th}>عدد العقود</th><th style={th}>النقدي</th>
               <th style={th}>الإجمالي</th><th style={th}>الأقساط</th><th style={th}>المحصّل</th>
@@ -6147,7 +6278,7 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
             </tbody>
           </table>
         </div>
-        <div style={{fontSize:17,fontWeight:900,color:C.ink,borderRight:"4px solid #2563eb",paddingRight:12,marginTop:28,marginBottom:12}}>إجمالي المتبقي لكل مستثمر</div>
+        <div className="qmp-table-title" style={{fontSize:17,fontWeight:900,color:C.ink,borderRight:"4px solid #2563eb",paddingRight:12,marginTop:28,marginBottom:12}}>إجمالي المتبقي لكل مستثمر</div>
         {(()=>{
           const _doneIds=doneIds||[];
           const _now=new Date();
@@ -6180,8 +6311,8 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
           });
           const sm=rows2.reduce((a,r)=>({activeN:a.activeN+r.activeN,deferN:a.deferN+r.deferN,doneN:a.doneN+r.doneN,cashAmt:a.cashAmt+r.cashAmt,totalAmt:a.totalAmt+r.totalAmt,profitAmt:a.profitAmt+r.profitAmt,paidAmt:a.paidAmt+r.paidAmt,invCash:a.invCash+r.invCash,remAmt:a.remAmt+r.remAmt,overdue:a.overdue+r.overdue,grand:a.grand+r.grand}),{activeN:0,deferN:0,doneN:0,cashAmt:0,totalAmt:0,profitAmt:0,paidAmt:0,invCash:0,remAmt:0,overdue:0,grand:0});
           const smPct=sm.totalAmt>0?Math.round((sm.paidAmt/sm.totalAmt)*100):0;
-          return(<div style={{overflowX:"auto"}}>
-            <table style={{width:"100%",borderCollapse:"collapse",borderRadius:10,overflow:"hidden",minWidth:1050}}>
+          return(<div className="qmp-table-wrap" style={{overflowX:"auto"}}>
+            <table className="qmp-data-table qmp-investor-balance-table" style={{width:"100%",borderCollapse:"collapse",borderRadius:10,overflow:"hidden",minWidth:1050}}>
               <thead><tr>
                 <th style={thSticky}>المستثمر</th>
                 <th style={thG1}>نشط</th><th style={thG1}>مؤجل</th><th style={thG1}>منتهي</th>
@@ -14102,6 +14233,221 @@ body .contracts-lux button.q-contracts-status-tab.is-active .q-contracts-status-
   body .contracts-lux button.q-contracts-status-tab{padding:9px 17px!important}
   body .contracts-lux button.q-contracts-status-tab .q-contracts-status-label{font-size:15px!important}
   body .contracts-lux button.q-contracts-status-tab .q-contracts-status-count{font-size:14px!important}
+}
+</style>
+<!-- ═══ QIMAT MONTHLY PORTFOLIO · EXECUTIVE SUITE v8 ═══ -->
+<style id="qimat-monthly-portfolio-v8">
+/* طبقة واجهة للمؤشرات والجرد ورصيد الحسابات — من دون تغيير منطق النظام */
+.qmp-monthly-portfolio{
+  --qmp-navy:#082943;--qmp-navy-2:#0d385a;--qmp-navy-3:#155173;
+  --qmp-gold:#c8922a;--qmp-gold-2:#e2b85f;--qmp-cream:#fbf8f1;
+  --qmp-paper:#fffefa;--qmp-line:#e5dccd;--qmp-ink:#0b2a43;--qmp-muted:#667789;
+  color:var(--qmp-ink);font-family:"IBM Plex Sans Arabic","Tajawal",Arial,sans-serif;
+}
+.qmp-monthly-portfolio *{box-sizing:border-box}
+.qmp-monthly-portfolio .qmp-subtabs{
+  width:100%!important;padding:5px!important;gap:5px!important;margin-bottom:18px!important;
+  background:#fffaf1!important;border:1px solid #dfd5c4!important;border-radius:15px!important;
+  box-shadow:0 7px 22px rgba(8,41,67,.07)!important;
+}
+.qmp-monthly-portfolio .qmp-subtab{
+  flex:1 1 180px!important;min-height:48px!important;justify-content:center!important;
+  color:#354d61!important;background:transparent!important;border:1px solid transparent!important;
+  border-radius:11px!important;font-size:16px!important;font-weight:900!important;
+}
+.qmp-monthly-portfolio .qmp-subtab svg *{stroke:#8f6b28!important}
+.qmp-monthly-portfolio .qmp-subtab.is-active{
+  color:#fff!important;background:linear-gradient(145deg,var(--qmp-navy-2),var(--qmp-navy))!important;
+  border-color:rgba(200,146,42,.72)!important;box-shadow:0 6px 16px rgba(8,41,67,.18)!important;
+}
+.qmp-monthly-portfolio .qmp-subtab.is-active svg *{stroke:var(--qmp-gold-2)!important}
+
+.qmp-surface{
+  overflow:hidden!important;background:var(--qmp-cream)!important;border:1px solid #dfd5c5!important;
+  border-radius:20px!important;box-shadow:0 12px 34px rgba(8,41,67,.09)!important;
+}
+.qmp-section-head{
+  min-height:92px!important;padding:18px 21px!important;
+  background:
+    radial-gradient(circle at 8% 18%,rgba(226,184,95,.17),transparent 28%),
+    linear-gradient(110deg,var(--qmp-navy),var(--qmp-navy-2) 68%,var(--qmp-navy-3))!important;
+  color:#fff!important;border:0!important;border-bottom:2px solid var(--qmp-gold)!important;
+}
+.qmp-heading-copy{min-width:220px}
+.qmp-heading-copy .qmp-eyebrow{
+  display:block;margin-bottom:3px;color:var(--qmp-gold-2);font-size:12px;font-weight:900;
+}
+.qmp-heading-copy h2,.qmp-heading-copy h2 svg+*{color:#fff!important}
+.qmp-heading-copy h2{font-size:22px!important;line-height:1.3!important}
+.qmp-heading-copy h2 svg *{stroke:var(--qmp-gold-2)!important}
+.qmp-heading-copy p{margin:5px 0 0;color:#c5d2dc;font-size:13px;font-weight:700}
+.qmp-head-actions{justify-content:flex-end}
+.qmp-total-pill{
+  min-height:42px;display:inline-flex;align-items:center;gap:8px;padding:8px 12px;
+  color:#d5e0e7!important;background:rgba(255,255,255,.065);border:1px solid rgba(226,184,95,.28);
+  border-radius:11px;font-size:12.5px!important;
+}
+.qmp-total-pill strong{color:var(--qmp-gold-2);font-size:15px;font-weight:900}
+.qmp-action{
+  min-height:41px!important;padding:9px 14px!important;border-radius:10px!important;
+  font-size:13.5px!important;font-weight:900!important;font-family:inherit!important;
+}
+.qmp-action-primary{background:linear-gradient(145deg,#e3b75a,#c58e25)!important;color:#102b41!important;border:1px solid #a9781e!important}
+.qmp-action-primary svg *{stroke:#102b41!important}
+.qmp-action-secondary{background:#fffdf8!important;color:#15334b!important;border:1px solid #d4b36c!important}
+.qmp-action-secondary svg *{stroke:#9a6d1f!important}
+.qmp-action-success{background:#16834a!important;color:#fff!important;border:1px solid #116e3d!important}
+.qmp-action-danger{background:#fff8f6!important;color:#a82f2b!important;border:1px solid #d99b96!important}
+.qmp-overview-body,.qmp-detail-body{padding:18px!important}
+.qmp-empty{padding:50px 20px;text-align:center;color:#697887;font-size:15px;font-weight:800}
+.qmp-empty-small{padding:18px;text-align:center;color:#71808e;font-size:13px;font-weight:700}
+
+/* المؤشرات — لوحة القيادة المعتمدة */
+.qmp-command-grid{
+  display:grid;grid-template-columns:minmax(300px,.86fr) minmax(420px,1.14fr);gap:14px;margin-bottom:14px;
+}
+.qmp-cycle-summary{
+  position:relative;overflow:hidden;min-height:272px;padding:20px;
+  background:
+    radial-gradient(circle at 10% 18%,rgba(226,184,95,.18),transparent 31%),
+    linear-gradient(145deg,var(--qmp-navy-2),var(--qmp-navy));
+  color:#fff;border:1px solid rgba(200,146,42,.64);border-radius:17px;
+  box-shadow:0 12px 26px rgba(8,41,67,.16);
+}
+.qmp-cycle-summary::after{content:"";position:absolute;left:-55px;bottom:-72px;width:190px;height:190px;border:1px solid rgba(226,184,95,.13);border-radius:50%;box-shadow:0 0 0 25px rgba(226,184,95,.025)}
+.qmp-card-kicker{position:relative;z-index:1;color:var(--qmp-gold-2);font-size:12px;font-weight:900}
+.qmp-cycle-title{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:8px}
+.qmp-cycle-title>div:first-child{display:flex;flex-direction:column;gap:4px}
+.qmp-cycle-title>div:first-child strong{color:#fff;font-size:20px;font-weight:900}
+.qmp-cycle-title>div:first-child span{color:#b9c9d5;font-size:12px;font-weight:700}
+.qmp-progress-ring{
+  --qmp-progress:0%;position:relative;flex:0 0 92px;width:92px;height:92px;border-radius:50%;
+  display:grid;place-content:center;text-align:center;
+  background:conic-gradient(var(--qmp-gold-2) var(--qmp-progress),rgba(255,255,255,.11) 0);
+}
+.qmp-progress-ring::before{content:"";position:absolute;inset:8px;background:var(--qmp-navy);border-radius:50%;border:1px solid rgba(255,255,255,.08)}
+.qmp-progress-ring span,.qmp-progress-ring small{position:relative;z-index:1;display:block}
+.qmp-progress-ring span{color:#fff;font-size:20px;font-weight:900;line-height:1.1}
+.qmp-progress-ring small{margin-top:2px;color:#c1cfda;font-size:9.5px;font-weight:800}
+.qmp-balance-label{position:relative;z-index:1;margin-top:14px;color:#b9c9d5;font-size:12px;font-weight:750}
+.qmp-balance-value{position:relative;z-index:1;margin-top:2px;color:var(--qmp-gold-2);font-size:clamp(28px,3.1vw,39px);font-weight:900;font-variant-numeric:tabular-nums}
+.qmp-cycle-foot{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:15px}
+.qmp-cycle-foot>span{padding:9px 10px;background:rgba(255,255,255,.055);border:1px solid rgba(226,184,95,.20);border-radius:10px}
+.qmp-cycle-foot small,.qmp-cycle-foot strong{display:block}
+.qmp-cycle-foot small{color:#adbfcc;font-size:10px;font-weight:700}
+.qmp-cycle-foot strong{margin-top:2px;color:#fff;font-size:14px;font-weight:900}
+
+.qmp-flow-panel,.qmp-ranking-panel,.qmp-months-panel{
+  padding:17px;background:#fffefa;border:1px solid var(--qmp-line);border-top:3px solid var(--qmp-gold);
+  border-radius:17px;box-shadow:0 7px 20px rgba(8,41,67,.065);
+}
+.qmp-panel-title{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.qmp-panel-title>div{display:flex;flex-direction:column;gap:2px}
+.qmp-panel-title span{color:var(--qmp-navy);font-size:17px;font-weight:900}
+.qmp-panel-title small{color:#758391;font-size:11.5px;font-weight:700}
+.qmp-panel-title>b{min-width:38px;padding:4px 9px;text-align:center;color:#8d661f;background:#fbf1dc;border:1px solid #e1c98d;border-radius:9px;font-size:12px;font-weight:900}
+.qmp-flow-row{margin-bottom:15px}
+.qmp-flow-row>div:first-child{display:flex;justify-content:space-between;gap:10px;margin-bottom:6px}
+.qmp-flow-row span{color:#41566a;font-size:13px;font-weight:800}
+.qmp-flow-row strong{color:var(--qmp-navy);font-size:14px;font-weight:900}
+.qmp-flow-track{height:11px;overflow:hidden;background:#eee9df;border-radius:99px}
+.qmp-flow-track i{display:block;height:100%;border-radius:99px;transition:width .25s ease}
+.qmp-flow-track i.is-green{background:#24935a}.qmp-flow-track i.is-gold{background:#d2a03c}.qmp-flow-track i.is-red{background:#cf5145}
+.qmp-flow-note{display:flex;justify-content:space-between;gap:12px;margin-top:18px;padding:10px 12px;background:#f7f2e8;border:1px solid #e6d9c2;border-radius:10px}
+.qmp-flow-note span{color:#607183;font-size:12px;font-weight:750}.qmp-flow-note strong{color:#147249;font-size:15px;font-weight:900}
+
+.qmp-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.qmp-kpi{position:relative;overflow:hidden;min-height:105px;padding:15px 16px;background:#fffefa;border:1px solid var(--qmp-line);border-top:3px solid var(--qmp-gold);border-radius:14px;box-shadow:0 6px 17px rgba(8,41,67,.055)}
+.qmp-kpi::before{content:"";position:absolute;left:-18px;bottom:-22px;width:70px;height:70px;border-radius:50%;background:rgba(200,146,42,.08)}
+.qmp-kpi span,.qmp-kpi strong,.qmp-kpi small{position:relative;z-index:1;display:block}
+.qmp-kpi span{color:#5f7181;font-size:12.5px;font-weight:800}.qmp-kpi strong{margin-top:5px;color:var(--qmp-navy);font-size:22px;font-weight:900}.qmp-kpi small{margin-top:2px;color:#8b98a4;font-size:10.5px;font-weight:700}
+.qmp-kpi.is-red{border-top-color:#c7463b}.qmp-kpi.is-blue{border-top-color:#2e6f9e}.qmp-kpi.is-navy{border-top-color:var(--qmp-navy)}
+.qmp-insights-grid{display:grid;grid-template-columns:minmax(300px,.82fr) minmax(460px,1.18fr);gap:14px}
+.qmp-ranking-list{display:flex;flex-direction:column;gap:7px}
+.qmp-rank-row{display:grid;grid-template-columns:31px 1fr auto;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid #eee6d9}
+.qmp-rank-row:last-child{border-bottom:0}.qmp-rank-row em{width:27px;height:27px;display:grid;place-items:center;color:#8c641c;background:#fbf0d7;border:1px solid #e1c785;border-radius:9px;font-style:normal;font-size:11px;font-weight:900}
+.qmp-rank-row>div{min-width:0}.qmp-rank-row>div strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--qmp-navy);font-size:13px;font-weight:900}
+.qmp-rank-row>div span{display:block;height:6px;margin-top:5px;overflow:hidden;background:#eee8de;border-radius:99px}.qmp-rank-row>div i{display:block;height:100%;background:linear-gradient(90deg,#c8922a,#e2b85f);border-radius:99px}
+.qmp-rank-row>b{color:#1b7350;font-size:12px;font-weight:900;white-space:nowrap}
+.qmp-month-list{display:flex;flex-direction:column;gap:7px;max-height:350px;overflow:auto;padding-left:2px}
+.qmp-month-row{width:100%!important;display:grid!important;grid-template-columns:58px minmax(135px,1fr) 135px minmax(190px,.9fr) 18px!important;align-items:center!important;gap:10px!important;min-height:0!important;padding:10px 11px!important;background:#fff!important;border:1px solid #e6ded1!important;border-radius:11px!important;color:var(--qmp-ink)!important;font-family:inherit!important;text-align:right!important;cursor:pointer!important;box-shadow:none!important;transition:transform .15s ease,border-color .15s ease,background .15s ease!important}
+.qmp-month-row:hover{transform:translateY(-1px)!important;background:#fff9ed!important;border-color:#d1ad64!important}.qmp-month-status{padding:4px 6px;text-align:center;color:#805d1e;background:#f8edda;border-radius:7px;font-size:10px;font-weight:900}.qmp-month-row.is-closed .qmp-month-status{color:#17643e;background:#e9f5ee}
+.qmp-month-copy{display:flex;flex-direction:column;min-width:0}.qmp-month-copy strong{color:var(--qmp-navy);font-size:13px;font-weight:900}.qmp-month-copy small{margin-top:2px;color:#73818f;font-size:10.5px;font-weight:700;white-space:nowrap}
+.qmp-month-progress{position:relative;height:9px;background:#ece7df;border-radius:99px}.qmp-month-progress i{display:block;height:100%;background:#309361;border-radius:99px}.qmp-month-progress span{position:absolute;top:-18px;left:0;color:#5f6d79;font-size:9px;font-weight:900}
+.qmp-month-values{display:grid;grid-template-columns:1fr 1fr;gap:7px}.qmp-month-values span{display:flex;flex-direction:column}.qmp-month-values small{color:#87939e;font-size:9.5px;font-weight:700}.qmp-month-values strong{color:#244056;font-size:11.5px;font-weight:900;white-space:nowrap}.qmp-row-arrow{color:var(--qmp-gold);font-size:22px}
+
+/* تفاصيل المؤشرات */
+.qmp-detail-head>div:first-child{min-width:0}.qmp-detail-command{margin-bottom:15px}.qmp-detail-leaders{margin-top:15px;padding-top:12px;border-top:1px solid #e8dfd2}.qmp-detail-leaders>span{display:block;margin-bottom:7px;color:#697987;font-size:11px;font-weight:800}
+.qmp-detail-leaders>div{display:grid;grid-template-columns:23px 1fr auto;align-items:center;gap:7px;margin-top:5px}.qmp-detail-leaders em{width:21px;height:21px;display:grid;place-items:center;background:#f4e7ca;color:#8e641a;border-radius:7px;font-style:normal;font-size:9px;font-weight:900}.qmp-detail-leaders strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--qmp-navy);font-size:12px;font-weight:850}.qmp-detail-leaders b{color:#18764c;font-size:11.5px;font-weight:900}
+.qmp-drag-hint{color:#6f7d89!important;font-size:12px!important;font-weight:700!important}
+.qmp-detail-cards{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:10px!important}
+.qmp-detail-card{min-height:108px!important;display:flex!important;flex-direction:column!important;justify-content:center!important;padding:13px 10px!important;background:#fffefa!important;border:1px solid var(--qmp-line)!important;border-top:3px solid var(--qmp-gold)!important;border-radius:13px!important;box-shadow:0 6px 15px rgba(8,41,67,.05)!important}
+.qmp-detail-card>div:first-child{color:#526779!important;font-size:13.5px!important;font-weight:900!important}.qmp-detail-card>div:nth-child(2){color:var(--qmp-navy)!important;font-size:21px!important;font-weight:900!important}.qmp-detail-card>div:last-child{color:#7b6a47!important;font-size:11.5px!important}
+.qmp-table-title{color:var(--qmp-navy)!important;border-right-color:var(--qmp-gold)!important;font-size:19px!important;font-weight:900!important}
+.qmp-table-wrap{overflow-x:auto!important;border:1px solid #e2d9cc;border-radius:13px;box-shadow:0 7px 20px rgba(8,41,67,.055);background:#fff}
+.qmp-data-table{border-collapse:separate!important;border-spacing:0!important;background:#fff!important}
+.qmp-data-table th{padding:12px 9px!important;background:linear-gradient(180deg,var(--qmp-navy-2),var(--qmp-navy))!important;color:#fff!important;border-bottom:2px solid var(--qmp-gold)!important;font-size:13.5px!important;font-weight:900!important}
+.qmp-data-table td{padding:11px 9px!important;color:#18364d!important;border-bottom:1px solid #ebe4d9!important;font-size:13.5px!important;font-weight:700!important}
+.qmp-data-table tbody tr:nth-child(even) td{background:#fbf8f2!important}.qmp-data-table tbody tr:hover td{background:#fff4dc!important}.qmp-investor-balance-table{min-width:1180px!important}
+
+/* الجرد — المعادلة والدفتران */
+.qmp-jard-page{color:var(--qmp-ink);font-family:inherit}.qmp-jard-toolbar{padding:12px 15px!important;background:#fffefa!important;border:1px solid #dfd5c6!important;border-radius:14px!important;box-shadow:0 6px 18px rgba(8,41,67,.06)!important}.qmp-jard-toolbar label{color:var(--qmp-navy)!important;font-size:16px!important;font-weight:900!important}.qmp-jard-toolbar select{min-height:43px!important;background:#fff!important;color:var(--qmp-navy)!important;border:1px solid #d3c5ad!important;border-radius:10px!important;font-size:14px!important;font-weight:800!important}
+.qmp-jard-hero{position:relative;overflow:hidden;margin-bottom:14px;padding:19px 20px;background:linear-gradient(145deg,var(--qmp-navy-2),var(--qmp-navy));border:1px solid rgba(200,146,42,.66);border-right:5px solid var(--qmp-gold);border-radius:18px;box-shadow:0 12px 28px rgba(8,41,67,.15)}
+.qmp-jard-heading span{color:var(--qmp-gold-2);font-size:11.5px;font-weight:900}.qmp-jard-heading h2{margin:2px 0 0;color:#fff;font-size:24px;font-weight:900}.qmp-jard-heading p{margin:4px 0 0;color:#bdcbd6;font-size:12.5px;font-weight:700}
+.qmp-jard-equation{display:grid;grid-template-columns:minmax(150px,1fr) 36px minmax(150px,1fr) 36px minmax(170px,1.08fr);align-items:center;gap:8px;margin-top:17px}.qmp-equation-card{min-height:105px;padding:13px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,.065);border:1px solid rgba(226,184,95,.27);border-radius:13px;text-align:center}.qmp-equation-card small{color:#bed0dc;font-size:11px;font-weight:750}.qmp-equation-card strong{margin-top:4px;color:#fff;font-size:23px;font-weight:900;font-variant-numeric:tabular-nums}.qmp-equation-card span{margin-top:3px;color:#9fb2c0;font-size:10px;font-weight:800}.qmp-equation-card.is-assets{border-top:3px solid #45a978}.qmp-equation-card.is-liabilities{border-top:3px solid #d4a341}.qmp-equation-card.is-net{background:rgba(226,184,95,.11);border-color:rgba(226,184,95,.51)}.qmp-equation-card.is-net strong{color:var(--qmp-gold-2)}.qmp-equation-card.is-net.is-negative{border-top:3px solid #dd6258}.qmp-equation-sign{color:var(--qmp-gold-2);font-size:27px;font-weight:900;text-align:center}
+.qmp-jard-sources{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.qmp-jard-sources>div{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);border-radius:9px}.qmp-jard-sources i{width:8px;height:8px;flex:0 0 8px;background:#43ad77;border-radius:50%;box-shadow:0 0 0 3px rgba(67,173,119,.13)}.qmp-jard-sources .is-waiting i{background:#d9a33a;box-shadow:0 0 0 3px rgba(217,163,58,.13)}.qmp-jard-sources span{min-width:0;display:flex;flex-direction:column}.qmp-jard-sources small{color:#9fb2c0;font-size:9.5px;font-weight:700}.qmp-jard-sources strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;font-size:11.5px;font-weight:850}
+.qmp-jard-ledgers{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}.qmp-jard-ledger{overflow:hidden;background:#fffefa;border:1px solid #dfd5c6;border-radius:17px;box-shadow:0 8px 23px rgba(8,41,67,.07)}.qmp-ledger-head{min-height:70px;padding:13px 15px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:linear-gradient(145deg,var(--qmp-navy-2),var(--qmp-navy));border-bottom:2px solid var(--qmp-gold)}.qmp-jard-ledger.is-assets .qmp-ledger-head{background:linear-gradient(145deg,#154e52,#0d343d)}.qmp-ledger-head>div{display:flex;flex-direction:column}.qmp-ledger-head span{color:#fff;font-size:17px;font-weight:900}.qmp-ledger-head small{margin-top:2px;color:#b8c7d1;font-size:10.5px;font-weight:700}.qmp-ledger-head>b{color:var(--qmp-gold-2);font-size:18px;font-weight:900;white-space:nowrap}
+.qmp-jard-table{width:100%;min-width:620px;border-collapse:collapse;font-size:13px}.qmp-jard-table th{padding:11px 8px!important;background:#f5efe4!important;color:var(--qmp-navy)!important;border-bottom:2px solid #d8b66e!important;font-size:12.5px!important;font-weight:900!important}.qmp-jard-table td{padding:9px 8px!important;color:#18364d!important;border-bottom:1px solid #ebe4d9!important;font-size:13px!important}.qmp-jard-row:nth-child(even) td{background:#fbf8f2!important}.qmp-jard-row td:first-child>span{color:var(--qmp-navy)!important;font-size:13.5px!important;font-weight:900!important}.qmp-jard-row td:first-child>div{color:#6d7c89!important;font-size:10.5px!important;font-weight:700!important}.qmp-jard-row td>span[style*="display: inline-block"]{max-width:135px!important;padding:9px 8px!important;background:#fff!important;border-width:1px!important;border-color:#d8cfbf!important;color:#17364e!important;font-size:14px!important;font-weight:900!important}.qmp-jard-row input{max-width:135px!important;min-height:39px!important;padding:8px!important;background:#fff!important;color:#17364e!important;border:1px solid #c9ad72!important;font-size:14px!important;font-weight:900!important}.qmp-jard-group-title{padding:8px 12px!important;background:#f8edd7!important;color:#7d591b!important;border-right:4px solid var(--qmp-gold)!important;font-size:12px!important;font-weight:900!important}
+.qmp-jard-result{min-height:72px;margin-top:14px;padding:13px 17px;display:flex;align-items:center;justify-content:space-between;gap:14px;background:#eef8f2;border:1px solid #9ac8ac;border-right:5px solid #2e8b57;border-radius:14px}.qmp-jard-result.is-negative{background:#fff3f1;border-color:#e3a7a2;border-right-color:#c94a40}.qmp-jard-result.is-positive{background:#fff8e9;border-color:#dec184;border-right-color:#c8922a}.qmp-jard-result>div{display:flex;flex-direction:column}.qmp-jard-result span{color:#617382;font-size:11px;font-weight:750}.qmp-jard-result strong{margin-top:2px;color:var(--qmp-navy);font-size:14px;font-weight:900}.qmp-jard-result>b{color:#167047;font-size:22px;font-weight:900;white-space:nowrap}.qmp-jard-result.is-negative>b{color:#b7352e}.qmp-jard-result.is-positive>b{color:#8b641e}.qmp-jard-result b small{font-size:10px}
+
+/* رصيد الحسابات — الحركات والمطابقة الذكية */
+.qmp-bank-page{color:var(--qmp-ink);font-family:inherit}.qmp-bank-view-tabs{padding:5px!important;background:#fffaf1!important;border:1px solid #dfd5c6!important;border-radius:14px!important;box-shadow:0 6px 18px rgba(8,41,67,.06)!important}.qmp-bank-view-tab{min-height:47px!important;color:#41586b!important;background:transparent!important;border:1px solid transparent!important;border-radius:10px!important;font-size:15px!important;font-weight:900!important}.qmp-bank-view-tab svg *{stroke:#8e6a29!important}.qmp-bank-view-tab.is-active{color:#fff!important;background:linear-gradient(145deg,var(--qmp-navy-2),var(--qmp-navy))!important;border-color:rgba(200,146,42,.66)!important;box-shadow:0 6px 15px rgba(8,41,67,.16)!important}.qmp-bank-view-tab.is-active svg *{stroke:var(--qmp-gold-2)!important}
+.qmp-bank-empty{background:#fffefa!important;color:#647687!important;border:1px dashed #d2b677!important;border-radius:15px!important;font-size:15px!important;font-weight:800!important}
+.qmp-bank-upload-card{overflow:hidden!important;padding:0!important;background:#fffefa!important;border:1px solid #dfd5c6!important;border-radius:18px!important;box-shadow:0 10px 27px rgba(8,41,67,.08)!important}.qmp-bank-upload-head{min-height:86px;margin:0!important;padding:16px 18px!important;background:linear-gradient(145deg,var(--qmp-navy-2),var(--qmp-navy))!important;border-bottom:2px solid var(--qmp-gold)!important}.qmp-bank-title{color:#fff!important;font-size:20px!important;font-weight:900!important}.qmp-bank-title svg *{stroke:var(--qmp-gold-2)!important}.qmp-bank-title>span{display:flex;flex-direction:column}.qmp-bank-title small{margin-bottom:2px;color:var(--qmp-gold-2);font-size:10.5px;font-weight:900}.qmp-bank-upload-head button{min-height:40px!important;padding:8px 13px!important;background:#fffdf8!important;color:#17344c!important;border:1px solid #d1ad64!important;border-radius:9px!important;font-size:12.5px!important;font-weight:900!important}.qmp-bank-upload-head button svg *{stroke:#9a6a1b!important}.qmp-bank-upload-head button:last-of-type{background:#fff3f0!important;color:#a52f2b!important;border-color:#d99c96!important}.qmp-bank-dropzone{margin:14px!important;padding:25px 18px!important;background:#fbf7ed!important;border:2px dashed #cda85c!important;border-radius:14px!important}.qmp-bank-dropzone.is-dragging{background:#fff1ce!important;border-color:var(--qmp-gold)!important}.qmp-bank-dropzone>div:first-child{color:var(--qmp-navy)!important;font-size:15.5px!important;font-weight:900!important}.qmp-bank-dropzone>div:nth-child(2){color:#6c7b88!important;font-size:12.5px!important;font-weight:700!important}
+.qmp-bank-kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important}.qmp-bank-kpi{min-height:104px!important;display:flex!important;flex-direction:column!important;justify-content:center!important;background:#fffefa!important;border:1px solid #dfd5c6!important;border-top:3px solid var(--qmp-gold)!important;border-radius:14px!important;box-shadow:0 6px 17px rgba(8,41,67,.055)!important}.qmp-bank-kpi>div:first-child{color:#657686!important;font-size:12.5px!important;font-weight:850!important}.qmp-bank-kpi>div:nth-child(2){color:var(--qmp-navy)!important;font-size:21px!important;font-weight:900!important}.qmp-bank-kpi-balance{background:linear-gradient(145deg,var(--qmp-navy-2),var(--qmp-navy))!important;border-color:rgba(200,146,42,.65)!important}.qmp-bank-kpi-balance>div:first-child{color:#bacbd6!important}.qmp-bank-kpi-balance>div:nth-child(2){color:var(--qmp-gold-2)!important;font-size:24px!important}.qmp-bank-kpi.is-active{background:#fff4dc!important;border-color:#cda44d!important;box-shadow:0 7px 18px rgba(160,111,28,.12)!important}
+.qmp-bank-types-title{margin:18px 0 9px!important;color:var(--qmp-navy)!important;font-size:14.5px!important;font-weight:900!important}.qmp-bank-types-title svg *{stroke:#a27320!important}.qmp-bank-type-grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))!important}.qmp-bank-type-card{min-height:96px!important;background:#fffefa!important;border:1px solid #e0d7c9!important;border-top:3px solid #d4aa54!important;border-radius:13px!important;box-shadow:0 5px 14px rgba(8,41,67,.045)!important}.qmp-bank-type-card>div:first-child{color:#4c6173!important;font-size:12.5px!important;font-weight:850!important}.qmp-bank-type-card>div:nth-child(2){color:var(--qmp-navy)!important;font-size:17px!important;font-weight:900!important}.qmp-bank-type-card.is-active{background:#fff3d9!important;border-color:#c69737!important;transform:translateY(-1px)}
+.qmp-bank-filter-badge{box-shadow:0 5px 14px rgba(8,41,67,.045)}.qmp-bank-search{min-height:50px!important;background:#fffefa!important;border:1px solid #d9cebd!important;border-radius:12px!important;box-shadow:inset 0 1px 2px rgba(8,41,67,.025)!important}.qmp-bank-search input{color:var(--qmp-navy)!important;font-size:14.5px!important;font-weight:800!important}.qmp-bank-search input::placeholder{color:#82909c!important}.qmp-bank-table-wrap{border:1px solid #ded4c5!important;border-radius:14px!important;box-shadow:0 8px 23px rgba(8,41,67,.065)!important}.qmp-bank-table{min-width:760px!important;border-collapse:separate!important;border-spacing:0!important;background:#fff!important}.qmp-bank-table th{padding:12px 9px!important;background:linear-gradient(180deg,var(--qmp-navy-2),var(--qmp-navy))!important;color:#fff!important;border-bottom:2px solid var(--qmp-gold)!important;font-size:13.5px!important;font-weight:900!important}.qmp-bank-table td{padding:11px 9px!important;color:#17364e!important;border-bottom:1px solid #ebe4da!important;font-size:13.5px!important;font-weight:700!important}.qmp-bank-table tbody tr:nth-child(even) td{background:#fbf8f2!important}.qmp-bank-table tbody tr:hover td{background:#fff3d7!important}.qmp-bank-table td:nth-child(2)>div:first-child{color:var(--qmp-navy)!important;font-size:14px!important;font-weight:900!important}.qmp-bank-table td:nth-child(2)>div:nth-child(2){color:#667989!important;font-size:12.5px!important;font-weight:750!important}
+
+.qmp-reconcile-hero{display:grid;grid-template-columns:minmax(260px,.75fr) minmax(330px,1.25fr);gap:12px;margin-bottom:12px}.qmp-reconcile-balance{min-height:138px;padding:18px;display:flex;flex-direction:column;justify-content:center;background:linear-gradient(145deg,var(--qmp-navy-2),var(--qmp-navy));border:1px solid rgba(200,146,42,.65);border-radius:16px;box-shadow:0 9px 22px rgba(8,41,67,.14)}.qmp-reconcile-balance span{color:#b9cad5;font-size:12px;font-weight:800}.qmp-reconcile-balance strong{margin-top:4px;color:var(--qmp-gold-2);font-size:27px;font-weight:900}.qmp-reconcile-balance small{margin-top:7px;color:#96acbb;font-size:10.5px;font-weight:700}.qmp-reconcile-progress{min-height:138px;padding:18px;background:#fffefa;border:1px solid #ded4c5;border-top:3px solid var(--qmp-gold);border-radius:16px;box-shadow:0 7px 20px rgba(8,41,67,.06)}.qmp-reconcile-progress>div:first-child{display:flex;justify-content:space-between;align-items:center}.qmp-reconcile-progress span{color:var(--qmp-navy);font-size:16px;font-weight:900}.qmp-reconcile-progress b{color:#1c8150;font-size:21px;font-weight:900}.qmp-reconcile-track{height:11px;margin-top:15px;overflow:hidden;background:#ece6dc;border-radius:99px}.qmp-reconcile-track i{display:block;height:100%;background:linear-gradient(90deg,#1f8c57,#52b67f);border-radius:99px}.qmp-reconcile-progress p{margin:10px 0 0;color:#677987;font-size:11.5px;font-weight:750}
+.qmp-reconcile-alert{position:relative;padding:15px 18px!important;background:#fff4f1!important;color:#9f2f29!important;border:1px solid #e1aaa5!important;border-right:5px solid #c94239!important;border-radius:14px!important;box-shadow:0 6px 16px rgba(153,27,27,.07)!important}.qmp-reconcile-alert>div:first-child{color:#9f2f29!important;font-size:15px!important;font-weight:900!important}.qmp-reconcile-alert>div:nth-child(2){color:#b53630!important;font-size:21px!important}.qmp-reconcile-alert>div:last-child{color:#805b58!important;opacity:1!important;font-weight:700!important}
+.qmp-reconcile-kpis{gap:8px!important}.qmp-reconcile-kpi{min-height:82px!important;color:#526779!important;background:#fffefa!important;border:1px solid #ded4c5!important;border-top:3px solid #d0a24a!important;border-radius:12px!important;font-size:11.5px!important;font-weight:850!important}.qmp-reconcile-kpi svg *{stroke:#9a6a1b!important}.qmp-reconcile-kpi.is-active{color:#fff!important;background:linear-gradient(145deg,var(--qmp-navy-2),var(--qmp-navy))!important;border-color:rgba(200,146,42,.68)!important;box-shadow:0 6px 16px rgba(8,41,67,.14)!important}.qmp-reconcile-kpi.is-active svg *{stroke:var(--qmp-gold-2)!important}.qmp-reconcile-kpi>div:last-child{font-size:17px!important;font-weight:900!important}
+.qmp-reconcile-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.qmp-match-card{margin:0!important;padding:13px 14px!important;background:#fffefa!important;border:1px solid #dfd5c6!important;border-right:3px solid #d2a247!important;border-radius:13px!important;box-shadow:0 5px 15px rgba(8,41,67,.05)!important}.qmp-match-card>div:first-child>div:first-child>div:first-child{color:#72808d!important}.qmp-match-card>div:first-child>div:first-child>div:nth-child(2){color:var(--qmp-navy)!important;font-size:13.5px!important;font-weight:900!important}.qmp-match-evidence{border-radius:9px!important}.qmp-match-actions button{min-height:37px!important;font-size:12px!important;font-weight:900!important}
+
+@media (max-width:1100px){
+  .qmp-detail-cards{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  .qmp-jard-ledgers{grid-template-columns:1fr}.qmp-reconcile-list{grid-template-columns:1fr}
+}
+@media (max-width:900px){
+  .qmp-command-grid,.qmp-insights-grid,.qmp-reconcile-hero{grid-template-columns:1fr}
+  .qmp-cycle-summary{min-height:250px}.qmp-kpi-grid,.qmp-bank-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .qmp-detail-cards{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .qmp-jard-equation{grid-template-columns:1fr 30px 1fr;grid-template-areas:"assets minus liabilities" "net net net"}.qmp-equation-card.is-assets{grid-area:assets}.qmp-jard-equation>.qmp-equation-sign:nth-of-type(1){grid-area:minus}.qmp-equation-card.is-liabilities{grid-area:liabilities}.qmp-jard-equation>.qmp-equation-sign:nth-of-type(2){display:none}.qmp-equation-card.is-net{grid-area:net}
+  .qmp-jard-sources{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .qmp-month-row{grid-template-columns:55px minmax(130px,1fr) 110px 170px 16px!important}
+}
+@media (max-width:700px){
+  .qmp-monthly-portfolio .qmp-subtab{flex:1 1 30%!important;min-height:45px!important;padding:9px 8px!important;font-size:14px!important}
+  .qmp-section-head{align-items:flex-start!important;padding:15px!important}.qmp-heading-copy h2{font-size:19px!important}.qmp-heading-copy p{font-size:11.5px}.qmp-head-actions{width:100%;justify-content:flex-start}.qmp-total-pill{width:100%;justify-content:space-between}.qmp-action{flex:1 1 145px!important;justify-content:center!important}
+  .qmp-overview-body,.qmp-detail-body{padding:11px!important}.qmp-cycle-summary{padding:16px}.qmp-cycle-title>div:first-child strong{font-size:18px}.qmp-progress-ring{width:82px;height:82px;flex-basis:82px}.qmp-balance-value{font-size:28px}.qmp-cycle-foot{grid-template-columns:1fr}
+  .qmp-kpi-grid,.qmp-bank-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.qmp-kpi,.qmp-bank-kpi{min-height:94px!important;padding:12px!important}.qmp-kpi strong{font-size:19px}
+  .qmp-detail-cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}.qmp-detail-card{min-height:101px!important}.qmp-table-title{font-size:17px!important}
+  .qmp-month-list{max-height:none}.qmp-month-row{grid-template-columns:54px 1fr 18px!important;gap:7px!important}.qmp-month-progress,.qmp-month-values{grid-column:2/4}.qmp-month-progress{margin-top:5px}.qmp-month-values{padding-top:3px}.qmp-row-arrow{grid-column:3;grid-row:1}
+  .qmp-jard-toolbar{margin-bottom:12px!important}.qmp-jard-hero{padding:15px 13px}.qmp-jard-heading h2{font-size:20px}.qmp-jard-heading p{font-size:11px}.qmp-jard-equation{gap:5px}.qmp-equation-card{min-height:92px;padding:10px 7px}.qmp-equation-card strong{font-size:18px}.qmp-jard-sources{gap:5px}.qmp-jard-sources>div{padding:7px}.qmp-ledger-head span{font-size:15px}.qmp-ledger-head>b{font-size:15px}
+  .qmp-jard-result{align-items:flex-start;flex-direction:column}.qmp-jard-result>b{font-size:20px}
+  .qmp-bank-view-tab{font-size:13.5px!important}.qmp-bank-upload-head{align-items:flex-start!important;padding:14px!important}.qmp-bank-title{font-size:18px!important}.qmp-bank-upload-head>div:last-of-type{width:100%}.qmp-bank-upload-head button{flex:1 1 120px!important;justify-content:center!important}.qmp-bank-dropzone{margin:10px!important;padding:20px 11px!important}.qmp-bank-type-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.qmp-bank-search input{font-size:13px!important}.qmp-reconcile-kpis{grid-template-columns:repeat(3,minmax(0,1fr))!important}.qmp-reconcile-kpi{min-height:76px!important}
+}
+@media (max-width:480px){
+  .qmp-monthly-portfolio .qmp-subtab{font-size:13px!important}.qmp-monthly-portfolio .qmp-subtab svg{width:15px;height:15px}
+  .qmp-cycle-title{align-items:flex-start}.qmp-progress-ring{width:75px;height:75px;flex-basis:75px}.qmp-progress-ring span{font-size:17px}.qmp-balance-value{font-size:25px}
+  .qmp-kpi-grid,.qmp-bank-kpi-grid{gap:7px!important}.qmp-kpi span{font-size:11.5px}.qmp-kpi strong{font-size:17px}.qmp-detail-card>div:nth-child(2){font-size:18px!important}
+  .qmp-jard-equation{grid-template-columns:1fr;grid-template-areas:"assets" "liabilities" "net"}.qmp-jard-equation>.qmp-equation-sign{display:none!important}.qmp-jard-sources{grid-template-columns:1fr 1fr}.qmp-jard-table{min-width:590px}.qmp-jard-result strong{font-size:12.5px}
+  .qmp-bank-type-grid{grid-template-columns:1fr 1fr!important}.qmp-bank-type-card{min-height:88px!important;padding:9px 6px!important}.qmp-reconcile-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}.qmp-reconcile-kpi:last-child{grid-column:1/-1}.qmp-reconcile-balance strong{font-size:23px}.qmp-reconcile-progress span{font-size:14px}
+}
+@media (prefers-reduced-motion:reduce){.qmp-month-row,.qmp-flow-track i{transition:none!important}}
+@media print{
+  .qmp-subtabs,.qmp-head-actions,.qmp-jard-toolbar,.qmp-bank-view-tabs,.qmp-bank-upload-card{display:none!important}
+  .qmp-jard-ledgers,.qmp-command-grid,.qmp-insights-grid{grid-template-columns:1fr 1fr!important}
+  .qmp-surface,.qmp-jard-ledger,.qmp-table-wrap{box-shadow:none!important}
 }
 </style>
 <script id="qimat-full-enterprise-ui-behavior">
