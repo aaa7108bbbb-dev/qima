@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-23-qima-ai-os-v12-customer-360 -->
+<!-- build: 2026-08-23-qima-ai-os-v13-executive-navigation -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -9414,7 +9414,7 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
   const AI_PAGE_LABELS = {
     dashboard:"الرئيسية", contracts:"العقود", collect:"التحصيل", overdue:"المتعثرون",
     portfolio:"المحفظة الشهرية", accounts:"رصيد الحسابات", investorsList:"المستثمرون",
-    goods:"البضاعة", activity:"سجل النشاط", pastclients:"الزبائن", settings:"الإعدادات",
+    goods:"البضاعة", activity:"سجل النشاط", customers:"العملاء", pastclients:"الزبائن", settings:"الإعدادات",
     upgrades:"التطويرات", search:"البحث"
   };
   const aiSourceLabel = AI_PAGE_LABELS[sourcePage] || "البرنامج";
@@ -9518,6 +9518,7 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
     portfolio:["توقع تحصيل الشهر القادم","قارن أداء المستثمرين","حلّل اتجاه المحفظة"],
     accounts:["راجع أرصدة المستثمرين","اكشف الفروقات المحتملة","لخّص الحركات الكبيرة"],
     goods:["حلّل ربح البضائع","ما أكثر بضاعة تعثراً؟","قارن هامش الربح"],
+    customers:["افتح ملف عميل شامل","لخّص عقود عميل","راجع انتظام العميل"],
     pastclients:["ابحث عن عميل متكرر","لخّص سجل العميل","حدد أفضل العملاء"],
     settings:["راجع جاهزية النظام","اقترح تحسينات تشغيلية","ما البيانات التي تحتاج نسخاً احتياطياً؟"]
   };
@@ -11928,8 +11929,8 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
 
 // ─── Activity Log Page ───────────────────────────────────────
 // ═══════════ صفحة التطويرات ═══════════
-function UpgradesPage({contracts, investors, payments, activity, settings, toast, setPage, doneIds}) {
-  const [tab, setTab] = React.useState("log");
+function UpgradesPage({contracts, allContracts, investors, payments, activity, settings, toast, setPage, doneIds, pastClients, setPastClients, customerOnly=false}) {
+  const [tab, setTab] = React.useState(customerOnly?"stmt":"log");
   const [logFilter, setLogFilter] = React.useState("all");
   const [stmtSearch, setStmtSearch] = React.useState("");
   const [stmtContract, setStmtContract] = React.useState(null);
@@ -12301,14 +12302,14 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
 
   const tabs = [
     {id:"log",label:"📜",name:"سجل التغييرات"},
-    {id:"stmt",label:"📄",name:"كشف العميل"},
+    {id:"customers",label:"📇",name:"الزبائن"},
     {id:"alerts",label:"⏰",name:"التنبيهات"},
     {id:"classify",label:"🤖",name:"التصنيف"},
     {id:"backup",label:"🛡️",name:"الباك اب"},
   ];
 
   return React.createElement("div",{style:styles.main},
-    React.createElement("div",{style:{...styles.panel,paddingBottom:0}},
+    !customerOnly && React.createElement("div",{style:{...styles.panel,paddingBottom:0}},
       React.createElement("div",{style:{...styles.panelHdr,textAlign:"center"}},
         React.createElement("h2",{style:{margin:0,fontSize:20,fontWeight:900,color:C.ink}},"🚀 التطويرات")
       ),
@@ -12344,12 +12345,17 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
       )
     ),
 
-    // ═══ TAB 2: ملف العميل الشامل ═══
+    // ═══ TAB 2: الزبائن — نُقلت كاملة من الشريط الرئيسي ═══
+    tab==="customers" && <div className="qima-upgrades-customers">
+      <PastClientsPage toast={toast} pastClients={pastClients} setPastClients={setPastClients} contracts={allContracts||contracts}/>
+    </div>,
+
+    // ═══ صفحة العملاء الرئيسية: ملف العميل الشامل ═══
     tab==="stmt" && <div className="qcf-page">
       {stmtContract ? renderCustomerProfile(stmtContract) : <div className="qcf-directory">
         <section className="qcf-directory-hero">
           <div>
-            <span>التطويرات • ملف العميل 360°</span>
+            <span>العملاء • ملف العميل 360°</span>
             <h2>مركز ملفات العملاء</h2>
             <p>كل عقود العميل وسداداته وبياناته في ملف واحد، من دون تغيير طريقة إدارة البرنامج.</p>
           </div>
@@ -12926,7 +12932,7 @@ function App() {
     return () => { if (_unsubSnap) _unsubSnap(); };
   }, []);
 
-  const AI_ORIGIN_LABELS={dashboard:"الرئيسية",contracts:"العقود",collect:"التحصيل",overdue:"المتعثرون",portfolio:"المحفظة الشهرية",accounts:"رصيد الحسابات",investorsList:"المستثمرون",goods:"البضاعة",activity:"سجل النشاط",pastclients:"الزبائن",upgrades:"التطويرات",settings:"الإعدادات",search:"البحث"};
+  const AI_ORIGIN_LABELS={dashboard:"الرئيسية",contracts:"العقود",customers:"العملاء",collect:"التحصيل",overdue:"المتعثرون",portfolio:"المحفظة الشهرية",accounts:"رصيد الحسابات",investorsList:"المستثمرون",goods:"البضاعة",activity:"سجل النشاط",pastclients:"الزبائن",upgrades:"التطويرات",settings:"الإعدادات",search:"البحث"};
   const openQimaAI=(origin)=>{
     const from=(origin&&origin!=="qimaai")?origin:(page!=="qimaai"?page:aiReturnPage);
     setAiReturnPage(from||"dashboard");
@@ -12940,7 +12946,7 @@ function App() {
     {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
     {id:"portfolio",label:"📊",name:"المحفظة الشهرية",color:"#0d9488"},
     {id:"qimaai",label:"🤖",name:"قمة AI",color:"#6d28d9"},
-    {id:"pastclients",label:"📇",name:"الزبائن",color:"#c8922a"},
+    {id:"customers",label:"👥",name:"العملاء",color:"#c8922a"},
     {id:"upgrades",label:"🚀",name:"التطويرات",color:"#7c3aed"},
     {id:"settings",label:"⚙️",name:"الإعدادات",color:"#4b5563"},
   ];
@@ -12963,10 +12969,10 @@ function App() {
     <div style={styles.body}>
       <section className="qimat-top-hero noprint" aria-label="قائمة التنقل الرئيسية">
         <div className="qimat-hero-brand-live">
-          <div className="qimat-hero-brand-kicker">QIMAT AL-FORSAH</div>
+          <div className="qimat-hero-brand-kicker">نظام الإدارة المؤسسية</div>
           <div className="qimat-hero-brand-title">مؤسسة قمة الفرصة التجارية</div>
           <div className="qimat-hero-brand-line"></div>
-          <div className="qimat-hero-brand-sub">نحو مستقبل من الفرص والنجاحات</div>
+          <div className="qimat-hero-brand-sub">العقود • العملاء • المحافظ الاستثمارية</div>
         </div>
         <div className="qimat-hero-mark" aria-hidden="true">
           <span className="qimat-mark-bars"><i></i><i></i><i></i><i></i></span>
@@ -12980,13 +12986,13 @@ function App() {
             {syncStatus==="saving" ? "جارٍ المزامنة" : syncStatus==="loading" ? "جارٍ التحميل" : syncStatus==="error" ? "محفوظ محلياً" : "متصل"}
           </div>
         </div>
-        <button type="button" className={"qimat-hero-tab visits "+(page==="pastclients"?"active":"")} data-label="الزيارات" aria-label="الزيارات" title="الزيارات" onClick={()=>setPage("pastclients")}></button>
-        <button type="button" className={"qimat-hero-tab ai "+(page==="qimaai"?"active":"")} data-label="قمة AI" aria-label="قمة AI" title="قمة AI" onClick={()=>openQimaAI(page)}></button>
-        <button type="button" className={"qimat-hero-tab portfolio "+(page==="portfolio"?"active":"")} data-label="المحفظة الشهرية" aria-label="المحفظة الشهرية" title="المحفظة الشهرية" onClick={()=>setPage("portfolio")}></button>
-        <button type="button" className={"qimat-hero-tab contracts "+(page==="contracts"?"active":"")} data-label="العقود" aria-label="العقود" title="العقود" onClick={()=>setPage("contracts")}></button>
-        <button type="button" className={"qimat-hero-tab home "+(page==="dashboard"?"active":"")} data-label="الرئيسية" aria-label="الرئيسية" title="الرئيسية" onClick={()=>setPage("dashboard")}></button>
-        <button type="button" className={"qimat-hero-tab settings "+(page==="settings"?"active":"")} data-label="الإعدادات" aria-label="الإعدادات" title="الإعدادات" onClick={()=>setPage("settings")}></button>
-        <button type="button" className={"qimat-hero-tab upgrades "+(page==="upgrades"?"active":"")} data-label="التطويرات" aria-label="التطويرات" title="التطويرات" onClick={()=>setPage("upgrades")}></button>
+        <button type="button" className={"qimat-hero-tab visits customers "+(page==="customers"?"active":"")} data-section="علاقات العملاء" data-label="العملاء" aria-label="العملاء" title="ملفات العملاء" onClick={()=>setPage("customers")}></button>
+        <button type="button" className={"qimat-hero-tab ai "+(page==="qimaai"?"active":"")} data-section="الذكاء" data-label="قمة AI" aria-label="قمة AI" title="قمة AI" onClick={()=>openQimaAI(page)}></button>
+        <button type="button" className={"qimat-hero-tab portfolio "+(page==="portfolio"?"active":"")} data-section="المالية" data-label="المحفظة الشهرية" aria-label="المحفظة الشهرية" title="المحفظة الشهرية" onClick={()=>setPage("portfolio")}></button>
+        <button type="button" className={"qimat-hero-tab contracts "+(page==="contracts"?"active":"")} data-section="التشغيل" data-label="العقود" aria-label="العقود" title="العقود" onClick={()=>setPage("contracts")}></button>
+        <button type="button" className={"qimat-hero-tab home "+(page==="dashboard"?"active":"")} data-section="القيادة" data-label="الرئيسية" aria-label="الرئيسية" title="الرئيسية" onClick={()=>setPage("dashboard")}></button>
+        <button type="button" className={"qimat-hero-tab settings "+(page==="settings"?"active":"")} data-section="النظام" data-label="الإعدادات" aria-label="الإعدادات" title="الإعدادات" onClick={()=>setPage("settings")}></button>
+        <button type="button" className={"qimat-hero-tab upgrades "+(page==="upgrades"?"active":"")} data-section="التطوير" data-label="التطويرات" aria-label="التطويرات" title="التطويرات" onClick={()=>setPage("upgrades")}></button>
       </section>
 
       {syncStatus==="error" && (
@@ -13002,8 +13008,9 @@ function App() {
         {page==="dashboard" && <Dashboard contracts={publicContracts} investors={publicInvestors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={publicPayments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} setPrivateAccMode={setPrivateAccMode} doneIds={doneIds}/>}
         {page==="search" && <SearchPage contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="qimaai" && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:999,background:"#f4f4f6",overflowY:"auto"}}><QimaAI contracts={contracts} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct} sourcePage={aiReturnPage} onOpenPage={target=>setPage(target)} goBack={()=>setPage(aiReturnPage||"dashboard")}/></div>}
-        {page==="pastclients" && <PastClientsPage toast={toast} pastClients={pastClients} setPastClients={setPastClients} contracts={contracts}/>}
-        {page==="upgrades" && <UpgradesPage contracts={publicContracts} investors={publicInvestors} payments={publicPayments} activity={activity} settings={settings} toast={toast} setPage={setPage} doneIds={doneIds}/>}
+        {page==="customers" && <UpgradesPage customerOnly contracts={publicContracts} allContracts={contracts} investors={publicInvestors} payments={publicPayments} activity={activity} settings={settings} toast={toast} setPage={setPage} doneIds={doneIds} pastClients={pastClients} setPastClients={setPastClients}/>} 
+        {page==="pastclients" && <PastClientsPage toast={toast} pastClients={pastClients} setPastClients={setPastClients} contracts={contracts}/>} 
+        {page==="upgrades" && <UpgradesPage contracts={publicContracts} allContracts={contracts} investors={publicInvestors} payments={publicPayments} activity={activity} settings={settings} toast={toast} setPage={setPage} doneIds={doneIds} pastClients={pastClients} setPastClients={setPastClients}/>} 
         {page==="collect" && <CollectionPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="collect" goBack={()=>setPage("contracts")}/>}
         {page==="overdue" && <CollectionPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="overdue" goBack={()=>setPage("contracts")}/>}
         {page==="contracts" && <ContractsPage contracts={contracts.filter(c=>!hiddenInvIds.includes(c.investorId))} investors={publicInvestors} settings={settings} onDelete={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:true}:c));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));}} onRestore={id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(c=>c.id===id?{...c,deleted:false}:c));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));}} onUpdate={updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));}} payments={publicPayments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={c=>{setContracts(p=>[...p,c]);addPastClientFromContract(c);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));}} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/>}
@@ -15353,6 +15360,143 @@ body .contracts-lux button.q-contracts-status-tab.is-active .q-contracts-status-
   .qcf-section,.qcf-kpi{box-shadow:none!important;break-inside:avoid}
   .qcf-table-wrap{overflow:visible!important}.qcf-table{min-width:0!important;font-size:9px!important}
   .qcf-table thead th,.qcf-table tbody td{padding:6px!important;font-size:9px!important}
+}
+</style>
+<style id="qima-executive-navigation-v13">
+/* ═══════════════════════════════════════════════════════════════
+   رأس المؤسسة التنفيذي — هوية واضحة + هيكل الأقسام + خط مقروء
+   ═══════════════════════════════════════════════════════════════ */
+@media (min-width:1000px){
+  .qimat-top-hero{
+    --qn-brand-space:clamp(305px,25.5vw,430px);
+    --qn-control-space:clamp(132px,11.5vw,185px);
+    --qn-tabw:calc((100% - var(--qn-brand-space) - var(--qn-control-space))/7);
+    height:96px!important;min-height:96px!important;max-height:96px!important;
+    margin:0 0 20px!important;padding:0!important;border-radius:0!important;overflow:hidden!important;
+    background:
+      radial-gradient(circle at 15% -110%,rgba(45,108,146,.34),transparent 48%),
+      linear-gradient(100deg,#04121f 0%,#08263d 54%,#061b2d 100%)!important;
+    border:0!important;border-bottom:2px solid rgba(225,178,70,.9)!important;
+    box-shadow:0 11px 30px rgba(5,24,39,.21)!important;
+  }
+  .qimat-top-hero::before{
+    display:block!important;content:""!important;position:absolute!important;inset:0!important;
+    background:linear-gradient(90deg,rgba(255,255,255,.025),transparent 42%,rgba(226,184,95,.045))!important;
+    pointer-events:none!important
+  }
+  .qimat-top-hero::after{
+    display:block!important;content:""!important;position:absolute!important;right:0!important;left:auto!important;top:0!important;bottom:0!important;
+    width:6px!important;background:linear-gradient(#f0cf79,#b67d1e)!important;opacity:1!important
+  }
+  .qimat-hero-mark{
+    display:flex!important;position:absolute!important;z-index:95!important;right:18px!important;top:20px!important;
+    width:47px!important;height:57px!important;align-items:center!important;justify-content:center!important;color:#f0cf79!important
+  }
+  .qimat-hero-mark strong,.qimat-hero-mark small{display:none!important}
+  .qimat-mark-bars{
+    display:flex!important;width:43px!important;height:43px!important;gap:3px!important;padding:1px 6px 5px!important;
+    border:2px solid #e4b955!important;border-radius:13px!important;transform:rotate(45deg)!important;
+    box-shadow:0 0 18px rgba(218,169,57,.18)!important
+  }
+  .qimat-mark-bars i{width:4px!important;border-radius:3px!important;transform:rotate(-45deg)!important;background:linear-gradient(#f6dc98,#c18723)!important}
+  .qimat-mark-bars i:nth-child(1){height:10px!important}.qimat-mark-bars i:nth-child(2){height:17px!important}.qimat-mark-bars i:nth-child(3){height:24px!important}.qimat-mark-bars i:nth-child(4){height:31px!important}
+  .qimat-hero-brand-live{
+    display:block!important;position:absolute!important;z-index:92!important;top:50%!important;right:78px!important;left:auto!important;
+    width:calc(var(--qn-brand-space) - 94px)!important;padding:0!important;transform:translateY(-50%)!important;
+    text-align:right!important;background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important
+  }
+  .qimat-hero-brand-kicker{
+    display:block!important;margin:0 0 3px!important;color:#e6bd60!important;opacity:1!important;
+    font-family:'IBM Plex Sans Arabic','Tajawal',Arial,sans-serif!important;font-size:9px!important;font-weight:900!important;letter-spacing:.3px!important
+  }
+  .qimat-hero-brand-title{
+    color:#fff!important;font-family:'IBM Plex Sans Arabic','Tajawal',Arial,sans-serif!important;
+    font-size:clamp(19px,1.45vw,25px)!important;font-weight:950!important;letter-spacing:0!important;line-height:1.22!important;
+    text-shadow:0 2px 15px rgba(0,0,0,.28)!important;white-space:nowrap!important
+  }
+  .qimat-hero-brand-line{display:block!important;width:78px!important;height:2px!important;margin:5px 0 4px auto!important;background:linear-gradient(90deg,transparent,#e6b74c)!important}
+  .qimat-hero-brand-sub{
+    display:block!important;color:#d9e1e8!important;font-size:10px!important;font-weight:750!important;line-height:1.2!important;white-space:nowrap!important;letter-spacing:0!important
+  }
+  .qimat-hero-live-controls{
+    display:flex!important;position:absolute!important;z-index:95!important;left:14px!important;right:auto!important;top:50%!important;bottom:auto!important;
+    width:calc(var(--qn-control-space) - 19px)!important;min-width:0!important;transform:translateY(-50%)!important;
+    flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:7px!important;
+    padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important
+  }
+  .qimat-hero-sync{font-size:10px!important;font-weight:850!important;color:#9ee0c2!important;white-space:nowrap!important}
+  .qimat-hero-logout{height:32px!important;min-height:32px!important;padding:0 11px!important;border-radius:8px!important;font-size:11px!important;font-weight:900!important}
+  .qimat-hero-tab{
+    position:absolute!important;z-index:80!important;top:0!important;bottom:auto!important;height:96px!important;width:var(--qn-tabw)!important;
+    display:block!important;padding:0!important;border-radius:0!important;border:0!important;border-right:1px solid rgba(255,255,255,.055)!important;border-bottom:4px solid transparent!important;
+    background:transparent!important;color:#f3f6f8!important;box-shadow:none!important;
+    font-family:'IBM Plex Sans Arabic','Tajawal',Arial,sans-serif!important;font-weight:900!important;text-align:center!important;
+    transition:background .17s ease,color .17s ease,border-color .17s ease!important
+  }
+  .qimat-hero-tab::before{
+    display:block!important;content:attr(data-section)!important;position:absolute!important;top:19px!important;left:3px!important;right:3px!important;
+    width:auto!important;height:auto!important;margin:0!important;padding:0!important;transform:none!important;
+    background:none!important;border:0!important;filter:none!important;color:#aebdca!important;
+    font-family:'IBM Plex Sans Arabic','Tajawal',Arial,sans-serif!important;font-size:clamp(8px,.66vw,10px)!important;font-weight:800!important;line-height:1.15!important;white-space:nowrap!important
+  }
+  .qimat-hero-tab::after{
+    display:block!important;content:attr(data-label)!important;position:absolute!important;top:45px!important;left:4px!important;right:4px!important;
+    color:#f5f7f9!important;font-size:clamp(12px,1vw,16px)!important;font-weight:950!important;line-height:1.25!important;white-space:normal!important
+  }
+  .qimat-hero-tab.home{right:var(--qn-brand-space)!important;left:auto!important}
+  .qimat-hero-tab.contracts{right:calc(var(--qn-brand-space) + 1*var(--qn-tabw))!important;left:auto!important}
+  .qimat-hero-tab.customers{right:calc(var(--qn-brand-space) + 2*var(--qn-tabw))!important;left:auto!important}
+  .qimat-hero-tab.portfolio{right:calc(var(--qn-brand-space) + 3*var(--qn-tabw))!important;left:auto!important}
+  .qimat-hero-tab.ai{right:calc(var(--qn-brand-space) + 4*var(--qn-tabw))!important;left:auto!important}
+  .qimat-hero-tab.upgrades{right:calc(var(--qn-brand-space) + 5*var(--qn-tabw))!important;left:auto!important}
+  .qimat-hero-tab.settings{right:calc(var(--qn-brand-space) + 6*var(--qn-tabw))!important;left:auto!important}
+  .qimat-hero-tab:hover{
+    transform:none!important;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(225,178,70,.07))!important;
+    border-bottom-color:rgba(232,190,91,.55)!important;box-shadow:none!important
+  }
+  .qimat-hero-tab:hover::before{color:#e7d4a4!important}.qimat-hero-tab:hover::after{color:#fff!important}
+  .qimat-hero-tab.active{
+    transform:none!important;background:linear-gradient(180deg,rgba(229,185,82,.04),rgba(210,158,54,.16))!important;
+    border-bottom-color:#edc765!important;box-shadow:inset 0 -8px 20px rgba(216,168,57,.06)!important
+  }
+  .qimat-hero-tab.active::before{color:#f0d791!important}.qimat-hero-tab.active::after{color:#f4ce74!important;text-shadow:0 0 16px rgba(226,182,79,.19)!important}
+}
+
+@media (max-width:999px){
+  .qimat-top-hero{
+    position:relative!important;width:100%!important;max-width:none!important;height:154px!important;min-height:154px!important;max-height:154px!important;
+    margin:0 0 13px!important;padding:76px 9px 9px!important;display:flex!important;align-items:flex-end!important;gap:8px!important;direction:rtl!important;
+    overflow-x:auto!important;overflow-y:hidden!important;border-radius:0!important;
+    background:linear-gradient(100deg,#04121f,#08263d 58%,#061b2d)!important;border:0!important;border-bottom:2px solid #c99831!important;
+    box-shadow:0 8px 24px rgba(5,24,39,.2)!important;scrollbar-width:none!important
+  }
+  .qimat-top-hero::-webkit-scrollbar{display:none!important}
+  .qimat-top-hero::before{display:block!important;content:""!important;position:absolute!important;inset:0!important;background:radial-gradient(circle at 80% -30%,rgba(220,171,58,.12),transparent 38%)!important;pointer-events:none!important}
+  .qimat-top-hero::after{display:block!important;content:""!important;position:absolute!important;right:0!important;top:0!important;bottom:0!important;width:4px!important;background:#d8a944!important}
+  .qimat-hero-mark{display:flex!important;position:absolute!important;right:12px!important;top:13px!important;width:38px!important;height:42px!important;align-items:center!important;justify-content:center!important;z-index:95!important}
+  .qimat-hero-mark strong,.qimat-hero-mark small{display:none!important}.qimat-mark-bars{width:31px!important;height:31px!important;padding:0 4px 3px!important;border:1.5px solid #e4b955!important;border-radius:9px!important;transform:rotate(45deg)!important}.qimat-mark-bars i{width:3px!important;transform:rotate(-45deg)!important;background:#e6bd60!important}
+  .qimat-hero-brand-live{display:block!important;position:absolute!important;z-index:94!important;top:12px!important;right:58px!important;left:auto!important;width:auto!important;max-width:calc(100% - 195px)!important;padding:0!important;text-align:right!important;background:transparent!important;border:0!important;box-shadow:none!important;transform:none!important}
+  .qimat-hero-brand-kicker{display:block!important;margin:0 0 2px!important;color:#e5b959!important;opacity:1!important;font-size:8px!important;font-weight:900!important;letter-spacing:0!important}
+  .qimat-hero-brand-title{font-family:'IBM Plex Sans Arabic','Tajawal',Arial,sans-serif!important;color:#fff!important;font-size:17px!important;font-weight:950!important;line-height:1.25!important;white-space:nowrap!important;text-shadow:none!important}
+  .qimat-hero-brand-line{display:none!important}.qimat-hero-brand-sub{display:block!important;color:#cbd5de!important;font-size:8.5px!important;font-weight:700!important;white-space:nowrap!important;margin-top:2px!important}
+  .qimat-hero-live-controls{display:flex!important;position:absolute!important;z-index:95!important;left:9px!important;right:auto!important;top:14px!important;bottom:auto!important;width:auto!important;min-width:0!important;padding:0!important;gap:5px!important;transform:none!important;background:transparent!important;border:0!important;box-shadow:none!important}
+  .qimat-hero-sync{font-size:8px!important;font-weight:850!important}.qimat-hero-logout{height:29px!important;min-height:29px!important;padding:0 8px!important;border-radius:7px!important;font-size:9px!important;font-weight:900!important}
+  .qimat-hero-tab{
+    position:relative!important;inset:auto!important;top:auto!important;right:auto!important;bottom:auto!important;left:auto!important;
+    flex:0 0 auto!important;width:auto!important;min-width:126px!important;height:68px!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;padding:0 14px!important;
+    background:rgba(255,255,255,.045)!important;color:#f3f6f8!important;border:1px solid rgba(255,255,255,.14)!important;border-bottom:3px solid rgba(226,184,95,.34)!important;border-radius:11px!important;
+    box-shadow:none!important;font-family:'IBM Plex Sans Arabic','Tajawal',Arial,sans-serif!important;font-size:13px!important;font-weight:950!important
+  }
+  .qimat-hero-tab::before{display:none!important;content:none!important;background:none!important}.qimat-hero-tab::after{display:block!important;content:attr(data-label)!important;position:static!important;color:inherit!important;font-size:inherit!important;font-weight:inherit!important;white-space:nowrap!important;line-height:1!important}
+  .qimat-hero-tab.home{order:1!important}.qimat-hero-tab.contracts{order:2!important}.qimat-hero-tab.customers{order:3!important}.qimat-hero-tab.portfolio{order:4!important}.qimat-hero-tab.ai{order:5!important}.qimat-hero-tab.upgrades{order:6!important}.qimat-hero-tab.settings{order:7!important}
+  .qimat-hero-tab:hover{transform:none!important;background:rgba(255,255,255,.075)!important;box-shadow:none!important}
+  .qimat-hero-tab.active{transform:none!important;background:rgba(208,158,54,.2)!important;color:#f5cf76!important;border-color:rgba(235,197,104,.78)!important;border-bottom-color:#f1c966!important;box-shadow:inset 0 -3px 0 #e3b654!important}
+}
+@media(max-width:480px){
+  .qimat-top-hero{height:148px!important;min-height:148px!important;max-height:148px!important;padding-top:72px!important}
+  .qimat-hero-brand-live{max-width:calc(100% - 165px)!important}.qimat-hero-brand-title{font-size:14px!important}.qimat-hero-brand-sub{display:none!important}
+  .qimat-hero-tab{min-width:112px!important;height:64px!important;padding:0 11px!important;font-size:12px!important}
 }
 </style>
 <script id="qimat-full-enterprise-ui-behavior">
