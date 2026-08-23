@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-23-qima-ai-os-v14-reports-collection-identity -->
+<!-- build: 2026-08-23-qima-ai-os-v15-cheque-filters-white-brand -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -3609,10 +3609,8 @@ function DeductionsSheet({contracts, investors, payments, doneIds=[]}){
   const getDueDay=c=>{if(!c.firstInst)return""; return String(new Date(c.firstInst).getDate());};
   const togglePay = f => {
     if(f==="الكل"){ setPayF(new Set(["الكل"])); setBankF(""); return; }
-    const n = new Set(payF); n.delete("الكل");
-    if(n.has(f)) n.delete(f); else n.add(f);
-    if(n.size===0) n.add("الكل");
-    setPayF(n); setBankF("");
+    // تبويبات التقارير اختيار واحد؛ يمنع اختلاط كشفين عند التنقل بينهما.
+    setPayF(new Set([f])); setBankF("");
   };
   const toggleStatus = s => {
     const n = new Set(statusF);
@@ -3782,6 +3780,24 @@ function DeductionsSheet({contracts, investors, payments, doneIds=[]}){
           return <button type="button" data-qe-manual="true" aria-pressed={on} className={on?"is-active":""} key={f} onClick={()=>togglePay(f)}>{f}</button>;
         })}
       </div>
+      {/* فلتر الشيكات السريع — يظهر مباشرة دون فتح الفلاتر المتقدمة */}
+      {(payF.has("شيكات") || payF.has("المقاصة")) && (
+        <div className="q-reports-cheque-subfilters" aria-label="فلتر الشيكات حسب البنك والمقاصة">
+          <span>تفصيل الشيكات</span>
+          <button type="button" data-qe-manual="true"
+            className={payF.has("شيكات")&&bankF==="الراجحي"?"is-active":""}
+            aria-pressed={payF.has("شيكات")&&bankF==="الراجحي"}
+            onClick={()=>{setPayF(new Set(["شيكات"]));setBankF("الراجحي");}}>الراجحي</button>
+          <button type="button" data-qe-manual="true"
+            className={payF.has("شيكات")&&bankF==="الأهلي"?"is-active":""}
+            aria-pressed={payF.has("شيكات")&&bankF==="الأهلي"}
+            onClick={()=>{setPayF(new Set(["شيكات"]));setBankF("الأهلي");}}>الأهلي</button>
+          <button type="button" data-qe-manual="true"
+            className={payF.has("المقاصة")?"is-active":""}
+            aria-pressed={payF.has("المقاصة")}
+            onClick={()=>{setPayF(new Set(["المقاصة"]));setBankF("");}}>المقاصة</button>
+        </div>
+      )}
       {/* الفلاتر التفصيلية مخفية */}
       {showFilters && <>
       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:8}}>
@@ -15681,6 +15697,57 @@ body .contracts-lux button.q-contracts-status-tab.is-active .q-contracts-status-
   .qimat-top-hero{height:160px!important;min-height:160px!important;max-height:160px!important;padding-top:80px!important}.qimat-hero-brand-live{width:calc(100% - 135px)!important;height:60px!important}.qimat-hero-brand-title{font-size:12px!important}.qimat-hero-tab{height:66px!important;min-width:112px!important;font-size:12px!important}
   .q-monthly-installments-cycle{font-size:10.5px!important}.q-monthly-installments-summary small{font-size:8.5px!important}.q-monthly-installments-summary strong{font-size:10.5px!important}.q-monthly-installments-total>span:first-child{font-size:29px!important}
   .q-upgrades-head{align-items:flex-start!important;flex-direction:column!important}.q-upgrades-back{align-self:stretch!important;justify-content:center!important}
+}
+</style>
+<style id="qima-cheques-and-brand-correction-v15">
+/* فلتر الشيكات المباشر: الراجحي، الأهلي، المقاصة */
+.q-reports-cheque-subfilters{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-5px 0 14px;padding:10px 12px;
+  border:1px solid #d9c69f;border-radius:14px;background:linear-gradient(135deg,#fffdf8,#f6eddd);
+  box-shadow:0 5px 14px rgba(67,48,20,.05)
+}
+.q-reports-cheque-subfilters>span{margin-left:4px;color:#183147;font-size:13px;font-weight:950;white-space:nowrap}
+.q-reports-cheque-subfilters button{
+  min-width:108px;min-height:39px;padding:7px 15px;border:1px solid #cdb789;border-radius:10px;
+  background:#fff;color:#34495a;font-family:'IBM Plex Sans Arabic','Tajawal',Arial,sans-serif;
+  font-size:13px;font-weight:950;cursor:pointer;transition:.16s ease
+}
+.q-reports-cheque-subfilters button:hover{border-color:#b77d1d;background:#fff9e9;transform:translateY(-1px)}
+.q-reports-cheque-subfilters button.is-active{
+  border-color:#a96e13;background:linear-gradient(135deg,#f2d37e,#c88e29);color:#071827;
+  box-shadow:0 5px 12px rgba(183,125,29,.2)
+}
+
+/* اسم المؤسسة يعود جزءاً من الشريط الداكن: بلا كتلة ذهبية وبعنوان أبيض */
+@media(min-width:1000px){
+  .qimat-hero-brand-live{
+    background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+    backdrop-filter:none!important;-webkit-backdrop-filter:none!important
+  }
+  .qimat-hero-brand-live::after{background:rgba(226,188,88,.48)!important}
+  .qimat-hero-brand-kicker{color:#e8c86f!important}
+  .qimat-hero-brand-title{color:#fff!important;text-shadow:0 2px 14px rgba(0,0,0,.28)!important}
+  .qimat-hero-brand-line{background:linear-gradient(90deg,transparent,#e1bb57)!important}
+  .qimat-hero-brand-sub{color:#dbe5ec!important}
+  .qimat-hero-mark{color:#e1bb57!important}
+  .qimat-mark-bars{border-color:#e1bb57!important}.qimat-mark-bars i{background:#e1bb57!important}
+}
+@media(max-width:999px){
+  .qimat-hero-brand-live{
+    background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+    backdrop-filter:none!important;-webkit-backdrop-filter:none!important
+  }
+  .qimat-hero-brand-live::after{display:none!important}
+  .qimat-hero-brand-kicker{color:#e8c86f!important}
+  .qimat-hero-brand-title{color:#fff!important;text-shadow:0 2px 12px rgba(0,0,0,.28)!important}
+  .qimat-hero-brand-sub{color:#dbe5ec!important}
+  .qimat-hero-mark{color:#e1bb57!important}
+  .qimat-mark-bars{border-color:#e1bb57!important}.qimat-mark-bars i{background:#e1bb57!important}
+}
+@media(max-width:760px){
+  .q-reports-cheque-subfilters{flex-wrap:nowrap;overflow-x:auto;padding:8px;margin-top:-6px}
+  .q-reports-cheque-subfilters>span{position:sticky;right:0;z-index:1;padding:8px 3px 8px 10px;background:#faf3e6}
+  .q-reports-cheque-subfilters button{min-width:96px;flex:0 0 auto}
 }
 </style>
 <script id="qimat-full-enterprise-ui-behavior">
