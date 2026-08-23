@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-23-qima-ai-os-v17-contract-name-hover-fix -->
+<!-- build: 2026-08-23-qima-ai-os-v18-bright-white-ai-headings -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -10442,9 +10442,9 @@ tbody tr:nth-child(even){background:#f7f9fb}
   const QUICK = ["☀️ التقرير الصباحي","⚠️ من راح يتعثر قريباً؟","أسوأ 10 متعثرين","قارن كل المستثمرين","التحصيل آخر 6 شهور","أفضل الزبائن التزاماً","تحليل ربح البضائع","مصروفات هذا الشهر","توقع دخل الشهر الجاي"];
 
   return (
-    React.createElement("div",{style:{display:"flex",flexDirection:"column",height:"100vh",height:"100dvh",background:"#faf6ee",color:"#141428",fontFamily:"'Tajawal','IBM Plex Sans Arabic',sans-serif"}},
+    React.createElement("div",{className:"qima-ai-os",style:{display:"flex",flexDirection:"column",height:"100vh",height:"100dvh",background:"#faf6ee",color:"#141428",fontFamily:"'Tajawal','IBM Plex Sans Arabic',sans-serif"}},
       /* Header - Premium Navy with rounded bottom */
-      React.createElement("div",{style:{background:"linear-gradient(180deg,#141428 0%,#0d0d1f 100%)",padding:"clamp(16px,4vw,24px) clamp(14px,4vw,20px) clamp(14px,3.5vw,18px)",flexShrink:0,borderRadius:"0 0 clamp(20px,6vw,32px) clamp(20px,6vw,32px)",boxShadow:"0 6px 30px rgba(13,13,31,0.25)",position:"relative",zIndex:10}},
+      React.createElement("div",{className:"qima-ai-os-header",style:{background:"linear-gradient(180deg,#141428 0%,#0d0d1f 100%)",padding:"clamp(16px,4vw,24px) clamp(14px,4vw,20px) clamp(14px,3.5vw,18px)",flexShrink:0,borderRadius:"0 0 clamp(20px,6vw,32px) clamp(20px,6vw,32px)",boxShadow:"0 6px 30px rgba(13,13,31,0.25)",position:"relative",zIndex:10}},
         React.createElement("div",{style:{display:"flex",alignItems:"center",gap:"clamp(10px,3vw,14px)",marginBottom:"clamp(12px,3.5vw,18px)"}},
           /* زر الرجوع */
           goBack && React.createElement("button",{onClick:goBack,style:{width:"clamp(36px,9vw,44px)",height:"clamp(36px,9vw,44px)",borderRadius:"clamp(10px,2.5vw,14px)",background:"rgba(200,146,42,0.08)",border:"1px solid rgba(200,146,42,0.12)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},
@@ -10454,8 +10454,8 @@ tbody tr:nth-child(even){background:#f7f9fb}
             React.createElement("svg",{width:"clamp(22px,6vw,30px)",height:"clamp(22px,6vw,30px)",viewBox:"0 0 24 24",fill:"none",stroke:"#141428",strokeWidth:2.2,strokeLinecap:"round"},React.createElement("path",{d:"M12 2L2 7l10 5 10-5-10-5z"}),React.createElement("path",{d:"M2 17l10 5 10-5"}),React.createElement("path",{d:"M2 12l10 5 10-5"}))
           ),
           React.createElement("div",{style:{flex:1}},
-            React.createElement("div",{style:{fontSize:"clamp(24px,6.5vw,32px)",fontWeight:900,color:"#e0b85c",letterSpacing:-0.5,lineHeight:1}},"قمة",React.createElement("span",{style:{color:"rgba(240,240,245,0.5)",fontWeight:500,fontSize:"clamp(14px,4vw,18px)",marginRight:4}}," AI")),
-            React.createElement("div",{style:{fontSize:"clamp(10px,2.8vw,13px)",color:"rgba(240,240,245,0.42)",fontWeight:600,marginTop:4}},"يعمل الآن مع: ",React.createElement("b",{style:{color:"#e0b85c"}},aiSourceLabel)," · ",new Date().toLocaleDateString("ar-SA",{weekday:"long",day:"numeric",month:"long"}))
+            React.createElement("div",{className:"qima-ai-brand-title",style:{fontSize:"clamp(24px,6.5vw,32px)",fontWeight:900,color:"#e0b85c",letterSpacing:-0.5,lineHeight:1}},"قمة",React.createElement("span",{className:"qima-ai-brand-ai",style:{color:"#fff",fontWeight:900,fontSize:"clamp(14px,4vw,18px)",marginRight:4}}," AI")),
+            React.createElement("div",{className:"qima-ai-brand-context",style:{fontSize:"clamp(10px,2.8vw,13px)",color:"rgba(255,255,255,.88)",fontWeight:800,marginTop:4}},"يعمل الآن مع: ",React.createElement("b",{style:{color:"#f1cb72"}},aiSourceLabel)," · ",new Date().toLocaleDateString("ar-SA",{weekday:"long",day:"numeric",month:"long"}))
           ),
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:"clamp(4px,1.5vw,8px)"}},
             React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5,background:aiKey?"rgba(18,183,106,0.08)":"rgba(245,158,11,0.06)",border:"1px solid "+(aiKey?"rgba(18,183,106,0.15)":"rgba(245,158,11,0.12)"),borderRadius:20,padding:"clamp(4px,1.2vw,6px) clamp(10px,2.5vw,14px)"}},
@@ -10468,16 +10468,16 @@ tbody tr:nth-child(even){background:#f7f9fb}
             )
           )
         ),
-        /* Tab Bar - Gold */
-        React.createElement("div",{style:{display:"flex",gap:3,background:"rgba(200,146,42,0.05)",borderRadius:"clamp(14px,3.5vw,18px)",padding:3,border:"1px solid rgba(200,146,42,0.08)",overflowX:"auto",scrollbarWidth:"none"}},
+        /* Tab Bar - white high-contrast labels */
+        React.createElement("div",{className:"qima-ai-nav",style:{display:"flex",gap:3,background:"rgba(255,255,255,.035)",borderRadius:"clamp(14px,3.5vw,18px)",padding:3,border:"1px solid rgba(255,255,255,.11)",overflowX:"auto",scrollbarWidth:"none"}},
           [{id:"command",l:"القيادة",d:"M4 13h6V4H4v9zM14 20h6V11h-6v9zM4 20h6v-3H4v3zM14 7h6V4h-6v3z"},
            {id:"insights",l:"الأداء",d:"M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"},
            {id:"review",l:"المراجعة",d:"M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"},
            {id:"alerts",l:"المخاطر",d:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"},
            {id:"search",l:"العملاء",d:"M21 21l-4.35-4.35M11 3a8 8 0 100 16 8 8 0 000-16z"},
            {id:"chat",l:"المساعد",d:"M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"}
-          ].map(t=>React.createElement("button",{key:t.id,onClick:()=>{setAiTab(t.id);setDrillDown(null);},style:{flex:"1 0 clamp(72px,17vw,100px)",padding:"clamp(10px,2.8vw,14px) 4px clamp(8px,2.2vw,11px)",borderRadius:"clamp(12px,3vw,15px)",border:"none",background:aiTab===t.id?"linear-gradient(140deg,#c8922a,#e0b85c)":"transparent",color:aiTab===t.id?"#141428":"rgba(224,184,92,0.5)",fontWeight:aiTab===t.id?900:700,fontSize:"clamp(11px,3vw,13px)",cursor:"pointer",fontFamily:"inherit",transition:"all 0.25s",boxShadow:aiTab===t.id?"0 4px 18px rgba(200,146,42,0.35)":"none",display:"flex",flexDirection:"column",alignItems:"center",gap:"clamp(4px,1.2vw,6px)"}},
-            React.createElement("svg",{width:"clamp(18px,5vw,24px)",height:"clamp(18px,5vw,24px)",viewBox:"0 0 24 24",fill:"none",stroke:aiTab===t.id?"#141428":"rgba(224,184,92,0.4)",strokeWidth:aiTab===t.id?2.2:1.8,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:t.d})),
+          ].map(t=>React.createElement("button",{key:t.id,type:"button","data-qe-manual":"true",className:"qima-ai-nav-tab "+(aiTab===t.id?"is-active":""),onClick:()=>{setAiTab(t.id);setDrillDown(null);},style:{flex:"1 0 clamp(78px,17vw,106px)",padding:"clamp(10px,2.8vw,14px) 4px clamp(8px,2.2vw,11px)",borderRadius:"clamp(12px,3vw,15px)",border:"none",background:aiTab===t.id?"linear-gradient(140deg,#c8922a,#e0b85c)":"transparent",color:aiTab===t.id?"#141428":"#fff",fontWeight:900,fontSize:"clamp(13px,3.2vw,15px)",cursor:"pointer",fontFamily:"inherit",transition:"all 0.25s",boxShadow:aiTab===t.id?"0 4px 18px rgba(200,146,42,0.35)":"none",display:"flex",flexDirection:"column",alignItems:"center",gap:"clamp(4px,1.2vw,6px)",textShadow:aiTab===t.id?"none":"0 1px 10px rgba(0,0,0,.35)"}},
+            React.createElement("svg",{className:"qima-ai-nav-icon",width:"clamp(18px,5vw,24px)",height:"clamp(18px,5vw,24px)",viewBox:"0 0 24 24",fill:"none",stroke:aiTab===t.id?"#141428":"#fff",strokeWidth:aiTab===t.id?2.2:2.1,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:t.d})),
             t.l
           ))
         )
@@ -15803,6 +15803,23 @@ body .contracts-lux table.freeze3 td.q-contracts-client>span:hover{
   background:transparent!important;color:#0b2c45!important;cursor:pointer!important;
   transform:none!important;box-shadow:none!important;filter:none!important
 }
+</style>
+<style id="qima-ai-bright-headings-v18">
+/* عناوين قمة AI: أبيض ناصع، بلا شفافية أو بهتان. */
+.qima-ai-os .qima-ai-brand-ai{color:#fff!important;opacity:1!important;font-weight:950!important}
+.qima-ai-os .qima-ai-brand-context{color:rgba(255,255,255,.9)!important;opacity:1!important;font-weight:800!important}
+.qima-ai-os .qima-ai-nav-tab{opacity:1!important;font-weight:950!important}
+.qima-ai-os .qima-ai-nav-tab:not(.is-active){
+  color:#fff!important;background:transparent!important;text-shadow:0 1px 10px rgba(0,0,0,.38)!important
+}
+.qima-ai-os .qima-ai-nav-tab:not(.is-active) svg,
+.qima-ai-os .qima-ai-nav-tab:not(.is-active) svg *{
+  color:#fff!important;stroke:#fff!important;opacity:1!important
+}
+.qima-ai-os .qima-ai-nav-tab.is-active{color:#071827!important;text-shadow:none!important}
+.qima-ai-os .qima-ai-nav-tab.is-active svg,
+.qima-ai-os .qima-ai-nav-tab.is-active svg *{color:#071827!important;stroke:#071827!important;opacity:1!important}
+.qima-ai-os .qima-ai-nav-tab:not(.is-active):hover{background:rgba(255,255,255,.08)!important;color:#fff!important}
 </style>
 <script id="qimat-full-enterprise-ui-behavior">
 (function(){
