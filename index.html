@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-23-qima-ai-os-v13-executive-navigation -->
+<!-- build: 2026-08-23-qima-ai-os-v14-reports-collection-identity -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -1868,35 +1868,35 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         const gName = cleanInv(grp[0]);
         const pb = idx>0 ? ' class="page-break"' : '';
         if(reportMode==="brief"){
-          let rows = grp.map((c,i)=>`<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${c.cPhone||""}</td><td>${NUM(c.instAmt||0)}</td><td style="width:100px"></td></tr>`).join("");
+          let rows = grp.map((c,i)=>`<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${c.cPhone||""}</td><td>${reportStatusOf(c)}</td><td>${NUM(c.instAmt||0)}</td><td style="width:100px"></td></tr>`).join("");
           const tot = grp.reduce((s,c)=>s+(c.instAmt||0),0);
-          rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="4">الإجمالي</td><td>${NUM(tot)}</td><td></td></tr>`;
-          content += `<div${pb}><h2>${gName} — (${grp.length} عقد)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+          rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="5">الإجمالي</td><td>${NUM(tot)}</td><td></td></tr>`;
+          content += `<div${pb}><h2>${gName} — (${grp.length} عقد)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th><th>الحالة</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${rows}</tbody></table></div>`;
         } else {
           let rows = grp.map((c,i)=>{
             const paid=_getPaid(payments,c.id); const left=Math.max(0,(c.totalInst||0)-paid);
-            return `<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${NUM(c.amount||0)}</td><td>${NUM(c.totalInst||0)}</td><td>${NUM(c.instAmt||0)}</td><td style="color:#15803d">${NUM(paid)}</td><td style="color:#dc2626">${NUM(left)}</td></tr>`;
+            return `<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${reportStatusOf(c)}</td><td>${NUM(c.amount||0)}</td><td>${NUM(c.totalInst||0)}</td><td>${NUM(c.instAmt||0)}</td><td style="color:#15803d">${NUM(paid)}</td><td style="color:#dc2626">${NUM(left)}</td></tr>`;
           }).join("");
           const tA=grp.reduce((s,c)=>s+(c.amount||0),0), tT=grp.reduce((s,c)=>s+(c.totalInst||0),0), tI=grp.reduce((s,c)=>s+(c.instAmt||0),0), tP=grp.reduce((s,c)=>s+_getPaid(payments,c.id),0), tL=grp.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
-          rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="3">الإجمالي</td><td>${NUM(tA)}</td><td>${NUM(tT)}</td><td>${NUM(tI)}</td><td style="color:#15803d">${NUM(tP)}</td><td style="color:#dc2626">${NUM(tL)}</td></tr>`;
-          content += `<div${pb}><h2>${gName} — (${grp.length} عقد)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>المحصّل</th><th>المتبقي</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+          rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="4">الإجمالي</td><td>${NUM(tA)}</td><td>${NUM(tT)}</td><td>${NUM(tI)}</td><td style="color:#15803d">${NUM(tP)}</td><td style="color:#dc2626">${NUM(tL)}</td></tr>`;
+          content += `<div${pb}><h2>${gName} — (${grp.length} عقد)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>الحالة</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>المحصّل</th><th>المتبقي</th></tr></thead><tbody>${rows}</tbody></table></div>`;
         }
       });
     } else {
       // مستثمر فردي
       if(reportMode==="brief"){
-        let rows = list.map((c,i)=>`<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${c.cPhone||""}</td><td>${NUM(c.instAmt||0)}</td><td style="width:100px"></td></tr>`).join("");
+        let rows = list.map((c,i)=>`<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${c.cPhone||""}</td><td>${reportStatusOf(c)}</td><td>${NUM(c.instAmt||0)}</td><td style="width:100px"></td></tr>`).join("");
         const tot = list.reduce((s,c)=>s+(c.instAmt||0),0);
-        rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="4">الإجمالي</td><td>${NUM(tot)}</td><td></td></tr>`;
-        content = `<h2>كشف المستثمر — ${invName} (مختصر)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${rows}</tbody></table>`;
+        rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="5">الإجمالي</td><td>${NUM(tot)}</td><td></td></tr>`;
+        content = `<h2>كشف المستثمر — ${invName} (مختصر)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th><th>الحالة</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${rows}</tbody></table>`;
       } else {
         let rows = list.map((c,i)=>{
           const paid=_getPaid(payments,c.id); const left=Math.max(0,(c.totalInst||0)-paid);
-          return `<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${NUM(c.amount||0)}</td><td>${NUM(c.totalInst||0)}</td><td>${NUM(c.instAmt||0)}</td><td style="color:#15803d">${NUM(paid)}</td><td style="color:#dc2626">${NUM(left)}</td></tr>`;
+          return `<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${reportStatusOf(c)}</td><td>${NUM(c.amount||0)}</td><td>${NUM(c.totalInst||0)}</td><td>${NUM(c.instAmt||0)}</td><td style="color:#15803d">${NUM(paid)}</td><td style="color:#dc2626">${NUM(left)}</td></tr>`;
         }).join("");
         const tA=list.reduce((s,c)=>s+(c.amount||0),0), tT=list.reduce((s,c)=>s+(c.totalInst||0),0), tI=list.reduce((s,c)=>s+(c.instAmt||0),0), tP=list.reduce((s,c)=>s+_getPaid(payments,c.id),0), tL=list.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
-        rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="3">الإجمالي</td><td>${NUM(tA)}</td><td>${NUM(tT)}</td><td>${NUM(tI)}</td><td style="color:#15803d">${NUM(tP)}</td><td style="color:#dc2626">${NUM(tL)}</td></tr>`;
-        content = `<h2>كشف المستثمر — ${invName} (مفصل)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>المحصّل</th><th>المتبقي</th></tr></thead><tbody>${rows}</tbody></table>`;
+        rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="4">الإجمالي</td><td>${NUM(tA)}</td><td>${NUM(tT)}</td><td>${NUM(tI)}</td><td style="color:#15803d">${NUM(tP)}</td><td style="color:#dc2626">${NUM(tL)}</td></tr>`;
+        content = `<h2>كشف المستثمر — ${invName} (مفصل)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>الحالة</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>المحصّل</th><th>المتبقي</th></tr></thead><tbody>${rows}</tbody></table>`;
       }
     }
     const w = window.open("","_blank");
@@ -2027,8 +2027,15 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
   const deletedCount = deletedList.length;
 
   // Investor report
+  const reportStatusOf = c => {
+    if(c.contractType==="defer") return "مؤجل";
+    const paid=_getPaid(payments,c.id), total=+c.totalInst||+c.amount||0;
+    if((doneIds||[]).includes(c.id)||(total>0&&paid>=total)) return "منتهي";
+    return c.contractType==="migrated"?"مستمر مرحّل":"مستمر";
+  };
   const invReportContracts = (()=>{
-    let list = contracts.filter(c=>!c.deleted && c.contractType!=="defer" && !doneIds.includes(c.id));
+    // التقارير مرجع شامل: لا تستبعد المنتهي أو المؤجل، وإنما تستبعد المحذوف فقط.
+    let list = contracts.filter(c=>!c.deleted);
     if(invSearch && invSearch!=="__all__") list = list.filter(c=>(investors.find(i=>String(i.id)===String(c.investorId))?.name||"")===invSearch);
     else if(!invSearch) list = [];
     if(payFilter){
@@ -2220,7 +2227,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#141428" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           رجوع
         </button>
-        <DeductionsSheet contracts={contracts} investors={investors} payments={payments}/>
+        <DeductionsSheet contracts={contracts} investors={investors} payments={payments} doneIds={doneIds}/>
       </div>
     );
   }
@@ -2466,7 +2473,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
         <button type="button" data-qe-manual="true" className={"qimat-quick-action "+(showDeduct?"active":"")} onClick={()=>setShowDeduct(true)} style={{borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
           <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2v6h6M18 22v-6h-6"/><path d="M21 11.5A8.5 8.5 0 0 0 6.7 4.4L2 8M3 12.5a8.5 8.5 0 0 0 14.3 7.1L22 16"/></g></svg>
-          الطباعة
+          التقارير
         </button>
         <button type="button" data-qe-manual="true" className="qimat-quick-action" onClick={()=>setPage("investorsList")} style={{borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
           <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></g></svg>
@@ -2568,7 +2575,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           <div style={{overflowX:"auto",maxHeight:"75vh",overflowY:"auto"}}>
             <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14}}>
               <thead>
-                <tr>{["#","اسم الزبون","الجوال","اسم الكفيل","جوال الكفيل","نقداً","أقساط","القسط","الواصل","المتأخر","المتبقي","🚨"].map((h,hi)=>{
+                <tr>{["#","اسم الزبون","الجوال","اسم الكفيل","جوال الكفيل","الحالة","نقداً","أقساط","القسط","الواصل","المتأخر","المتبقي","🚨"].map((h,hi)=>{
                   const isName = h==="اسم الزبون";
                   return <th key={h} style={{...styles.th,whiteSpace:"nowrap",position:"sticky",top:0,zIndex:isName?12:10,...(isName?{right:0,zIndex:12}:{})}}>{h}</th>;
                 })}</tr>
@@ -2598,6 +2605,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                       <td style={styles.td}>{c.cPhone||"—"}</td>
                       <td style={styles.td}>{c.gName||"—"}</td>
                       <td style={styles.td}>{c.gPhone||"—"}</td>
+                      <td style={{...styles.td,fontWeight:900,color:reportStatusOf(c)==="منتهي"?C.green:reportStatusOf(c)==="مؤجل"?"#a16207":C.ink}}>{reportStatusOf(c)}</td>
                       <td style={styles.td}>{SAR(c.amount||0)}</td>
                       <td style={styles.td}>{SAR(c.totalInst||0)}</td>
                       <td style={styles.td}>{SAR(c.instAmt||0)}</td>
@@ -2611,13 +2619,14 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               </tbody>
               <tfoot>
                 <tr style={{background:"#fffbf0",fontWeight:800}}>
-                  <td colSpan={5} style={{...styles.td}}>الإجمالي</td>
+                  <td colSpan={6} style={{...styles.td}}>الإجمالي</td>
                   <td style={styles.td}>{SAR(invReportContracts.reduce((s,c)=>s+(c.amount||0),0))}</td>
                   <td style={styles.td}>{SAR(invReportContracts.reduce((s,c)=>s+(c.totalInst||0),0))}</td>
                   <td style={styles.td}>{SAR(invReportContracts.reduce((s,c)=>s+(c.instAmt||0),0))}</td>
                   <td style={{...styles.td,color:C.green}}>{SAR(invReportContracts.reduce((s,c)=>s+_getPaid(payments,c.id),0))}</td>
                   <td style={styles.td}>—</td>
                   <td style={{...styles.td,color:C.red}}>{SAR(invReportContracts.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0))}</td>
+                  <td style={styles.td}></td>
                 </tr>
               </tfoot>
             </table>
@@ -2627,7 +2636,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           <div style={{overflowX:"auto",maxHeight:"75vh",overflowY:"auto"}}>
             <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:15}}>
               <thead>
-                <tr>{["اسم الزبون","رقم الجوال","القسط","ملاحظات"].map((h,hi)=>{
+                <tr>{["اسم الزبون","رقم الجوال","الحالة","القسط","ملاحظات"].map((h,hi)=>{
                   const isName = h==="اسم الزبون";
                   return <th key={h} style={{...styles.th,position:"sticky",top:0,zIndex:isName?12:10,...(isName?{right:0,zIndex:12}:{})}}>{h}</th>;
                 })}</tr>
@@ -2637,6 +2646,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                   <tr key={c.id} style={{background:i%2===0?"#fff":"#f8f8f8"}}>
                     <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",position:"sticky",right:0,background:i%2===0?"#fff":"#f8f8f8",zIndex:5,borderLeft:"1px solid #e0d8c6"}}>{c.client}</td>
                     <td style={styles.td}>{c.cPhone||"—"}</td>
+                    <td style={{...styles.td,fontWeight:900}}>{reportStatusOf(c)}</td>
                     <td style={styles.td}>{SAR(c.instAmt||0)}</td>
                     <td style={{...styles.td,textAlign:"center"}}></td>
                   </tr>
@@ -2644,7 +2654,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               </tbody>
               <tfoot>
                 <tr style={{background:"#fffbf0",fontWeight:800}}>
-                  <td colSpan={2} style={styles.td}>الإجمالي</td>
+                  <td colSpan={3} style={styles.td}>الإجمالي</td>
                   <td style={styles.td}>{SAR(invReportContracts.reduce((s,c)=>s+(c.instAmt||0),0))}</td>
                   <td style={styles.td}></td>
                 </tr>
@@ -3586,37 +3596,37 @@ const TX_TYPES = [
   {key:"contract",  label:"خصم عقد",          color:"#7030A0", sign:-1},
 ];
 
-function DeductionsSheet({contracts, investors, payments}){
+function DeductionsSheet({contracts, investors, payments, doneIds=[]}){
   const [checked,setChecked]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_deduct_check")||"{}");}catch{return{};}});
   const toggle=id=>{const n={...checked,[id]:!checked[id]};setChecked(n);localStorage.setItem("qimma_deduct_check",JSON.stringify(n));};
-  const [payF,setPayF]=useState(new Set(["استقطاع"])); // فلتر نوع السداد - متعدد
+  const [payF,setPayF]=useState(new Set(["الكل"])); // التقارير تفتح بجميع طرق السداد
   const [bankF,setBankF]=useState(""); // فلتر البنك (للشيكات والاستقطاع)
   const [sortBy,setSortBy]=useState(""); // ترتيب الكشف: "" | inv | bank
   const [dayF,setDayF]=useState(""); // فلتر يوم الاستحقاق
   const [showFilters,setShowFilters]=useState(false); // إظهار/إخفاء كل الفلاتر
-  const [statusF,setStatusF]=useState(new Set(["شهري","مستمر"])); // فلتر حالة العقد — مخفي
+  const [statusF,setStatusF]=useState(new Set(["شهري","مستمر","مؤجل","منتهي"])); // كل الحالات ظاهرة افتراضياً
   const [showStatusF,setShowStatusF]=useState(false); // إظهار/إخفاء فلتر الحالة
   const getDueDay=c=>{if(!c.firstInst)return""; return String(new Date(c.firstInst).getDate());};
   const togglePay = f => {
     if(f==="الكل"){ setPayF(new Set(["الكل"])); setBankF(""); return; }
     const n = new Set(payF); n.delete("الكل");
     if(n.has(f)) n.delete(f); else n.add(f);
-    if(n.size===0) n.add("استقطاع");
+    if(n.size===0) n.add("الكل");
     setPayF(n); setBankF("");
   };
   const toggleStatus = s => {
     const n = new Set(statusF);
     if(n.has(s)) n.delete(s); else n.add(s);
-    if(n.size===0) n.add("شهري");
+    if(n.size===0){["شهري","مستمر","مؤجل","منتهي"].forEach(x=>n.add(x));}
     setStatusF(n);
   };
   // تصنيف حالة العقد
   const _cStatus = c => {
     if(c.contractType==="defer") return "مؤجل";
-    if(c.contractType==="migrated") return "مستمر";
     // منتهي: المحصّل >= الإجمالي
     const paid = _getPaid(payments, c.id);
-    if(paid >= (c.totalInst||0) && (c.totalInst||0)>0) return "منتهي";
+    if((doneIds||[]).includes(c.id)||(paid >= (c.totalInst||0) && (c.totalInst||0)>0)) return "منتهي";
+    if(c.contractType==="migrated") return "مستمر";
     return "شهري";
   };
   // البنك يظهر مع الشيكات والمقاصة والاستقطاع
@@ -3647,7 +3657,7 @@ function DeductionsSheet({contracts, investors, payments}){
     const inv=investors.find(i=>String(i.id)===String(c.investorId));
     const paid=_getPaid(payments,c.id);
     const left=Math.max(0,(c.totalInst||0)-paid);
-    return {...c, invName:inv?invLabel(inv):"—", paid, left, dueDay:getDueDay(c)};
+    return {...c, invName:inv?invLabel(inv):"—", paid, left, dueDay:getDueDay(c), contractStatus:_cStatus(c)};
   });
   // ترتيب موحد: الراجحي→الأهلي→باقي البنوك بالكثرة→نقدي→تحويل→صرافة→استقطاع
   const fixedOrder = {"الراجحي":1,"الأهلي":2};
@@ -3726,17 +3736,17 @@ function DeductionsSheet({contracts, investors, payments}){
       const isRowDeduct = c.payType==="deduction"||pm==="استقطاع";
       const bankVal = isRowDeduct ? "استقطاع" : isRowCheck ? (_bankOf(c)||"—") : pm;
       const checkCol = hasChecks ? `<td>${isRowCheck?"":""}</td>` : "";
-      return `<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client}</td><td>${c.cPhone||"—"}</td>${checkCol}<td>${bankVal}</td><td>${cleanInv(c.invName)}</td><td class="amt">${fmt(c.instAmt)}</td><td></td></tr>`;
+      return `<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client}</td><td>${c.cPhone||"—"}</td>${checkCol}<td>${bankVal}</td><td>${cleanInv(c.invName)}</td><td>${c.contractStatus||"—"}</td><td class="amt">${fmt(c.instAmt)}</td><td></td></tr>`;
     }).join("");
-    const colCount = hasChecks ? 9 : 8;
+    const colCount = hasChecks ? 10 : 9;
     const win=window.open("","_blank");
-    win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>كشف الاستقطاعات</title>
+    win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${titleLabel}</title>
     <style>body{font-family:Arial;padding:8px 6px;color:#000;margin:0}.header{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px}.org{font-size:15px;font-weight:900}.sub{font-size:11px}.title{text-align:center;font-size:17px;font-weight:900;border:2px solid #000;padding:8px;margin-bottom:10px}table{width:100%;border-collapse:collapse;font-size:12px;border:2px solid #000}th,td{border:1px solid #000;padding:4px 5px;text-align:right;font-weight:700;white-space:nowrap}th{font-weight:900;border-bottom:2px solid #000;font-size:11px}td:nth-child(1){width:22px;text-align:center}td:nth-child(2){white-space:normal}td.amt{font-weight:900;text-align:left}.foot{text-align:center;color:#444;font-size:10px;margin-top:10px;border-top:1px solid #000;padding-top:6px}@media print{button{display:none!important}@page{size:A4;margin:5mm}}</style>
     </head><body>
     <div class="header"><div><div class="org">مؤسسة قمة الفرصة التجارية</div><div class="sub">بريدة - شارع الثلاثين</div><div class="sub">ج: 0555171283  ت: 0163839323</div></div>
-    <div style="text-align:left"><div class="sub">كشف الاستقطاعات</div><div class="sub">التاريخ: ${(()=>{const d=new Date();return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0");})()}</div></div></div>
+    <div style="text-align:left"><div class="sub">التقارير والكشوف</div><div class="sub">التاريخ: ${(()=>{const d=new Date();return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0");})()}</div></div></div>
     <div class="title">${titleLabel}</div>
-    <table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th>${hasChecks?`<th>رقم الشيك</th>`:""}<th>البنك</th><th>المستثمر</th><th>القسط</th><th>ملاحظات</th></tr></thead>
+    <table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th>${hasChecks?`<th>رقم الشيك</th>`:""}<th>البنك</th><th>المستثمر</th><th>الحالة</th><th>القسط</th><th>ملاحظات</th></tr></thead>
     <tbody>${body||`<tr><td colspan="${colCount}" style="text-align:center;color:#666">لا يوجد بيانات</td></tr>`}
     <tr style="font-weight:900;border-top:2px solid #000"><td colspan="${colCount-2}">الإجمالي</td><td class="amt">${fmt(totalInst)}</td><td></td></tr></tbody></table>
     <div class="foot">طُبع بتاريخ ${new Date().toLocaleString("en-US")}</div>
@@ -3748,15 +3758,15 @@ function DeductionsSheet({contracts, investors, payments}){
   return (
     <div className="q-contracts-module q-contracts-deductions">
       <div className="q-contracts-module-head">
-        <div><span>مركز العقود</span><h2>الطباعة والاستقطاعات</h2><p>كشف موحّد قابل للفرز والتصفية والطباعة</p></div>
-        <b>كشف</b>
+        <div><span>قمة الفرصة · مركز المعلومات</span><h2>التقارير والكشوف</h2><p>كل العقود وطرق السداد في مركز واحد — مستمرة، منتهية ومؤجلة</p></div>
+        <b>تقارير</b>
       </div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:10}}>
         <div style={{fontSize:18,fontWeight:800,display:"flex",alignItems:"center",gap:8}}>
           <svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg>
           {payLabel} ({dRows.length})</div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <button onClick={()=>setShowFilters(!showFilters)}
+          <button type="button" aria-label="الفلاتر المتقدمة" title="الفلاتر المتقدمة" onClick={()=>setShowFilters(!showFilters)}
             style={{width:40,height:40,borderRadius:10,border:showFilters?"1px solid #b8862b":"1px solid #b8862b",background:showFilters?"linear-gradient(140deg,#e0b85c,#c8922a)":"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>
             <svg width="18" height="18" viewBox="0 0 24 24"><g fill="none" stroke={showFilters?"#141428":"#64748b"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M7 12h10M10 18h4"/></g></svg>
           </button>
@@ -3765,7 +3775,14 @@ function DeductionsSheet({contracts, investors, payments}){
             طباعة الكشف</button>
         </div>
       </div>
-      {/* كل الفلاتر مخفية */}
+      {/* أنواع التقارير ظاهرة دائماً — الفلاتر التفصيلية فقط داخل زر التصفية */}
+      <div className="q-reports-type-tabs" aria-label="نوع التقرير">
+        {["الكل","نقدي","تحويل","صرافة","شيكات","المقاصة","استقطاع"].map(f=>{
+          const on=payF.has(f);
+          return <button type="button" data-qe-manual="true" aria-pressed={on} className={on?"is-active":""} key={f} onClick={()=>togglePay(f)}>{f}</button>;
+        })}
+      </div>
+      {/* الفلاتر التفصيلية مخفية */}
       {showFilters && <>
       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:8}}>
         <span style={{fontSize:13,fontWeight:700,color:"#4a5568"}}>ترتيب الكشف:</span>
@@ -3785,16 +3802,6 @@ function DeductionsSheet({contracts, investors, payments}){
               border:statusF.has(s)?"1px solid #e0d8c6":"1px solid #e0d8c6",
               background:statusF.has(s)?"#fffbf0":"#fff",
               color:statusF.has(s)?"#141428":"#64748b"}}>{s}</button>
-        ))}
-      </div>
-      {/* فلتر نوع السداد */}
-      <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
-        {["استقطاع","شيكات","المقاصة","نقدي","تحويل","صرافة","الكل"].map(f=>(
-          <button key={f} onClick={()=>togglePay(f)}
-            style={{padding:"6px 14px",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
-              border:payF.has(f)?"1px solid #e0d8c6":"1px solid #e0d8c6",
-              background:payF.has(f)?"#fffbf0":"#fff",
-              color:payF.has(f)?"#141428":"#64748b"}}>{f}</button>
         ))}
       </div>
       {/* فلتر البنك */}
@@ -3842,11 +3849,11 @@ function DeductionsSheet({contracts, investors, payments}){
       })()}
       </>}
       {dRows.length===0 ? (
-        <div style={{...styles.card,textAlign:"center",color:"#1f2937",padding:30}}>لا يوجد زبائن استقطاع</div>
+        <div style={{...styles.card,textAlign:"center",color:"#1f2937",padding:30}}>لا توجد عقود مطابقة للفلاتر المختارة</div>
       ) : (
         <div style={{overflowX:"auto",maxHeight:"75vh",overflowY:"auto"}}>
           <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14}}>
-            <thead><tr>{["✓","اسم الزبون","رقم الجوال","رقم العقد","رقم الحساب","البنك","المستثمر","يوم","القسط","المتبقي"].map((h,hi)=>{
+            <thead><tr>{["✓","اسم الزبون","رقم الجوال","رقم العقد","رقم الحساب","البنك","المستثمر","الحالة","يوم","القسط","المتبقي"].map((h,hi)=>{
               const isName = h==="اسم الزبون";
               return <th key={h} style={{...styles.th,whiteSpace:"nowrap",position:"sticky",top:0,zIndex:isName?12:10,...(isName?{right:0,zIndex:12}:{})}}>{h}</th>;
             })}</tr></thead>
@@ -3860,13 +3867,14 @@ function DeductionsSheet({contracts, investors, payments}){
                   <td style={{...styles.td,fontFamily:"monospace",whiteSpace:"nowrap"}}>{c.bankAccount||"—"}</td>
                   <td style={{...styles.td,whiteSpace:"nowrap",fontWeight:700,color:_bankOf(c)?C.ink:"#cbd5e1"}}>{_bankOf(c)||"—"}</td>
                   <td style={{...styles.td,whiteSpace:"nowrap"}}>{c.invName}</td>
+                  <td style={{...styles.td,whiteSpace:"nowrap",fontWeight:900,color:c.contractStatus==="منتهي"?C.green:c.contractStatus==="مؤجل"?"#a16207":C.ink}}>{c.contractStatus}</td>
                   <td style={{...styles.td,textAlign:"center",fontWeight:700,color:C.gold}}>{c.dueDay||"—"}</td>
                   <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap"}}>{SAR(c.instAmt||0)}</td>
                   <td style={{...styles.td,color:C.red,whiteSpace:"nowrap"}}>{SAR(c.left)}</td>
                 </tr>
               ))}
             </tbody>
-            <tfoot><tr style={{background:"#fffbf0",fontWeight:800}}><td colSpan={8} style={styles.td}>الإجمالي</td><td style={styles.td}>{SAR(totalInst)}</td><td style={{...styles.td,color:C.red}}>{SAR(dRows.reduce((s,c)=>s+(c.left||0),0))}</td></tr></tfoot>
+            <tfoot><tr style={{background:"#fffbf0",fontWeight:800}}><td colSpan={9} style={styles.td}>الإجمالي</td><td style={styles.td}>{SAR(totalInst)}</td><td style={{...styles.td,color:C.red}}>{SAR(dRows.reduce((s,c)=>s+(c.left||0),0))}</td></tr></tfoot>
           </table>
         </div>
       )}
@@ -6711,50 +6719,60 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
         const amt = isDone ? doneAmount : targetAmount;
         const cnt = isDone ? doneCount : targetCount;
         return (
-        <div onClick={()=>setDetail(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:1000,
+        <div className="q-monthly-installments-overlay" onClick={()=>setDetail(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:1000,
           display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-          <div onClick={e=>e.stopPropagation()} style={{background:C.white,borderRadius:22,overflow:"hidden",
+          <div className="q-monthly-installments-modal" onClick={e=>e.stopPropagation()} style={{background:C.white,borderRadius:22,overflow:"hidden",
             width:"100%",maxWidth:440,maxHeight:"85vh",display:"flex",flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,.35)"}}>
-            <div style={{padding:"20px 18px 18px",color:"#fff",position:"relative",overflow:"hidden",background:headBg}}>
+            <div className="q-monthly-installments-head" style={{padding:"20px 18px 18px",color:"#fff",position:"relative",overflow:"hidden",background:headBg}}>
               <div style={{position:"absolute",left:-30,top:-30,width:130,height:130,borderRadius:"50%",background:"rgba(255,255,255,.12)"}}/>
-              <div onClick={()=>setDetail(null)} style={{position:"absolute",top:16,left:16,width:30,height:30,
+              <button type="button" className="q-monthly-installments-close" aria-label="إغلاق" onClick={()=>setDetail(null)} style={{position:"absolute",top:16,left:16,width:30,height:30,
                 background:"rgba(255,255,255,.2)",borderRadius:"50%",display:"flex",alignItems:"center",
-                justifyContent:"center",fontSize:14,cursor:"pointer"}}>✕</div>
-              <div style={{fontSize:16,fontWeight:800,marginBottom:14}}>{isDone?"🏆 المنجز منها":"🎯 أقساط الشهر"}</div>
-              <div style={{display:"flex",alignItems:"baseline",gap:8}}>
+                justifyContent:"center",fontSize:14,cursor:"pointer"}}>✕</button>
+              <div className="q-monthly-installments-title" style={{fontSize:16,fontWeight:800,marginBottom:14}}>{isDone?"المنجز من أقساط الدورة":"أقساط الشهر المستحقة"}</div>
+              <div className="q-monthly-installments-total" style={{display:"flex",alignItems:"baseline",gap:8}}>
                 <span style={{fontSize:38,fontWeight:800,lineHeight:1,letterSpacing:"-.5px"}}>{SARf(amt)}</span>
-                <span style={{fontSize:14,opacity:.92,fontWeight:700}}>﷼ · {cnt} قسط</span>
+                <span style={{fontSize:14,opacity:.92,fontWeight:700}}>ر.س · {cnt} قسط</span>
               </div>
-              <div style={{fontSize:12,opacity:.9,marginTop:8,fontWeight:600}}>دورة {cycleLabel} · مرتّبين بالمبلغ</div>
+              <div className="q-monthly-installments-cycle" style={{fontSize:12,opacity:.9,marginTop:8,fontWeight:600}}>دورة {cycleLabel} · مرتبة حسب قيمة القسط</div>
+              <div className="q-monthly-installments-summary">
+                <div><small>إجمالي الدورة</small><strong>{SARf(targetAmount)} ر.س</strong></div>
+                <div><small>تم إنجازه</small><strong>{SARf(doneAmount)} ر.س</strong></div>
+                <div><small>المتبقي</small><strong>{SARf(remAmount)} ر.س</strong></div>
+              </div>
             </div>
-            <div style={{overflowY:"auto",flex:1}}>
+            <div className="q-monthly-installments-columns" aria-hidden="true">
+              <span>#</span><span>العميل والعقد</span><span>المستثمر</span><span>القسط والحالة</span><span>الإجراء</span>
+            </div>
+            <div className="q-monthly-installments-body" style={{overflowY:"auto",flex:1}}>
               {rows.length===0 ? (
-                <div style={{textAlign:"center",padding:40,color:C.ink2,fontSize:14}}>
+                <div className="q-monthly-installments-empty" style={{textAlign:"center",padding:40,color:C.ink2,fontSize:14}}>
                   {isDone?"ما فيه سدادات بعد في هذي الدورة":"ما فيه أقساط مستحقة"}
                 </div>
               ) : rows.map((r,i)=>{
                 const c=r.c, inv=investors.find(x=>String(x.id)===String(c.investorId));
                 const paid=r.isPaid;
                 return (
-                <div key={c.id} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 16px",
+                <div className={"q-monthly-installments-row "+(paid?"is-paid":"is-due")} key={c.id} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 16px",
                   borderBottom:"1px solid #f1f5f9",background:paid?"#f0fdf4":"transparent"}}>
-                  <div style={{width:26,height:26,borderRadius:8,flexShrink:0,background:paid?"#dcfce7":"#f1f5f9",
+                  <div className="q-monthly-installments-index" style={{width:26,height:26,borderRadius:8,flexShrink:0,background:paid?"#dcfce7":"#f1f5f9",
                     color:paid?C.green:C.ink2,fontSize:12,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>
                     {paid?"✓":(i+1)}</div>
-                  <div style={{flex:1,minWidth:0}}>
+                  <div className="q-monthly-installments-client" style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:14,fontWeight:700,color:C.ink,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{c.client}</div>
-                    <div style={{fontSize:11,color:"#64748b",marginTop:2}}>{inv?invLabel(inv):"—"} · #{c.num}</div>
+                    <div style={{fontSize:11,color:"#64748b",marginTop:2}}>عقد #{c.num||"—"} · استحقاق {shortD(c.firstInst)||"—"}</div>
                   </div>
-                  <div style={{textAlign:"left",flexShrink:0}}>
+                  <div className="q-monthly-installments-investor">{inv?invLabel(inv):"—"}</div>
+                  <div className="q-monthly-installments-amount" style={{textAlign:"left",flexShrink:0}}>
                     <div style={{fontSize:15,fontWeight:800,color:paid?C.green:C.ink}}>{SARf(r.due)}</div>
                     <span style={{fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:8,marginTop:3,display:"inline-block",
                       background:paid?"#dcfce7":"#f0fdfa",color:paid?C.green:C.teal}}>{paid?"تم السداد":"مستحق"}</span>
                   </div>
                   {!isDone && !paid && (
-                    <button onClick={()=>{setDetail(null);setPage&&setPage("contracts");}}
+                    <button className="q-monthly-installments-pay" onClick={()=>{setDetail(null);setPage&&setPage("contracts");}}
                       style={{background:C.green,color:"#fff",border:"none",borderRadius:9,padding:"7px 13px",
                       fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>سدّد</button>
                   )}
+                  {(isDone||paid) && <span className="q-monthly-installments-complete">مكتمل</span>}
                 </div>);
               })}
               {/* ═══ اللي ما سددوا ═══ */}
@@ -11157,7 +11175,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
 
   // ─── هيدر مشترك ───
   const Header=({title})=>(
-    React.createElement("div",{style:{background:"linear-gradient(135deg,#071827 0%,#0b2a43 58%,#123a59 100%)",borderRadius:20,padding:"18px 20px",marginBottom:16,color:"#fff",border:"1px solid rgba(224,184,92,.62)",boxShadow:"0 12px 30px rgba(7,24,39,.18)",position:"relative",overflow:"hidden"}},
+    React.createElement("div",{className:"qcollect-header",style:{background:"linear-gradient(135deg,#071827 0%,#0b2a43 58%,#123a59 100%)",borderRadius:20,padding:"18px 20px",marginBottom:16,color:"#fff",border:"1px solid rgba(224,184,92,.62)",boxShadow:"0 12px 30px rgba(7,24,39,.18)",position:"relative",overflow:"hidden"}},
       React.createElement("div",{style:{position:"absolute",inset:0,background:"radial-gradient(circle at 12% 20%,rgba(224,184,92,.18),transparent 30%),linear-gradient(110deg,transparent 55%,rgba(224,184,92,.08))",pointerEvents:"none"}}),
       React.createElement("div",{style:{position:"relative"}},
         React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
@@ -11191,8 +11209,8 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
         ),
         viewMode!=="overdue" && React.createElement(Header,{title:"التحصيل"}),
         // ── تبويبا الحالة: التحصيل / المتعثرون (hidden when initialMode provided) ──
-        !initialMode && React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}},
-          React.createElement("button",{onClick:()=>setViewMode("collect"),
+        !initialMode && React.createElement("div",{className:"qcollect-mode-switch",style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}},
+          React.createElement("button",{className:"qcollect-mode-tab "+(viewMode==="collect"?"is-active":""),onClick:()=>setViewMode("collect"),
             style:{padding:"13px",borderRadius:13,border:viewMode==="collect"?"none":"1px solid #b8862b",
               background:viewMode==="collect"?"linear-gradient(140deg,#e0b85c,#c8922a)":"#fff",
               color:viewMode==="collect"?"#141428":"#64748b",fontWeight:800,fontSize:14.5,cursor:"pointer",
@@ -11202,7 +11220,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
             ),
             "التحصيل"
           ),
-          React.createElement("button",{onClick:()=>setViewMode("overdue"),
+          React.createElement("button",{className:"qcollect-mode-tab "+(viewMode==="overdue"?"is-active":""),onClick:()=>setViewMode("overdue"),
             style:{padding:"13px",borderRadius:13,border:viewMode==="overdue"?"none":"1px solid #b8862b",
               background:viewMode==="overdue"?"linear-gradient(140deg,#e0b85c,#c8922a)":"#fff",
               color:viewMode==="overdue"?"#141428":"#64748b",fontWeight:800,fontSize:14.5,cursor:"pointer",
@@ -11221,7 +11239,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
               goCollect:()=>setViewMode("collect"),
               onFlag:(id,val)=>{ setContracts && setContracts(p=>p.map(c=>c.id===id?{...c,defaulter:val}:c)); }})
           : React.createElement(React.Fragment,null,
-              React.createElement("div",{style:{display:"flex",gap:10,marginBottom:14,alignItems:"center",background:"#fffdf9",border:"1px solid #e4d7c1",borderRadius:14,padding:"10px 12px",boxShadow:"0 4px 14px rgba(21,37,54,.05)"}},
+              React.createElement("div",{className:"qcollect-date-card",style:{display:"flex",gap:10,marginBottom:14,alignItems:"center",background:"#fffdf9",border:"1px solid #e4d7c1",borderRadius:14,padding:"10px 12px",boxShadow:"0 4px 14px rgba(21,37,54,.05)"}},
                 React.createElement("div",{style:{width:34,height:34,borderRadius:10,background:"#0b2439",color:"#f0cf79",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}},"▣"),
                 React.createElement("div",{style:{flex:1}},
                   React.createElement("div",{style:{fontSize:11,color:"#7b8794",fontWeight:700,marginBottom:3}},"تاريخ التحصيل"),
@@ -11230,29 +11248,29 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
               ),
               invCards.length===0
                 ? React.createElement("div",{style:{...styles.card,textAlign:"center",padding:40,color:"#6b7280"}},"لا يوجد عقود نشطة")
-                : React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:12}},
+                : React.createElement("div",{className:"qcollect-investor-grid",style:{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:12}},
                     invCards.map((g,gi)=>(
                     React.createElement("div",{key:g.inv.id,onClick:()=>{setSelInv(g.inv);setColSearch("");setExpanded({});},
-                      style:{background:"linear-gradient(150deg,#102d46 0%,#071b2d 78%)",borderRadius:18,padding:"18px 16px",cursor:"pointer",boxShadow:"0 9px 22px rgba(7,24,39,.13)",border:"1px solid rgba(224,184,92,.55)",position:"relative",transition:"transform .15s ease,box-shadow .15s ease",overflow:"hidden",minHeight:160,color:"#fff"}},
+                      className:"qcollect-investor-card",style:{background:"linear-gradient(145deg,#fffefa 0%,#f7efe1 100%)",borderRadius:18,padding:"18px 16px",cursor:"pointer",boxShadow:"0 9px 22px rgba(7,24,39,.09)",border:"1px solid #d8b66c",position:"relative",transition:"transform .15s ease,box-shadow .15s ease",overflow:"hidden",minHeight:160,color:"#0b2439"}},
                       React.createElement("div",{style:{position:"absolute",width:86,height:86,borderRadius:"50%",top:-30,right:-22,background:"radial-gradient(circle,rgba(224,184,92,.18),transparent 70%)",pointerEvents:"none"}}),
                       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:16,position:"relative"}},
                         React.createElement("div",{style:{width:38,height:38,borderRadius:12,background:"linear-gradient(140deg,#f0cf79,#c8922a)",color:"#081b2b",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:900,boxShadow:"0 5px 12px rgba(200,146,42,.22)"}},String(gi+1)),
                         g.lateCount>0
-                          ? React.createElement("span",{style:{background:"rgba(220,38,38,.12)",color:"#ffb4b4",borderRadius:999,padding:"4px 9px",fontSize:10.5,fontWeight:900,border:"1px solid rgba(255,180,180,.25)"}},g.lateCount+" متأخر")
-                          : React.createElement("span",{style:{background:"rgba(34,197,94,.10)",color:"#a7f3c1",borderRadius:999,padding:"4px 9px",fontSize:10.5,fontWeight:900,border:"1px solid rgba(167,243,193,.18)"}},"منتظم")
+                          ? React.createElement("span",{className:"qcollect-investor-state is-late",style:{background:"#fff0f0",color:"#b42318",borderRadius:999,padding:"4px 9px",fontSize:10.5,fontWeight:900,border:"1px solid #f5b7b1"}},g.lateCount+" متأخر")
+                          : React.createElement("span",{className:"qcollect-investor-state is-good",style:{background:"#ecfdf3",color:"#067647",borderRadius:999,padding:"4px 9px",fontSize:10.5,fontWeight:900,border:"1px solid #abefc6"}},"منتظم")
                       ),
-                      React.createElement("div",{style:{fontFamily:"'Amiri','Traditional Arabic',serif",fontSize:"clamp(19px,2.8vw,27px)",fontWeight:700,color:"#fff",marginBottom:13,lineHeight:1.25,position:"relative"}},invLabel(g.inv)),
-                      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,position:"relative"}},
-                        React.createElement("div",{style:{background:"rgba(255,255,255,.055)",border:"1px solid rgba(255,255,255,.08)",borderRadius:11,padding:"8px 9px"}},
-                          React.createElement("div",{style:{fontSize:10.5,color:"#9fb4c5",fontWeight:700}},"العقود"),
+                      React.createElement("div",{className:"qcollect-investor-name",style:{fontFamily:"'IBM Plex Sans Arabic','Tajawal',Arial,sans-serif",fontSize:"clamp(18px,2.5vw,25px)",fontWeight:950,color:"#0b2439",marginBottom:13,lineHeight:1.35,position:"relative"}},invLabel(g.inv)),
+                      React.createElement("div",{className:"qcollect-investor-metrics",style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,position:"relative"}},
+                        React.createElement("div",{style:{background:"rgba(200,146,42,.08)",border:"1px solid rgba(200,146,42,.2)",borderRadius:11,padding:"8px 9px"}},
+                          React.createElement("div",{style:{fontSize:10.5,color:"#667085",fontWeight:800}},"العقود"),
                           React.createElement("div",{style:{fontSize:18,fontWeight:900,color:"#f0cf79",marginTop:2}},g.items.length)
                         ),
-                        React.createElement("div",{style:{background:"rgba(255,255,255,.055)",border:"1px solid rgba(255,255,255,.08)",borderRadius:11,padding:"8px 9px"}},
-                          React.createElement("div",{style:{fontSize:10.5,color:"#9fb4c5",fontWeight:700}},"إجمالي الأقساط"),
-                          React.createElement("div",{style:{fontSize:14,fontWeight:900,color:"#fff",marginTop:4}},SAR(g.totalInst))
+                        React.createElement("div",{style:{background:"rgba(200,146,42,.08)",border:"1px solid rgba(200,146,42,.2)",borderRadius:11,padding:"8px 9px"}},
+                          React.createElement("div",{style:{fontSize:10.5,color:"#667085",fontWeight:800}},"إجمالي الأقساط"),
+                          React.createElement("div",{style:{fontSize:14,fontWeight:900,color:"#0b2439",marginTop:4}},SAR(g.totalInst))
                         )
                       ),
-                      React.createElement("div",{style:{marginTop:11,fontSize:10.5,color:"#a9bfd0",fontWeight:700,display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative"}},
+                      React.createElement("div",{className:"qcollect-investor-link",style:{marginTop:11,fontSize:10.5,color:"#52606d",fontWeight:800,display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative"}},
                         React.createElement("span",null,"عرض العملاء"),React.createElement("span",{style:{color:"#f0cf79",fontSize:16}},"‹")
                       )
                     )
@@ -11267,12 +11285,15 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
   // شاشة 2: عقود المستثمر المختار
   // ═══════════════════════════════════════
   const selColor = getInvColor(sortedInvestors(investors).findIndex(i=>String(i.id)===String(selInv.id)));
+  const selTotalLeft = selRows.reduce((s,c)=>s+(+c.left||0),0);
+  const selTotalLate = selRows.reduce((s,c)=>s+(+c.lateAmt||0),0);
+  const selCyclePaid = dayPays.reduce((s,p)=>s+(+p.amount||0),0);
 
   return (
     React.createElement("div",{className:"q-contracts-module q-contracts-collection",style:{minHeight:"80vh"}},
       React.createElement(Header,{title:invLabel(selInv)}),
 
-      React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,alignItems:"center"}},
+      React.createElement("div",{className:"qcollect-toolbar",style:{display:"flex",gap:8,marginBottom:12,alignItems:"center"}},
         React.createElement("button",{onClick:()=>setSelInv(null),style:{background:"linear-gradient(145deg,#0b1f33,#0e2b45)",color:"#fff",border:"1px solid rgba(224,184,92,.55)",borderRadius:12,padding:"10px 15px",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"inline-flex",alignItems:"center",gap:7,whiteSpace:"nowrap"}},"‹ رجوع"),
         React.createElement("div",{style:{flex:1,display:"flex",gap:8,background:"#fffdf9",border:"1px solid #e4d7c1",borderRadius:12,padding:"6px 9px"}},
           React.createElement("input",{type:"date",value:colDate,onChange:e=>setColDate(e.target.value),style:{...styles.input,width:"138px",border:"none",boxShadow:"none",background:"transparent",padding:"6px 4px"}}),
@@ -11280,12 +11301,19 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
         )
       ),
 
+      React.createElement("div",{className:"qcollect-investor-summary"},
+        React.createElement("div",null,React.createElement("span",null,"العملاء النشطون"),React.createElement("strong",null,selRows.length),React.createElement("small",null,"عميل")),
+        React.createElement("div",null,React.createElement("span",null,"محصّل الدورة"),React.createElement("strong",null,SAR(selCyclePaid)),React.createElement("small",null,"ر.س")),
+        React.createElement("div",null,React.createElement("span",null,"إجمالي المتبقي"),React.createElement("strong",null,SAR(selTotalLeft)),React.createElement("small",null,"ر.س")),
+        React.createElement("div",{className:selTotalLate>0?"is-alert":""},React.createElement("span",null,"المتأخر الآن"),React.createElement("strong",null,SAR(selTotalLate)),React.createElement("small",null,"ر.س"))
+      ),
+
       selRows.length===0 && React.createElement("div",{style:{...styles.card,textAlign:"center",padding:30,color:"#6b7280"}},"✅ لا يوجد عقود متبقية"),
 
       // ─── جدول العملاء ───
-      selRows.length>0 && React.createElement("div",{style:{background:"#fffdf9",borderRadius:18,overflow:"hidden",boxShadow:"0 8px 24px rgba(16,34,51,.08)",border:"1px solid #e4d7c1"}},
+      selRows.length>0 && React.createElement("div",{className:"qcollect-ledger",style:{background:"#fffdf9",borderRadius:18,overflow:"hidden",boxShadow:"0 8px 24px rgba(16,34,51,.08)",border:"1px solid #e4d7c1"}},
         // رأس الجدول
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"28px 38px 1fr 90px 60px 30px",padding:"10px 8px",background:"linear-gradient(145deg,#0b2439,#081b2d)",borderBottom:"2px solid #c8922a",fontSize:12,fontWeight:800,color:"#fff",gap:2}},
+        React.createElement("div",{className:"qcollect-ledger-head",style:{display:"grid",gridTemplateColumns:"28px 38px 1fr 90px 60px 30px",padding:"10px 8px",background:"linear-gradient(145deg,#0b2439,#081b2d)",borderBottom:"2px solid #c8922a",fontSize:12,fontWeight:800,color:"#fff",gap:2}},
           React.createElement("span",{style:{textAlign:"center"}},"#"),
           React.createElement("span",{style:{textAlign:"center"}},"العقد"),
           React.createElement("span",null,"الاسم"),
@@ -11303,7 +11331,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
           const dotClr=c.lateAmt>0?"#ef4444":pct>=50?"#22c55e":"#f59e0b";
 
           return React.createElement("div",{key:c.id},
-            React.createElement("div",{onClick:()=>toggle(c.id),style:{display:"grid",gridTemplateColumns:"28px 38px 1fr 90px 60px 30px",padding:"10px 8px",alignItems:"center",cursor:"pointer",borderBottom:"1px solid #eee3d2",background:ci%2===0?"#fffdf9":"#fbf6ec",gap:2}},
+            React.createElement("div",{className:"qcollect-customer-row",onClick:()=>toggle(c.id),style:{display:"grid",gridTemplateColumns:"28px 38px 1fr 90px 60px 30px",padding:"10px 8px",alignItems:"center",cursor:"pointer",borderBottom:"1px solid #eee3d2",background:ci%2===0?"#fffdf9":"#fbf6ec",gap:2}},
               React.createElement("div",{style:{textAlign:"center",fontSize:13,fontWeight:800,color:"#1f2937"}},(ci+1)),
               React.createElement("div",{style:{textAlign:"center",fontSize:12,fontWeight:800,color:"#1f2937"}},(function(){if(c.num) return c.num; if(c.contractType==="migrated"){var m=String(c.note||"").match(/(\d+)/); if(m) return m[1];} return "—";}())),
               React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
@@ -11318,7 +11346,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
             ),
 
             // ═══ المحتوى الموسّع ═══
-            isExp && React.createElement("div",{style:{background:"linear-gradient(180deg,#fbf7ef,#fffdf9)",padding:"16px",borderBottom:"2px solid #e4d7c1"}},
+            isExp && React.createElement("div",{className:"qcollect-customer-detail",style:{background:"linear-gradient(180deg,#fbf7ef,#fffdf9)",padding:"16px",borderBottom:"2px solid #e4d7c1"}},
               // المؤشر الدائري + الأرقام
               React.createElement("div",{style:{display:"flex",alignItems:"center",gap:16,marginBottom:16}},
                 React.createElement(CircleProgress,{pct:pct,size:56,stroke:5}),
@@ -11358,8 +11386,8 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
               ),
 
               // سجل السدادات
-              hist.length>0 && React.createElement("div",{style:{background:"#fff",borderRadius:14,border:"1px solid #e2d5c0",overflow:"hidden",boxShadow:"0 4px 14px rgba(16,34,51,.05)"}},
-                React.createElement("div",{style:{background:"linear-gradient(145deg,#0b2439,#081b2d)",padding:"10px 14px",fontSize:15,fontWeight:900,color:"#fff",borderBottom:"2px solid #c8922a"}},"📋 السدادات ("+hist.length+")"),
+              hist.length>0 && React.createElement("div",{className:"qcollect-payments",style:{background:"#fff",borderRadius:14,border:"1px solid #e2d5c0",overflow:"hidden",boxShadow:"0 4px 14px rgba(16,34,51,.05)"}},
+                React.createElement("div",{className:"qcollect-payments-head",style:{background:"linear-gradient(145deg,#0b2439,#081b2d)",padding:"10px 14px",fontSize:15,fontWeight:900,color:"#fff",borderBottom:"2px solid #c8922a"}},"سجل السدادات ("+hist.length+")"),
                 React.createElement("table",{style:{width:"100%",borderCollapse:"collapse"}},
                   React.createElement("thead",null,
                     React.createElement("tr",{style:{background:"#f1f5f9"}},
@@ -12309,13 +12337,17 @@ function UpgradesPage({contracts, allContracts, investors, payments, activity, s
   ];
 
   return React.createElement("div",{style:styles.main},
-    !customerOnly && React.createElement("div",{style:{...styles.panel,paddingBottom:0}},
-      React.createElement("div",{style:{...styles.panelHdr,textAlign:"center"}},
-        React.createElement("h2",{style:{margin:0,fontSize:20,fontWeight:900,color:C.ink}},"🚀 التطويرات")
+    !customerOnly && React.createElement("div",{className:"q-upgrades-shell",style:{...styles.panel,paddingBottom:0}},
+      React.createElement("div",{className:"q-upgrades-head",style:{...styles.panelHdr,textAlign:"center"}},
+        React.createElement("div",{className:"q-upgrades-head-copy"},
+          React.createElement("span",null,"قمة الفرصة · التحسين المستمر"),
+          React.createElement("h2",{style:{margin:0,fontSize:20,fontWeight:900,color:C.ink}},"مركز التطويرات")
+        ),
+        React.createElement("button",{type:"button",className:"q-upgrades-back",onClick:()=>setPage&&setPage("dashboard")},"الرجوع للرئيسية")
       ),
       // sub-tabs
-      React.createElement("div",{style:{display:"flex",overflowX:"auto",gap:4,padding:"8px 12px",borderBottom:"2px solid "+C.border}},
-        tabs.map(t=>React.createElement("button",{key:t.id,onClick:()=>setTab(t.id),style:{...styles.btn(tab===t.id?"#1a1a2e":"#f1f5f9",tab===t.id?"#fff":"#374151"),fontSize:12,padding:"7px 12px",whiteSpace:"nowrap",borderRadius:8,fontFamily:"inherit"}},t.label+" "+t.name))
+      React.createElement("div",{className:"q-upgrades-tabs",style:{display:"flex",overflowX:"auto",gap:4,padding:"8px 12px",borderBottom:"2px solid "+C.border}},
+        tabs.map(t=>React.createElement("button",{className:tab===t.id?"is-active":"",key:t.id,onClick:()=>setTab(t.id),style:{...styles.btn(tab===t.id?"#1a1a2e":"#f1f5f9",tab===t.id?"#fff":"#374151"),fontSize:12,padding:"7px 12px",whiteSpace:"nowrap",borderRadius:8,fontFamily:"inherit"}},t.label+" "+t.name))
       )
     ),
 
@@ -15497,6 +15529,158 @@ body .contracts-lux button.q-contracts-status-tab.is-active .q-contracts-status-
   .qimat-top-hero{height:148px!important;min-height:148px!important;max-height:148px!important;padding-top:72px!important}
   .qimat-hero-brand-live{max-width:calc(100% - 165px)!important}.qimat-hero-brand-title{font-size:14px!important}.qimat-hero-brand-sub{display:none!important}
   .qimat-hero-tab{min-width:112px!important;height:64px!important;padding:0 11px!important;font-size:12px!important}
+}
+</style>
+<style id="qima-operations-refinement-v14">
+/* ═══════════════════════════════════════════════════════════════
+   قمة الفرصة v14 — أقساط الشهر، التقارير، التحصيل، التطويرات والهوية
+   ═══════════════════════════════════════════════════════════════ */
+
+/* نافذة أقساط الشهر — مساحة عمل واضحة بدلاً من القائمة الضيقة */
+.q-monthly-installments-overlay{
+  padding:clamp(12px,3vw,34px)!important;background:rgba(2,13,23,.68)!important;
+  backdrop-filter:blur(7px)!important;-webkit-backdrop-filter:blur(7px)!important
+}
+.q-monthly-installments-modal{
+  width:min(920px,100%)!important;max-width:920px!important;max-height:min(88vh,820px)!important;
+  border-radius:24px!important;border:1px solid rgba(227,184,82,.72)!important;
+  background:#fffdf8!important;box-shadow:0 28px 90px rgba(1,18,31,.42)!important
+}
+.q-monthly-installments-head{
+  padding:25px 27px 22px!important;background:
+    radial-gradient(circle at 8% -30%,rgba(240,207,121,.25),transparent 43%),
+    linear-gradient(128deg,#071827 0%,#0b2b45 62%,#123c5d 100%)!important;
+  border-bottom:3px solid #d5a13a!important
+}
+.q-monthly-installments-head::after{content:"";position:absolute;inset:0 0 auto;height:4px;background:linear-gradient(90deg,#9f6b16,#f2d989,#b77d1d)}
+.q-monthly-installments-close{border:1px solid rgba(255,255,255,.35)!important;color:#fff!important;z-index:3!important;font-weight:900!important}
+.q-monthly-installments-title{font-size:20px!important;font-weight:950!important;color:#fff!important;margin-bottom:10px!important}
+.q-monthly-installments-total>span:first-child{font-size:43px!important;color:#f2d37d!important;font-weight:950!important}
+.q-monthly-installments-total>span:last-child{color:#eef4f8!important;font-size:14px!important}
+.q-monthly-installments-cycle{color:#d5e0e8!important;font-size:12.5px!important;opacity:1!important}
+.q-monthly-installments-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:18px;position:relative;z-index:2}
+.q-monthly-installments-summary>div{padding:10px 12px;border:1px solid rgba(242,211,125,.24);border-radius:12px;background:rgba(255,255,255,.075);display:flex;flex-direction:column;gap:2px}
+.q-monthly-installments-summary small{font-size:10px!important;font-weight:800!important;color:#b9c9d5!important}
+.q-monthly-installments-summary strong{font-size:15px!important;font-weight:950!important;color:#fff!important}
+.q-monthly-installments-columns,.q-monthly-installments-row{
+  display:grid!important;grid-template-columns:44px minmax(220px,1.6fr) minmax(130px,.8fr) minmax(128px,.7fr) 92px!important;
+  gap:12px!important;align-items:center!important
+}
+.q-monthly-installments-columns{padding:11px 20px;background:#f2eadb;border-bottom:1px solid #d9c9ab;color:#415466;font-size:11px;font-weight:950;position:sticky;top:0;z-index:4}
+.q-monthly-installments-columns span:first-child,.q-monthly-installments-columns span:nth-last-child(-n+2){text-align:center}
+.q-monthly-installments-body{background:#fffdf8!important;overscroll-behavior:contain}
+.q-monthly-installments-row{padding:14px 20px!important;min-height:74px;border-bottom:1px solid #e7ddcb!important;background:#fffdf8!important;transition:background .15s ease,transform .15s ease}
+.q-monthly-installments-row:nth-child(even){background:#fbf6ed!important}.q-monthly-installments-row:hover{background:#fff7e4!important}
+.q-monthly-installments-row.is-paid{background:#f2fbf5!important}.q-monthly-installments-row.is-paid:nth-child(even){background:#edf8f1!important}
+.q-monthly-installments-index{width:32px!important;height:32px!important;border-radius:10px!important;font-size:13px!important;justify-self:center!important}
+.q-monthly-installments-client>div:first-child{font-size:16px!important;font-weight:950!important;color:#0a2033!important}
+.q-monthly-installments-client>div:last-child{font-size:11.5px!important;font-weight:750!important;color:#667788!important;margin-top:4px!important}
+.q-monthly-installments-investor{font-size:13px;font-weight:850;color:#33485a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.q-monthly-installments-amount{text-align:center!important}.q-monthly-installments-amount>div{font-size:17px!important;font-weight:950!important;color:#0a2033!important}.q-monthly-installments-amount span{font-size:10px!important}
+.q-monthly-installments-pay,.q-monthly-installments-complete{min-width:78px;justify-self:center;text-align:center;border-radius:10px!important;padding:9px 13px!important;font-size:12px!important;font-weight:950!important}
+.q-monthly-installments-pay{background:linear-gradient(135deg,#12845c,#08734e)!important;box-shadow:0 5px 13px rgba(8,115,78,.18)!important}
+.q-monthly-installments-complete{display:inline-flex;align-items:center;justify-content:center;color:#08734e;background:#dcf7e8;border:1px solid #a8e4c3}
+
+/* مركز التقارير */
+.q-contracts-deductions{background:linear-gradient(145deg,#fffdf8,#f7f0e4)!important;border:1px solid #d8c39a!important;border-radius:22px!important;padding:clamp(14px,2.4vw,24px)!important}
+.q-contracts-deductions .q-contracts-module-head{background:linear-gradient(125deg,#071827,#0c2d48 65%,#16466a)!important;border:1px solid #d7aa4e!important;border-radius:18px!important;box-shadow:0 12px 28px rgba(7,24,39,.15)!important}
+.q-contracts-deductions .q-contracts-module-head h2{color:#fff!important;font-size:clamp(20px,2.2vw,27px)!important;font-weight:950!important}
+.q-contracts-deductions .q-contracts-module-head span{color:#efcb75!important;font-weight:900!important}.q-contracts-deductions .q-contracts-module-head p{color:#d7e2ea!important;font-weight:700!important}
+.q-contracts-deductions .q-contracts-module-head>b{background:linear-gradient(145deg,#f2d37d,#c48a26)!important;color:#071827!important;border:1px solid #f5dfaa!important}
+.q-reports-type-tabs{display:grid;grid-template-columns:repeat(7,minmax(88px,1fr));gap:7px;margin:5px 0 14px;padding:7px;background:#f1e8d8;border:1px solid #dac7a4;border-radius:15px;overflow-x:auto}
+.q-reports-type-tabs button{min-height:44px;padding:8px 12px;border:1px solid #d7c29b;border-radius:11px;background:#fff;color:#34495a;font-family:'IBM Plex Sans Arabic','Tajawal',Arial,sans-serif;font-size:13px;font-weight:950;white-space:nowrap;cursor:pointer;box-shadow:none}
+.q-reports-type-tabs button.is-active{background:linear-gradient(135deg,#f1d27a,#c8922a);color:#071827;border-color:#b77d1d;box-shadow:0 5px 13px rgba(183,125,29,.18)}
+
+/* التحصيل — بطاقات فاتحة وهوية مؤسسية واضحة */
+.q-contracts-collection{background:linear-gradient(180deg,#f8f2e8 0%,#fffdfa 48%,#f5ecdd 100%)!important;border:1px solid #dfcda9!important;border-radius:22px!important;padding:clamp(12px,2vw,22px)!important}
+.qcollect-header{border-width:1px!important;border-top:4px solid #dfb44f!important;box-shadow:0 14px 34px rgba(7,24,39,.16)!important}
+.qcollect-mode-switch{padding:5px!important;border:1px solid #d9c39b!important;border-radius:16px!important;background:#f4ecdf!important;box-shadow:inset 0 1px 2px rgba(7,24,39,.04)!important}
+.qcollect-mode-tab{min-height:52px!important;background:#fffdf9!important;color:#20384c!important;border:1px solid transparent!important;border-radius:12px!important;font-size:15px!important;font-weight:950!important;box-shadow:none!important}
+.qcollect-mode-tab.is-active{background:linear-gradient(135deg,#f1d27a,#c9932d)!important;color:#071827!important;border-color:#b77d1d!important;box-shadow:0 6px 15px rgba(183,125,29,.2)!important}
+.qcollect-date-card{border-right:4px solid #c8922a!important;background:#fff!important}
+.qcollect-investor-card{border-right:5px solid #c8922a!important;box-shadow:0 8px 22px rgba(7,24,39,.08)!important}
+.qcollect-investor-card:hover{transform:translateY(-2px)!important;box-shadow:0 15px 32px rgba(7,24,39,.13)!important}
+.qcollect-investor-card>div:nth-child(2){background:radial-gradient(circle,rgba(200,146,42,.12),transparent 70%)!important}
+.qcollect-investor-metrics>div:first-child>div:last-child{color:#9a6718!important}
+.qcollect-investor-link span:last-child{color:#b47b20!important;font-size:20px!important}
+.qcollect-toolbar{padding:9px!important;background:#fff!important;border:1px solid #dfcda9!important;border-radius:15px!important;box-shadow:0 5px 15px rgba(7,24,39,.055)!important}
+.qcollect-investor-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 14px}
+.qcollect-investor-summary>div{position:relative;min-height:91px;padding:13px 15px;background:#fff;border:1px solid #dfcda9;border-radius:15px;box-shadow:0 5px 15px rgba(7,24,39,.055);overflow:hidden}
+.qcollect-investor-summary>div::before{content:"";position:absolute;top:0;right:0;bottom:0;width:4px;background:#c8922a}
+.qcollect-investor-summary>div.is-alert::before{background:#c63c34}.qcollect-investor-summary>div.is-alert strong{color:#b42318!important}
+.qcollect-investor-summary span{display:block;font-size:11px;font-weight:850;color:#667788;margin-bottom:5px}.qcollect-investor-summary strong{display:block;font-size:20px;font-weight:950;color:#0b2439}.qcollect-investor-summary small{font-size:9px;font-weight:800;color:#98a2ad}
+.qcollect-ledger{background:#fff!important;border-color:#d8c39a!important;box-shadow:0 11px 28px rgba(7,24,39,.09)!important}
+.qcollect-ledger-head{min-height:47px!important;background:linear-gradient(90deg,#0c304c,#071827)!important;border-bottom:3px solid #d5a13a!important;font-size:13px!important;font-weight:950!important}
+.qcollect-customer-row{min-height:59px!important;padding:11px 10px!important;background:#fff!important;border-bottom-color:#e7dbc5!important}.qcollect-customer-row:nth-child(even){background:#fbf7ef!important}.qcollect-customer-row:hover{background:#fff5df!important}
+.qcollect-customer-row span{font-weight:900!important}.qcollect-customer-detail{background:linear-gradient(180deg,#f7efe2,#fff)!important;border-right:4px solid #d1a03f!important}
+.qcollect-payments{border-color:#d8c39a!important;box-shadow:0 7px 20px rgba(7,24,39,.07)!important}.qcollect-payments-head{background:linear-gradient(90deg,#0c304c,#071827)!important;color:#fff!important;font-size:16px!important}
+
+/* التطويرات — رأس واضح وزر رجوع ثابت */
+.q-upgrades-shell{overflow:hidden!important;border:1px solid #d9c39a!important;border-radius:20px!important;background:#fffdf8!important}
+.q-upgrades-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:15px!important;padding:18px 20px!important;text-align:right!important;background:linear-gradient(125deg,#071827,#0c304c)!important;border-bottom:3px solid #d5a13a!important}
+.q-upgrades-head-copy span{display:block;color:#e9c56d;font-size:10px;font-weight:900;margin-bottom:3px}.q-upgrades-head-copy h2{color:#fff!important;font-size:22px!important;font-weight:950!important}
+.q-upgrades-back{display:inline-flex!important;align-items:center!important;gap:7px!important;border:1px solid #e8c46b!important;border-radius:11px!important;padding:10px 15px!important;background:#fff7e4!important;color:#0b2439!important;font-size:13px!important;font-weight:950!important;white-space:nowrap!important;cursor:pointer!important}
+.q-upgrades-back::before{content:"←";font-size:17px;line-height:1}.q-upgrades-tabs{padding:9px 12px!important;background:#f3ecdf!important;border-bottom-color:#ddc9a4!important}.q-upgrades-tabs button{min-height:39px!important;background:#fff!important;color:#34495a!important;border:1px solid #d9c6a2!important;font-size:12.5px!important;font-weight:900!important}.q-upgrades-tabs button.is-active{background:linear-gradient(135deg,#f0cf79,#c8922a)!important;color:#071827!important;border-color:#b77d1d!important}
+
+/* رأس المؤسسة — كتلة ذهبية صريحة + أقسام عالية التباين */
+@media(min-width:1000px){
+  .qimat-top-hero{
+    --qn-brand-space:clamp(350px,28vw,465px)!important;--qn-control-space:clamp(135px,11vw,180px)!important;
+    --qn-tabw:calc((100% - var(--qn-brand-space) - var(--qn-control-space))/7)!important;
+    height:108px!important;min-height:108px!important;max-height:108px!important;margin:0 0 20px!important;
+    background:linear-gradient(102deg,#061725 0%,#0b304d 56%,#071b2c 100%)!important;
+    border-bottom:4px solid #c68e2a!important;box-shadow:0 13px 34px rgba(3,19,32,.25)!important
+  }
+  .qimat-top-hero::after{display:none!important}
+  .qimat-hero-brand-live{
+    top:0!important;right:0!important;left:auto!important;width:var(--qn-brand-space)!important;height:108px!important;transform:none!important;
+    box-sizing:border-box!important;padding:19px 92px 13px 24px!important;text-align:right!important;
+    background:linear-gradient(132deg,#f5df9d 0%,#dbaf4d 55%,#bf8120 100%)!important;
+    border:0!important;border-left:2px solid #f5d989!important;box-shadow:-12px 0 30px rgba(0,0,0,.14)!important
+  }
+  .qimat-hero-brand-live::after{content:"";position:absolute;left:15px;top:15px;bottom:15px;width:1px;background:rgba(7,24,39,.28)}
+  .qimat-hero-brand-kicker{color:#5c3b08!important;font-size:10px!important;font-weight:950!important;letter-spacing:.2px!important}
+  .qimat-hero-brand-title{color:#061725!important;font-size:clamp(20px,1.55vw,27px)!important;font-weight:950!important;text-shadow:none!important}
+  .qimat-hero-brand-line{background:linear-gradient(90deg,transparent,#071827)!important;height:2px!important;width:92px!important;margin-top:6px!important}
+  .qimat-hero-brand-sub{color:#3f321d!important;font-size:10.5px!important;font-weight:850!important}
+  .qimat-hero-mark{right:21px!important;top:24px!important;width:52px!important;height:58px!important;color:#071827!important}
+  .qimat-mark-bars{border-color:#071827!important;box-shadow:none!important}.qimat-mark-bars i{background:#071827!important}
+  .qimat-hero-tab{height:108px!important;background:rgba(255,255,255,.018)!important;border-right:1px solid rgba(255,255,255,.11)!important;border-bottom-width:4px!important}
+  .qimat-hero-tab::before{top:23px!important;color:#e7c774!important;font-size:clamp(9px,.7vw,11px)!important;font-weight:900!important}
+  .qimat-hero-tab::after{top:53px!important;color:#fff!important;font-size:clamp(14px,1.05vw,17px)!important;font-weight:950!important;text-shadow:0 1px 12px rgba(0,0,0,.28)!important}
+  .qimat-hero-tab:hover{background:rgba(255,255,255,.075)!important;border-bottom-color:#f0cf79!important}
+  .qimat-hero-tab.active{background:linear-gradient(180deg,#f5df9d,#d6a63f)!important;border-bottom-color:#071827!important;box-shadow:inset 0 -5px 0 #071827!important}
+  .qimat-hero-tab.active::before{color:#604006!important}.qimat-hero-tab.active::after{color:#071827!important;text-shadow:none!important}
+  .qimat-hero-live-controls{left:10px!important}.qimat-hero-logout{background:#fff8e8!important;color:#071827!important;border:1px solid #d9b65f!important}.qimat-hero-sync{color:#b9efd5!important;font-weight:950!important}
+}
+
+@media(max-width:999px){
+  .qimat-top-hero{height:166px!important;min-height:166px!important;max-height:166px!important;padding:84px 9px 10px!important;background:linear-gradient(105deg,#061725,#0b304d)!important;border-bottom:3px solid #c8922a!important}
+  .qimat-hero-brand-live{top:8px!important;right:8px!important;width:calc(100% - 150px)!important;max-width:none!important;height:64px!important;box-sizing:border-box!important;padding:10px 53px 8px 12px!important;background:linear-gradient(132deg,#f3d98e,#c88e29)!important;border:1px solid #f2d37d!important;border-radius:13px!important;box-shadow:0 6px 18px rgba(0,0,0,.15)!important;overflow:hidden!important}
+  .qimat-hero-brand-kicker{color:#604006!important;font-size:7.5px!important}.qimat-hero-brand-title{color:#071827!important;font-size:14px!important;font-weight:950!important;overflow:hidden!important;text-overflow:ellipsis!important}.qimat-hero-brand-sub{color:#493719!important;font-size:8px!important;font-weight:850!important}
+  .qimat-hero-mark{right:17px!important;top:18px!important;z-index:97!important}.qimat-mark-bars{border-color:#071827!important}.qimat-mark-bars i{background:#071827!important}
+  .qimat-hero-tab{height:70px!important;min-width:122px!important;background:rgba(255,255,255,.08)!important;color:#fff!important;border-color:rgba(242,211,125,.35)!important;font-size:13px!important;font-weight:950!important}
+  .qimat-hero-tab.active{background:linear-gradient(135deg,#f2d889,#c88e29)!important;color:#071827!important;border-color:#f5e3ae!important;box-shadow:inset 0 -4px 0 #071827!important}
+  .qimat-hero-live-controls{top:14px!important;left:8px!important}.qimat-hero-sync{color:#b9efd5!important}.qimat-hero-logout{background:#fff8e8!important;color:#071827!important;border:1px solid #d7b35e!important}
+}
+
+@media(max-width:760px){
+  .q-monthly-installments-overlay{padding:0!important;align-items:flex-end!important}
+  .q-monthly-installments-modal{width:100%!important;max-height:94vh!important;border-radius:23px 23px 0 0!important;border-bottom:0!important}
+  .q-monthly-installments-head{padding:22px 18px 17px!important}.q-monthly-installments-title{font-size:17px!important}.q-monthly-installments-total>span:first-child{font-size:34px!important}
+  .q-monthly-installments-summary{gap:6px;margin-top:14px}.q-monthly-installments-summary>div{padding:8px}.q-monthly-installments-summary strong{font-size:12px!important}
+  .q-monthly-installments-columns{display:none!important}.q-monthly-installments-row{grid-template-columns:34px minmax(0,1fr) auto!important;gap:8px!important;padding:12px 13px!important;min-height:91px!important}
+  .q-monthly-installments-index{grid-row:1/3}.q-monthly-installments-investor{grid-column:2;grid-row:2;font-size:11px}.q-monthly-installments-amount{grid-column:3;grid-row:1}.q-monthly-installments-pay,.q-monthly-installments-complete{grid-column:3;grid-row:2;min-width:68px;padding:7px 8px!important}
+  .q-monthly-installments-client>div:first-child{font-size:14px!important}.q-monthly-installments-client>div:last-child{font-size:10px!important}
+  .qcollect-investor-grid{grid-template-columns:1fr!important}.qcollect-investor-card{min-height:150px!important}.qcollect-investor-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.qcollect-investor-summary>div{min-height:82px;padding:11px}.qcollect-investor-summary strong{font-size:17px}
+  .qcollect-toolbar{align-items:stretch!important;flex-wrap:wrap!important}.qcollect-toolbar>div{min-width:100%!important}.qcollect-ledger{overflow-x:auto!important}.qcollect-ledger-head,.qcollect-customer-row{min-width:590px!important}
+  .q-upgrades-head{padding:15px!important}.q-upgrades-head-copy h2{font-size:18px!important}.q-upgrades-back{padding:9px 11px!important;font-size:11px!important}
+  .q-reports-type-tabs{display:flex!important;padding:6px!important}.q-reports-type-tabs button{min-width:92px!important;flex:0 0 auto!important}
+}
+@media(max-width:480px){
+  .qimat-top-hero{height:160px!important;min-height:160px!important;max-height:160px!important;padding-top:80px!important}.qimat-hero-brand-live{width:calc(100% - 135px)!important;height:60px!important}.qimat-hero-brand-title{font-size:12px!important}.qimat-hero-tab{height:66px!important;min-width:112px!important;font-size:12px!important}
+  .q-monthly-installments-cycle{font-size:10.5px!important}.q-monthly-installments-summary small{font-size:8.5px!important}.q-monthly-installments-summary strong{font-size:10.5px!important}.q-monthly-installments-total>span:first-child{font-size:29px!important}
+  .q-upgrades-head{align-items:flex-start!important;flex-direction:column!important}.q-upgrades-back{align-self:stretch!important;justify-content:center!important}
 }
 </style>
 <script id="qimat-full-enterprise-ui-behavior">
