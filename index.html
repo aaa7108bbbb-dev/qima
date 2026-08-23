@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-23-qima-ai-os-v16-contract-status-print-cleanup -->
+<!-- build: 2026-08-23-qima-ai-os-v17-contract-name-hover-fix -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -15777,6 +15777,31 @@ body .contracts-lux button.q-contracts-status-tab.is-active .q-contracts-status-
   .q-reports-status-filter{display:grid;grid-template-columns:1fr 1fr;padding:8px;gap:6px}
   .q-reports-status-filter>span{grid-column:1/-1}.q-reports-status-filter button:first-of-type{grid-column:1/-1}
   .q-reports-status-filter button{padding:7px 8px;font-size:12px}
+}
+</style>
+<style id="qima-contract-name-hover-fix-v17">
+/* لا يتغير لون صف العقد عند مرور الفأرة؛ يبقى فقط مؤشر اليد فوق اسم الزبون. */
+body .contracts-lux table.freeze3 tbody tr.q-contracts-data-row:hover td,
+body .contracts-lux table.freeze3 tbody tr.q-contracts-data-row:hover td:not([colspan]):nth-child(-n+3){
+  background:#fff!important;color:#183249!important
+}
+body .contracts-lux table.freeze3 tbody tr.q-contracts-data-row:nth-child(even):hover td,
+body .contracts-lux table.freeze3 tbody tr.q-contracts-data-row:nth-child(even):hover td:not([colspan]):nth-child(-n+3){
+  background:#fcf8f1!important
+}
+body .contracts-lux table.freeze3 tbody tr.q-contracts-data-row-old:hover td,
+body .contracts-lux table.freeze3 tbody tr.q-contracts-data-row-old:hover td:not([colspan]):nth-child(-n+3){
+  background:#f5f2ec!important;color:#2c4255!important
+}
+body .contracts-lux table.freeze3 tbody tr.q-contracts-data-row:hover td.q-contracts-date{color:#15314a!important}
+body .contracts-lux table.freeze3 tbody tr.q-contracts-data-row:hover td.q-contracts-number{color:#092a43!important}
+body .contracts-lux table.freeze3 tbody tr.q-contracts-data-row:hover td.q-contracts-client,
+body .contracts-lux table.freeze3 tbody tr.q-contracts-data-row:hover td.q-contracts-client>span{
+  background:transparent!important;color:#0b2c45!important
+}
+body .contracts-lux table.freeze3 td.q-contracts-client>span:hover{
+  background:transparent!important;color:#0b2c45!important;cursor:pointer!important;
+  transform:none!important;box-shadow:none!important;filter:none!important
 }
 </style>
 <script id="qimat-full-enterprise-ui-behavior">
