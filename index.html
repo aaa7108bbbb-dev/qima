@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-23-qima-ai-os-v15-cheque-filters-white-brand -->
+<!-- build: 2026-08-23-qima-ai-os-v16-contract-status-print-cleanup -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -3612,11 +3612,13 @@ function DeductionsSheet({contracts, investors, payments, doneIds=[]}){
     // تبويبات التقارير اختيار واحد؛ يمنع اختلاط كشفين عند التنقل بينهما.
     setPayF(new Set([f])); setBankF("");
   };
-  const toggleStatus = s => {
-    const n = new Set(statusF);
-    if(n.has(s)) n.delete(s); else n.add(s);
-    if(n.size===0){["شهري","مستمر","مؤجل","منتهي"].forEach(x=>n.add(x));}
-    setStatusF(n);
+  const statusScope = statusF.size===4 ? "all"
+    : (statusF.size===2 && statusF.has("شهري") && statusF.has("مستمر")) ? "active"
+    : (statusF.size===1 && statusF.has("منتهي")) ? "ended" : "custom";
+  const chooseStatusScope = scope => {
+    if(scope==="active") setStatusF(new Set(["شهري","مستمر"]));
+    else if(scope==="ended") setStatusF(new Set(["منتهي"]));
+    else setStatusF(new Set(["شهري","مستمر","مؤجل","منتهي"]));
   };
   // تصنيف حالة العقد
   const _cStatus = c => {
@@ -3688,7 +3690,8 @@ function DeductionsSheet({contracts, investors, payments, doneIds=[]}){
   const totalInst=dRows.reduce((s,c)=>s+(c.instAmt||0),0);
   const payLabel=payF.has("الكل")?"جميع الأنواع":[...payF].join(" + ");
   const sortLabel = sortBy==="inv" ? " — مرتب حسب المستثمر" : sortBy==="bank" ? " — مرتب حسب البنك" : "";
-  const titleLabel=(payF.has("استقطاع")&&payF.size===1?"كشف حسابات الاستقطاع البنكي":"كشف "+payLabel)+(bankF?" — بنك "+bankF:"")+(dayF?" — يوم "+dayF:"")+sortLabel;
+  const statusLabel = statusScope==="active" ? " — العقود المستمرة" : statusScope==="ended" ? " — العقود المنتهية" : "";
+  const titleLabel=(payF.has("استقطاع")&&payF.size===1?"كشف حسابات الاستقطاع البنكي":"كشف "+payLabel)+(bankF?" — بنك "+bankF:"")+(dayF?" — يوم "+dayF:"")+statusLabel+sortLabel;
 
   const printSheet=()=>{
     const fmt=n=>Math.round(+(n||0)).toLocaleString("en-US");
@@ -3723,7 +3726,8 @@ function DeductionsSheet({contracts, investors, payments, doneIds=[]}){
       return bk!==0 ? bk : String(a.client||"").localeCompare(String(b.client||""),"ar");
     });
     // الطباعة الموحدة: كل عقد يُفحص نوعه على حدة
-    // الأعمدة ثابتة: # | اسم الزبون | رقم الجوال | رقم العقد | رقم الشيك | البنك | المستثمر | القسط | ملاحظات
+    // الأعمدة المطبوعة ثابتة، وعمود الحالة يبقى داخل شاشة النظام فقط.
+    // # | اسم الزبون | رقم الجوال | رقم العقد | رقم الشيك | البنك | المستثمر | القسط | ملاحظات
     // رقم الشيك يظهر فاضي فقط لعقود الشيكات/المقاصة
     // البنك: شيكات/مقاصة=اسم البنك، استقطاع="استقطاع"، نقدي/تحويل/صرافة=نوع السداد
     const hasChecks = printRows.some(c=>c.payMethod==="شيكات"||c.payMethod==="المقاصة");
@@ -3734,9 +3738,9 @@ function DeductionsSheet({contracts, investors, payments, doneIds=[]}){
       const isRowDeduct = c.payType==="deduction"||pm==="استقطاع";
       const bankVal = isRowDeduct ? "استقطاع" : isRowCheck ? (_bankOf(c)||"—") : pm;
       const checkCol = hasChecks ? `<td>${isRowCheck?"":""}</td>` : "";
-      return `<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client}</td><td>${c.cPhone||"—"}</td>${checkCol}<td>${bankVal}</td><td>${cleanInv(c.invName)}</td><td>${c.contractStatus||"—"}</td><td class="amt">${fmt(c.instAmt)}</td><td></td></tr>`;
+      return `<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client}</td><td>${c.cPhone||"—"}</td>${checkCol}<td>${bankVal}</td><td>${cleanInv(c.invName)}</td><td class="amt">${fmt(c.instAmt)}</td><td></td></tr>`;
     }).join("");
-    const colCount = hasChecks ? 10 : 9;
+    const colCount = hasChecks ? 9 : 8;
     const win=window.open("","_blank");
     win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${titleLabel}</title>
     <style>body{font-family:Arial;padding:8px 6px;color:#000;margin:0}.header{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px}.org{font-size:15px;font-weight:900}.sub{font-size:11px}.title{text-align:center;font-size:17px;font-weight:900;border:2px solid #000;padding:8px;margin-bottom:10px}table{width:100%;border-collapse:collapse;font-size:12px;border:2px solid #000}th,td{border:1px solid #000;padding:4px 5px;text-align:right;font-weight:700;white-space:nowrap}th{font-weight:900;border-bottom:2px solid #000;font-size:11px}td:nth-child(1){width:22px;text-align:center}td:nth-child(2){white-space:normal}td.amt{font-weight:900;text-align:left}.foot{text-align:center;color:#444;font-size:10px;margin-top:10px;border-top:1px solid #000;padding-top:6px}@media print{button{display:none!important}@page{size:A4;margin:5mm}}</style>
@@ -3744,7 +3748,7 @@ function DeductionsSheet({contracts, investors, payments, doneIds=[]}){
     <div class="header"><div><div class="org">مؤسسة قمة الفرصة التجارية</div><div class="sub">بريدة - شارع الثلاثين</div><div class="sub">ج: 0555171283  ت: 0163839323</div></div>
     <div style="text-align:left"><div class="sub">التقارير والكشوف</div><div class="sub">التاريخ: ${(()=>{const d=new Date();return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0");})()}</div></div></div>
     <div class="title">${titleLabel}</div>
-    <table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th>${hasChecks?`<th>رقم الشيك</th>`:""}<th>البنك</th><th>المستثمر</th><th>الحالة</th><th>القسط</th><th>ملاحظات</th></tr></thead>
+    <table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th>${hasChecks?`<th>رقم الشيك</th>`:""}<th>البنك</th><th>المستثمر</th><th>القسط</th><th>ملاحظات</th></tr></thead>
     <tbody>${body||`<tr><td colspan="${colCount}" style="text-align:center;color:#666">لا يوجد بيانات</td></tr>`}
     <tr style="font-weight:900;border-top:2px solid #000"><td colspan="${colCount-2}">الإجمالي</td><td class="amt">${fmt(totalInst)}</td><td></td></tr></tbody></table>
     <div class="foot">طُبع بتاريخ ${new Date().toLocaleString("en-US")}</div>
@@ -3810,14 +3814,18 @@ function DeductionsSheet({contracts, investors, payments, doneIds=[]}){
           <option value="bank">حسب البنك</option>
         </select>
       </div>
-      {/* فلتر حالة العقد */}
-      <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8,alignItems:"center"}}>
-        {["شهري","مستمر","مؤجل","منتهي"].map(s=>(
-          <button key={s} onClick={()=>toggleStatus(s)}
-            style={{padding:"6px 14px",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",
-              border:statusF.has(s)?"1px solid #e0d8c6":"1px solid #e0d8c6",
-              background:statusF.has(s)?"#fffbf0":"#fff",
-              color:statusF.has(s)?"#141428":"#64748b"}}>{s}</button>
+      {/* فلتر حالة العقود */}
+      <div className="q-reports-status-filter" aria-label="حالة العقود">
+        <span>حالة العقود:</span>
+        {[
+          {key:"all",label:"جميع العقود"},
+          {key:"active",label:"العقود المستمرة"},
+          {key:"ended",label:"العقود المنتهية"}
+        ].map(item=>(
+          <button type="button" data-qe-manual="true" key={item.key}
+            className={statusScope===item.key?"is-active":""}
+            aria-pressed={statusScope===item.key}
+            onClick={()=>chooseStatusScope(item.key)}>{item.label}</button>
         ))}
       </div>
       {/* فلتر البنك */}
@@ -15748,6 +15756,27 @@ body .contracts-lux button.q-contracts-status-tab.is-active .q-contracts-status-
   .q-reports-cheque-subfilters{flex-wrap:nowrap;overflow-x:auto;padding:8px;margin-top:-6px}
   .q-reports-cheque-subfilters>span{position:sticky;right:0;z-index:1;padding:8px 3px 8px 10px;background:#faf3e6}
   .q-reports-cheque-subfilters button{min-width:96px;flex:0 0 auto}
+}
+</style>
+<style id="qima-contract-status-filter-v16">
+.q-reports-status-filter{
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 10px;padding:10px 12px;
+  border:1px solid #d9c69f;border-radius:13px;background:#fbf7ef
+}
+.q-reports-status-filter>span{margin-left:3px;color:#183147;font-size:13px;font-weight:950;white-space:nowrap}
+.q-reports-status-filter button{
+  min-height:38px;padding:7px 15px;border:1px solid #d1be98;border-radius:10px;background:#fff;color:#526475;
+  font-family:'IBM Plex Sans Arabic','Tajawal',Arial,sans-serif;font-size:13px;font-weight:950;cursor:pointer
+}
+.q-reports-status-filter button:hover{border-color:#b77d1d;background:#fff9e9}
+.q-reports-status-filter button.is-active{
+  border-color:#a96e13;background:linear-gradient(135deg,#f2d37e,#c88e29);color:#071827;
+  box-shadow:0 4px 11px rgba(183,125,29,.17)
+}
+@media(max-width:760px){
+  .q-reports-status-filter{display:grid;grid-template-columns:1fr 1fr;padding:8px;gap:6px}
+  .q-reports-status-filter>span{grid-column:1/-1}.q-reports-status-filter button:first-of-type{grid-column:1/-1}
+  .q-reports-status-filter button{padding:7px 8px;font-size:12px}
 }
 </style>
 <script id="qimat-full-enterprise-ui-behavior">
