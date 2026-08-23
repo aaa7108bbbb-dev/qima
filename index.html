@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-23-qima-ai-os-v18-bright-white-ai-headings -->
+<!-- build: 2026-08-23-qima-ai-os-v19-gemini-connection-diagnostics -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -9325,15 +9325,22 @@ function GoodsPage({investors, contracts, toast, gsWrite, goBack}) {
 
 
 // ─── قمة AI — المساعد الذكي (Claude API) ────────────────────
-const AI_MODELS = ["gemini-2.5-flash","gemini-3.5-flash","gemini-3.6-flash","gemini-3.1-flash-lite","gemini-2.5-flash-lite"];
+const AI_MODELS = [
+  "gemini-2.5-flash","gemini-2.5-flash-lite","gemini-3.5-flash-lite",
+  "gemini-3.1-flash-lite","gemini-3.5-flash","gemini-3.6-flash","gemini-3.7-flash"
+];
 
 function QimaAI({contracts, investors, payments, setPayments, settings, doneIds, markDone, daily, setDaily, loans, zakatTx, pending, bankTx, invTxList, monthClose, dailyOpen, toast, logAct, goBack, sourcePage="dashboard", onOpenPage}) {
   const [msgs, setMsgs] = useState(()=>{ try{ return JSON.parse(localStorage.getItem("qimma_ai_chat")||"[]"); }catch(e){ return []; } });
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [aiKey, setAiKey] = useState(()=>localStorage.getItem("qimma_ai_key")||"");
-  const [aiModel, setAiModel] = useState(()=>localStorage.getItem("qimma_ai_model")||"gemini-2.5-flash");
+  const [aiModel, setAiModel] = useState(()=>{
+    const saved=localStorage.getItem("qimma_ai_model")||"gemini-2.5-flash";
+    return AI_MODELS.includes(saved)?saved:"gemini-2.5-flash";
+  });
   const [showSetup, setShowSetup] = useState(false);
+  const [aiTest, setAiTest] = useState({state:"idle",message:""});
   const [pendingAction, setPendingAction] = useState(null);
   const [listening, setListening] = useState(false);
   const [lastCost, setLastCost] = useState(null);
@@ -10213,35 +10220,61 @@ tbody tr:nth-child(even){background:#f7f9fb}
 - لا تقل "ليس لدي بيانات" — البيانات مرسلة لك مع كل سؤال، ابحث فيها وأجب`;
 
   // ═══════════ الإرسال ═══════════
-  // يحاول الموديل المختار، وإذا كان معطّلاً يجرّب البقية تلقائياً
-  const callModel = async (model, body) => {
-    try {
+  // يعرض سبب الخطأ الحقيقي، ولا يخلط خطأ المفتاح أو الشبكة مع تعطل الموديل.
+  const friendlyGeminiError = r => {
+    const msg=String((r&&r.msg)||"خطأ غير معروف");
+    if(r&&r.network) return "تعذّر الوصول إلى خدمة Gemini من المتصفح. تحقق من الإنترنت أو عطّل مانع الإعلانات/الخصوصية لهذا الموقع، واسمح بالاتصال مع generativelanguage.googleapis.com.";
+    if((r&&r.status===401)||/api key not valid|invalid api key|unauthenticated/i.test(msg)) return "مفتاح Gemini غير صالح. أنشئ مفتاح API جديداً من Google AI Studio ثم احفظه من ⚙️.";
+    if((r&&r.status===403)||/permission.denied|permission denied|access restricted|forbidden/i.test(msg)) return "مفتاح Gemini موجود لكنه مرفوض أو لا يملك صلاحية Generative Language API. أنشئ Auth API key جديداً من Google AI Studio ثم جرّب اختبار الاتصال.";
+    if((r&&r.status===429)||/quota|rate limit|resource.exhausted/i.test(msg)) return "تم بلوغ حصة Gemini أو الحد المؤقت للطلبات. راجع الحصة والفوترة في Google AI Studio ثم أعد المحاولة.";
+    if((r&&r.status>=500)||/service unavailable|internal error/i.test(msg)) return "خدمة Gemini غير مستقرة حالياً. أعد المحاولة بعد قليل.";
+    if((r&&r.status===400)) return "طلب Gemini مرفوض: "+msg;
+    return msg;
+  };
+
+  const callModel = async (model, body, keyOverride) => {
+    const key=String(keyOverride!==undefined?keyOverride:aiKey).trim();
+    if(!key) return {ok:false,status:401,msg:"API key missing",retryable:false};
+    const requestOnce = async payload => {
       const resp = await fetch(
         "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent",
-        { method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":aiKey}, body: JSON.stringify(body) }
+        {method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body:JSON.stringify(payload)}
       );
-      const data = await resp.json();
-      if(data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts){
-        return {ok:true, text: data.candidates[0].content.parts.map(function(p){return p.text||"";}).join("")};
+      const raw=await resp.text();
+      let data={};
+      try{data=raw?JSON.parse(raw):{};}catch(e){data={};}
+      const parts=data&&data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts;
+      if(resp.ok&&parts){
+        return {ok:true,status:resp.status,text:parts.map(function(p){return p.text||"";}).join("")};
       }
-      const msg = (data.error && data.error.message) ? data.error.message : "لم أستطع الإجابة";
-      const retryable = /no longer available|not found|not supported|is not available|deprecated|shut down|not compatible|does not support/i.test(msg);
-      // إذا الخطأ بسبب googleSearch جرّب بدونه
-      if(body.tools && body.tools.length && /tool|google|search|not support/i.test(msg)){
-        var bodyNoTools = Object.assign({}, body); delete bodyNoTools.tools;
-        var resp2 = await fetch(
-          "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent",
-          { method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":aiKey}, body: JSON.stringify(bodyNoTools) }
-        );
-        var data2 = await resp2.json();
-        if(data2.candidates && data2.candidates[0] && data2.candidates[0].content && data2.candidates[0].content.parts){
-          return {ok:true, text: data2.candidates[0].content.parts.map(function(p){return p.text||"";}).join("")};
-        }
+      const msg=(data.error&&data.error.message)||raw||("HTTP "+resp.status);
+      const code=(data.error&&data.error.status)||"";
+      const modelSpecific=resp.status===404||/model[^\n]*(not found|not available|deprecated|retired|shut down)|no longer available/i.test(msg);
+      return {ok:false,status:resp.status,code:code,msg:msg,retryable:modelSpecific||resp.status>=500};
+    };
+    try{
+      let result=await requestOnce(body);
+      // لو بحث Google غير مدعوم لهذا الموديل، أعد الطلب نفسه بلا أداة البحث.
+      if(!result.ok&&body.tools&&body.tools.length&&/tool|google.?search|grounding|not support/i.test(result.msg)){
+        const bodyNoTools=Object.assign({},body); delete bodyNoTools.tools;
+        result=await requestOnce(bodyNoTools);
       }
-      return {ok:false, msg:msg, retryable:retryable};
-    } catch(e) {
-      return {ok:false, msg: e.message||"خطأ في الاتصال", retryable:true};
+      return result;
+    }catch(e){
+      return {ok:false,status:0,msg:e&&e.message?e.message:"Failed to fetch",network:true,retryable:false};
     }
+  };
+
+  const testGeminiConnection = async () => {
+    const keyEl=document.getElementById("_aiKey");
+    const modelEl=document.getElementById("_aiModel");
+    const key=String(keyEl?keyEl.value:aiKey).trim();
+    const model=String(modelEl?modelEl.value:aiModel);
+    if(!key){setAiTest({state:"error",message:"أدخل مفتاح Gemini أولاً"});return;}
+    setAiTest({state:"loading",message:"جاري اختبار الاتصال..."});
+    const result=await callModel(model,{contents:[{role:"user",parts:[{text:"أجب بكلمة واحدة: متصل"}]}],generationConfig:{maxOutputTokens:24}},key);
+    if(result.ok) setAiTest({state:"success",message:"الاتصال ناجح — "+model});
+    else setAiTest({state:"error",message:friendlyGeminiError(result)});
   };
 
   const sendToAI = async (question, img) => {
@@ -10249,7 +10282,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
     try {
       const context = buildContext(question);
       setLastCost(Math.round((context.length + systemPrompt.length)/4));
-      const hist = msgs.filter(m=>!String(m.text||"").startsWith("⚠️") && !String(m.text||"").startsWith("⚙️") && !String(m.text||"").startsWith("☀️")).slice(-500);
+      const hist = msgs.filter(m=>!String(m.text||"").startsWith("⚠️") && !String(m.text||"").startsWith("⚙️") && !String(m.text||"").startsWith("☀️")).slice(-30);
       const contents = hist.map(m=>({role: m.role==="user"?"user":"model", parts:[{text: stripChart(stripAction(m.text))}]}));
       const userParts = [{text: question || "اقرأ النص في هذه الصور واكتبه بالكامل"}];
       if(img && Array.isArray(img)){ img.forEach(im=>userParts.push({inline_data:{mime_type:im.mime||"image/jpeg", data:im.data}})); }
@@ -10258,27 +10291,31 @@ tbody tr:nth-child(even){background:#f7f9fb}
       const body = {
         system_instruction: {parts:[{text: systemPrompt + "\n\n" + context}]},
         contents: contents,
-        generationConfig: {maxOutputTokens:8192, temperature:0.2},
+        // temperature محذوف عمداً: موديلات Gemini 3.x الحديثة ترفضه.
+        generationConfig: {maxOutputTokens:8192},
         tools: [{googleSearch: {}}]
       };
 
       // 1) الموديل المختار
       let r = await callModel(aiModel, body);
-      if(r.ok) return r.text;
-      if(!r.retryable) return "⚠️ " + r.msg;
+      if(r.ok){setAiTest({state:"success",message:"الاتصال ناجح — "+aiModel});return r.text;}
+      if(!r.retryable) return "⚠️ " + friendlyGeminiError(r);
 
       // 2) تبديل تلقائي — يجرب باقي الموديلات
+      let lastFailure=r;
       for(const m of AI_MODELS){
         if(m===aiModel) continue;
         const alt = await callModel(m, body);
         if(alt.ok){
           setAiModel(m);
           try{ localStorage.setItem("qimma_ai_model", m); }catch(e){}
+          setAiTest({state:"success",message:"الاتصال ناجح — "+m});
           return "🔄 *تم التبديل تلقائياً إلى " + m + "*\n\n" + alt.text;
         }
-        if(!alt.retryable) return "⚠️ " + alt.msg;
+        lastFailure=alt;
+        if(!alt.retryable) return "⚠️ " + friendlyGeminiError(alt);
       }
-      return "⚠️ كل الموديلات غير متاحة حالياً. جرّب لاحقاً أو غيّر الموديل من ⚙️.";
+      return "⚠️ تعذّر تشغيل موديلات Gemini. آخر سبب: " + friendlyGeminiError(lastFailure);
     } catch(err) { return "⚠️ خطأ: " + err.message; }
   };
 
@@ -10490,16 +10527,14 @@ tbody tr:nth-child(even){background:#f7f9fb}
         React.createElement("input",{style:{width:"100%",padding:"12px 14px",borderRadius:10,border:"1px solid #e0d8c6",fontSize:14,fontFamily:"monospace",direction:"ltr",marginBottom:10,boxSizing:"border-box"},placeholder:"AQ.Ab8... أو AIzaSy...",defaultValue:aiKey,id:"_aiKey"}),
         React.createElement("label",{style:{fontSize:13,fontWeight:700,color:"#4a5568",display:"block",marginBottom:4}},"الموديل"),
         React.createElement("select",{style:{width:"100%",padding:"12px 14px",borderRadius:10,border:"1px solid #e0d8c6",fontSize:14,fontFamily:"monospace",direction:"ltr",marginBottom:10,boxSizing:"border-box",background:"#fff"},defaultValue:aiModel,id:"_aiModel"},
-          React.createElement("option",{value:"gemini-3.5-flash-lite"},"gemini-3.5-flash-lite"),
-          React.createElement("option",{value:"gemini-3.1-flash-lite"},"gemini-3.1-flash-lite"),
-          React.createElement("option",{value:"gemini-3.6-flash"},"gemini-3.6-flash"),
-          React.createElement("option",{value:"gemini-3.5-flash"},"gemini-3.5-flash"),
-          React.createElement("option",{value:"gemini-2.5-flash"},"gemini-2.5-flash"),
-          React.createElement("option",{value:"gemini-2.5-flash-lite"},"gemini-2.5-flash-lite")
+          AI_MODELS.map(m=>React.createElement("option",{key:m,value:m},m))
         ),
+        React.createElement("div",{style:{fontSize:12,color:"#64748b",lineHeight:1.7,margin:"-2px 2px 10px",fontWeight:650}},"استخدم مفتاح Gemini API من Google AI Studio. زر الاختبار يفحص المفتاح والموديل قبل الحفظ."),
+        aiTest.state!=="idle" && React.createElement("div",{style:{fontSize:12.5,lineHeight:1.7,marginBottom:10,padding:"9px 11px",borderRadius:10,fontWeight:800,background:aiTest.state==="success"?"#ecfdf3":aiTest.state==="error"?"#fff1f0":"#f4f7fb",color:aiTest.state==="success"?"#16794b":aiTest.state==="error"?"#b42318":"#29435a",border:"1px solid "+(aiTest.state==="success"?"#a9dfc2":aiTest.state==="error"?"#efb7b3":"#cbd8e3")}},aiTest.message),
         lastCost && React.createElement("div",{style:{fontSize:12,color:"#94a3b8",marginBottom:10}},"حجم آخر طلب: ~"+lastCost.toLocaleString()+" توكن"),
-        React.createElement("div",{style:{display:"flex",gap:8}},
+        React.createElement("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
           React.createElement("button",{onClick:()=>{const k=document.getElementById("_aiKey").value.trim();const m=document.getElementById("_aiModel").value;saveKey(k,m);},style:{flex:1,padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#6d28d9,#7c3aed)",color:"#fff",fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"حفظ وتفعيل"),
+          React.createElement("button",{onClick:testGeminiConnection,disabled:aiTest.state==="loading",style:{flex:1,padding:"12px",borderRadius:10,border:"1px solid #c8922a",background:aiTest.state==="loading"?"#eef1f4":"#141428",color:aiTest.state==="loading"?"#64748b":"#fff",fontWeight:900,fontSize:14,cursor:aiTest.state==="loading"?"default":"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},aiTest.state==="loading"?"جاري الاختبار...":"اختبار الاتصال"),
           aiKey && React.createElement("button",{onClick:()=>saveKey("",""),style:{padding:"12px 16px",borderRadius:10,border:"1px solid #e0d8c6",background:"#fff",color:"#dc2626",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"إلغاء")
         )
       ),
