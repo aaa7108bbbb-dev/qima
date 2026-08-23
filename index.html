@@ -663,6 +663,43 @@ function printContent(elementId) {
     placeholder.remove();
   }, 300);
 }
+
+// شريط موحّد لكل نافذة طباعة: يبقي الرجوع إلى البرنامج واضحاً بعد إغلاق مربع الطباعة.
+function attachPrintReturn(win) {
+  if(!win || win.closed) return;
+  const mount = () => {
+    try {
+      const doc = win.document;
+      if(!doc || !doc.body || doc.getElementById("qima-print-toolbar")) return;
+      const style = doc.createElement("style");
+      style.id = "qima-print-toolbar-style";
+      style.textContent = `
+        #qima-print-toolbar{position:sticky;top:0;z-index:2147483647;display:flex!important;gap:10px;align-items:center;justify-content:center;padding:12px;margin:0 0 16px;background:#141428;box-shadow:0 5px 18px rgba(0,0,0,.18);direction:rtl}
+        #qima-print-toolbar button{display:inline-flex!important;align-items:center;justify-content:center;min-height:46px;padding:11px 22px;border:0;border-radius:11px;font:800 16px Arial,sans-serif;cursor:pointer}
+        #qima-print-now{flex:1;max-width:360px;background:linear-gradient(140deg,#e0b85c,#c8922a);color:#141428}
+        #qima-print-back{background:#fff;color:#141428;border:1px solid #e0b85c!important}
+        @media print{#qima-print-toolbar{display:none!important}}
+      `;
+      (doc.head || doc.documentElement).appendChild(style);
+      const bar = doc.createElement("div");
+      bar.id = "qima-print-toolbar";
+      bar.className = "noprint np";
+      bar.innerHTML = '<button id="qima-print-now" type="button">🖨️ طباعة / حفظ PDF</button><button id="qima-print-back" type="button">↩ الرجوع للبرنامج</button>';
+      doc.body.insertBefore(bar, doc.body.firstChild);
+      doc.getElementById("qima-print-now").onclick = () => win.print();
+      doc.getElementById("qima-print-back").onclick = () => {
+        try { if(win.opener && !win.opener.closed) win.opener.focus(); } catch(e){}
+        try { win.close(); } catch(e){}
+        setTimeout(()=>{ try { if(!win.closed && win.history.length>1) win.history.back(); } catch(e){} },80);
+      };
+    } catch(e){}
+  };
+  try {
+    if(win.document.readyState === "loading") win.addEventListener("load",mount,{once:true});
+    else setTimeout(mount,0);
+  } catch(e){}
+}
+
 function printStatement(elementId) {
   const el = document.getElementById(elementId);
   if(!el){ window.print(); return; }
@@ -681,6 +718,7 @@ function printStatement(elementId) {
 
 </body></html>`);
   win.document.close();
+  attachPrintReturn(win);
   setTimeout(()=>{win.print();}, 400);
 }
 
@@ -1775,6 +1813,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     if(!w){ alert("الرجاء السماح بالنوافذ المنبثقة"); return; }
     w.document.write(`<html><head><title>عقد #${c.num||""} — ${c.client||""}</title><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>@media print{.noprint{display:none!important}}</style></head><body style="margin:0;background:#f7f8fa"><div class="noprint" style="position:sticky;top:0;display:flex;gap:10px;padding:12px;background:#1e2235;z-index:99"><button onclick="window.print()" style="flex:1;background:#0d7a6f;color:#fff;border:none;border-radius:10px;padding:14px;font-size:17px;font-weight:800;font-family:Arial;cursor:pointer">🖨️ طباعة</button><button onclick="window.close()" style="background:#dc2626;color:#fff;border:none;border-radius:10px;padding:14px 22px;font-size:17px;font-weight:800;font-family:Arial;cursor:pointer">✕ إغلاق</button></div>${html}</body></html>`);
     w.document.close();
+    attachPrintReturn(w);
   };
   // حساب السداد المبكر: نسبة المستثمر 50% أول 6 شهور، ثم تدرّج من 60% إلى 80% حتى النهاية
   const calcEarly = (c) => {
@@ -1864,6 +1903,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     if(!w){ alert("الرجاء السماح بالنوافذ المنبثقة"); return; }
     w.document.write(`<html dir="rtl"><head><meta charset="utf-8"><title>كشف المستثمر — ${invName}</title><style>${pStyle}</style></head><body><div class="noprint" style="display:flex;gap:10px;margin-bottom:14px"><button onclick="window.print()" style="flex:1;background:#0d7a6f;color:#fff;border:none;border-radius:8px;padding:13px;font-size:16px;font-weight:800;cursor:pointer">🖨️ طباعة</button><button onclick="window.close()" style="background:#dc2626;color:#fff;border:none;border-radius:8px;padding:13px 20px;font-size:16px;font-weight:800;cursor:pointer">✕ إغلاق</button></div>${content}</body></html>`);
     w.document.close();
+    attachPrintReturn(w);
   };
   // طباعة إيصال سداد
   const printReceipt = (contract, amount, date, note, receiptNum) => {
@@ -1923,6 +1963,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     </div>
     </body></html>`);
     w.document.close();
+    attachPrintReturn(w);
   };
 
   const addPayment=()=>{
@@ -2486,6 +2527,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               var w=window.open("","_blank");
               w.document.write("<!DOCTYPE html><html dir='rtl' lang='ar'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>كشف "+invName+"</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box}body{padding:12px;color:#000;margin:0;background:#f8f9fa}h2{font-size:17px;text-align:center;margin:0 0 12px;font-weight:900}table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:2px solid #000}th,td{border:1px solid #000;padding:6px 5px;text-align:center;font-weight:700}th{font-weight:900;border-bottom:2px solid #000;font-size:12px;background:#fff}.btns{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}.btn{flex:1;padding:14px;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;min-width:80px;text-align:center}@media print{.noprint{display:none!important}}</style></head><body><div class='noprint btns'><button class='btn' style='background:#25d366;color:#fff' onclick='doShare()'>📤 مشاركة</button><button class='btn' style='background:linear-gradient(140deg,#e0b85c,#c8922a);color:#141428' onclick='window.print()'>🖨️ طباعة</button><button class='btn' style='background:#dc2626;color:#fff' onclick='window.close()'>✕</button></div><h2>كشف المستثمر — "+invName+" ("+ml+")</h2><table><thead><tr>"+hdrs+"</tr></thead><tbody>"+tRows+"</tbody></table><scr"+"ipt>function doShare(){if(navigator.share){navigator.share({title:'كشف "+invName+"',url:location.href});}else{alert('استخدم زر المشاركة بالمتصفح');}}</scr"+"ipt></body></html>");
               w.document.close();
+              attachPrintReturn(w);
             }}>
               <svg width="15" height="15" viewBox="0 0 24 24"><g fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></g></svg>
               تصدير
@@ -2850,6 +2892,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
               w.document.write(allHtml);
               w.document.write('</body></html>');
               w.document.close();
+              attachPrintReturn(w);
               setTimeout(()=>{ setContractDoc(null);setBond(null);setCheque(null);setBondG(null);setChequeG(null); },500);
             },600);
           };
@@ -3699,7 +3742,7 @@ function DeductionsSheet({contracts, investors, payments}){
     <div class="foot">طُبع بتاريخ ${new Date().toLocaleString("en-US")}</div>
     <button onclick="window.print()" style="display:block;margin:20px auto;padding:10px 30px;font-size:16px;background:#333;color:#fff;border:none;border-radius:8px;cursor:pointer">🖨️ طباعة</button>
     </body></html>`);
-    win.document.close(); setTimeout(()=>win.print(),400);
+    win.document.close(); attachPrintReturn(win); setTimeout(()=>win.print(),400);
   };
 
   return (
@@ -4934,6 +4977,9 @@ function parseRajhiPDF(items){
       date: date||"",
       type: typeText||"غير محدد",
       name: nameText||"",
+      raw: rowsY.slice(Math.max(0,i-3),i+4)
+        .filter(rr=>rr && rr.page===r.page && (rr===r || !moneyRow(rr)))
+        .map(rr=>rr.text||"").join(" "),
       madin: Math.abs(madin)||0,
       dain: Math.abs(dain)||0,
       balance: bal,
@@ -4990,6 +5036,7 @@ function printBankStatement(rows, lastBalance, totalDain, totalMadin, filterLabe
     <button onclick="window.print()" style="display:block;margin:20px auto;padding:10px 30px;font-size:16px;background:#000;color:#fff;border:none;border-radius:8px;cursor:pointer">🖨️ طباعة</button>
     </body></html>`);
   win.document.close();
+  attachPrintReturn(win);
   setTimeout(()=>win.print(), 400);
 }
 
@@ -4997,21 +5044,60 @@ function printBankStatement(rows, lastBalance, totalDain, totalMadin, filterLabe
 //  🔗 المطابقة البنكية الذكية
 //  يربط حركات البنك بالعقود بأدلة صريحة — لا تخمين
 // ═══════════════════════════════════════════════════════════
-const _RC_NORM = (s) => String(s||"")
-  .replace(/[\u064B-\u0652\u0640]/g,"")
-  .replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه")
-  .replace(/[^\u0600-\u06FF0-9a-zA-Z\s]/g," ")
-  .replace(/\s+/g," ").trim();
-const _RC_STOP = ["عبد","بن","بنت","ابو","ابن","محول","تحويل","من","الى","حساب","سداد","مدفوعات","شبكه","نقاط","بيع","صراف","الي","علي"];
-const _RC_TOK = (s) => _RC_NORM(s).split(" ").filter(w=>w.length>=3 && _RC_STOP.indexOf(w)<0);
+const _RC_NORM = (s) => {
+  let v=String(s||"");
+  try{ v=v.normalize("NFKC"); }catch(e){}
+  return v.toLowerCase()
+    .replace(/[\u064B-\u065F\u0670\u0640]/g,"")
+    .replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه")
+    .replace(/ؤ/g,"و").replace(/ئ/g,"ي")
+    .replace(/[^\u0600-\u06FF0-9a-z\s]/g," ")
+    .replace(/\s+/g," ").trim();
+};
+// كلمات وصف الحوالة فقط؛ لا نستبعد أسماء حقيقية مثل عبد وعلي وبن.
+const _RC_STOP = ["محول","المحول","تحويل","حواله","حوالات","وارد","وارده","صادر","صادره","استقطاع","خصم","من","الى","حساب","الحساب","سداد","مدفوعات","شبكه","نقاط","بيع","صراف","ايداع","نقدي","عمليه","داخليه","فوريه","bank","transfer","payment","payments","debit","credit","from","account","acct","iban","rajhi","alrajhi","banking","online","internal","instant","deduction"];
+const _RC_BASE_TOK = (w) => {
+  if(/^[\u0600-\u06FF]+$/.test(w) && w.length>=5 && w.startsWith("ال")) return w.slice(2);
+  if(/^[a-z]+$/.test(w) && w.length>=5 && w.startsWith("al")) return w.slice(2);
+  return w;
+};
+const _RC_TOK = (s) => {
+  const out=[];
+  _RC_NORM(s).split(" ").forEach(w=>{
+    if(w.length<2 || _RC_STOP.indexOf(w)>=0 || /^\d+$/.test(w)) return;
+    const b=_RC_BASE_TOK(w);
+    if(b.length>=2 && out.indexOf(b)<0) out.push(b);
+  });
+  return out;
+};
 const _RC_DIG = (s) => String(s||"").replace(/\D/g,"");
+const _RC_SAME_SCRIPT = (a,b) => (/^[\u0600-\u06FF]+$/.test(a) && /^[\u0600-\u06FF]+$/.test(b)) || (/^[a-z]+$/.test(a) && /^[a-z]+$/.test(b));
+const _RC_DIST = (a,b) => {
+  if(a===b) return 0;
+  const prev=Array.from({length:b.length+1},(_,i)=>i), cur=new Array(b.length+1);
+  for(let i=1;i<=a.length;i++){
+    cur[0]=i;
+    for(let j=1;j<=b.length;j++) cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+    for(let j=0;j<=b.length;j++) prev[j]=cur[j];
+  }
+  return prev[b.length];
+};
+const _RC_TOKEN_HIT = (a,b) => {
+  if(a===b) return true;
+  if(!_RC_SAME_SCRIPT(a,b) || Math.min(a.length,b.length)<5) return false;
+  return 1-(_RC_DIST(a,b)/Math.max(a.length,b.length)) >= 0.86;
+};
+const _RC_ALIASES = (c) => [c.client,c.clientEn,c.clientEnglish,c.englishName,c.bankName,c.clientAlias,c.alias]
+  .map(v=>String(v||"").trim()).filter((v,i,a)=>v && a.indexOf(v)===i);
 
 function reconcileOne(tx, list){
-  const narr = _RC_NORM((tx.type||"")+" "+(tx.name||""));
-  const nd = _RC_DIG((tx.type||"")+" "+(tx.name||""));
+  const source = (tx.type||"")+" "+(tx.name||"")+" "+(tx.raw||"")+" "+(tx.note||"")+" "+(tx.desc||"");
+  const narr = _RC_NORM(source);
+  const nd = _RC_DIG(source);
   const amt = Math.abs(+tx.dain||0) || Math.abs(+tx.madin||0);
   const isIn = (+tx.dain||0) > 0;
   const nTok = _RC_TOK(narr);
+  const narrCompact=narr.replace(/\s/g,"");
   const res = [];
   for(const c of list){
     let score=0; const reasons=[];
@@ -5022,13 +5108,25 @@ function reconcileOne(tx, list){
     }
     if(c.cPhone){ const p=_RC_DIG(c.cPhone); if(p.length>=7 && nd.indexOf(p.slice(-7))>=0){ score+=45; reasons.push("رقم الجوال"); } }
     if(c.idNum){ const d=_RC_DIG(c.idNum); if(d.length>=9 && nd.indexOf(d)>=0){ score+=45; reasons.push("رقم الهوية"); } }
-    const cTok=_RC_TOK(c.client);
-    if(cTok.length){
-      const hit=cTok.filter(w=>nTok.indexOf(w)>=0);
-      if(hit.length>=3){ score+=42; reasons.push("الاسم ("+hit.slice(0,3).join(" ")+")"); }
-      else if(hit.length===2){ score+=34; reasons.push("الاسم ("+hit.join(" ")+")"); }
-      else if(hit.length===1 && hit[0].length>=5){ score+=12; reasons.push("جزء من الاسم"); }
-    }
+    let nameScore=0, nameReason="";
+    _RC_ALIASES(c).forEach(alias=>{
+      const cn=_RC_NORM(alias), cCompact=cn.replace(/\s/g,"");
+      const cTok=_RC_TOK(cn);
+      if(!cn || !cTok.length) return;
+      let s=0, reason="";
+      if(cCompact.length>=5 && narrCompact.indexOf(cCompact)>=0){
+        s=82; reason="تطابق الاسم الكامل";
+      } else {
+        const hits=cTok.filter(w=>nTok.some(nw=>_RC_TOKEN_HIT(w,nw)));
+        const coverage=hits.length/Math.max(1,cTok.length);
+        if(hits.length>=3 && coverage>=0.75){ s=70; reason="تطابق معظم الاسم ("+hits.slice(0,3).join(" ")+")"; }
+        else if(hits.length>=2 && coverage>=0.66){ s=62; reason="تطابق الاسم ("+hits.join(" ")+")"; }
+        else if(hits.length>=2){ s=48; reason="تطابق جزأين من الاسم"; }
+        else if(hits.length===1 && hits[0].length>=6){ s=18; reason="جزء مميز من الاسم"; }
+      }
+      if(s>nameScore){ nameScore=s; nameReason=reason; }
+    });
+    if(nameScore){ score+=nameScore; reasons.push(nameReason); }
     const inst=+c.instAmt||0, left=+c.__left||0;
     if(amt>0){
       if(inst>0 && Math.abs(amt-inst)<0.5){ score+=26; reasons.push("يساوي القسط ("+inst.toLocaleString()+")"); }
@@ -5041,7 +5139,7 @@ function reconcileOne(tx, list){
       if(!isNaN(td)&&!isNaN(dd)){ const df=Math.min(Math.abs(td-dd),31-Math.abs(td-dd));
         if(df<=2){ score+=10; reasons.push("قريب من يوم الاستحقاق"); } else if(df<=5) score+=5; }
     }
-    if(isIn && c.payType==="deduction" && score>0){ score+=8; reasons.push("عقد استقطاع"); }
+    if(isIn && (c.payType==="deduction" || /استقطاع/.test(_RC_NORM(c.payType))) && score>0){ score+=8; reasons.push("عقد استقطاع"); }
     if(score>0) res.push({c,score,reasons});
   }
   res.sort((a,b)=>b.score-a.score);
@@ -5333,6 +5431,7 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
           parsed.push({
             id: "bnk_"+i+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),
             date, type: detailRaw, name: nameText,
+            raw: r.map(v=>String(v||"").trim()).filter(Boolean).join(" "),
             madin, dain, balance: balN,
           });
         }
@@ -5425,7 +5524,7 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
           if(engMatch && !/SAR|TOACCT|FRACCT/.test(engMatch[0])){ name=engMatch[0].trim(); break; }
         }
         if(bal>0||madin>0||dain>0){
-          parsed.push({ id:"bnk_b_"+i+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,7), date:currentDate, type, name, madin, dain, balance:bal });
+          parsed.push({ id:"bnk_b_"+i+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,7), date:currentDate, type, name, raw:lines.slice(Math.max(0,i-2),i+4).join(" "), madin, dain, balance:bal });
         }
         pendingType="";
       } else {
@@ -5950,6 +6049,7 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
     const body=rows.map(r=>"<tr><td>"+mLabel(r.ym)+"</td><td>"+SAR(r.d.collected)+"</td><td>"+SAR(r.d.tot.amt)+"</td><td>"+SAR(r.d.tot.profit)+"</td><td>"+SAR(r.d.tot.net)+"</td><td>"+r.d.count+"</td></tr>").join("");
     w.document.write("<!DOCTYPE html><html dir='rtl'><head><meta charset='utf-8'><title>"+title+"</title><style>*{font-family:Arial}body{padding:18px;color:#000}h1{font-size:20px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid #000;padding:7px;text-align:center;font-weight:600}th{background:#fff;color:#000;font-weight:900;border-bottom:2px solid #000}</style></head><body onload='window.print()'><h1>مؤسسة قمة الفرصة التجارية — "+title+"</h1><table><thead><tr><th>الشهر</th><th>المحصّل</th><th>قيمة العقود</th><th>الأرباح</th><th>صافي المستثمرين</th><th>عدد العقود</th></tr></thead><tbody>"+body+"</tbody></table></body></html>");
     w.document.close();
+    attachPrintReturn(w);
   };
 
   const subTabs=[
@@ -6162,6 +6262,7 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
     const rowsHtml=d.invRows.map(r=>"<tr><td style='text-align:right;font-weight:bold'>"+r.name+"</td><td>"+r.count+"</td><td>"+SAR(r.cash)+"</td><td>"+SAR(r.total)+"</td><td>"+SAR(r.inst)+"</td><td>"+SAR(r.coll)+"</td><td>"+SAR(r.due)+"</td><td style='color:#b91c1c'>"+SAR(r.late)+"</td></tr>").join("");
     w.document.write("<!DOCTYPE html><html dir='rtl'><head><meta charset='utf-8'><title>تقرير "+mLabel(ym)+"</title><style>*{font-family:Arial;box-sizing:border-box}body{padding:18px;color:#000}h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:18px 0 8px}.g{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.cc{border:1px solid #000;border-radius:8px;padding:8px;text-align:center}.cl{font-size:12px;color:#555}.cv{font-size:16px;font-weight:bold}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #000;padding:6px;text-align:center;font-weight:600}th{background:#fff;color:#000;font-weight:900;border-bottom:2px solid #000}@media print{@page{size:A4 landscape;margin:8mm}}</style></head><body onload='window.print()'><h1>مؤسسة قمة الفرصة التجارية</h1><div>تقرير "+mLabel(ym)+"</div><h2>مؤشرات الشهر</h2><div class='g'>"+cardsHtml+"</div><h2>محصلة المستثمرين</h2><table><thead><tr><th>المستثمر</th><th>عدد العقود</th><th>النقدي</th><th>الإجمالي</th><th>الأقساط</th><th>المحصّل</th><th>المستحق</th><th>المتعثّر</th></tr></thead><tbody>"+rowsHtml+"</tbody></table></body></html>");
     w.document.close();
+    attachPrintReturn(w);
   };
   return (
     <div className="qmp-month-detail qmp-surface" style={styles.panel}>
@@ -6685,6 +6786,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
                         const w=window.open("","_blank");
                         w.document.write(html);
                         w.document.close();
+                        attachPrintReturn(w);
                         setTimeout(()=>w.print(),400);
                       }} style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",border:"1px solid #b8862b",borderRadius:9,padding:"7px 14px",color:"#141428",fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>طباعة</button>
                     </div>
@@ -6871,6 +6973,7 @@ function printAccountStatement(from, to, totals, sIn, sOut, sNet){
     <button onclick="window.print()" style="display:block;margin:20px auto;padding:10px 30px;font-size:16px;background:#000;color:#fff;border:none;border-radius:8px;cursor:pointer">🖨️ طباعة</button>
     </body></html>`);
   win.document.close();
+  attachPrintReturn(win);
   setTimeout(()=>win.print(), 400);
 }
 
@@ -6936,6 +7039,7 @@ function printDailyReport(day, rows, opening, closing, sumByType){
     <button onclick="window.print()" style="display:block;margin:20px auto;padding:10px 30px;font-size:16px;background:#000;color:#fff;border:none;border-radius:8px;cursor:pointer">🖨️ طباعة</button>
     </body></html>`);
   win.document.close();
+  attachPrintReturn(win);
   setTimeout(()=>win.print(), 400);
 }
 
@@ -7049,6 +7153,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
     const w=window.open("","_blank");if(!w)return;
     w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><style>*{box-sizing:border-box;font-family:Arial,sans-serif;margin:0;padding:0}body{padding:12px;font-size:14px}.receipt{border:2px solid #000;padding:16px;max-width:350px;margin:0 auto}.header{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:12px}.header h2{font-size:18px;margin-bottom:4px}.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #ccc}.row .label{font-weight:700}.row .val{font-weight:800}.total{background:#f0f0f0;padding:10px;text-align:center;margin-top:12px;border-radius:6px}.total .amount{font-size:22px;font-weight:900;color:${t?.color||"#333"}}.footer{text-align:center;margin-top:14px;font-size:11px;color:#777;border-top:1px solid #ccc;padding-top:8px}@media print{.noprint{display:none!important}}</style></head><body><div class="noprint" style="display:flex;gap:10px;margin-bottom:14px"><button onclick="window.print()" style="flex:1;background:#0d7a6f;color:#fff;border:none;border-radius:10px;padding:14px;font-size:17px;font-weight:800;cursor:pointer">🖨️ طباعة</button><button onclick="window.close()" style="background:#dc2626;color:#fff;border:none;border-radius:10px;padding:14px 22px;font-size:17px;font-weight:800;cursor:pointer">✕</button></div><div class="receipt"><div class="header"><h2>مؤسسة قمة الفرصة التجارية</h2><div style="font-size:12px;color:#555">إيصال — ${t?.label||d.type}</div><div style="margin-top:6px;font-size:16px;font-weight:900;color:#0d7a6f">رقم: ${rNum}</div></div><div class="row"><span class="label">التاريخ:</span><span class="val">${d.date}</span></div><div class="row"><span class="label">النوع:</span><span class="val">${t?.label||d.type}</span></div><div class="row"><span class="label">الاسم / الوصف:</span><span class="val">${d.desc||"—"}</span></div><div class="total"><div style="font-size:13px;color:#555">المبلغ</div><div class="amount">${d.amount?.toLocaleString()} ر.س</div></div><div style="display:flex;justify-content:space-between;margin-top:20px;font-size:12px"><div style="text-align:center;min-width:100px">توقيع المستلم<div style="border-top:1px solid #000;margin-top:30px;padding-top:4px">المحاسب</div></div><div style="text-align:center;min-width:100px">توقيع المسلّم<div style="border-top:1px solid #000;margin-top:30px;padding-top:4px">${d.desc||""}</div></div></div><div class="footer">${new Date().toLocaleString("ar-SA")} — مؤسسة قمة الفرصة التجارية</div></div></body></html>`);
     w.document.close();
+    attachPrintReturn(w);
   };
 
   const addRow=()=>{
@@ -7417,7 +7522,7 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                 w.document.write("<h2 style='text-align:center'>📋 تفاصيل الحركات</h2>");
                 w.document.write("<table><thead><tr><th>التاريخ</th><th>النوع</th><th>الاسم / الوصف</th><th>المبلغ</th></tr></thead><tbody>"+rows+"</tbody></table>");
                 w.document.write("<br><button onclick='window.print()' style='background:#0d7a6f;color:#fff;border:none;padding:12px 30px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer'>🖨️ طباعة</button>");
-                w.document.write("</body></html>");w.document.close();
+                w.document.write("</body></html>");w.document.close();attachPrintReturn(w);
               }}>طباعة</button>
             </div>
             <div style={{overflowX:"auto",maxHeight:"70vh",overflowY:"auto",WebkitOverflowScrolling:"touch",position:"relative"}}>
@@ -9821,6 +9926,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
 <div class="ft">${new Date().toLocaleString("ar-SA")} — مؤسسة قمة الفرصة التجارية — بريدة</div>
 </body></html>`);
     w.document.close();
+    attachPrintReturn(w);
   };
 
   const copyText = (t) => {
