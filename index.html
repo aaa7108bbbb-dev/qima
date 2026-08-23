@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-23-qima-ai-os-v19-gemini-connection-diagnostics -->
+<!-- build: 2026-08-23-qima-ai-os-v20-firebase-ai-logic-app-check -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -146,6 +146,58 @@
       console.warn("كل مصادر Firebase محجوبة — البرنامج يعمل بالوضع العادي (Google Sheets)");
     }
   })();
+</script>
+<script>
+  // ═══ قمة AI: Firebase AI Logic + App Check (لا مفتاح Gemini داخل المتصفح) ═══
+  // يتم إنشاء تطبيق Firebase معياري مستقل حتى لا نتدخل في ربط Firestore القديم.
+  window._qimaAIStatus = "loading";
+  window._qimaAIError = "";
+  window._qimaAIReady = (async function(){
+    try {
+      const sdkBase = "https://www.gstatic.com/firebasejs/12.17.1/";
+      const [appSdk, appCheckSdk, aiSdk] = await Promise.all([
+        import(sdkBase + "firebase-app.js"),
+        import(sdkBase + "firebase-app-check.js"),
+        import(sdkBase + "firebase-ai.js")
+      ]);
+      const aiAppName = "qima-ai-logic";
+      const aiApp = appSdk.getApps().find(function(app){ return app.name === aiAppName; }) || appSdk.initializeApp(firebaseConfig, aiAppName);
+      let appCheck;
+      try {
+        appCheck = appCheckSdk.initializeAppCheck(aiApp, {
+          provider: new appCheckSdk.ReCaptchaEnterpriseProvider("6LexIZUtAAAAANnA_XNOVTO4v7wsYWLcKSg724jP"),
+          isTokenAutoRefreshEnabled: true
+        });
+      } catch (e) {
+        if (/already initialized/i.test(String(e && e.message))) appCheck = appCheckSdk.getAppCheck(aiApp);
+        else throw e;
+      }
+      // احصل على إثبات App Check الآن؛ بهذا يظهر خطأ النطاق بوضوح قبل أول سؤال.
+      await appCheckSdk.getToken(appCheck, false);
+      const ai = aiSdk.getAI(aiApp, { backend: new aiSdk.GoogleAIBackend() });
+      const bridge = { ai: ai, getGenerativeModel: aiSdk.getGenerativeModel };
+      window._qimaAIStatus = "ready";
+      return bridge;
+    } catch (e) {
+      window._qimaAIStatus = "error";
+      window._qimaAIError = String((e && (e.message || e.code)) || e || "تعذر تحميل Firebase AI Logic");
+      throw e;
+    }
+  })();
+
+  window.qimaAIGenerate = async function(options){
+    const bridge = await window._qimaAIReady;
+    const model = bridge.getGenerativeModel(bridge.ai, {
+      model: options.model,
+      systemInstruction: options.systemInstruction,
+      generationConfig: options.generationConfig || { maxOutputTokens: 8192 }
+    });
+    const result = await model.generateContent({ contents: options.contents });
+    const response = result && result.response;
+    const output = response && typeof response.text === "function" ? response.text() : "";
+    if (!output) throw new Error("لم يرجع نموذج Gemini نصاً قابلاً للعرض");
+    return { text: output, response: response };
+  };
 </script>
 <style>
   * { box-sizing: border-box; }
@@ -9324,21 +9376,20 @@ function GoodsPage({investors, contracts, toast, gsWrite, goBack}) {
 }
 
 
-// ─── قمة AI — المساعد الذكي (Claude API) ────────────────────
+// ─── قمة AI — المساعد الذكي عبر Firebase AI Logic ───────────
 const AI_MODELS = [
-  "gemini-2.5-flash","gemini-2.5-flash-lite","gemini-3.5-flash-lite",
-  "gemini-3.1-flash-lite","gemini-3.5-flash","gemini-3.6-flash","gemini-3.7-flash"
+  "gemini-3.6-flash","gemini-3.5-flash","gemini-3.5-flash-lite","gemini-3.1-flash-lite"
 ];
 
 function QimaAI({contracts, investors, payments, setPayments, settings, doneIds, markDone, daily, setDaily, loans, zakatTx, pending, bankTx, invTxList, monthClose, dailyOpen, toast, logAct, goBack, sourcePage="dashboard", onOpenPage}) {
   const [msgs, setMsgs] = useState(()=>{ try{ return JSON.parse(localStorage.getItem("qimma_ai_chat")||"[]"); }catch(e){ return []; } });
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [aiKey, setAiKey] = useState(()=>localStorage.getItem("qimma_ai_key")||"");
   const [aiModel, setAiModel] = useState(()=>{
-    const saved=localStorage.getItem("qimma_ai_model")||"gemini-2.5-flash";
-    return AI_MODELS.includes(saved)?saved:"gemini-2.5-flash";
+    const saved=localStorage.getItem("qimma_ai_model")||"gemini-3.6-flash";
+    return AI_MODELS.includes(saved)?saved:"gemini-3.6-flash";
   });
+  const [aiBridgeStatus, setAiBridgeStatus] = useState(()=>window._qimaAIStatus||"loading");
   const [showSetup, setShowSetup] = useState(false);
   const [aiTest, setAiTest] = useState({state:"idle",message:""});
   const [pendingAction, setPendingAction] = useState(null);
@@ -9356,6 +9407,16 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
   useEffect(()=>{
     try{ localStorage.setItem("qimma_ai_chat", JSON.stringify(msgs.slice(-500))); }catch(e){}
   },[msgs]);
+
+  // ترحيل آمن: المفتاح القديم لم يعد مستخدماً أو محفوظاً داخل البرنامج.
+  useEffect(()=>{
+    try{ localStorage.removeItem("qimma_ai_key"); }catch(e){}
+    let active=true;
+    Promise.resolve(window._qimaAIReady)
+      .then(()=>{ if(active) setAiBridgeStatus("ready"); })
+      .catch(()=>{ if(active) setAiBridgeStatus("error"); });
+    return ()=>{ active=false; };
+  },[]);
 
   // التقرير الصباحي تلقائياً مرة واحدة كل يوم
   useEffect(()=>{
@@ -10220,80 +10281,66 @@ tbody tr:nth-child(even){background:#f7f9fb}
 - لا تقل "ليس لدي بيانات" — البيانات مرسلة لك مع كل سؤال، ابحث فيها وأجب`;
 
   // ═══════════ الإرسال ═══════════
-  // يعرض سبب الخطأ الحقيقي، ولا يخلط خطأ المفتاح أو الشبكة مع تعطل الموديل.
+  // يعرض سبب الخطأ الحقيقي، ولا يخلط App Check أو الشبكة مع تعطل الموديل.
   const friendlyGeminiError = r => {
     const msg=String((r&&r.msg)||"خطأ غير معروف");
-    if(r&&r.network) return "تعذّر الوصول إلى خدمة Gemini من المتصفح. تحقق من الإنترنت أو عطّل مانع الإعلانات/الخصوصية لهذا الموقع، واسمح بالاتصال مع generativelanguage.googleapis.com.";
-    if((r&&r.status===401)||/api key not valid|invalid api key|unauthenticated/i.test(msg)) return "مفتاح Gemini غير صالح. أنشئ مفتاح API جديداً من Google AI Studio ثم احفظه من ⚙️.";
-    if((r&&r.status===403)||/permission.denied|permission denied|access restricted|forbidden/i.test(msg)) return "مفتاح Gemini موجود لكنه مرفوض أو لا يملك صلاحية Generative Language API. أنشئ Auth API key جديداً من Google AI Studio ثم جرّب اختبار الاتصال.";
-    if((r&&r.status===429)||/quota|rate limit|resource.exhausted/i.test(msg)) return "تم بلوغ حصة Gemini أو الحد المؤقت للطلبات. راجع الحصة والفوترة في Google AI Studio ثم أعد المحاولة.";
+    if(r&&r.sdk) return "تعذّر تحميل مكتبات Firebase AI Logic. حدّث الصفحة وتأكد أن الشبكة تسمح بالاتصال مع gstatic.com.";
+    if(r&&r.appCheck) return "فشل التحقق من App Check. تأكد أن النطاق app.qimatalforsa.com مسجل في مفتاح reCAPTCHA Enterprise ثم حدّث الصفحة.";
+    if(r&&r.network) return "تعذّر الاتصال ببوابة Firebase AI Logic. تحقق من الإنترنت ثم حدّث الصفحة وأعد المحاولة.";
+    if((r&&r.status===401)||/unauthenticated/i.test(msg)) return "Firebase AI Logic لم يعتمد الطلب. حدّث الصفحة ثم أعد اختبار الاتصال.";
+    if((r&&r.status===403)||/permission.denied|permission denied|access restricted|forbidden/i.test(msg)) return "طلب الذكاء مرفوض من Firebase. تحقق من تفعيل Gemini Developer API وApp Check للمشروع qima-erp-654fa.";
+    if((r&&r.status===429)||/quota|rate limit|resource.exhausted/i.test(msg)) return "تم بلوغ حصة Gemini أو الحد المؤقت للطلبات. راجع استخدام Firebase AI Logic ثم أعد المحاولة.";
     if((r&&r.status>=500)||/service unavailable|internal error/i.test(msg)) return "خدمة Gemini غير مستقرة حالياً. أعد المحاولة بعد قليل.";
     if((r&&r.status===400)) return "طلب Gemini مرفوض: "+msg;
     return msg;
   };
 
-  const callModel = async (model, body, keyOverride) => {
-    const key=String(keyOverride!==undefined?keyOverride:aiKey).trim();
-    if(!key) return {ok:false,status:401,msg:"API key missing",retryable:false};
-    const requestOnce = async payload => {
-      const resp = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent",
-        {method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body:JSON.stringify(payload)}
-      );
-      const raw=await resp.text();
-      let data={};
-      try{data=raw?JSON.parse(raw):{};}catch(e){data={};}
-      const parts=data&&data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts;
-      if(resp.ok&&parts){
-        return {ok:true,status:resp.status,text:parts.map(function(p){return p.text||"";}).join("")};
-      }
-      const msg=(data.error&&data.error.message)||raw||("HTTP "+resp.status);
-      const code=(data.error&&data.error.status)||"";
-      const modelSpecific=resp.status===404||/model[^\n]*(not found|not available|deprecated|retired|shut down)|no longer available/i.test(msg);
-      return {ok:false,status:resp.status,code:code,msg:msg,retryable:modelSpecific||resp.status>=500};
-    };
+  const callModel = async (model, body) => {
     try{
-      let result=await requestOnce(body);
-      // لو بحث Google غير مدعوم لهذا الموديل، أعد الطلب نفسه بلا أداة البحث.
-      if(!result.ok&&body.tools&&body.tools.length&&/tool|google.?search|grounding|not support/i.test(result.msg)){
-        const bodyNoTools=Object.assign({},body); delete bodyNoTools.tools;
-        result=await requestOnce(bodyNoTools);
-      }
-      return result;
+      if(typeof window.qimaAIGenerate!=="function") throw new Error("Firebase AI Logic SDK bridge missing");
+      const out=await window.qimaAIGenerate({
+        model:model,
+        systemInstruction:body.systemInstruction,
+        contents:body.contents,
+        generationConfig:body.generationConfig
+      });
+      return {ok:true,status:200,text:out.text};
     }catch(e){
-      return {ok:false,status:0,msg:e&&e.message?e.message:"Failed to fetch",network:true,retryable:false};
+      const msg=String((e&&(e.message||e.code))||e||"خطأ Firebase AI Logic");
+      const code=String((e&&e.code)||"");
+      const sm=msg.match(/\b(400|401|403|404|408|429|500|502|503|504)\b/);
+      const status=sm?Number(sm[1]):0;
+      const modelSpecific=status===404||/model[^\n]*(not found|not available|deprecated|retired|shut down)|no longer available/i.test(msg);
+      const appCheck=/app-check|appcheck|recaptcha|attestation|exchange.*token/i.test(code+" "+msg);
+      const sdk=/dynamically imported module|firebase-ai\.js|sdk bridge missing|gstatic/i.test(msg);
+      const network=/failed to fetch|load failed|network request failed|networkerror|internet disconnected/i.test(msg);
+      return {ok:false,status:status,code:code,msg:msg,appCheck:appCheck,sdk:sdk,network:network,retryable:modelSpecific};
     }
   };
 
   const testGeminiConnection = async () => {
-    const keyEl=document.getElementById("_aiKey");
     const modelEl=document.getElementById("_aiModel");
-    const key=String(keyEl?keyEl.value:aiKey).trim();
     const model=String(modelEl?modelEl.value:aiModel);
-    if(!key){setAiTest({state:"error",message:"أدخل مفتاح Gemini أولاً"});return;}
     setAiTest({state:"loading",message:"جاري اختبار الاتصال..."});
-    const result=await callModel(model,{contents:[{role:"user",parts:[{text:"أجب بكلمة واحدة: متصل"}]}],generationConfig:{maxOutputTokens:24}},key);
-    if(result.ok) setAiTest({state:"success",message:"الاتصال ناجح — "+model});
-    else setAiTest({state:"error",message:friendlyGeminiError(result)});
+    const result=await callModel(model,{systemInstruction:"أجب بالعربية بإيجاز.",contents:[{role:"user",parts:[{text:"أجب بكلمة واحدة: متصل"}]}],generationConfig:{maxOutputTokens:64}});
+    if(result.ok){setAiBridgeStatus("ready");setAiTest({state:"success",message:"Firebase AI Logic متصل — "+model});}
+    else {setAiBridgeStatus("error");setAiTest({state:"error",message:friendlyGeminiError(result)});}
   };
 
   const sendToAI = async (question, img) => {
-    if(!aiKey){ setShowSetup(true); return "⚙️ أدخل مفتاح Gemini API. اضغط ⚙️ فوق."; }
     try {
       const context = buildContext(question);
       setLastCost(Math.round((context.length + systemPrompt.length)/4));
       const hist = msgs.filter(m=>!String(m.text||"").startsWith("⚠️") && !String(m.text||"").startsWith("⚙️") && !String(m.text||"").startsWith("☀️")).slice(-30);
       const contents = hist.map(m=>({role: m.role==="user"?"user":"model", parts:[{text: stripChart(stripAction(m.text))}]}));
       const userParts = [{text: question || "اقرأ النص في هذه الصور واكتبه بالكامل"}];
-      if(img && Array.isArray(img)){ img.forEach(im=>userParts.push({inline_data:{mime_type:im.mime||"image/jpeg", data:im.data}})); }
-      else if(img && img.data){ userParts.push({inline_data:{mime_type:img.mime||"image/jpeg", data:img.data}}); }
+      if(img && Array.isArray(img)){ img.forEach(im=>userParts.push({inlineData:{mimeType:im.mime||"image/jpeg", data:im.data}})); }
+      else if(img && img.data){ userParts.push({inlineData:{mimeType:img.mime||"image/jpeg", data:img.data}}); }
       contents.push({role:"user", parts:userParts});
       const body = {
-        system_instruction: {parts:[{text: systemPrompt + "\n\n" + context}]},
+        systemInstruction: systemPrompt + "\n\n" + context,
         contents: contents,
-        // temperature محذوف عمداً: موديلات Gemini 3.x الحديثة ترفضه.
-        generationConfig: {maxOutputTokens:8192},
-        tools: [{googleSearch: {}}]
+        generationConfig: {maxOutputTokens:8192}
       };
 
       // 1) الموديل المختار
@@ -10388,11 +10435,6 @@ tbody tr:nth-child(even){background:#f7f9fb}
     setInput(""); setImgData([]);
     setLoading(true); scrollDown();
 
-    if(!aiKey){
-      const local = (img && img.length) ? null : localQuery(q);
-      setMsgs(p=>[...p, {role:"ai", text: local || "⚙️ **فعّل Gemini AI** للإجابة.\n\nاضغط ⚙️ فوق."}]);
-      setLoading(false); scrollDown(); return;
-    }
     const answer = await sendToAI(q, img);
     setMsgs(p=>[...p, {role:"ai", text:answer}]);
     const act = parseAction(answer);
@@ -10411,11 +10453,11 @@ tbody tr:nth-child(even){background:#f7f9fb}
     scrollDown();
   };
 
-  const saveKey = (key, model) => {
-    setAiKey(key); localStorage.setItem("qimma_ai_key", key);
+  const saveModel = (model) => {
     if(model){ setAiModel(model); localStorage.setItem("qimma_ai_model", model); }
+    try{ localStorage.removeItem("qimma_ai_key"); }catch(e){}
     setShowSetup(false);
-    if(key) setMsgs(p=>[...p, {role:"ai", text:"✅ **تم التفعيل!** اسألني أي شيء..."}]);
+    setMsgs(p=>[...p, {role:"ai", text:"✅ **تم اعتماد نموذج "+model+" عبر Firebase AI Logic.** اسألني أي شيء..."}]);
   };
 
   const clearChat = () => { setMsgs([]); try{ localStorage.removeItem("qimma_ai_chat"); }catch(e){} };
@@ -10477,6 +10519,8 @@ tbody tr:nth-child(even){background:#f7f9fb}
   };
 
   const QUICK = ["☀️ التقرير الصباحي","⚠️ من راح يتعثر قريباً؟","أسوأ 10 متعثرين","قارن كل المستثمرين","التحصيل آخر 6 شهور","أفضل الزبائن التزاماً","تحليل ربح البضائع","مصروفات هذا الشهر","توقع دخل الشهر الجاي"];
+  const aiOnline = aiBridgeStatus==="ready";
+  const aiStatusLabel = aiOnline ? "Firebase AI" : aiBridgeStatus==="loading" ? "جاري الربط" : "يحتاج فحص";
 
   return (
     React.createElement("div",{className:"qima-ai-os",style:{display:"flex",flexDirection:"column",height:"100vh",height:"100dvh",background:"#faf6ee",color:"#141428",fontFamily:"'Tajawal','IBM Plex Sans Arabic',sans-serif"}},
@@ -10495,9 +10539,9 @@ tbody tr:nth-child(even){background:#f7f9fb}
             React.createElement("div",{className:"qima-ai-brand-context",style:{fontSize:"clamp(10px,2.8vw,13px)",color:"rgba(255,255,255,.88)",fontWeight:800,marginTop:4}},"يعمل الآن مع: ",React.createElement("b",{style:{color:"#f1cb72"}},aiSourceLabel)," · ",new Date().toLocaleDateString("ar-SA",{weekday:"long",day:"numeric",month:"long"}))
           ),
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:"clamp(4px,1.5vw,8px)"}},
-            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5,background:aiKey?"rgba(18,183,106,0.08)":"rgba(245,158,11,0.06)",border:"1px solid "+(aiKey?"rgba(18,183,106,0.15)":"rgba(245,158,11,0.12)"),borderRadius:20,padding:"clamp(4px,1.2vw,6px) clamp(10px,2.5vw,14px)"}},
-              React.createElement("div",{style:{width:5,height:5,borderRadius:"50%",background:aiKey?"#34d399":"#f59e0b",boxShadow:"0 0 8px "+(aiKey?"#34d399":"#f59e0b")}}),
-              React.createElement("span",{style:{fontSize:"clamp(10px,2.8vw,12px)",color:aiKey?"#34d399":"#f59e0b",fontWeight:700}},aiKey?"Gemini":"أساسي")
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5,background:aiOnline?"rgba(18,183,106,0.08)":"rgba(245,158,11,0.06)",border:"1px solid "+(aiOnline?"rgba(18,183,106,0.15)":"rgba(245,158,11,0.12)"),borderRadius:20,padding:"clamp(4px,1.2vw,6px) clamp(10px,2.5vw,14px)"}},
+              React.createElement("div",{style:{width:5,height:5,borderRadius:"50%",background:aiOnline?"#34d399":"#f59e0b",boxShadow:"0 0 8px "+(aiOnline?"#34d399":"#f59e0b")}}),
+              React.createElement("span",{style:{fontSize:"clamp(10px,2.8vw,12px)",color:aiOnline?"#34d399":"#f59e0b",fontWeight:700}},aiStatusLabel)
             ),
             msgs.length>0 && React.createElement("button",{onClick:clearChat,style:{width:"clamp(32px,8vw,40px)",height:"clamp(32px,8vw,40px)",borderRadius:10,background:"rgba(255,255,255,0.05)",border:"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"rgba(224,184,92,0.7)"}},"🗑"),
             React.createElement("button",{onClick:()=>setShowSetup(!showSetup),style:{width:"clamp(32px,8vw,40px)",height:"clamp(32px,8vw,40px)",borderRadius:10,background:"rgba(255,255,255,0.05)",border:"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"rgba(224,184,92,0.7)"}},
@@ -10522,20 +10566,22 @@ tbody tr:nth-child(even){background:#f7f9fb}
 
       /* Setup */
       showSetup && React.createElement("div",{style:{background:"rgba(255,255,255,0.96)",borderRadius:16,padding:"18px",marginBottom:12,border:"2px solid #7c3aed",flexShrink:0}},
-        React.createElement("div",{style:{fontSize:15,fontWeight:800,color:"#6d28d9",marginBottom:10}},"⚙️ إعداد Gemini AI"),
-        React.createElement("label",{style:{fontSize:13,fontWeight:700,color:"#4a5568",display:"block",marginBottom:4}},"المفتاح (aistudio.google.com/apikey)"),
-        React.createElement("input",{style:{width:"100%",padding:"12px 14px",borderRadius:10,border:"1px solid #e0d8c6",fontSize:14,fontFamily:"monospace",direction:"ltr",marginBottom:10,boxSizing:"border-box"},placeholder:"AQ.Ab8... أو AIzaSy...",defaultValue:aiKey,id:"_aiKey"}),
+        React.createElement("div",{style:{fontSize:15,fontWeight:900,color:"#6d28d9",marginBottom:10}},"⚙️ Firebase AI Logic"),
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",borderRadius:11,marginBottom:12,fontSize:13,fontWeight:800,background:aiOnline?"#ecfdf3":aiBridgeStatus==="loading"?"#f4f7fb":"#fff1f0",color:aiOnline?"#16794b":aiBridgeStatus==="loading"?"#29435a":"#b42318",border:"1px solid "+(aiOnline?"#a9dfc2":aiBridgeStatus==="loading"?"#cbd8e3":"#efb7b3")}},
+          React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:aiOnline?"#22c55e":aiBridgeStatus==="loading"?"#64748b":"#ef4444"}}),
+          aiOnline?"App Check وFirebase AI Logic جاهزان":aiBridgeStatus==="loading"?"جاري تجهيز الاتصال الآمن...":"الاتصال يحتاج اختباراً"
+        ),
         React.createElement("label",{style:{fontSize:13,fontWeight:700,color:"#4a5568",display:"block",marginBottom:4}},"الموديل"),
         React.createElement("select",{style:{width:"100%",padding:"12px 14px",borderRadius:10,border:"1px solid #e0d8c6",fontSize:14,fontFamily:"monospace",direction:"ltr",marginBottom:10,boxSizing:"border-box",background:"#fff"},defaultValue:aiModel,id:"_aiModel"},
           AI_MODELS.map(m=>React.createElement("option",{key:m,value:m},m))
         ),
-        React.createElement("div",{style:{fontSize:12,color:"#64748b",lineHeight:1.7,margin:"-2px 2px 10px",fontWeight:650}},"استخدم مفتاح Gemini API من Google AI Studio. زر الاختبار يفحص المفتاح والموديل قبل الحفظ."),
+        React.createElement("div",{style:{fontSize:12,color:"#64748b",lineHeight:1.7,margin:"-2px 2px 10px",fontWeight:650}},"الاتصال محمي بواسطة reCAPTCHA Enterprise وFirebase App Check. لا يُحفظ أي مفتاح Gemini داخل المتصفح."),
         aiTest.state!=="idle" && React.createElement("div",{style:{fontSize:12.5,lineHeight:1.7,marginBottom:10,padding:"9px 11px",borderRadius:10,fontWeight:800,background:aiTest.state==="success"?"#ecfdf3":aiTest.state==="error"?"#fff1f0":"#f4f7fb",color:aiTest.state==="success"?"#16794b":aiTest.state==="error"?"#b42318":"#29435a",border:"1px solid "+(aiTest.state==="success"?"#a9dfc2":aiTest.state==="error"?"#efb7b3":"#cbd8e3")}},aiTest.message),
         lastCost && React.createElement("div",{style:{fontSize:12,color:"#94a3b8",marginBottom:10}},"حجم آخر طلب: ~"+lastCost.toLocaleString()+" توكن"),
         React.createElement("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
-          React.createElement("button",{onClick:()=>{const k=document.getElementById("_aiKey").value.trim();const m=document.getElementById("_aiModel").value;saveKey(k,m);},style:{flex:1,padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#6d28d9,#7c3aed)",color:"#fff",fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"حفظ وتفعيل"),
+          React.createElement("button",{onClick:()=>{const m=document.getElementById("_aiModel").value;saveModel(m);},style:{flex:1,padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#6d28d9,#7c3aed)",color:"#fff",fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"حفظ النموذج"),
           React.createElement("button",{onClick:testGeminiConnection,disabled:aiTest.state==="loading",style:{flex:1,padding:"12px",borderRadius:10,border:"1px solid #c8922a",background:aiTest.state==="loading"?"#eef1f4":"#141428",color:aiTest.state==="loading"?"#64748b":"#fff",fontWeight:900,fontSize:14,cursor:aiTest.state==="loading"?"default":"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},aiTest.state==="loading"?"جاري الاختبار...":"اختبار الاتصال"),
-          aiKey && React.createElement("button",{onClick:()=>saveKey("",""),style:{padding:"12px 16px",borderRadius:10,border:"1px solid #e0d8c6",background:"#fff",color:"#dc2626",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"إلغاء")
+          React.createElement("button",{onClick:()=>setShowSetup(false),style:{padding:"12px 16px",borderRadius:10,border:"1px solid #e0d8c6",background:"#fff",color:"#475569",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}},"إغلاق")
         )
       ),
 
