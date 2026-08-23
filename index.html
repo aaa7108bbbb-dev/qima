@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-23-qima-ai-os-v10 -->
+<!-- build: 2026-08-23-qima-ai-os-v12-customer-360 -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -11933,6 +11933,7 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
   const [logFilter, setLogFilter] = React.useState("all");
   const [stmtSearch, setStmtSearch] = React.useState("");
   const [stmtContract, setStmtContract] = React.useState(null);
+  const [stmtView, setStmtView] = React.useState("overview");
 
   const _doneIds = _arr(doneIds);
   const active = (contracts||[]).filter(c=>!c.deleted && _doneIds.indexOf(c.id)<0);
@@ -12004,81 +12005,298 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
   // ═══ 5. مراقبة الباك اب ═══
   const fbConnected = typeof firebase !== "undefined" && firebase.apps && firebase.apps.length > 0;
 
-  // ═══ كشف حساب العميل ═══
-  const stmtFiltered = stmtSearch.trim().length >= 2 
-    ? active.filter(c => (c.client||"").includes(stmtSearch.trim()))
-    : active;
-  // ترتيب المستثمرين حسب الرقم
-  const stmtInvOrder = [...(investors||[])].sort((a,b)=>{
-    const numOf=nm=>{const m=String(nm).match(/(\d+)\s*$/);return m?parseInt(m[1]):9999;};
-    return numOf(a.name)-numOf(b.name);
+  // ═══ كشف العميل الشامل ═══
+  const stmtAllContracts = (contracts||[]).filter(c=>!c.deleted);
+  const stmtDigits = value => String(value||"").replace(/[^0-9٠-٩]/g,"");
+  const stmtNormalizeName = value => String(value||"")
+    .normalize("NFKC")
+    .replace(/[\u064B-\u065F\u0670]/g,"")
+    .replace(/ـ/g,"")
+    .replace(/[أإآ]/g,"ا")
+    .replace(/ى/g,"ي")
+    .replace(/ة/g,"ه")
+    .replace(/[^\u0600-\u06FFa-zA-Z0-9]+/g," ")
+    .trim().toLowerCase();
+  const stmtContractNum = c => {
+    if(!c) return "—";
+    if(c.num) return c.num;
+    if(c.oldNum) return c.oldNum;
+    const m=String(c.note||"").match(/(?:عقد|رقم)?\s*#?\s*(\d+)/);
+    return m?m[1]:"—";
+  };
+  const stmtContractPaid = c => pays
+    .filter(p=>String(p.contractId)===String(c.id))
+    .reduce((sum,p)=>sum+(+p.amount||0),0);
+  const stmtContractTotal = c => +c.totalInst || +c.amount || 0;
+  const stmtContractRemaining = c => Math.max(0,stmtContractTotal(c)-stmtContractPaid(c));
+  const stmtContractDateValue = c => String(c.date||c.createdAt||c.firstInst||"");
+  const stmtProfileValue = (group, keys) => {
+    const ordered=[...(group.contracts||[])].sort((a,b)=>stmtContractDateValue(b).localeCompare(stmtContractDateValue(a)));
+    for(const c of ordered){
+      for(const key of keys){ if(c[key]!==undefined && c[key]!==null && String(c[key]).trim()) return String(c[key]).trim(); }
+    }
+    return "";
+  };
+  const stmtCustomerGroups = [];
+  stmtAllContracts.forEach(c=>{
+    const normalizedName=stmtNormalizeName(c.client);
+    const id=stmtDigits(c.idNum);
+    const phone=stmtDigits(c.cPhone||c.phone);
+    let group=id?stmtCustomerGroups.find(g=>g.ids.includes(id)):null;
+    if(!group&&phone.length>=8){
+      group=stmtCustomerGroups.find(g=>g.phones.includes(phone)&&(!id||g.ids.length===0||g.ids.includes(id)));
+    }
+    if(!group&&normalizedName){
+      group=stmtCustomerGroups.find(g=>g.names.includes(normalizedName)&&(!id||g.ids.length===0||g.ids.includes(id))&&(!phone||g.phones.length===0||g.phones.includes(phone)));
+    }
+    if(!group){
+      group={key:id||phone||normalizedName||String(c.id),name:c.client||"عميل بلا اسم",ids:[],phones:[],names:[],contracts:[]};
+      stmtCustomerGroups.push(group);
+    }
+    group.contracts.push(c);
+    if(id&&!group.ids.includes(id)) group.ids.push(id);
+    if(phone&&!group.phones.includes(phone)) group.phones.push(phone);
+    if(normalizedName&&!group.names.includes(normalizedName)) group.names.push(normalizedName);
+    if(c.client) group.name=c.client;
   });
-  const stmtGrouped = stmtInvOrder.map(inv=>{
-    const invContracts = stmtFiltered.filter(c=>String(c.investorId)===String(inv.id));
-    if(invContracts.length===0) return null;
-    // المرحّل أولاً ثم العادي
-    const sorted = [...invContracts].sort((a,b)=>{
-      const aM=a.contractType==="migrated"?0:1, bM=b.contractType==="migrated"?0:1;
-      if(aM!==bM) return aM-bM;
-      return (a.num||9999)-(b.num||9999);
-    });
-    return {inv, contracts:sorted};
-  }).filter(Boolean);
+  stmtCustomerGroups.sort((a,b)=>String(a.name).localeCompare(String(b.name),"ar"));
 
-  const renderStatement = (c) => {
-    const cPays = pays.filter(p=>p.contractId===c.id).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
-    const totalPaid = cPays.reduce((s,p)=>s+(+p.amount||0),0);
-    const remaining = Math.max(0, (+c.totalInst||0) - totalPaid);
-    const inv = (investors||[]).find(i=>String(i.id)===String(c.investorId));
-    return React.createElement("div",{style:{background:"#fff",borderRadius:14,padding:16,color:"#1f2937"}},
-      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,paddingBottom:10,borderBottom:"2px solid #f1f5f9"}},
-        React.createElement("div",null,
-          React.createElement("div",{style:{fontSize:16,fontWeight:800,color:"#1a1a2e"}},c.client),
-          React.createElement("div",{style:{fontSize:11,color:"#6b7280",marginTop:2}},c.phone||"")
-        ),
-        React.createElement("div",{style:{fontSize:11,color:"#6b7280",background:"#f1f5f9",padding:"3px 8px",borderRadius:6}},"عقد #"+(c.num||""))
-      ),
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}},
-        React.createElement("div",{style:{background:"#f8fafc",borderRadius:8,padding:8,textAlign:"center"}},
-          React.createElement("div",{style:{fontSize:9,color:"#6b7280"}},"إجمالي العقد"),
-          React.createElement("div",{style:{fontSize:14,fontWeight:800,color:"#2563eb"}},SAR(c.totalInst||0))
-        ),
-        React.createElement("div",{style:{background:"#f8fafc",borderRadius:8,padding:8,textAlign:"center"}},
-          React.createElement("div",{style:{fontSize:9,color:"#6b7280"}},"المسدد"),
-          React.createElement("div",{style:{fontSize:14,fontWeight:800,color:"#059669"}},SAR(totalPaid))
-        ),
-        React.createElement("div",{style:{background:"#f8fafc",borderRadius:8,padding:8,textAlign:"center"}},
-          React.createElement("div",{style:{fontSize:9,color:"#6b7280"}},"المتبقي"),
-          React.createElement("div",{style:{fontSize:14,fontWeight:800,color:"#dc2626"}},SAR(remaining))
-        )
-      ),
-      cPays.length>0 && React.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:11}},
-        React.createElement("thead",null,
-          React.createElement("tr",{style:{background:"linear-gradient(140deg,#e0b85c,#c8922a)"}},
-            React.createElement("th",{style:{padding:"6px 8px",color:"#fff",fontWeight:700,textAlign:"center"}},"#"),
-            React.createElement("th",{style:{padding:"6px 8px",color:"#fff",fontWeight:700,textAlign:"center"}},"التاريخ"),
-            React.createElement("th",{style:{padding:"6px 8px",color:"#fff",fontWeight:700,textAlign:"center"}},"المبلغ"),
-            React.createElement("th",{style:{padding:"6px 8px",color:"#fff",fontWeight:700,textAlign:"center"}},"المتبقي")
-          )
-        ),
-        React.createElement("tbody",null,
-          cPays.map((p,pi)=>{
-            const running = (+c.totalInst||0) - cPays.slice(0,pi+1).reduce((s,x)=>s+(+x.amount||0),0);
-            return React.createElement("tr",{key:p.id||pi,style:{background:pi%2===0?"#fff":"#f8fafc"}},
-              React.createElement("td",{style:{padding:"6px 8px",textAlign:"center"}},pi+1),
-              React.createElement("td",{style:{padding:"6px 8px",textAlign:"center"}},fmtDate(p.date)),
-              React.createElement("td",{style:{padding:"6px 8px",textAlign:"center",color:"#059669",fontWeight:700}},SAR(p.amount)),
-              React.createElement("td",{style:{padding:"6px 8px",textAlign:"center",color:Math.max(0,running)>0?"#dc2626":"#059669",fontWeight:700}},SAR(Math.max(0,running)))
-            );
-          })
-        )
-      ),
-      React.createElement("button",{onClick:()=>{
-        const msg = "كشف حساب — "+c.client+"\nعقد #"+(c.num||"")+"\nالإجمالي: "+SAR(c.totalInst||0)+"\nالمسدد: "+SAR(totalPaid)+"\nالمتبقي: "+SAR(remaining)+"\n\nالسدادات:\n"+cPays.map((p,i)=>(i+1)+". "+fmtDate(p.date)+" — "+SAR(p.amount)).join("\n")+"\n\nمؤسسة قمة الفرصة التجارية";
-        window.open("https://wa.me/"+(c.phone||"").replace(/^0/,"966")+"?text="+encodeURIComponent(msg));
-      },style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"#25d366",color:"#fff",border:"none",borderRadius:10,padding:10,fontSize:13,fontWeight:700,cursor:"pointer",width:"100%",marginTop:10,fontFamily:"IBM Plex Sans Arabic,Arial"}},"📤 إرسال للعميل عبر واتساب"),
-      React.createElement("button",{onClick:()=>setStmtContract(null),style:{background:"#f1f5f9",color:"#64748b",border:"none",borderRadius:10,padding:8,fontSize:12,fontWeight:700,cursor:"pointer",width:"100%",marginTop:6,fontFamily:"inherit"}},"← رجوع")
-    );
+  const stmtDueInfo = c => {
+    const remaining=stmtContractRemaining(c);
+    const installment=+c.instAmt||+c.installment||0;
+    const start=c.firstInst||c.startDate||c.date;
+    if(remaining<=0||installment<=0||!start) return null;
+    const d=new Date(start);
+    if(isNaN(d.getTime())) return null;
+    const paidCount=Math.max(0,Math.floor(stmtContractPaid(c)/installment));
+    d.setMonth(d.getMonth()+paidCount);
+    const days=Math.floor((today-d)/(1000*60*60*24));
+    return {date:d,days,amount:Math.min(installment,remaining),contract:c};
+  };
+  const stmtGroupStats = group => {
+    const his=group.contracts||[];
+    const ids=his.map(c=>String(c.id));
+    const customerPays=pays.filter(p=>ids.includes(String(p.contractId)));
+    const total=his.reduce((s,c)=>s+stmtContractTotal(c),0);
+    const paid=customerPays.reduce((s,p)=>s+(+p.amount||0),0);
+    const remaining=his.reduce((s,c)=>s+stmtContractRemaining(c),0);
+    const activeCount=his.filter(c=>_doneIds.indexOf(c.id)<0&&stmtContractRemaining(c)>0).length;
+    const dueItems=his.map(stmtDueInfo).filter(Boolean).sort((a,b)=>a.date-b.date);
+    const overdueCount=dueItems.filter(x=>x.days>0).length;
+    let penalty=0;
+    his.forEach(c=>{
+      const due=stmtDueInfo(c);
+      if(c.defaulter) penalty+=55;
+      else if(due&&due.days>60) penalty+=38;
+      else if(due&&due.days>30) penalty+=25;
+      else if(due&&due.days>0) penalty+=12;
+    });
+    const score=Math.max(0,Math.min(100,100-Math.round(penalty/Math.max(1,his.length))));
+    const status=score>=90?"ممتاز":score>=75?"منتظم":score>=55?"يحتاج متابعة":"متعثر";
+    return {his,ids,customerPays,total,paid,remaining,activeCount,dueItems,overdueCount,score,status};
+  };
+  const stmtQuery=stmtSearch.trim();
+  const stmtQueryName=stmtNormalizeName(stmtQuery);
+  const stmtQueryDigits=stmtDigits(stmtQuery);
+  const stmtFilteredCustomers=stmtCustomerGroups.filter(g=>{
+    if(!stmtQuery) return true;
+    if(stmtQueryName && (stmtNormalizeName(g.name).includes(stmtQueryName)||g.names.some(n=>n.includes(stmtQueryName)))) return true;
+    if(stmtQueryDigits && (g.ids.some(x=>x.includes(stmtQueryDigits))||g.phones.some(x=>x.includes(stmtQueryDigits)))) return true;
+    return g.contracts.some(c=>String(stmtContractNum(c)).includes(stmtQuery));
+  });
+  const stmtAllRemaining=stmtCustomerGroups.reduce((sum,g)=>sum+stmtGroupStats(g).remaining,0);
+  const stmtAllActive=stmtAllContracts.filter(c=>_doneIds.indexOf(c.id)<0&&stmtContractRemaining(c)>0).length;
+
+  const renderCustomerProfile = group => {
+    const data=stmtGroupStats(group);
+    const his=[...data.his].sort((a,b)=>stmtContractDateValue(b).localeCompare(stmtContractDateValue(a)));
+    const customerName=stmtProfileValue(group,["client"])||group.name;
+    const idNum=stmtProfileValue(group,["idNum"]);
+    const idType=stmtProfileValue(group,["idType"])||"هوية وطنية";
+    const phone=stmtProfileValue(group,["cPhone","phone"]);
+    const job=stmtProfileValue(group,["job"]);
+    const address=stmtProfileValue(group,["address"]);
+    const nationality=stmtProfileValue(group,["nationality"]);
+    const guarantor=stmtProfileValue(group,["gName"]);
+    const guarantorId=stmtProfileValue(group,["gId"]);
+    const guarantorPhone=stmtProfileValue(group,["gPhone"]);
+    const guarantorJob=stmtProfileValue(group,["gJob"]);
+    const invNames=[...new Set(his.map(c=>{
+      const inv=(investors||[]).find(i=>String(i.id)===String(c.investorId));
+      return inv?(inv.name||inv.title||"مستثمر"):"غير محدد";
+    }))];
+    const nextDue=data.dueItems[0]||null;
+    const paidPct=data.total>0?Math.min(100,Math.round(data.paid/data.total*100)):0;
+    const completeFields=[customerName,idNum,phone,job,address,nationality,guarantor,guarantorId,guarantorPhone];
+    const completeCount=completeFields.filter(Boolean).length;
+    const completeness=Math.round(completeCount/completeFields.length*100);
+    const notes=[...new Set(his.map(c=>String(c.note||"").trim()).filter(Boolean))];
+    const initials=customerName.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x.charAt(0)).join("")||"ع";
+    const journey=[
+      ...his.map(c=>({key:"c"+c.id,date:c.date||c.createdAt||"",type:"contract",title:"إنشاء العقد رقم "+stmtContractNum(c),detail:"بقيمة "+SAR(stmtContractTotal(c)),amount:stmtContractTotal(c)})),
+      ...data.customerPays.map((p,i)=>{
+        const c=his.find(x=>String(x.id)===String(p.contractId));
+        return {key:"p"+(p.id||i),date:p.date||"",type:"payment",title:"سداد على العقد رقم "+stmtContractNum(c),detail:(p.note||"دفعة مسجلة")+" — "+SAR(p.amount),amount:+p.amount||0};
+      })
+    ].filter(x=>x.date).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+    const docItems=[
+      {label:"هوية العميل",value:idNum},
+      {label:"رقم الجوال",value:phone},
+      {label:"العنوان والعمل",value:address&&job},
+      {label:"بيانات الكفيل",value:guarantor&&guarantorId},
+      {label:"بيانات العقود",value:his.length>0},
+      {label:"سجل السداد",value:data.customerPays.length>0}
+    ];
+    const sortedPays=[...data.customerPays].sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")));
+    const renderContractsTable = limit => {
+      const rows=typeof limit==="number"?his.slice(0,limit):his;
+      return <div className="qcf-table-wrap">
+        <table className="qcf-table">
+          <thead><tr><th>رقم العقد</th><th>التاريخ</th><th>المستثمر</th><th>الإجمالي</th><th>المسدد</th><th>المتبقي</th><th>الحالة</th></tr></thead>
+          <tbody>{rows.map(c=>{
+            const inv=(investors||[]).find(i=>String(i.id)===String(c.investorId));
+            const rem=stmtContractRemaining(c), paid=stmtContractPaid(c);
+            const done=_doneIds.indexOf(c.id)>=0||rem<=0;
+            return <tr key={c.id}>
+              <td className="qcf-strong">#{stmtContractNum(c)}</td>
+              <td className="qcf-date">{c.date?fmtDate(c.date):"—"}</td>
+              <td>{inv?(inv.name||inv.title||"—"):"—"}</td>
+              <td>{SAR(stmtContractTotal(c))}</td>
+              <td className="qcf-paid">{SAR(paid)}</td>
+              <td className="qcf-remain">{SAR(rem)}</td>
+              <td><span className={"qcf-status "+(done?"done":c.defaulter?"late":"active")}>{done?"منتهي":c.defaulter?"متعثر":"مستمر"}</span></td>
+            </tr>;
+          })}</tbody>
+        </table>
+      </div>;
+    };
+    const profileTabs=[
+      {id:"overview",name:"نظرة شاملة",icon:"◫"},
+      {id:"contracts",name:"العقود",icon:"▤"},
+      {id:"payments",name:"السدادات",icon:"◉"},
+      {id:"documents",name:"اكتمال الملف",icon:"✓"},
+      {id:"activity",name:"رحلة العميل",icon:"⌁"}
+    ];
+    return <div className="qcf-profile">
+      <section className="qcf-hero">
+        <div className="qcf-hero-glow"></div>
+        <div className="qcf-hero-top">
+          <button className="qcf-back" onClick={()=>{setStmtContract(null);setStmtView("overview");}}>→ العودة لقائمة العملاء</button>
+          <div className="qcf-actions">
+            <button onClick={()=>setPage&&setPage("contracts")}>▤ فتح العقود</button>
+            <button onClick={()=>window.print()}>⌁ طباعة الملف</button>
+            <button className="qcf-action-gold" onClick={()=>{
+              const clean=stmtDigits(phone);
+              if(!clean){ if(toast) toast("لا يوجد رقم جوال مسجل للعميل","warn"); return; }
+              const wa=clean.startsWith("0")?"966"+clean.slice(1):clean;
+              const msg="مرحباً "+customerName+"\nملخص حسابكم لدى مؤسسة قمة الفرصة التجارية:\nعدد العقود: "+his.length+"\nإجمالي العقود: "+SAR(data.total)+"\nالمسدد: "+SAR(data.paid)+"\nالمتبقي: "+SAR(data.remaining);
+              window.open("https://wa.me/"+wa+"?text="+encodeURIComponent(msg),"_blank");
+            }}>واتساب ◀</button>
+          </div>
+        </div>
+        <div className="qcf-identity">
+          <div className="qcf-avatar">{initials}</div>
+          <div className="qcf-identity-main">
+            <div className="qcf-eyebrow">ملف العميل الشامل</div>
+            <h2>{customerName}</h2>
+            <div className="qcf-identity-meta">
+              <span>هوية: <b>{idNum||"غير مسجلة"}</b></span>
+              <span>جوال: <b>{phone||"غير مسجل"}</b></span>
+              <span>العمل: <b>{job||"غير مسجل"}</b></span>
+            </div>
+          </div>
+          <div className="qcf-score-card">
+            <div className="qcf-score-ring" style={{background:"conic-gradient(#d9ac4a "+data.score+"%,rgba(255,255,255,.14) 0)"}}><span>{data.score}</span></div>
+            <div><small>مؤشر الانتظام</small><strong>{data.status}</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section className="qcf-kpis">
+        <div className="qcf-kpi"><span>قيمة جميع العقود</span><strong>{SAR(data.total)}</strong><small>{his.length} عقد مسجل</small></div>
+        <div className="qcf-kpi qcf-kpi-paid"><span>إجمالي المسدد</span><strong>{SAR(data.paid)}</strong><small>{paidPct}% من الإجمالي</small></div>
+        <div className="qcf-kpi qcf-kpi-remain"><span>إجمالي المتبقي</span><strong>{SAR(data.remaining)}</strong><small>{data.activeCount} عقد مستمر</small></div>
+        <div className="qcf-kpi"><span>القسط القادم</span><strong>{nextDue?SAR(nextDue.amount):"لا يوجد"}</strong><small>{nextDue?fmtDate(nextDue.date.toISOString().slice(0,10)):"جميع العقود مكتملة"}</small></div>
+        <div className="qcf-kpi"><span>اكتمال الملف</span><strong>{completeness}%</strong><small>{completeCount} من {completeFields.length} بيانات أساسية</small></div>
+      </section>
+
+      <nav className="qcf-tabs">
+        {profileTabs.map(t=><button key={t.id} className={stmtView===t.id?"active":""} onClick={()=>setStmtView(t.id)}><span>{t.icon}</span>{t.name}</button>)}
+      </nav>
+
+      {stmtView==="overview" && <div className="qcf-layout">
+        <main className="qcf-main-column">
+          <section className="qcf-section">
+            <div className="qcf-section-head"><div><span className="qcf-section-kicker">ملخص التعاملات</span><h3>العقود الأخيرة</h3></div><button onClick={()=>setStmtView("contracts")}>عرض جميع العقود</button></div>
+            {renderContractsTable(4)}
+          </section>
+          <section className="qcf-section">
+            <div className="qcf-section-head"><div><span className="qcf-section-kicker">تسلسل زمني موحد</span><h3>آخر حركات العميل</h3></div><button onClick={()=>setStmtView("activity")}>عرض الرحلة كاملة</button></div>
+            <div className="qcf-timeline compact">
+              {journey.length?journey.slice(0,6).map((item,i)=><div className="qcf-timeline-item" key={item.key}>
+                <span className={"qcf-timeline-dot "+item.type}></span>
+                <div><strong>{item.title}</strong><p>{item.detail}</p></div>
+                <time>{fmtDate(item.date)}</time>
+              </div>):<div className="qcf-empty">لا توجد حركات مسجلة حتى الآن</div>}
+            </div>
+          </section>
+        </main>
+        <aside className="qcf-side-column">
+          <section className="qcf-section qcf-info-card">
+            <div className="qcf-section-head"><div><span className="qcf-section-kicker">بيانات موحدة</span><h3>هوية العميل</h3></div></div>
+            <dl className="qcf-info-list">
+              <div><dt>نوع الهوية</dt><dd>{idType}</dd></div><div><dt>رقم الهوية</dt><dd className="qcf-strong">{idNum||"—"}</dd></div>
+              <div><dt>الجنسية</dt><dd>{nationality||"—"}</dd></div><div><dt>الجوال</dt><dd className="qcf-strong">{phone||"—"}</dd></div>
+              <div className="wide"><dt>العنوان</dt><dd>{address||"—"}</dd></div><div className="wide"><dt>العمل</dt><dd>{job||"—"}</dd></div>
+            </dl>
+          </section>
+          <section className="qcf-section qcf-info-card">
+            <div className="qcf-section-head"><div><span className="qcf-section-kicker">الضمان والاستثمار</span><h3>الكفيل والمستثمرون</h3></div></div>
+            <div className="qcf-person"><span>ك</span><div><strong>{guarantor||"لا يوجد كفيل مسجل"}</strong><small>{guarantorId?("هوية "+guarantorId):""}{guarantorPhone?(" • "+guarantorPhone):""}{guarantorJob?(" • "+guarantorJob):""}</small></div></div>
+            <div className="qcf-investors">{invNames.map((name,i)=><span key={i}>{name}</span>)}</div>
+          </section>
+          <section className="qcf-section qcf-info-card">
+            <div className="qcf-complete-head"><strong>اكتمال بيانات الملف</strong><b>{completeness}%</b></div>
+            <div className="qcf-progress"><span style={{width:completeness+"%"}}></span></div>
+            <p className="qcf-help">كلما اكتملت البيانات أصبحت المطابقة الذكية والتقارير أدق.</p>
+          </section>
+          {notes.length>0&&<section className="qcf-section qcf-info-card"><div className="qcf-section-head"><div><span className="qcf-section-kicker">من العقود</span><h3>ملاحظات العميل</h3></div></div>{notes.slice(0,3).map((n,i)=><p className="qcf-note" key={i}>{n}</p>)}</section>}
+        </aside>
+      </div>}
+
+      {stmtView==="contracts" && <section className="qcf-section qcf-full-section">
+        <div className="qcf-section-head"><div><span className="qcf-section-kicker">{his.length} عقدًا في ملف واحد</span><h3>جميع عقود العميل</h3></div><button onClick={()=>setPage&&setPage("contracts")}>إدارة العقود</button></div>
+        {renderContractsTable()}
+      </section>}
+
+      {stmtView==="payments" && <section className="qcf-section qcf-full-section">
+        <div className="qcf-section-head"><div><span className="qcf-section-kicker">{sortedPays.length} حركة سداد</span><h3>سجل السدادات الموحد</h3></div><strong className="qcf-total-paid">المجموع {SAR(data.paid)}</strong></div>
+        <div className="qcf-table-wrap"><table className="qcf-table"><thead><tr><th>#</th><th>التاريخ</th><th>رقم العقد</th><th>البيان</th><th>المبلغ</th></tr></thead><tbody>
+          {sortedPays.length?sortedPays.map((p,i)=>{
+            const c=his.find(x=>String(x.id)===String(p.contractId));
+            return <tr key={p.id||i}><td>{i+1}</td><td className="qcf-date">{p.date?fmtDate(p.date):"—"}</td><td className="qcf-strong">#{stmtContractNum(c)}</td><td>{p.note||p.method||"سداد"}</td><td className="qcf-paid qcf-strong">{SAR(p.amount)}</td></tr>;
+          }):<tr><td colSpan="5"><div className="qcf-empty">لا توجد سدادات مسجلة لهذا العميل</div></td></tr>}
+        </tbody></table></div>
+      </section>}
+
+      {stmtView==="documents" && <div className="qcf-doc-layout">
+        <section className="qcf-section">
+          <div className="qcf-section-head"><div><span className="qcf-section-kicker">جاهزية الملف</span><h3>فحص اكتمال البيانات</h3></div><strong className="qcf-complete-number">{completeness}%</strong></div>
+          <div className="qcf-doc-grid">{docItems.map((item,i)=><div className={"qcf-doc-item "+(item.value?"ready":"missing")} key={i}><span>{item.value?"✓":"!"}</span><div><strong>{item.label}</strong><small>{item.value?"مكتمل":"يحتاج استكمال"}</small></div></div>)}</div>
+        </section>
+        <section className="qcf-section">
+          <div className="qcf-section-head"><div><span className="qcf-section-kicker">البيانات المرجعية</span><h3>الكفيل والعنوان</h3></div></div>
+          <dl className="qcf-info-list single"><div><dt>اسم الكفيل</dt><dd>{guarantor||"—"}</dd></div><div><dt>هوية الكفيل</dt><dd>{guarantorId||"—"}</dd></div><div><dt>جوال الكفيل</dt><dd>{guarantorPhone||"—"}</dd></div><div><dt>عمل الكفيل</dt><dd>{guarantorJob||"—"}</dd></div><div><dt>العنوان</dt><dd>{address||"—"}</dd></div></dl>
+        </section>
+      </div>}
+
+      {stmtView==="activity" && <section className="qcf-section qcf-full-section">
+        <div className="qcf-section-head"><div><span className="qcf-section-kicker">من أول عقد حتى آخر سداد</span><h3>رحلة العميل</h3></div><span className="qcf-journey-count">{journey.length} حركة</span></div>
+        <div className="qcf-timeline">
+          {journey.length?journey.map(item=><div className="qcf-timeline-item" key={item.key}><span className={"qcf-timeline-dot "+item.type}></span><div><strong>{item.title}</strong><p>{item.detail}</p></div><time>{fmtDate(item.date)}</time></div>):<div className="qcf-empty">لا توجد حركات مسجلة حتى الآن</div>}
+        </div>
+      </section>}
+    </div>;
   };
 
   const tabs = [
@@ -12126,39 +12344,53 @@ function UpgradesPage({contracts, investors, payments, activity, settings, toast
       )
     ),
 
-    // ═══ TAB 2: كشف حساب العميل ═══
-    tab==="stmt" && React.createElement("div",{style:{...styles.panel,marginTop:8}},
-      React.createElement("div",{style:{padding:14}},
-        stmtContract
-          ? renderStatement(stmtContract)
-          : React.createElement(React.Fragment,null,
-              React.createElement("input",{style:{width:"100%",padding:"14px 16px",borderRadius:12,border:"1px solid #e0d8c6",fontSize:16,fontFamily:"IBM Plex Sans Arabic,Arial",background:"#fff",boxSizing:"border-box",marginBottom:12},placeholder:"ابحث باسم العميل...",value:stmtSearch,onChange:e=>setStmtSearch(e.target.value)}),
-              stmtGrouped.map(g=>
-                React.createElement(React.Fragment,{key:g.inv.id},
-                  React.createElement("div",{style:{fontSize:18,fontWeight:900,color:"#141428",padding:"12px 16px",background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:10,marginBottom:10,marginTop:16,border:"1px solid #b8862b"}},g.inv.name),
-                  g.contracts.map(c=>{
-                    const cPaid = pays.filter(p=>p.contractId===c.id).reduce((s,p)=>s+(+p.amount||0),0);
-                    const rem = Math.max(0,(+c.totalInst||0)-cPaid);
-                    const _cNum = (function(){ if(c.contractType==="migrated"){ if(c.num) return c.num; if(c.oldNum) return c.oldNum; var m=String(c.note||"").match(/(\d+)/); return m?m[1]:"—"; } return c.num||"—"; }());
-                    return React.createElement("div",{key:c.id,onClick:()=>setStmtContract(c),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px",background:"#fffbf0",borderRadius:10,marginBottom:6,cursor:"pointer",border:"2px solid #1a1a2e"}},
-                      React.createElement("div",{style:{flex:1}},
-                        React.createElement("div",{style:{fontSize:16,fontWeight:900,color:"#1a1a2e"}},c.client),
-                        React.createElement("div",{style:{fontSize:14,color:"#1a1a2e",fontWeight:800,marginTop:4}},"عقد "+_cNum+" — قسط "+SAR(c.instAmt||c.installment||0)),
-                        c.date && React.createElement("div",{style:{fontSize:11,color:"#64748b",marginTop:3}},"تاريخ العقد: "+c.date),
-                        c.contractType==="migrated" && React.createElement("div",{style:{fontSize:10,color:"#c8922a",fontWeight:700,marginTop:2}},"مرحّل")
-                      ),
-                      React.createElement("div",{style:{textAlign:"left",minWidth:70}},
-                        React.createElement("div",{style:{fontSize:16,fontWeight:900,color:"#1a1a2e"}},SAR(rem)),
-                        React.createElement("div",{style:{fontSize:10,color:"#64748b",fontWeight:600}},"متبقي")
-                      )
-                    );
-                  })
-                )
-              ),
-              stmtSearch.trim().length>=2 && stmtGrouped.length===0 && React.createElement("div",{style:{textAlign:"center",padding:20,color:"#94a3b8"}},"لا توجد نتائج")
-            )
-      )
-    ),
+    // ═══ TAB 2: ملف العميل الشامل ═══
+    tab==="stmt" && <div className="qcf-page">
+      {stmtContract ? renderCustomerProfile(stmtContract) : <div className="qcf-directory">
+        <section className="qcf-directory-hero">
+          <div>
+            <span>التطويرات • ملف العميل 360°</span>
+            <h2>مركز ملفات العملاء</h2>
+            <p>كل عقود العميل وسداداته وبياناته في ملف واحد، من دون تغيير طريقة إدارة البرنامج.</p>
+          </div>
+          <div className="qcf-directory-badge"><strong>{stmtCustomerGroups.length}</strong><small>ملف عميل</small></div>
+        </section>
+
+        <section className="qcf-directory-kpis">
+          <div><span>إجمالي العملاء</span><strong>{stmtCustomerGroups.length}</strong><small>ملف موحد</small></div>
+          <div><span>إجمالي العقود</span><strong>{stmtAllContracts.length}</strong><small>نشط ومنتهي</small></div>
+          <div><span>العقود المستمرة</span><strong>{stmtAllActive}</strong><small>تحتاج متابعة</small></div>
+          <div><span>إجمالي المتبقي</span><strong>{SAR(stmtAllRemaining)}</strong><small>على جميع العملاء</small></div>
+        </section>
+
+        <section className="qcf-search-panel">
+          <div className="qcf-search-title"><span>⌕</span><div><h3>الوصول السريع للعميل</h3><p>ابحث بالاسم أو الهوية أو الجوال أو رقم العقد</p></div></div>
+          <div className="qcf-search-box"><span>⌕</span><input autoFocus value={stmtSearch} onChange={e=>setStmtSearch(e.target.value)} placeholder="اكتب اسم العميل، رقم الهوية، الجوال أو رقم العقد..."/><kbd>{stmtFilteredCustomers.length} نتيجة</kbd></div>
+        </section>
+
+        <section className="qcf-clients-section">
+          <div className="qcf-section-head"><div><span className="qcf-section-kicker">دليل العملاء</span><h3>{stmtSearch?"نتائج البحث":"جميع ملفات العملاء"}</h3></div><span className="qcf-results-count">{stmtFilteredCustomers.length} عميل</span></div>
+          <div className="qcf-client-header"><span>العميل</span><span>الهوية والجوال</span><span>العقود</span><span>المتبقي</span><span>الانتظام</span><span></span></div>
+          <div className="qcf-client-list">
+            {stmtFilteredCustomers.length?stmtFilteredCustomers.map((group,index)=>{
+              const stats=stmtGroupStats(group);
+              const id=stmtProfileValue(group,["idNum"]);
+              const phone=stmtProfileValue(group,["cPhone","phone"]);
+              const due=stats.dueItems.find(x=>x.days<=0)||stats.dueItems[0];
+              const initials=group.name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x.charAt(0)).join("")||"ع";
+              return <button className="qcf-client-row" key={group.key+"_"+index} onClick={()=>{setStmtContract(group);setStmtView("overview");}}>
+                <span className="qcf-client-cell qcf-client-name"><i>{initials}</i><span><strong>{group.name}</strong><small>{stmtProfileValue(group,["job"])||"بيانات عميل مسجلة"}</small></span></span>
+                <span className="qcf-client-cell qcf-client-contact"><strong>{id||"هوية غير مسجلة"}</strong><small>{phone||"جوال غير مسجل"}</small></span>
+                <span className="qcf-client-cell"><strong>{stats.his.length}</strong><small>{stats.activeCount} مستمر</small></span>
+                <span className="qcf-client-cell qcf-client-remain"><strong>{SAR(stats.remaining)}</strong><small>{due?(due.days>0?"متأخر "+due.days+" يوم":"القادم "+fmtDate(due.date.toISOString().slice(0,10))):"لا يوجد استحقاق"}</small></span>
+                <span className="qcf-client-cell"><b className={"qcf-score-badge score-"+(stats.score>=75?"good":stats.score>=55?"watch":"late")}>{stats.score}</b><small>{stats.status}</small></span>
+                <span className="qcf-row-arrow">←</span>
+              </button>;
+            }):<div className="qcf-empty qcf-empty-large"><span>⌕</span><strong>لم نجد عميلًا مطابقًا</strong><small>جرّب البحث بالاسم أو الهوية أو الجوال أو رقم العقد</small></div>}
+          </div>
+        </section>
+      </div>}
+    </div>,
 
     // ═══ TAB 3: تنبيهات الأقساط ═══
     tab==="alerts" && React.createElement("div",{style:{...styles.panel,marginTop:8}},
@@ -14855,6 +15087,272 @@ body .contracts-lux button.q-contracts-status-tab.is-active .q-contracts-status-
   .qmp-subtabs,.qmp-head-actions,.qmp-jard-toolbar,.qmp-bank-view-tabs,.qmp-bank-upload-card{display:none!important}
   .qmp-jard-ledgers,.qmp-command-grid,.qmp-insights-grid{grid-template-columns:1fr 1fr!important}
   .qmp-surface,.qmp-jard-ledger,.qmp-table-wrap{box-shadow:none!important}
+}
+</style>
+
+<style id="qima-customer-profile-styles">
+/* ═══════════════════════════════════════════════════════════════
+   ملف العميل الشامل — تطويرات ← كشف العميل
+   نطاق مستقل حتى لا يؤثر في أي صفحة أو وظيفة أخرى في النظام
+   ═══════════════════════════════════════════════════════════════ */
+.qcf-page{
+  --qcf-navy:#0b2138;
+  --qcf-navy-2:#07182a;
+  --qcf-navy-soft:#173651;
+  --qcf-gold:#d5a63f;
+  --qcf-gold-2:#b98525;
+  --qcf-cream:#f7f2e7;
+  --qcf-paper:#fffdf9;
+  --qcf-ink:#11263b;
+  --qcf-muted:#687789;
+  --qcf-line:#e5dccb;
+  --qcf-green:#188761;
+  --qcf-red:#c9504d;
+  direction:rtl;
+  margin-top:8px;
+  padding:14px;
+  color:var(--qcf-ink);
+  border:1px solid #e1d8c7;
+  border-radius:20px;
+  background:
+    radial-gradient(circle at 5% 3%,rgba(213,166,63,.13),transparent 28%),
+    linear-gradient(145deg,#faf6ed 0%,#f3ecde 100%);
+  box-shadow:0 12px 34px rgba(20,33,46,.08);
+  font-family:"IBM Plex Sans Arabic",Arial,sans-serif;
+}
+.qcf-page,.qcf-page *{box-sizing:border-box}
+.qcf-page button,.qcf-page input{font-family:inherit}
+.qcf-directory,.qcf-profile{width:100%;max-width:1500px;margin:0 auto}
+
+/* دليل العملاء */
+.qcf-directory-hero{
+  min-height:170px;
+  padding:30px 34px;
+  border:1px solid rgba(224,187,104,.45);
+  border-radius:22px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+  overflow:hidden;
+  position:relative;
+  color:#fff;
+  background:
+    radial-gradient(circle at 12% 10%,rgba(213,166,63,.28),transparent 34%),
+    linear-gradient(125deg,#07182a 0%,#0d2a45 58%,#163b59 100%);
+  box-shadow:0 18px 35px rgba(7,24,42,.18);
+}
+.qcf-directory-hero:after{
+  content:"";position:absolute;left:-52px;bottom:-85px;width:235px;height:235px;border:1px solid rgba(255,255,255,.09);border-radius:50%;box-shadow:0 0 0 26px rgba(255,255,255,.025),0 0 0 52px rgba(255,255,255,.018)
+}
+.qcf-directory-hero>div:first-child{position:relative;z-index:1}
+.qcf-directory-hero span{display:block;color:#e9c978;font-size:13px;font-weight:800;letter-spacing:.2px;margin-bottom:7px}
+.qcf-directory-hero h2{color:#fff!important;font-size:28px!important;font-weight:900!important;margin:0 0 7px!important;line-height:1.35!important}
+.qcf-directory-hero p{margin:0;color:#d7e0e8;font-size:14px;font-weight:600;line-height:1.8}
+.qcf-directory-badge{
+  position:relative;z-index:1;flex:0 0 118px;height:105px;border:1px solid rgba(231,198,119,.52);border-radius:19px;background:rgba(255,255,255,.08);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:inset 0 1px rgba(255,255,255,.14)
+}
+.qcf-directory-badge strong{font-size:33px;line-height:1;color:#f0ce78;font-weight:900}
+.qcf-directory-badge small{color:#e7edf3;font-size:12px;font-weight:700;margin-top:9px}
+.qcf-directory-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:13px 0}
+.qcf-directory-kpis>div,.qcf-kpi{
+  min-height:108px;padding:17px 18px;border:1px solid var(--qcf-line);border-radius:16px;background:rgba(255,253,249,.92);box-shadow:0 8px 20px rgba(27,41,53,.055);position:relative;overflow:hidden
+}
+.qcf-directory-kpis>div:before,.qcf-kpi:before{content:"";position:absolute;right:0;top:18px;width:4px;height:36px;border-radius:4px 0 0 4px;background:var(--qcf-gold)}
+.qcf-directory-kpis span,.qcf-kpi>span{display:block;color:var(--qcf-muted);font-size:12px;font-weight:800;margin-bottom:6px}
+.qcf-directory-kpis strong,.qcf-kpi>strong{display:block;color:var(--qcf-navy);font-size:23px;font-weight:900;line-height:1.25;direction:rtl}
+.qcf-directory-kpis small,.qcf-kpi>small{display:block;color:#8c97a3;font-size:10px;font-weight:650;margin-top:6px}
+.qcf-search-panel,.qcf-clients-section,.qcf-section{
+  border:1px solid var(--qcf-line);border-radius:18px;background:rgba(255,253,249,.96);box-shadow:0 8px 24px rgba(26,39,51,.055)
+}
+.qcf-search-panel{padding:20px;margin-bottom:13px}
+.qcf-search-title{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.qcf-search-title>span{width:42px;height:42px;border-radius:13px;background:#f6ead0;border:1px solid #e8d3a1;display:grid;place-items:center;color:var(--qcf-gold-2);font-size:22px;font-weight:900}
+.qcf-search-title h3,.qcf-section-head h3{margin:0!important;color:var(--qcf-navy)!important;font-size:18px!important;font-weight:900!important;line-height:1.35!important}
+.qcf-search-title p{margin:3px 0 0;color:var(--qcf-muted);font-size:11px;font-weight:650}
+.qcf-search-box{height:56px;display:flex;align-items:center;gap:10px;padding:0 15px;border:1.5px solid #d9c9aa;border-radius:14px;background:#fff;transition:.2s ease;box-shadow:inset 0 1px 2px rgba(12,29,46,.025)}
+.qcf-search-box:focus-within{border-color:var(--qcf-gold);box-shadow:0 0 0 4px rgba(213,166,63,.12)}
+.qcf-search-box>span{font-size:23px;color:var(--qcf-gold-2);line-height:1}
+.qcf-search-box input{flex:1;min-width:0;height:100%;border:0!important;outline:0!important;background:transparent!important;color:var(--qcf-navy)!important;font-size:15px!important;font-weight:750!important;padding:0!important}
+.qcf-search-box input::placeholder{color:#9ca7b2;font-weight:650}
+.qcf-search-box kbd{border:1px solid #e6ddce;border-radius:8px;background:#f7f3eb;color:#748293;padding:5px 8px;font-size:10px;font-weight:800;white-space:nowrap}
+.qcf-clients-section{overflow:hidden}
+.qcf-clients-section>.qcf-section-head{padding:18px 20px 14px}
+.qcf-section-head{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.qcf-section-kicker{display:block;color:var(--qcf-gold-2);font-size:10px;font-weight:900;margin-bottom:3px}
+.qcf-results-count,.qcf-journey-count{padding:6px 10px;border-radius:999px;background:#f4ead5;color:#87651f;font-size:10px;font-weight:900;white-space:nowrap}
+.qcf-client-header,.qcf-client-row{display:grid;grid-template-columns:minmax(230px,1.5fr) minmax(180px,1.05fr) minmax(90px,.55fr) minmax(170px,1fr) minmax(90px,.6fr) 34px;align-items:center;gap:10px}
+.qcf-client-header{min-height:42px;padding:8px 18px;color:#eaf0f5;background:linear-gradient(105deg,var(--qcf-navy-2),var(--qcf-navy-soft));font-size:11px;font-weight:850}
+.qcf-client-row{width:100%;min-height:84px;padding:11px 18px;border:0!important;border-bottom:1px solid #ebe5d9!important;border-radius:0!important;background:#fffdf9!important;color:var(--qcf-ink)!important;text-align:right;cursor:pointer;transition:.18s ease;box-shadow:none!important}
+.qcf-client-row:last-child{border-bottom:0!important}
+.qcf-client-row:hover{background:#fbf5e8!important;transform:translateX(-2px);box-shadow:inset -4px 0 var(--qcf-gold)!important}
+.qcf-client-cell{min-width:0;display:flex;flex-direction:column;gap:3px}
+.qcf-client-cell>strong{color:var(--qcf-navy);font-size:14px;font-weight:900;line-height:1.45;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qcf-client-cell>small{color:var(--qcf-muted);font-size:10px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qcf-client-name{flex-direction:row;align-items:center;gap:11px}
+.qcf-client-name>i{width:43px;height:43px;flex:0 0 43px;border-radius:14px;background:linear-gradient(145deg,#f7e8c6,#e5bd61);color:#17324b;border:1px solid #dfbd70;display:grid;place-items:center;font-size:15px;font-style:normal;font-weight:900}
+.qcf-client-name>span{display:flex;min-width:0;flex-direction:column;gap:3px}
+.qcf-client-name>span strong{font-size:15px;color:var(--qcf-navy);font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qcf-client-name>span small{font-size:10px;color:var(--qcf-muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qcf-client-remain>strong{color:#a13e3b}
+.qcf-score-badge{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:900;border:3px solid}
+.qcf-score-badge.score-good{color:#167453;border-color:#54b38f;background:#eef9f4}
+.qcf-score-badge.score-watch{color:#986b17;border-color:#d9ad55;background:#fff8e8}
+.qcf-score-badge.score-late{color:#b84240;border-color:#dc7774;background:#fff1f0}
+.qcf-row-arrow{font-size:20px;color:var(--qcf-gold-2);font-weight:900;text-align:left}
+
+/* رأس الملف */
+.qcf-hero{position:relative;overflow:hidden;border:1px solid rgba(222,184,95,.48);border-radius:22px;padding:18px 22px 24px;color:#fff;background:linear-gradient(118deg,#07182a 0%,#0d2b46 62%,#173b58 100%);box-shadow:0 18px 34px rgba(7,24,42,.18)}
+.qcf-hero-glow{position:absolute;left:-50px;top:-95px;width:310px;height:310px;border-radius:50%;background:radial-gradient(circle,rgba(213,166,63,.24),transparent 68%);pointer-events:none}
+.qcf-hero:after{content:"";position:absolute;left:20%;bottom:-110px;width:280px;height:180px;border:1px solid rgba(255,255,255,.08);border-radius:50%}
+.qcf-hero-top{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.qcf-back,.qcf-actions button,.qcf-section-head button{
+  border-radius:10px!important;border:1px solid!important;cursor:pointer;font-weight:850!important;transition:.18s ease;box-shadow:none!important
+}
+.qcf-back{padding:8px 12px!important;color:#e9d398!important;border-color:rgba(231,204,139,.38)!important;background:rgba(255,255,255,.06)!important;font-size:11px!important}
+.qcf-back:hover{background:rgba(255,255,255,.12)!important}
+.qcf-actions{display:flex;gap:7px;flex-wrap:wrap}
+.qcf-actions button{padding:8px 12px!important;color:#e6edf3!important;border-color:rgba(255,255,255,.18)!important;background:rgba(255,255,255,.07)!important;font-size:11px!important}
+.qcf-actions button:hover{background:rgba(255,255,255,.13)!important}
+.qcf-actions .qcf-action-gold{color:#10273b!important;border-color:#dfb95f!important;background:linear-gradient(145deg,#eccb78,#cc972f)!important}
+.qcf-identity{position:relative;z-index:1;display:flex;align-items:center;gap:16px;padding-top:20px}
+.qcf-avatar{width:76px;height:76px;flex:0 0 76px;border-radius:22px;border:1px solid rgba(247,218,147,.7);background:linear-gradient(145deg,#f1d488,#c99530);color:#10263a;display:grid;place-items:center;font-size:25px;font-weight:950;box-shadow:0 10px 22px rgba(0,0,0,.17)}
+.qcf-identity-main{min-width:0;flex:1}
+.qcf-eyebrow{font-size:10px;color:#e7c672;font-weight:900;margin-bottom:3px}
+.qcf-identity-main h2{margin:0!important;color:#fff!important;font-size:25px!important;font-weight:950!important;line-height:1.45!important}
+.qcf-identity-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.qcf-identity-meta span{padding:4px 8px;border-radius:7px;background:rgba(255,255,255,.07);color:#c9d5df;font-size:10px;font-weight:650}
+.qcf-identity-meta b{color:#fff;font-weight:850}
+.qcf-score-card{min-width:178px;display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid rgba(255,255,255,.13);border-radius:16px;background:rgba(255,255,255,.065)}
+.qcf-score-ring{width:58px;height:58px;flex:0 0 58px;border-radius:50%;display:grid;place-items:center;position:relative}
+.qcf-score-ring:before{content:"";position:absolute;inset:6px;border-radius:50%;background:#0e2a44}
+.qcf-score-ring span{position:relative;z-index:1;color:#fff;font-size:16px;font-weight:950}
+.qcf-score-card small,.qcf-score-card strong{display:block}
+.qcf-score-card small{color:#afbdc9;font-size:9px;font-weight:750}
+.qcf-score-card strong{color:#e9c76f;font-size:14px;font-weight:900;margin-top:3px}
+.qcf-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:12px 0}
+.qcf-kpi{min-height:106px}
+.qcf-kpi-paid:before{background:var(--qcf-green)}
+.qcf-kpi-paid>strong{color:var(--qcf-green)}
+.qcf-kpi-remain:before{background:var(--qcf-red)}
+.qcf-kpi-remain>strong{color:var(--qcf-red)}
+
+/* تبويبات ومحتوى الملف */
+.qcf-tabs{display:flex;gap:6px;overflow-x:auto;padding:7px;border:1px solid var(--qcf-line);border-radius:15px;background:#fffdf9;margin-bottom:12px;scrollbar-width:thin}
+.qcf-tabs button{flex:1;min-width:130px;height:43px;padding:0 13px!important;border:1px solid transparent!important;border-radius:10px!important;background:transparent!important;color:#667688!important;font-size:12px!important;font-weight:850!important;cursor:pointer;white-space:nowrap;box-shadow:none!important}
+.qcf-tabs button span{color:var(--qcf-gold-2);margin-left:6px;font-size:14px}
+.qcf-tabs button.active{color:#fff!important;border-color:#193b57!important;background:linear-gradient(105deg,var(--qcf-navy-2),var(--qcf-navy-soft))!important;box-shadow:0 5px 12px rgba(11,33,56,.13)!important}
+.qcf-tabs button.active span{color:#edcb73}
+.qcf-layout{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(285px,.85fr);gap:12px;align-items:start}
+.qcf-main-column,.qcf-side-column{display:flex;flex-direction:column;gap:12px;min-width:0}
+.qcf-section{padding:18px;min-width:0}
+.qcf-full-section{margin-top:2px}
+.qcf-section-head{margin-bottom:13px}
+.qcf-section-head button{padding:7px 10px!important;border-color:#dec99c!important;background:#fffaf0!important;color:#8d671c!important;font-size:10px!important}
+.qcf-section-head button:hover{background:#f6e8c9!important}
+.qcf-table-wrap{width:100%;overflow:auto;border:1px solid #e6ded0;border-radius:13px;background:#fff}
+.qcf-table{width:100%;min-width:790px;border-collapse:separate!important;border-spacing:0!important;font-size:12px!important;background:#fff}
+.qcf-table thead th{padding:11px 10px!important;text-align:center!important;color:#eef3f7!important;background:linear-gradient(105deg,var(--qcf-navy-2),var(--qcf-navy-soft))!important;border:0!important;border-bottom:2px solid var(--qcf-gold)!important;font-size:11px!important;font-weight:900!important;white-space:nowrap}
+.qcf-table tbody td{padding:12px 10px!important;text-align:center!important;color:#263b4e!important;border:0!important;border-bottom:1px solid #eee8dc!important;background:#fff!important;font-size:12px!important;font-weight:700!important;white-space:nowrap}
+.qcf-table tbody tr:nth-child(even) td{background:#fcf9f2!important}
+.qcf-table tbody tr:last-child td{border-bottom:0!important}
+.qcf-table tbody tr:hover td{background:#fbf2df!important}
+.qcf-table .qcf-strong,.qcf-strong{color:var(--qcf-navy)!important;font-weight:950!important;font-size:13px!important}
+.qcf-table .qcf-date{font-size:13px!important;font-weight:900!important;color:#253d53!important}
+.qcf-table .qcf-paid{color:var(--qcf-green)!important;font-weight:950!important}
+.qcf-table .qcf-remain{color:#b64643!important;font-weight:950!important}
+.qcf-status{display:inline-flex;align-items:center;justify-content:center;min-width:58px;padding:4px 8px;border-radius:999px;font-size:9px;font-weight:900;border:1px solid}
+.qcf-status.active{color:#176f52;background:#edf8f3;border-color:#a6d6c4}
+.qcf-status.done{color:#5e6b78;background:#f1f3f5;border-color:#d7dde2}
+.qcf-status.late{color:#b2403e;background:#fff0ef;border-color:#e5aaa8}
+.qcf-info-card{padding:16px}
+.qcf-info-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0}
+.qcf-info-list>div{padding:9px 10px;border:1px solid #ebe3d5;border-radius:10px;background:#fdfaf4;min-width:0}
+.qcf-info-list>div.wide{grid-column:1/-1}
+.qcf-info-list dt{color:#83909d;font-size:9px;font-weight:800;margin-bottom:3px}
+.qcf-info-list dd{margin:0;color:var(--qcf-navy);font-size:12px;font-weight:850;line-height:1.5;word-break:break-word}
+.qcf-info-list.single{grid-template-columns:1fr}
+.qcf-person{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid #e8dfd0;border-radius:12px;background:#fdf9f0}
+.qcf-person>span{width:38px;height:38px;flex:0 0 38px;border-radius:11px;display:grid;place-items:center;color:#14314a;background:#ead09a;font-size:14px;font-weight:950}
+.qcf-person strong,.qcf-person small{display:block}
+.qcf-person strong{color:var(--qcf-navy);font-size:12px;font-weight:900}
+.qcf-person small{color:var(--qcf-muted);font-size:9px;font-weight:650;margin-top:3px;line-height:1.5}
+.qcf-investors{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+.qcf-investors span{padding:5px 8px;border:1px solid #e1c984;border-radius:8px;background:#fff9e9;color:#87651f;font-size:9px;font-weight:850}
+.qcf-complete-head{display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--qcf-navy);font-size:12px;font-weight:900}
+.qcf-complete-head b,.qcf-complete-number{color:var(--qcf-green);font-size:18px;font-weight:950}
+.qcf-progress{height:8px;border-radius:99px;background:#e9e5dd;overflow:hidden;margin:10px 0 7px}
+.qcf-progress span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#1c8563,#58b38f)}
+.qcf-help{margin:0;color:#7d8995;font-size:9px;font-weight:650;line-height:1.7}
+.qcf-note{margin:7px 0 0;padding:8px 10px;border-right:3px solid var(--qcf-gold);border-radius:7px;background:#fdf8ed;color:#4f6071;font-size:10px;font-weight:700;line-height:1.7}
+.qcf-timeline{position:relative;padding:3px 5px}
+.qcf-timeline:before{content:"";position:absolute;right:14px;top:13px;bottom:13px;width:2px;background:#e7dcc5}
+.qcf-timeline-item{position:relative;display:grid;grid-template-columns:28px 1fr auto;align-items:start;gap:8px;padding:10px 0;border-bottom:1px solid #eee8dd}
+.qcf-timeline-item:last-child{border-bottom:0}
+.qcf-timeline-dot{position:relative;z-index:1;width:12px;height:12px;margin:4px 7px 0 0;border-radius:50%;border:3px solid #fdfbf6;background:var(--qcf-gold);box-shadow:0 0 0 1px #d9bc7b}
+.qcf-timeline-dot.payment{background:var(--qcf-green);box-shadow:0 0 0 1px #7ab9a2}
+.qcf-timeline-item strong{display:block;color:var(--qcf-navy);font-size:12px;font-weight:900;line-height:1.5}
+.qcf-timeline-item p{margin:2px 0 0;color:var(--qcf-muted);font-size:10px;font-weight:650;line-height:1.6}
+.qcf-timeline-item time{color:#84919d;font-size:10px;font-weight:850;white-space:nowrap;padding-top:2px;direction:ltr}
+.qcf-total-paid{color:var(--qcf-green);font-size:14px;font-weight:950}
+.qcf-doc-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(270px,.65fr);gap:12px}
+.qcf-doc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.qcf-doc-item{display:flex;align-items:center;gap:10px;padding:13px;border:1px solid;border-radius:12px}
+.qcf-doc-item>span{width:34px;height:34px;flex:0 0 34px;border-radius:10px;display:grid;place-items:center;font-size:14px;font-weight:950}
+.qcf-doc-item strong,.qcf-doc-item small{display:block}
+.qcf-doc-item strong{font-size:12px;font-weight:900;color:var(--qcf-navy)}
+.qcf-doc-item small{font-size:9px;font-weight:750;margin-top:3px}
+.qcf-doc-item.ready{border-color:#c1dfd3;background:#f3faf7}.qcf-doc-item.ready>span{color:#fff;background:#238564}.qcf-doc-item.ready small{color:#3d896f}
+.qcf-doc-item.missing{border-color:#e6c8a6;background:#fff8ef}.qcf-doc-item.missing>span{color:#fff;background:#c98539}.qcf-doc-item.missing small{color:#a2672a}
+.qcf-empty{padding:28px;text-align:center;color:#87939f;font-size:11px;font-weight:750}
+.qcf-empty-large{min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;background:#fffdf9}
+.qcf-empty-large>span{font-size:35px;color:#d3ad58}.qcf-empty-large>strong{font-size:16px;color:var(--qcf-navy);font-weight:900}.qcf-empty-large>small{font-size:10px;color:#8995a0}
+
+@media(max-width:1050px){
+  .qcf-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .qcf-layout{grid-template-columns:minmax(0,1.5fr) minmax(260px,.8fr)}
+  .qcf-client-header,.qcf-client-row{grid-template-columns:minmax(210px,1.4fr) minmax(160px,1fr) 80px minmax(145px,.9fr) 75px 28px}
+}
+@media(max-width:820px){
+  .qcf-page{padding:9px;border-radius:16px}
+  .qcf-directory-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .qcf-directory-hero{min-height:150px;padding:24px}
+  .qcf-directory-hero h2{font-size:24px!important}
+  .qcf-client-header{display:none}
+  .qcf-client-row{grid-template-columns:minmax(0,1fr) auto;gap:9px 12px;padding:14px 15px}
+  .qcf-client-name{grid-column:1/2}.qcf-client-contact{grid-column:1/2}.qcf-client-row>.qcf-client-cell:nth-child(3){grid-column:2/3;grid-row:1}.qcf-client-remain{grid-column:1/2}.qcf-client-row>.qcf-client-cell:nth-child(5){grid-column:2/3;grid-row:2/4;align-items:center}.qcf-row-arrow{grid-column:2/3}
+  .qcf-identity{flex-wrap:wrap}.qcf-score-card{margin-right:auto}
+  .qcf-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .qcf-layout,.qcf-doc-layout{grid-template-columns:1fr}
+  .qcf-side-column{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}.qcf-side-column>.qcf-section:last-child:nth-child(odd){grid-column:1/-1}
+}
+@media(max-width:560px){
+  .qcf-page{padding:6px;margin-right:-3px;margin-left:-3px}
+  .qcf-directory-hero{padding:20px 17px;min-height:160px;align-items:flex-start}.qcf-directory-hero p{font-size:11px}.qcf-directory-badge{flex-basis:84px;height:82px}.qcf-directory-badge strong{font-size:25px}.qcf-directory-badge small{font-size:9px}
+  .qcf-directory-kpis{gap:7px}.qcf-directory-kpis>div,.qcf-kpi{padding:14px 13px;min-height:96px}.qcf-directory-kpis strong,.qcf-kpi>strong{font-size:18px}.qcf-directory-kpis span,.qcf-kpi>span{font-size:10px}
+  .qcf-search-panel{padding:15px}.qcf-search-box{height:54px;padding:0 11px}.qcf-search-box input{font-size:13px!important}.qcf-search-box kbd{display:none}
+  .qcf-client-name>span strong{font-size:14px}.qcf-client-cell>strong{font-size:13px}
+  .qcf-hero{padding:14px}.qcf-hero-top{align-items:flex-start}.qcf-actions{justify-content:flex-end}.qcf-actions button{padding:7px 8px!important;font-size:9px!important}.qcf-back{font-size:9px!important;padding:7px 8px!important}
+  .qcf-identity{gap:11px}.qcf-avatar{width:59px;height:59px;flex-basis:59px;border-radius:17px;font-size:20px}.qcf-identity-main h2{font-size:20px!important}.qcf-identity-meta{gap:5px}.qcf-identity-meta span{font-size:9px}.qcf-score-card{width:100%;min-width:0;justify-content:center}
+  .qcf-kpis{gap:7px}.qcf-kpis>.qcf-kpi:last-child{grid-column:1/-1}
+  .qcf-tabs{padding:5px}.qcf-tabs button{min-width:116px;height:40px;font-size:10px!important}
+  .qcf-section{padding:13px}.qcf-section-head h3,.qcf-search-title h3{font-size:15px!important}.qcf-section-head button{font-size:9px!important}
+  .qcf-side-column{display:flex}.qcf-doc-grid{grid-template-columns:1fr}
+  .qcf-timeline-item{grid-template-columns:26px 1fr}.qcf-timeline-item time{grid-column:2;margin-top:-5px}.qcf-timeline-item strong{font-size:11px}
+}
+
+@media print{
+  body *{visibility:hidden!important}
+  .qcf-profile,.qcf-profile *{visibility:visible!important}
+  .qcf-profile{position:absolute!important;inset:0!important;width:100%!important;max-width:none!important;padding:0!important;background:#fff!important;color:#111!important}
+  .qcf-actions,.qcf-back,.qcf-tabs,.qcf-section-head button{display:none!important}
+  .qcf-hero,.qcf-table thead th{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .qcf-hero{box-shadow:none!important}
+  .qcf-kpis{grid-template-columns:repeat(5,1fr)!important}
+  .qcf-layout,.qcf-doc-layout{grid-template-columns:1.7fr .8fr!important}
+  .qcf-section,.qcf-kpi{box-shadow:none!important;break-inside:avoid}
+  .qcf-table-wrap{overflow:visible!important}.qcf-table{min-width:0!important;font-size:9px!important}
+  .qcf-table thead th,.qcf-table tbody td{padding:6px!important;font-size:9px!important}
 }
 </style>
 <script id="qimat-full-enterprise-ui-behavior">
