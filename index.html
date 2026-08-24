@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-24-overdue-card-contract-total-v23 -->
+<!-- build: 2026-08-24-overdue-full-registered-amount-v24 -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -6926,7 +6926,10 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
   const manualDefaulters=currentC.filter(c=>c.defaulter).map(c=>{
     const total=+c.totalInst||+c.amount||0, paid=_getPaid(payments,c.id);
     const remaining=Math.max(0,total-paid);
-    const manualAmount=+c.defaulterAmount||Math.min(+c.instAmt||remaining,remaining);
+    // المبلغ المتعثر هو كامل المبلغ المسجل للعقد، وليس قيمة قسط واحد.
+    // إن وُجد مبلغ تعثر مدخل يدويًا نأخذه، وإلا نأخذ كامل الرصيد المتبقي.
+    const registeredAmount=+c.defaulterAmount;
+    const manualAmount=registeredAmount>0?Math.min(registeredAmount,remaining):remaining;
     return {c,amount:Math.max(0,manualAmount),remaining};
   }).sort((a,b)=>b.amount-a.amount);
   const manualDefaulterAmount=manualDefaulters.reduce((sum,row)=>sum+(+row.amount||0),0);
@@ -11786,7 +11789,9 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
     const paidTotal=(payments||[]).filter(p=>String(p.contractId)===String(c.id)).reduce((s,p)=>s+(+p.amount||0),0);
     const totalInst=+c.totalInst||+c.amount||0;
     const remaining=Math.max(0,totalInst-paidTotal);
-    const overdueAmt=+c.defaulterAmount||Math.min(+c.instAmt||remaining,remaining);
+    // يتطابق مع بطاقة الرئيسية: مبلغ التعثر المسجل كاملًا، وإلا كامل المتبقي.
+    const registeredAmount=+c.defaulterAmount;
+    const overdueAmt=registeredAmount>0?Math.min(registeredAmount,remaining):remaining;
     return {c,o:{monthsBehind:0,overdueAmt:Math.max(0,overdueAmt),remaining,paidTotal}};
   }).filter(x=>x.o.remaining>0).sort((a,b)=>b.o.overdueAmt-a.o.overdueAmt);
 
