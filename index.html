@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-24-qima-ai-os-v21-safari-app-check-body-race-fix -->
+<!-- build: 2026-08-24-home-five-kpi-details-v22 -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -6574,6 +6574,159 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
   );
 }
 
+function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycleLabel,totals}) {
+  const [tab,setTab] = React.useState("all");
+  const [query,setQuery] = React.useState("");
+  const [invFilter,setInvFilter] = React.useState("all");
+  React.useEffect(()=>{setTab("all");setQuery("");setInvFilter("all");},[mode]);
+
+  const nf = v => (+v||0).toLocaleString("en-US",{maximumFractionDigits:0});
+  const invOf = c => investors.find(x=>String(x.id)===String(c.investorId));
+  const invText = c => {const x=invOf(c);return x?invLabel(x):"—";};
+  const sum = (rows,key) => rows.reduce((s,r)=>s+(+r[key]||0),0);
+  const remainingRows = targetRows.filter(r=>r.remainingDue>0);
+  const completedRows = targetRows.filter(r=>r.status==="paid");
+  const partialRows = targetRows.filter(r=>r.status==="partial");
+  const dueRows = targetRows.filter(r=>r.remainingDue>0&&r.isDueNow);
+  const upcomingRows = targetRows.filter(r=>r.remainingDue>0&&r.isUpcoming);
+
+  const investorRows = sortedInvestors(investors).map(inv=>{
+    const rows=targetRows.filter(r=>String(r.c.investorId)===String(inv.id));
+    const target=sum(rows,"due"), collected=sum(rows,"paidApplied"), remaining=sum(rows,"remainingDue");
+    return {inv,rows,target,collected,remaining,done:rows.filter(r=>r.status==="paid").length,
+      partial:rows.filter(r=>r.status==="partial").length,pct:target>0?Math.round(collected/target*100):0};
+  }).filter(r=>r.rows.length>0);
+
+  const meta={
+    target:{title:"أقساط الشهر",eyebrow:"كشف هدف الدورة",desc:"كل الأقساط المجدولة داخل دورة "+cycleLabel},
+    remaining:{title:"باقي الأقساط",eyebrow:"كشف المتبقي",desc:"المبالغ غير المكتملة من أقساط الدورة"},
+    done:{title:"المنجز منها",eyebrow:"كشف الإنجاز",desc:"الأقساط المكتملة بالكامل خلال الدورة"},
+    progress:{title:"نسبة الإنجاز",eyebrow:"أداء المستثمرين",desc:"تحليل التحصيل والمتبقي لكل مستثمر"},
+    overdue:{title:"المتعثرون",eyebrow:"القائمة اليدوية",desc:"العقود التي صنّفتها يدويًا كمتعثر"}
+  }[mode]||{};
+
+  const tabSets={
+    target:[
+      ["all","جميع الدورة",targetRows.length],
+      ["due","مستحق حتى اليوم",dueRows.length],
+      ["upcoming","القادم",upcomingRows.length],
+      ["paid","مسدد",completedRows.length],
+      ["partial","مسدد جزئيًا",partialRows.length]
+    ],
+    remaining:[
+      ["all","كل المتبقي",remainingRows.length],
+      ["due","مستحق حتى اليوم",dueRows.length],
+      ["upcoming","القادم",upcomingRows.length],
+      ["partial","مسدد جزئيًا",partialRows.length]
+    ]
+  };
+
+  let rows=[];
+  if(mode==="target") rows=tab==="due"?dueRows:tab==="upcoming"?upcomingRows:tab==="paid"?completedRows:tab==="partial"?partialRows:targetRows;
+  else if(mode==="remaining") rows=tab==="due"?dueRows:tab==="upcoming"?upcomingRows:tab==="partial"?partialRows:remainingRows;
+  else if(mode==="done") rows=completedRows;
+  else if(mode==="overdue") rows=manualRows;
+
+  const q=query.trim().toLowerCase();
+  const visibleRows=rows.filter(r=>{
+    const c=r.c||{};
+    const text=[c.client,c.num,c.idNum,c.cPhone,invText(c)].join(" ").toLowerCase();
+    return (!q||text.includes(q))&&(invFilter==="all"||String(c.investorId)===String(invFilter));
+  });
+  const visibleInvestors=investorRows.filter(r=>{
+    const text=(invLabel(r.inv)||"").toLowerCase();
+    return (!q||text.includes(q))&&(invFilter==="all"||String(r.inv.id)===String(invFilter));
+  });
+
+  const statusMeta={
+    paid:["مكتمل","is-paid"],partial:["جزئي","is-partial"],due:["مستحق","is-due"],
+    upcoming:["قادم","is-upcoming"],unknown:["تاريخ غير محدد","is-unknown"]
+  };
+  const manualCustomers=new Set(manualRows.map(r=>String(r.c.idNum||r.c.client||r.c.id))).size;
+  const dueNowAmount=sum(dueRows,"remainingDue"), upcomingAmount=sum(upcomingRows,"remainingDue");
+  const summary = mode==="target" ? [
+    ["إجمالي الدورة",totals.target,"ر.س"],["مستحق حتى اليوم",dueNowAmount,"ر.س"],
+    ["قادم",upcomingAmount,"ر.س"],["تم تحصيله",totals.collected,"ر.س"]
+  ] : mode==="remaining" ? [
+    ["إجمالي المتبقي",totals.remaining,"ر.س"],["مستحق الآن",dueNowAmount,"ر.س"],
+    ["قادم",upcomingAmount,"ر.س"],["جزئي",sum(partialRows,"remainingDue"),"ر.س"]
+  ] : mode==="done" ? [
+    ["المنجز بالكامل",totals.done,"ر.س"],["أقساط مكتملة",completedRows.length,"قسط"],
+    ["تحصيل الدورة",totals.collected,"ر.س"],["نسبة التحصيل",totals.pct,"٪"]
+  ] : mode==="overdue" ? [
+    ["الزبائن",manualCustomers,"زبون"],["العقود",manualRows.length,"عقد"],
+    ["المبلغ المتعثر",sum(manualRows,"amount"),"ر.س"],["مصدر التصنيف","يدوي",""]
+  ] : [
+    ["هدف الدورة",totals.target,"ر.س"],["المحصّل",totals.collected,"ر.س"],
+    ["المتبقي",totals.remaining,"ر.س"],["نسبة الإنجاز",totals.pct,"٪"]
+  ];
+
+  return (
+    <div className="qkpi-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label={meta.title}>
+      <div className={"qkpi-modal qkpi-mode-"+mode} onClick={e=>e.stopPropagation()}>
+        <header className="qkpi-head">
+          <button type="button" className="qkpi-close" onClick={onClose} aria-label="إغلاق">×</button>
+          <div className="qkpi-head-copy"><span>{meta.eyebrow}</span><h2>{meta.title}</h2><p>{meta.desc}</p></div>
+          <div className="qkpi-cycle"><small>الدورة المالية</small><strong>{cycleLabel}</strong></div>
+        </header>
+
+        <section className="qkpi-summary">
+          {summary.map((x,i)=><div key={i}><small>{x[0]}</small><strong>{typeof x[1]==="number"?nf(x[1]):x[1]}</strong><em>{x[2]}</em></div>)}
+        </section>
+
+        {(tabSets[mode]||[]).length>0&&(
+          <nav className="qkpi-tabs" aria-label="تصفية الكشف">
+            {tabSets[mode].map(x=><button type="button" key={x[0]} className={tab===x[0]?"active":""} onClick={()=>setTab(x[0])}>{x[1]} <b>{x[2]}</b></button>)}
+          </nav>
+        )}
+
+        <div className="qkpi-tools">
+          <label className="qkpi-search"><span>⌕</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={mode==="progress"?"ابحث باسم المستثمر...":"ابحث باسم الزبون أو رقم العقد..."}/></label>
+          <select value={invFilter} onChange={e=>setInvFilter(e.target.value)}>
+            <option value="all">كل المستثمرين</option>
+            {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
+          </select>
+          <span className="qkpi-result-count">{mode==="progress"?visibleInvestors.length:visibleRows.length} نتيجة</span>
+        </div>
+
+        <div className="qkpi-table-wrap">
+          {mode==="progress" ? (
+            <table className="qkpi-table qkpi-progress-table">
+              <thead><tr><th>#</th><th>المستثمر</th><th>أقساط الدورة</th><th>هدف الدورة</th><th>المحصّل</th><th>المتبقي</th><th>مكتمل</th><th>الإنجاز</th></tr></thead>
+              <tbody>{visibleInvestors.length===0?<tr><td colSpan={8} className="qkpi-empty">لا توجد نتائج</td></tr>:visibleInvestors.map((r,i)=><tr key={r.inv.id}>
+                <td>{i+1}</td><td className="qkpi-name">{invLabel(r.inv)}</td><td>{r.rows.length}</td><td>{nf(r.target)}</td><td className="qkpi-green">{nf(r.collected)}</td><td className="qkpi-red">{nf(r.remaining)}</td><td>{r.done}{r.partial>0?<small className="qkpi-partial-note"> + {r.partial} جزئي</small>:null}</td>
+                <td><div className="qkpi-mini-progress"><i style={{width:Math.min(100,r.pct)+"%"}}></i><b>{r.pct}%</b></div></td>
+              </tr>)}</tbody>
+            </table>
+          ) : mode==="overdue" ? (
+            <table className="qkpi-table">
+              <thead><tr><th>#</th><th>اسم الزبون</th><th>رقم العقد</th><th>المستثمر</th><th>المبلغ المتعثر</th><th>التصنيف</th></tr></thead>
+              <tbody>{visibleRows.length===0?<tr><td colSpan={6} className="qkpi-empty">لا يوجد متعثرون محددون يدويًا</td></tr>:visibleRows.map((r,i)=><tr key={r.c.id}>
+                <td>{i+1}</td><td className="qkpi-name">{r.c.client||"—"}</td><td>#{r.c.num||"—"}</td><td>{invText(r.c)}</td><td className="qkpi-red qkpi-money">{nf(r.amount)} ر.س</td><td><span className="qkpi-badge is-manual">يدوي</span></td>
+              </tr>)}</tbody>
+            </table>
+          ) : mode==="remaining" ? (
+            <table className="qkpi-table">
+              <thead><tr><th>#</th><th>الزبون والعقد</th><th>المستثمر</th><th>الاستحقاق</th><th>القسط</th><th>المدفوع</th><th>الباقي</th><th>الحالة</th></tr></thead>
+              <tbody>{visibleRows.length===0?<tr><td colSpan={8} className="qkpi-empty">لا توجد نتائج</td></tr>:visibleRows.map((r,i)=>{const sm=statusMeta[r.status]||statusMeta.unknown;return <tr key={r.c.id}>
+                <td>{i+1}</td><td className="qkpi-name">{r.c.client||"—"}<small>عقد #{r.c.num||"—"}</small></td><td>{invText(r.c)}</td><td>{r.dueDateStr?fmtDate(r.dueDateStr):"—"}</td><td>{nf(r.due)}</td><td className="qkpi-green">{nf(r.paidApplied)}</td><td className="qkpi-red qkpi-money">{nf(r.remainingDue)}</td><td><span className={"qkpi-badge "+sm[1]}>{sm[0]}</span></td>
+              </tr>})}</tbody>
+            </table>
+          ) : (
+            <table className="qkpi-table">
+              <thead><tr><th>#</th><th>الزبون والعقد</th><th>المستثمر</th><th>تاريخ الاستحقاق</th><th>{mode==="done"?"المبلغ المنجز":"قيمة القسط"}</th><th>{mode==="done"?"تاريخ السداد":"المحصّل"}</th><th>الحالة</th></tr></thead>
+              <tbody>{visibleRows.length===0?<tr><td colSpan={7} className="qkpi-empty">لا توجد نتائج في هذا التبويب</td></tr>:visibleRows.map((r,i)=>{const sm=statusMeta[r.status]||statusMeta.unknown;return <tr key={r.c.id}>
+                <td>{i+1}</td><td className="qkpi-name">{r.c.client||"—"}<small>عقد #{r.c.num||"—"}</small></td><td>{invText(r.c)}</td><td>{r.dueDateStr?fmtDate(r.dueDateStr):"—"}</td><td className="qkpi-money">{nf(r.due)}</td><td className="qkpi-green">{mode==="done"?(r.lastPaymentDate?fmtDate(r.lastPaymentDate):"—"):nf(r.paidApplied)}</td><td><span className={"qkpi-badge "+sm[1]}>{sm[0]}</span></td>
+              </tr>})}</tbody>
+            </table>
+          )}
+        </div>
+        <footer className="qkpi-footer"><span>تُحدّث البيانات مباشرة من العقود والسدادات</span><button type="button" onClick={onClose}>إغلاق الكشف</button></footer>
+      </div>
+    </div>
+  );
+}
+
 function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dailyOpen,setDailyOpen,toast,setPage,payments,zakatTx,setZakatTx,loans,setLoans,setPrivateAccMode,doneIds}) {
   const [detail,setDetail] = useState(null); // {title, color, rows, mode}
   const [homeInvId,setHomeInvId] = useState("");
@@ -6677,10 +6830,6 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
   const todayStr = today.getFullYear()+"/"+String(today.getMonth()+1).padStart(2,"0")+"/"+String(today.getDate()).padStart(2,"0");
   // المحصّل اليوم فعلياً
   const collectedToday = (payments||[]).filter(p=>{ if(!p.date) return false; const d=new Date(p.date); return d.getFullYear()===today.getFullYear()&&d.getMonth()===today.getMonth()&&d.getDate()===today.getDate(); }).reduce((s,p)=>s+(+p.amount||0),0);
-  // العقود حسب المخاطر (غير المكتملة)
-  const withRisk = currentC.map(c=>({c, r:assessRisk(c,payments)})).filter(x=>x.r.level!=="—" && x.r.level!=="مكتمل");
-  const troubled = withRisk.filter(x=>x.r.months>=2).sort((a,b)=>b.r.months-a.r.months); // متعثّر/متأخر
-  const slightLate = withRisk.filter(x=>x.r.months===1);
   // مستحقّون هذا الأسبوع: قسطهم يحل خلال 7 أيام قادمة (تقريبياً حسب يوم أول قسط)
   const dueSoon = currentC.map(c=>{
     const inst=+c.instAmt||0, total=+c.totalInst||+c.amount||0;
@@ -6702,20 +6851,40 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
     return (diffDays>=0 && diffDays<=7) ? {c, days:diffDays, inst} : null;
   }).filter(Boolean).sort((a,b)=>a.days-b.days);
 
-  // ═══ أقساط الشهر / المنجز — مربوطة بالإقفال الشهري ═══
-  const _do = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
-  const _base = _do.__base && typeof _do.__base==="object" ? _do.__base : null;
-  const cycleStart = _base && _base.date ? _base.date : null; // تاريخ آخر إقفال (بداية الدورة)
-  // تواريخ الدورة بناءً على cycleDay من الإعدادات
+  // ═══ أقساط الشهر / المنجز — دورة مالية مضبوطة من الإعدادات ═══
   const _cyDates = getCycleDates(_cd);
-  const cycleFrom = cycleStart ? new Date(cycleStart) : _cyDates.from;
-  const cycleTo = cycleStart ? new Date(new Date(cycleStart).getFullYear(), new Date(cycleStart).getMonth()+1, new Date(cycleStart).getDate()-1) : _cyDates.to;
+  const cycleFrom = _cyDates.from;
+  const cycleTo = _cyDates.to;
+  const cycleFromStr = _cyDates.fromStr;
   const cycleToStr = cycleTo.getFullYear()+"-"+String(cycleTo.getMonth()+1).padStart(2,"0")+"-"+String(cycleTo.getDate()).padStart(2,"0");
   const arMonths=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
   const fmtCycle = d => d.getDate()+" "+arMonths[d.getMonth()];
   const cycleLabel = fmtCycle(cycleFrom)+" ← "+fmtCycle(cycleTo);
 
-  // الهدف: قسط شهر واحد لكل عقد نشط (له متبقي)
+  const _parseHomeDate = value => {
+    if(!value) return null;
+    const m=String(value).slice(0,10).match(/^(\d{4})[-\/]([0-1]?\d)[-\/]([0-3]?\d)$/);
+    if(!m) return null;
+    const d=new Date(+m[1],+m[2]-1,+m[3]);
+    return Number.isNaN(d.getTime())?null:d;
+  };
+  const _homeYmd = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  const _scheduledMonth = (first,n) => {
+    const y=first.getFullYear(), m=first.getMonth()+n, day=first.getDate();
+    const last=new Date(y,m+1,0).getDate();
+    return new Date(y,m,Math.min(day,last));
+  };
+  const _dueInsideCycle = firstValue => {
+    const first=_parseHomeDate(firstValue);
+    if(!first) return null;
+    let n=Math.max(0,(cycleFrom.getFullYear()-first.getFullYear())*12+(cycleFrom.getMonth()-first.getMonth()));
+    let due=_scheduledMonth(first,n);
+    while(due<cycleFrom){n+=1;due=_scheduledMonth(first,n);}
+    return due<=cycleTo?due:null;
+  };
+  const _todayHome=_parseHomeDate(todayLocal())||new Date();
+
+  // الهدف: القسط المجدول فعلياً بين بداية الدورة ونهايتها لكل عقد نشط
   const targetRows = currentC.map(c=>{
     const inst=+c.instAmt||0, total=+c.totalInst||+c.amount||0;
     if(inst<=0) return null;
@@ -6724,23 +6893,44 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
     if(rem<=0) return null;
     if(c.contractType==="defer") return null; // المؤجل ما له قسط شهري
     if(c.status==="done"||c.done||(doneIds||[]).includes(c.id)) return null; // العقود المنتهية
-    if(c.firstInst && c.firstInst > cycleToStr) return null; // ما حل قسطه بعد
+    const dueDate=_dueInsideCycle(c.firstInst);
+    if(c.firstInst&&!dueDate) return null; // لا يوجد موعد قسط داخل الدورة الحالية
     const due=Math.min(inst,rem);
-    // هل سُدّد ضمن الدورة الحالية؟
-    const paidInCycle=(payments||[]).filter(p=>p.contractId===c.id && p.date && (!cycleStart || p.date>=cycleStart))
-      .reduce((s,p)=>s+(+p.amount||0),0);
-    return {c, due, paidInCycle, isPaid:paidInCycle>0};
-  }).filter(Boolean).sort((a,b)=>b.due-a.due);
+    const cyclePayments=(payments||[]).filter(p=>{
+      if(String(p.contractId)!==String(c.id)) return false;
+      const pd=_parseHomeDate(p.date);
+      return pd&&pd>=cycleFrom&&pd<=cycleTo;
+    }).sort((a,b)=>String(a.date||"").localeCompare(String(b.date||"")));
+    const paidInCycle=cyclePayments.reduce((s,p)=>s+(+p.amount||0),0);
+    const paidApplied=Math.min(due,paidInCycle);
+    const remainingDue=Math.max(0,due-paidApplied);
+    const isDueNow=!!dueDate&&dueDate<=_todayHome;
+    const isUpcoming=!!dueDate&&dueDate>_todayHome;
+    const status=remainingDue<=0?"paid":paidApplied>0?"partial":!dueDate?"unknown":isDueNow?"due":"upcoming";
+    return {c,due,dueDateStr:dueDate?_homeYmd(dueDate):"",paidInCycle,paidApplied,remainingDue,
+      isDueNow,isUpcoming,status,lastPaymentDate:cyclePayments.length?cyclePayments[cyclePayments.length-1].date:""};
+  }).filter(Boolean).sort((a,b)=>String(a.dueDateStr||"9999").localeCompare(String(b.dueDateStr||"9999"))||b.due-a.due);
 
   const targetAmount = targetRows.reduce((s,r)=>s+r.due,0);
   const targetCount = targetRows.length;
-  // المنجز: السدادات المسجّلة في الدورة الحالية لعقود الهدف
-  const doneRows = targetRows.filter(r=>r.isPaid);
-  const doneAmount = doneRows.reduce((s,r)=>s+Math.min(r.due,r.paidInCycle),0);
+  const collectedAmount = targetRows.reduce((s,r)=>s+r.paidApplied,0);
+  // المنجز: القسط المكتمل بالكامل؛ الجزئي يبقى ضمن المتبقي
+  const doneRows = targetRows.filter(r=>r.status==="paid");
+  const doneAmount = doneRows.reduce((s,r)=>s+r.due,0);
   const doneCount = doneRows.length;
-  const remCount = targetCount - doneCount;
-  const remAmount = targetAmount - doneAmount;
-  const donePct = targetAmount>0 ? Math.round(doneAmount/targetAmount*100) : 0;
+  const remainingRows = targetRows.filter(r=>r.remainingDue>0);
+  const remCount = remainingRows.length;
+  const remAmount = remainingRows.reduce((s,r)=>s+r.remainingDue,0);
+  const donePct = targetAmount>0 ? Math.round(collectedAmount/targetAmount*100) : 0;
+
+  // المتعثرون في الرئيسية: القائمة اليدوية فقط، بلا أي احتساب آلي للأشهر
+  const manualDefaulters=currentC.filter(c=>c.defaulter).map(c=>{
+    const total=+c.totalInst||+c.amount||0, paid=_getPaid(payments,c.id);
+    const remaining=Math.max(0,total-paid);
+    const manualAmount=+c.defaulterAmount||Math.min(+c.instAmt||remaining,remaining);
+    return {c,amount:Math.max(0,manualAmount),remaining};
+  }).sort((a,b)=>b.amount-a.amount);
+  const manualDefaulterCustomers=new Set(manualDefaulters.map(r=>String(r.c.idNum||r.c.client||r.c.id))).size;
 
   const SARf = v => (v||0).toLocaleString("en-US",{maximumFractionDigits:0});
   const shortD = d => d ? d.slice(8,10)+"/"+d.slice(5,7) : "";
@@ -6791,19 +6981,19 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
       <section className="qhv5-command" aria-label="ملخص الدورة">
         <div className="qhv5-cycle"><span>دورة الشهر</span><strong>{cycleLabel}</strong><span className="qhv5-cal">▣</span></div>
         <div className="qhv5-kpis">
-          <button type="button" className="qhv5-kpi qhv5-kpi-alert" onClick={()=>setPage&&setPage("overdue")}>
+          <button type="button" className="qhv5-kpi qhv5-kpi-alert" onClick={()=>setDetail({mode:"overdue"})}>
             <span className="qhv5-kpi-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3.8 2.6 20.2h18.8Z"/><path d="M12 10v4.2"/><circle cx="12" cy="17.4" r=".9" fill="currentColor" stroke="none"/></svg>
-            </span><small>المتعثرون</small><strong>{troubled.length}</strong><em>عميل</em>
+            </span><small>المتعثرون</small><strong>{manualDefaulterCustomers}</strong><em>{manualDefaulters.length} عقد يدوي</em>
           </button>
-          <div className="qhv5-kpi qhv5-kpi-ring">
+          <button type="button" className="qhv5-kpi qhv5-kpi-ring" onClick={()=>setDetail({mode:"progress"})}>
             <span className="qhv5-ring" style={{'--pct':donePct}}><b>{donePct}%</b></span><small>نسبة الإنجاز</small>
-          </div>
-          <div className="qhv5-kpi">
+          </button>
+          <button type="button" className="qhv5-kpi" onClick={()=>setDetail({mode:"remaining"})}>
             <span className="qhv5-kpi-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3.2 8.6A2.4 2.4 0 0 1 5.6 6.2h13.2a1.8 1.8 0 0 1 1.8 1.8v9a1.8 1.8 0 0 1-1.8 1.8H5.6a2.4 2.4 0 0 1-2.4-2.4Z"/><path d="M3.2 8.6V7.2a2 2 0 0 1 2-2h11.4"/><circle cx="16.6" cy="12.9" r="1.15" fill="currentColor" stroke="none"/></svg>
             </span><small>باقي الأقساط</small><strong>{SARf(remAmount)}</strong><em>{remCount} باقي قسط</em>
-          </div>
+          </button>
           <button type="button" className="qhv5-kpi" onClick={()=>setDetail({mode:"target"})}>
             <span className="qhv5-kpi-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>
@@ -6821,8 +7011,13 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
         </div>
       </section>
 
-      {/* بطاقة أقساط الشهر / المنجز الفخمة */}
-      {detail && (detail.mode==="target" || detail.mode==="done") && (()=>{
+      {/* نوافذ التفاصيل للبطاقات الخمس — ترتيب البطاقات في الرئيسية لم يتغير */}
+      {detail && <DashboardKpiDetails mode={detail.mode} onClose={()=>setDetail(null)} targetRows={targetRows}
+        manualRows={manualDefaulters} investors={investors} cycleLabel={cycleLabel}
+        totals={{target:targetAmount,collected:collectedAmount,remaining:remAmount,done:doneAmount,pct:donePct}}/>}
+
+      {/* النافذة القديمة محفوظة مرجعيًا ومعطلة */}
+      {false && detail && (detail.mode==="target" || detail.mode==="done") && (()=>{
         const isDone = detail.mode==="done";
         const rows = isDone ? doneRows : targetRows;
         const headBg = "linear-gradient(140deg,#e0b85c,#c8922a)";
@@ -11587,31 +11782,14 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
   const [filterInv, setFilterInv] = React.useState("all");
   const active = (contracts||[]).filter(c => !c.deleted);
 
-  const calcOverdue = (c) => {
-    const instAmt = +c.instAmt || 0;
-    const totalInst = +c.totalInst || +c.amount || 0;
-    if(instAmt <= 0 || !c.firstInst) return null;
-    const ps = (payments||[]).filter(p => p.contractId === c.id);
-    const paidTotal = ps.reduce((s,p)=>s+(+p.amount||0), 0);
-    const remaining = Math.max(0, totalInst - paidTotal);
-    if(remaining <= 0) return null;
-    const totalCount = Math.max(1, Math.round(totalInst / instAmt));
-    const first = new Date(c.firstInst);
-    const now = new Date();
-    let monthsElapsed = (now.getFullYear()-first.getFullYear())*12 + (now.getMonth()-first.getMonth());
-    if(now.getDate() >= first.getDate()) monthsElapsed += 1;
-    monthsElapsed = Math.max(0, monthsElapsed);
-    const due = Math.min(monthsElapsed, totalCount);
-    const paidCount = Math.floor(paidTotal / instAmt);
-    const monthsBehind = Math.max(0, due - paidCount);
-    const overdueAmt = monthsBehind * instAmt;
-    return {monthsBehind, overdueAmt, remaining, paidTotal};
-  };
-
-  const allRows = active.map(c => ({c, o: calcOverdue(c)}));
-  const autoRows = allRows.filter(x => x.o && x.o.monthsBehind >= 3);
-  const manualOnly = allRows.filter(x => x.c.defaulter && (!x.o || x.o.monthsBehind < 3));
-  const rows = [...autoRows, ...manualOnly].sort((a,b)=>(b.o?b.o.monthsBehind:0)-(a.o?a.o.monthsBehind:0));
+  // القائمة يدوية بالكامل: لا يُضاف أي عقد بسبب عدد أشهر التأخر.
+  const rows = active.filter(c=>c.defaulter).map(c=>{
+    const paidTotal=(payments||[]).filter(p=>String(p.contractId)===String(c.id)).reduce((s,p)=>s+(+p.amount||0),0);
+    const totalInst=+c.totalInst||+c.amount||0;
+    const remaining=Math.max(0,totalInst-paidTotal);
+    const overdueAmt=+c.defaulterAmount||Math.min(+c.instAmt||remaining,remaining);
+    return {c,o:{monthsBehind:0,overdueAmt:Math.max(0,overdueAmt),remaining,paidTotal}};
+  }).filter(x=>x.o.remaining>0).sort((a,b)=>b.o.overdueAmt-a.o.overdueAmt);
 
   const grouped = {};
   rows.forEach(x => {
@@ -16094,6 +16272,25 @@ body .contracts-lux table.freeze3 td.q-contracts-client>span:hover{
 <style id="qima-collection-reference-alignment-v21">
 .qcc-header-controls{justify-content:flex-start!important}
 @media(max-width:820px){.qcc-header-controls{justify-content:center!important}}
+</style>
+<style id="qima-home-five-kpi-details-v22">
+/* تفاصيل البطاقات الخمس في الرئيسية — من دون تغيير مواضع البطاقات */
+.qimat-home-v6 .qhv5-kpi{cursor:pointer!important;font-family:inherit!important}
+.qimat-home-v6 .qhv5-kpi:focus-visible{outline:3px solid rgba(224,184,92,.5)!important;outline-offset:3px!important}
+.qkpi-overlay{position:fixed;inset:0;z-index:2600;display:flex;align-items:center;justify-content:center;padding:clamp(10px,2vw,26px);background:rgba(4,15,27,.7);backdrop-filter:blur(7px);direction:rtl}
+.qkpi-modal{display:flex;width:min(1180px,100%);max-height:min(90vh,860px);flex-direction:column;overflow:hidden;border:1px solid rgba(224,184,92,.72);border-radius:24px;background:#fbf7ef;box-shadow:0 30px 85px rgba(3,16,28,.42);color:#112c43;font-family:"IBM Plex Sans Arabic","Tajawal",Arial,sans-serif}
+.qkpi-modal *{box-sizing:border-box}.qkpi-modal button,.qkpi-modal input,.qkpi-modal select{font-family:inherit}
+.qkpi-head{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:18px;min-height:135px;padding:24px 30px;background:radial-gradient(circle at 12% 15%,rgba(59,126,184,.24),transparent 28%),linear-gradient(115deg,#061726,#0b304d 64%,#071827);color:#fff;overflow:hidden}
+.qkpi-head:after{content:"";position:absolute;right:0;bottom:0;width:48%;height:3px;background:linear-gradient(90deg,transparent,#e8c55d)}
+.qkpi-mode-overdue .qkpi-head{background:radial-gradient(circle at 14% 18%,rgba(219,72,72,.22),transparent 28%),linear-gradient(115deg,#2a0c12,#6f1f27 63%,#301018)}
+.qkpi-head-copy,.qkpi-cycle{position:relative;z-index:1}.qkpi-head-copy>span{display:block;color:#efca69;font-size:11px;font-weight:950}.qkpi-head-copy h2{margin:3px 0!important;color:#fff!important;font-size:clamp(24px,3vw,35px)!important;font-weight:950!important;line-height:1.25}.qkpi-head-copy p{margin:0;color:#c9d6df;font-size:12px;font-weight:750}.qkpi-cycle{min-width:210px;padding:13px 16px;border:1px solid rgba(240,205,113,.28);border-radius:14px;background:rgba(255,255,255,.06);text-align:center}.qkpi-cycle small,.qkpi-cycle strong{display:block}.qkpi-cycle small{color:#9fb2c0;font-size:9px;font-weight:850}.qkpi-cycle strong{margin-top:4px;color:#f0cd72;font-size:14px;font-weight:950}.qkpi-close{position:absolute!important;left:17px!important;top:16px!important;z-index:5!important;display:grid!important;place-items:center!important;width:36px!important;height:36px!important;min-height:36px!important;padding:0!important;border:1px solid rgba(255,255,255,.2)!important;border-radius:50%!important;background:rgba(255,255,255,.08)!important;color:#fff!important;font-size:24px!important;font-weight:500!important;line-height:1!important;box-shadow:none!important}.qkpi-close:hover{background:rgba(255,255,255,.16)!important;transform:none!important}
+.qkpi-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:13px 17px 9px;background:#f7f0e4}.qkpi-summary>div{position:relative;min-height:82px;padding:13px 15px;border:1px solid #e3d5bd;border-radius:14px;background:linear-gradient(145deg,#fff,#fdfaf4);box-shadow:0 6px 16px rgba(9,34,52,.055);overflow:hidden}.qkpi-summary>div:after{content:"";position:absolute;right:0;top:0;bottom:0;width:4px;background:linear-gradient(#efce77,#c88e29)}.qkpi-summary small,.qkpi-summary strong,.qkpi-summary em{display:block}.qkpi-summary small{color:#677587;font-size:10px;font-weight:900}.qkpi-summary strong{display:inline-block;margin-top:6px;color:#0b2a43;font-size:clamp(18px,2vw,26px);font-weight:950;line-height:1}.qkpi-summary em{display:inline-block;margin-right:5px;color:#8b96a2;font-size:9px;font-style:normal;font-weight:850}
+.qkpi-tabs{display:flex;gap:7px;padding:7px 17px 10px;overflow-x:auto;background:#f7f0e4}.qkpi-tabs button{display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;min-width:145px!important;min-height:41px!important;padding:7px 12px!important;border:1px solid #dbc9a8!important;border-radius:11px!important;background:#fff!important;color:#647386!important;font-size:11px!important;font-weight:900!important;white-space:nowrap!important;box-shadow:none!important}.qkpi-tabs button b{display:grid;place-items:center;min-width:23px;height:23px;padding:0 5px;border-radius:8px;background:#f2eadc;color:#8a6522;font-size:9px}.qkpi-tabs button.active{border-color:#c38a26!important;background:linear-gradient(135deg,#efd078,#ca922a)!important;color:#0a2540!important;box-shadow:0 5px 12px rgba(190,133,32,.16)!important}.qkpi-tabs button.active b{background:rgba(8,37,64,.12);color:#0a2540}
+.qkpi-tools{display:grid;grid-template-columns:minmax(260px,1fr) minmax(190px,290px) auto;align-items:center;gap:9px;padding:10px 17px;border-top:1px solid #eadfce;border-bottom:1px solid #e2d6c3;background:#fffdf9}.qkpi-search{display:flex;align-items:center;gap:8px;min-height:43px;padding:0 12px;border:1px solid #dcd2c3;border-radius:11px;background:#fff}.qkpi-search span{color:#b27c20;font-size:21px;font-weight:900}.qkpi-search input{width:100%!important;height:39px!important;min-height:39px!important;padding:0!important;border:0!important;background:transparent!important;color:#18354c!important;font-size:12px!important;font-weight:800!important;box-shadow:none!important;outline:0!important}.qkpi-tools select{width:100%;min-height:43px;padding:0 12px;border:1px solid #dcd2c3;border-radius:11px;background:#fff;color:#233d52;font-size:12px;font-weight:850;outline:0}.qkpi-result-count{min-width:78px;color:#8a6a2f;font-size:10px;font-weight:950;text-align:left;white-space:nowrap}
+.qkpi-table-wrap{flex:1;min-height:220px;overflow:auto;background:#fff}.qkpi-table{width:100%;min-width:840px;border-collapse:separate;border-spacing:0;font-size:12px}.qkpi-table thead{position:sticky;top:0;z-index:2}.qkpi-table th{padding:12px 10px;border-bottom:2px solid #d9a63b;background:linear-gradient(105deg,#061b31,#0a3151);color:#f7e2aa;font-size:11px;font-weight:950;text-align:right;white-space:nowrap}.qkpi-table td{padding:12px 10px;border-bottom:1px solid #eee5d9;background:#fff;color:#2b4255;font-size:12px;font-weight:800;vertical-align:middle;white-space:nowrap}.qkpi-table tbody tr:nth-child(even) td{background:#fcf9f3}.qkpi-table tbody tr:hover td{background:#fff8e8}.qkpi-table td:first-child{color:#9a7840;text-align:center}.qkpi-table .qkpi-name{color:#0b2d48;font-size:13px;font-weight:950}.qkpi-name small{display:block;margin-top:3px;color:#8a96a2;font-size:9px;font-weight:800}.qkpi-money{font-size:13px!important;font-weight:950!important;font-variant-numeric:tabular-nums}.qkpi-green{color:#13835c!important;font-weight:950!important}.qkpi-red{color:#c13e42!important;font-weight:950!important}.qkpi-empty{height:190px!important;color:#8b96a2!important;font-size:14px!important;font-weight:850!important;text-align:center!important}.qkpi-badge{display:inline-flex;align-items:center;justify-content:center;min-width:72px;padding:5px 8px;border-radius:999px;font-size:9px;font-weight:950}.qkpi-badge.is-paid{background:#e5f7ee;color:#137e58}.qkpi-badge.is-partial{background:#fff3d6;color:#a87318}.qkpi-badge.is-due{background:#ffebea;color:#bd3d43}.qkpi-badge.is-upcoming{background:#e9f3fb;color:#2a6e9f}.qkpi-badge.is-unknown{background:#eff1f3;color:#66717d}.qkpi-badge.is-manual{background:#ffebe9;color:#b6323a;border:1px solid #f2c4c2}.qkpi-partial-note{display:block;margin-top:3px;color:#a7761f;font-size:8px}.qkpi-mini-progress{position:relative;width:118px;height:22px;border-radius:999px;background:#ece6dc;overflow:hidden}.qkpi-mini-progress i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#b97d19,#efcd72,#16815a)}.qkpi-mini-progress b{position:absolute;inset:0;display:grid;place-items:center;color:#0b2941;font-size:9px;font-weight:950;text-shadow:0 1px #fff}
+.qkpi-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 17px;border-top:1px solid #e2d7c6;background:#f9f4eb}.qkpi-footer span{color:#84909b;font-size:9px;font-weight:800}.qkpi-footer button{min-height:37px!important;padding:6px 18px!important;border:1px solid #b77f1f!important;border-radius:10px!important;background:linear-gradient(135deg,#efd078,#c88e29)!important;color:#0a2741!important;font-size:11px!important;font-weight:950!important;box-shadow:none!important}
+@media(max-width:760px){.qkpi-overlay{align-items:flex-end;padding:0}.qkpi-modal{width:100%;max-height:94vh;border-radius:22px 22px 0 0}.qkpi-head{grid-template-columns:1fr;min-height:130px;padding:20px 18px 16px}.qkpi-head-copy h2{font-size:25px!important}.qkpi-head-copy p{padding-left:30px;font-size:10px}.qkpi-cycle{min-width:0;padding:8px 12px;text-align:right}.qkpi-cycle small,.qkpi-cycle strong{display:inline}.qkpi-cycle strong{margin-right:6px;font-size:11px}.qkpi-close{left:13px!important;top:13px!important}.qkpi-summary{grid-template-columns:1fr 1fr;padding:9px}.qkpi-summary>div{min-height:70px;padding:11px}.qkpi-summary strong{font-size:19px}.qkpi-tabs{padding:7px 9px}.qkpi-tabs button{min-width:132px!important}.qkpi-tools{grid-template-columns:1fr 1fr;padding:9px}.qkpi-result-count{grid-column:1/-1;text-align:right}.qkpi-table{min-width:790px}.qkpi-table th,.qkpi-table td{padding:10px 9px}.qkpi-footer{padding:9px}.qkpi-footer span{display:none}.qkpi-footer button{width:100%}}
+@media(max-width:430px){.qkpi-summary{gap:6px}.qkpi-summary>div{min-height:64px}.qkpi-tools{grid-template-columns:1fr}.qkpi-result-count{grid-column:auto}.qkpi-head-copy p{max-width:310px}.qkpi-table-wrap{min-height:245px}}
 </style>
 <script id="qimat-full-enterprise-ui-behavior">
 (function(){
