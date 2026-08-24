@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-24-home-five-kpi-details-v22 -->
+<!-- build: 2026-08-24-overdue-card-contract-total-v23 -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -6642,7 +6642,6 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
     paid:["مكتمل","is-paid"],partial:["جزئي","is-partial"],due:["مستحق","is-due"],
     upcoming:["قادم","is-upcoming"],unknown:["تاريخ غير محدد","is-unknown"]
   };
-  const manualCustomers=new Set(manualRows.map(r=>String(r.c.idNum||r.c.client||r.c.id))).size;
   const dueNowAmount=sum(dueRows,"remainingDue"), upcomingAmount=sum(upcomingRows,"remainingDue");
   const summary = mode==="target" ? [
     ["إجمالي الدورة",totals.target,"ر.س"],["مستحق حتى اليوم",dueNowAmount,"ر.س"],
@@ -6654,8 +6653,8 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
     ["المنجز بالكامل",totals.done,"ر.س"],["أقساط مكتملة",completedRows.length,"قسط"],
     ["تحصيل الدورة",totals.collected,"ر.س"],["نسبة التحصيل",totals.pct,"٪"]
   ] : mode==="overdue" ? [
-    ["الزبائن",manualCustomers,"زبون"],["العقود",manualRows.length,"عقد"],
-    ["المبلغ المتعثر",sum(manualRows,"amount"),"ر.س"],["مصدر التصنيف","يدوي",""]
+    ["المبلغ المتعثر",sum(manualRows,"amount"),"ر.س"],["العقود المتعثرة",manualRows.length,"عقد"],
+    ["إجمالي المتبقي",sum(manualRows,"remaining"),"ر.س"],["مصدر التصنيف","يدوي",""]
   ] : [
     ["هدف الدورة",totals.target,"ر.س"],["المحصّل",totals.collected,"ر.س"],
     ["المتبقي",totals.remaining,"ر.س"],["نسبة الإنجاز",totals.pct,"٪"]
@@ -6930,7 +6929,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
     const manualAmount=+c.defaulterAmount||Math.min(+c.instAmt||remaining,remaining);
     return {c,amount:Math.max(0,manualAmount),remaining};
   }).sort((a,b)=>b.amount-a.amount);
-  const manualDefaulterCustomers=new Set(manualDefaulters.map(r=>String(r.c.idNum||r.c.client||r.c.id))).size;
+  const manualDefaulterAmount=manualDefaulters.reduce((sum,row)=>sum+(+row.amount||0),0);
 
   const SARf = v => (v||0).toLocaleString("en-US",{maximumFractionDigits:0});
   const shortD = d => d ? d.slice(8,10)+"/"+d.slice(5,7) : "";
@@ -6984,7 +6983,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
           <button type="button" className="qhv5-kpi qhv5-kpi-alert" onClick={()=>setDetail({mode:"overdue"})}>
             <span className="qhv5-kpi-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3.8 2.6 20.2h18.8Z"/><path d="M12 10v4.2"/><circle cx="12" cy="17.4" r=".9" fill="currentColor" stroke="none"/></svg>
-            </span><small>المتعثرون</small><strong>{manualDefaulterCustomers}</strong><em>{manualDefaulters.length} عقد يدوي</em>
+            </span><small>المتعثرون</small><strong>{SARf(manualDefaulterAmount)}</strong><em>{manualDefaulters.length} عقد</em>
           </button>
           <button type="button" className="qhv5-kpi qhv5-kpi-ring" onClick={()=>setDetail({mode:"progress"})}>
             <span className="qhv5-ring" style={{'--pct':donePct}}><b>{donePct}%</b></span><small>نسبة الإنجاز</small>
