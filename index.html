@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-26-unified-enterprise-structure-v25 -->
+<!-- build: 2026-08-26-clean-enterprise-release-v26 -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -2536,16 +2536,16 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         @media(min-width:1000px){.contracts-lux{padding:20px 22px}.contracts-lux .qimat-quick-action{font-size:15px!important}.contracts-lux>div:first-of-type{gap:12px!important}}
         @media(max-width:700px){.contracts-lux{padding:10px;border-radius:16px}.contracts-lux>div:first-of-type{grid-template-columns:repeat(2,1fr)!important}.contracts-lux .qimat-quick-action{min-height:66px;padding:12px 6px!important}.contracts-lux table{font-size:12px!important}}
       `}</style>
-      <div className="q-contracts-command-head">
+      {!embedded && <div className="q-contracts-command-head">
         <div className="q-contracts-command-copy">
           <span>قمة الفرصة · العمليات</span>
           <h2>مركز العقود التنفيذي</h2>
           <p>إدارة دورة العقد من الإنشاء والتوثيق حتى التحصيل والمتابعة</p>
         </div>
         <div className="q-contracts-command-seal"><b>360°</b><small>دورة العقد</small></div>
-      </div>
+      </div>}
       {/* ═══ Action Buttons — Premium Grid ═══ */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10,marginBottom:10}}>
+      {!embedded && <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10,marginBottom:10}}>
         <button type="button" data-qe-manual="true" className={"qimat-quick-action "+(showNew?"active":"")} onClick={()=>setShowNew(true)} style={{borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
           <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 8.4v7.2M8.4 12h7.2"/></g></svg>
           عقد جديد
@@ -2562,8 +2562,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></g></svg>
           التحصيل
         </button>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
+      </div>}
+      {!embedded && <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
         <button type="button" data-qe-manual="true" className={"qimat-quick-action "+(showDeduct?"active":"")} onClick={()=>setShowDeduct(true)} style={{borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
           <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2v6h6M18 22v-6h-6"/><path d="M21 11.5A8.5 8.5 0 0 0 6.7 4.4L2 8M3 12.5a8.5 8.5 0 0 0 14.3 7.1L22 16"/></g></svg>
           التقارير
@@ -2576,10 +2576,10 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></g></svg>
           المتعثرون
         </button>
-      </div>
+      </div>}
 
       {/* ═══ Investor Report — Premium Card ═══ */}
-      <div style={{background:"rgba(255,255,255,0.9)",backdropFilter:"blur(12px)",borderRadius:18,marginBottom:16,padding:"18px 20px",border:"1px solid #e0d8c6",boxShadow:"0 4px 24px rgba(0,0,0,0.04)"}}>
+      {!embedded && <div style={{background:"rgba(255,255,255,0.9)",backdropFilter:"blur(12px)",borderRadius:18,marginBottom:16,padding:"18px 20px",border:"1px solid #e0d8c6",boxShadow:"0 4px 24px rgba(0,0,0,0.04)"}}>
         <div className="q-contracts-report-heading" style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,paddingBottom:10,borderBottom:"2px solid rgba(200,146,42,0.15)"}}>
           <svg width="18" height="18" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-4-4"/></g></svg>
           <span className="q-contracts-report-title" style={{fontSize:17,fontWeight:900,color:"#141428"}}>كشف المستثمر</span>
@@ -2755,7 +2755,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
             </table>
           </div>
         )}
-      </div>
+      </div>}
 
       {/* ═══ Contracts Section ═══ */}
       <div className="q-contracts-list-title" style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
@@ -3708,7 +3708,7 @@ const TX_TYPES = [
   {key:"contract",  label:"خصم عقد",          color:"#7030A0", sign:-1},
 ];
 
-function DeductionsSheet({contracts, investors, payments, doneIds=[]}){
+function DeductionsSheet({contracts, investors, payments, doneIds=[], embedded=false}){
   const [checked,setChecked]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_deduct_check")||"{}");}catch{return{};}});
   const toggle=id=>{const n={...checked,[id]:!checked[id]};setChecked(n);localStorage.setItem("qimma_deduct_check",JSON.stringify(n));};
   const [payF,setPayF]=useState(new Set(["الكل"])); // التقارير تفتح بجميع طرق السداد
@@ -3877,10 +3877,10 @@ function DeductionsSheet({contracts, investors, payments, doneIds=[]}){
 
   return (
     <div className="q-contracts-module q-contracts-deductions">
-      <div className="q-contracts-module-head">
+      {!embedded && <div className="q-contracts-module-head">
         <div><span>قمة الفرصة · مركز المعلومات</span><h2>التقارير والكشوف</h2><p>العقود الجارية وطرق السداد في مركز واحد — مستمرة ومؤجلة</p></div>
         <b>تقارير</b>
-      </div>
+      </div>}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:10}}>
         <div style={{fontSize:18,fontWeight:800,display:"flex",alignItems:"center",gap:8}}>
           <svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.6v9.9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8.4a1 1 0 0 0-1-1H6a2 2 0 0 1 0-4h11.4"/></g></svg>
@@ -4095,12 +4095,12 @@ function FundsPanel({investors, contracts, settings, setInvestors, toast}){
   );
 }
 
-function AccountsPage({contracts, investors, setInvestors, settings, txList, setTxList, loans, setLoans, zakatTx, setZakatTx, pending, setPending, payments, setPayments, setContracts, toast, goBack, privateAccMode, initialSubTab, gsWrite, doneIds=[]}) {
+function AccountsPage({contracts, investors, setInvestors, settings, txList, setTxList, loans, setLoans, zakatTx, setZakatTx, pending, setPending, payments, setPayments, setContracts, toast, goBack, privateAccMode, initialSubTab, gsWrite, doneIds=[], embedded=false, initialInvestorId=null, onOpenInvestorAccount}) {
   const specialNames = ["1","2","4","7","8","9","11"];
   const isSpecial = function(inv){ var nm=(inv.name||"").trim(); return specialNames.some(function(n){return nm.endsWith(" "+n);}); };
   const visibleInvestors = privateAccMode ? investors.filter(function(inv){return isSpecial(inv) || inv.hidden;}) : investors;
   const [subTab, setSubTab] = useState(initialSubTab || (privateAccMode ? "list" : "inv"));
-  const [selInv, setSelInv] = useState(privateAccMode ? (visibleInvestors[0]?.id||null) : (investors[0]?.id||null));
+  const [selInv, setSelInv] = useState(initialInvestorId || (privateAccMode ? (visibleInvestors[0]?.id||null) : (investors[0]?.id||null)));
   const [invSubTab, setInvSubTab] = useState("inv");
   const [newContract, setNewContract] = useState(null); // null or {client,phone,amount,totalInst,instAmt,firstInst,goods}
   const [form, setForm] = useState({type:"deposit", amount:"", note:"", date:todayLocal()});
@@ -4209,10 +4209,10 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
           رجوع
         </button>
       )}
-      <div className="q-contracts-module-head">
+      {!embedded && <div className="q-contracts-module-head">
         <div><span>مركز العقود</span><h2>الحسابات وكشوف المستثمرين</h2><p>قراءة مالية موحّدة للحركات والأرصدة والمحافظ</p></div>
         <b>حسابات</b>
-      </div>
+      </div>}
       
       {/* Sub tabs - only show in privateAccMode */}
       {privateAccMode && <div style={{display:"flex",gap:0,marginBottom:20,background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:10,overflow:"hidden",border:"1px solid #b8862b",width:"fit-content",position:"sticky",top:0,zIndex:20}}>
@@ -4227,7 +4227,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
       </div>}
 
       {/* Commissions sub-page */}
-      {subTab==="list" && <InvestorsPage investors={privateAccMode?visibleInvestors:investors} contracts={contracts} settings={settings} payments={payments} txList={txList} doneIds={doneIds} onAdd={inv=>{if(privateAccMode){inv.hidden=true;}setInvestors(p=>[...p,inv]);}} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} setInvestors={setInvestors} toast={toast}/>}
+      {subTab==="list" && <InvestorsPage investors={privateAccMode?visibleInvestors:investors} contracts={contracts} settings={settings} payments={payments} txList={txList} doneIds={doneIds} onAdd={inv=>{if(privateAccMode){inv.hidden=true;}setInvestors(p=>[...p,inv]);if(onOpenInvestorAccount)setTimeout(()=>onOpenInvestorAccount(inv.id),0);}} onDelete={id=>setInvestors(p=>p.filter(i=>i.id!==id))} setInvestors={setInvestors} toast={toast}/>}
 
       {/* حسابات خاصة */}
       {subTab==="special" && (()=>{
@@ -6993,7 +6993,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
     } else {
       ok = (privPin===savedPin);
     }
-    if(ok){ setPrivPinShow(false); setPrivateAccMode(true); setPage("accounts"); }
+    if(ok){ setPrivPinShow(false); setPrivateAccMode(true); setPage("privateAccounts"); }
     else { setPrivPinErr(true); setPrivPin(""); }
   };
 
@@ -9416,7 +9416,7 @@ function PastClientsPage({toast, pastClients, setPastClients, contracts}){
   );
 }
 
-function GoodsPage({investors, contracts, toast, gsWrite, goBack}) {
+function GoodsPage({investors, contracts, toast, gsWrite, goBack, embedded=false}) {
   const [priceOverrides, setPriceOverrides] = useState(()=>{
     try{return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}");}catch{return{};}
   });
@@ -9519,10 +9519,10 @@ function GoodsPage({investors, contracts, toast, gsWrite, goBack}) {
           رجوع
         </button>
       )}
-      <div className="q-contracts-module-head">
+      {!embedded && <div className="q-contracts-module-head">
         <div><span>مركز العقود</span><h2>البضاعة والدعم</h2><p>متابعة حركة البطاقات والسلع والأرصدة النقدية</p></div>
         <b>مخزون</b>
-      </div>
+      </div>}
       {/* Header */}
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}}>
         <div></div>
@@ -11467,7 +11467,7 @@ function SearchPage({contracts, investors, settings, payments, setPayments, toas
 // ══════════════════════════════════════════════════════════════
 // ⚡ صفحة التحصيل — تصميم أبيض + بطاقات مستثمرين + مؤشر دائري
 // ══════════════════════════════════════════════════════════════
-function CollectionPage({contracts, investors, settings, payments, setPayments, toast, logAct, doneIds, markDone, setContracts, activeContracts, initialMode, goBack}) {
+function CollectionPage({contracts, investors, settings, payments, setPayments, toast, logAct, doneIds, markDone, setContracts, activeContracts, initialMode, goBack, embedded=false}) {
   // شاشات التحصيل تعرض الأرقام مباشرة بلا تكرار علامة العملة لتبقى الواجهة أخف.
   const SAR = value => NUM(value);
   const [colDate, setColDate] = useState(todayLocal());
@@ -11606,7 +11606,7 @@ function CollectionPage({contracts, investors, settings, payments, setPayments, 
           React.createElement("svg",{width:18,height:18,viewBox:"0 0 24 24",fill:"none",stroke:"#141428",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:"M15 18l-6-6 6-6"})),
           "رجوع"
         ),
-        viewMode!=="overdue" && React.createElement(Header,{title:"التحصيل"}),
+        viewMode!=="overdue" && !embedded && React.createElement(Header,{title:"التحصيل"}),
         // ── تبويبا الحالة: التحصيل / المتعثرون (hidden when initialMode provided) ──
         !initialMode && React.createElement("div",{className:"qcollect-mode-switch",style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}},
           React.createElement("button",{className:"qcollect-mode-tab "+(viewMode==="collect"?"is-active":""),onClick:()=>setViewMode("collect"),
@@ -12412,8 +12412,8 @@ function CollectionCommandCenter({contracts, investors, payments, doneIds, setPa
   </div>;
 }
 
-function UpgradesPage({contracts, allContracts, investors, payments, activity, settings, toast, setPage, doneIds, pastClients, setPastClients, collectionFollowups, setCollectionFollowups, logAct, customerOnly=false}) {
-  const [tab, setTab] = React.useState(customerOnly?"stmt":"log");
+function UpgradesPage({contracts, allContracts, investors, payments, activity, settings, toast, setPage, doneIds, pastClients, setPastClients, collectionFollowups, setCollectionFollowups, logAct, customerOnly=false, initialCustomerTab="stmt"}) {
+  const [tab, setTab] = React.useState(customerOnly?initialCustomerTab:"log");
   const [logFilter, setLogFilter] = React.useState("all");
   const [stmtSearch, setStmtSearch] = React.useState("");
   const [stmtContract, setStmtContract] = React.useState(null);
@@ -12864,14 +12864,14 @@ function UpgradesPage({contracts, allContracts, investors, payments, activity, s
     // ═══ صفحة العملاء الرئيسية: ملف العميل الشامل ═══
     tab==="stmt" && <div className="qcf-page">
       {stmtContract ? renderCustomerProfile(stmtContract) : <div className="qcf-directory">
-        <section className="qcf-directory-hero">
+        {!customerOnly && <section className="qcf-directory-hero">
           <div>
             <span>العملاء • ملف العميل 360°</span>
             <h2>مركز ملفات العملاء</h2>
             <p>كل عقود العميل وسداداته وبياناته في ملف واحد، من دون تغيير طريقة إدارة البرنامج.</p>
           </div>
           <div className="qcf-directory-badge"><strong>{stmtCustomerGroups.length}</strong><small>ملف عميل</small></div>
-        </section>
+        </section>}
 
         <section className="qcf-directory-kpis">
           <div><span>إجمالي العملاء</span><strong>{stmtCustomerGroups.length}</strong><small>ملف موحد</small></div>
@@ -13124,12 +13124,12 @@ function ContractReportsCenter({contracts,investors,payments,doneIds}){
   const [tab,setTab]=useState("contracts");
   return <div className="q-reports-center">
     <div className="q-inner-switch"><button className={tab==="contracts"?"active":""} onClick={()=>setTab("contracts")}>كشوف العقود</button><button className={tab==="payments"?"active":""} onClick={()=>setTab("payments")}>تقرير السدادات</button></div>
-    {tab==="contracts"?<DeductionsSheet contracts={contracts} investors={investors} payments={payments} doneIds={doneIds}/>:<PaymentsReportPage contracts={contracts} investors={investors} payments={payments}/>} 
+    {tab==="contracts"?<DeductionsSheet embedded contracts={contracts} investors={investors} payments={payments} doneIds={doneIds}/>:<PaymentsReportPage contracts={contracts} investors={investors} payments={payments}/>} 
   </div>;
 }
 
-function ContractsCenter({manageComp,newComp,goodsComp,reportsComp}){
-  const [tab,setTab]=useState("manage");
+function ContractsCenter({manageComp,newComp,goodsComp,reportsComp,initialTab="manage"}){
+  const [tab,setTab]=useState(initialTab);
   const tabs=[
     {id:"manage",icon:"▤",label:"إدارة العقود",note:"القائمة والحالات"},
     {id:"new",icon:"＋",label:"عقد جديد",note:"إنشاء في صفحة واحدة"},
@@ -13162,8 +13162,8 @@ function SupportingAccountsCenter({loans,setLoans,investors,contracts,settings,z
   </div>;
 }
 
-function FinanceCenter({portfolioComp,accountsComp,investorsComp,supportComp}){
-  const [tab,setTab]=useState("portfolio");
+function FinanceCenter({portfolioComp,accountsComp,investorsComp,supportComp,initialTab="portfolio"}){
+  const [tab,setTab]=useState(initialTab);
   const tabs=[
     {id:"portfolio",icon:"▥",label:"المحفظة الشهرية",note:"المؤشرات والجرد والأرصدة"},
     {id:"accounts",icon:"▣",label:"الحسابات",note:"الحركات والأرصدة"},
@@ -13205,9 +13205,26 @@ function NavIcon({id, on}){
 }
 
 function App() {
-  const [page,setPage]=useState("dashboard");
-  const [aiReturnPage,setAiReturnPage]=useState("dashboard");
+  const [page,setPageRaw]=useState("dashboard");
   const [privateAccMode,setPrivateAccMode]=useState(false);
+  const [contractsEntry,setContractsEntry]=useState("manage");
+  const [collectionEntry,setCollectionEntry]=useState("followup");
+  const [financeEntry,setFinanceEntry]=useState("portfolio");
+  const [financeInvestor,setFinanceInvestor]=useState(null);
+  const [customersEntry,setCustomersEntry]=useState("stmt");
+  const setPage=(target)=>{
+    if(target==="accounts"){setFinanceEntry("accounts");setPageRaw("portfolio");return;}
+    if(target==="investorsList"){setFinanceEntry("investors");setPageRaw("portfolio");return;}
+    if(target==="goods"){setContractsEntry("goods");setPageRaw("contracts");return;}
+    if(target==="overdue"){setCollectionEntry("overdue");setPageRaw("collect");return;}
+    if(target==="pastclients"){setCustomersEntry("customers");setPageRaw("customers");return;}
+    if(target==="contracts"){setContractsEntry("manage");setPageRaw("contracts");return;}
+    if(target==="collect"){setCollectionEntry("followup");setPageRaw("collect");return;}
+    if(target==="portfolio"){setFinanceEntry("portfolio");setPageRaw("portfolio");return;}
+    if(target==="customers"){setCustomersEntry("stmt");setPageRaw("customers");return;}
+    setPageRaw(target);
+  };
+  const [aiReturnPage,setAiReturnPage]=useState("dashboard");
   const [tabOrder,setTabOrder]=useState(()=>{try{return JSON.parse(localStorage.getItem("qimma_tab_order")||"null");}catch{return null;}});
   const [dragTab,setDragTab]=useState(null);
   const [toastMsg,setToastMsg]=useState(null);
@@ -13615,24 +13632,24 @@ function App() {
   const allVisibleContracts=contracts.filter(c=>!hiddenInvIds.includes(c.investorId));
   const accountCommon={contracts:publicContracts,investors:publicInvestors,setInvestors,settings,txList:invTxList,setTxList:setInvTxList,loans,setLoans,zakatTx,setZakatTx,pending,setPending,payments:publicPayments,setPayments,setContracts,toast,privateAccMode:false,gsWrite,doneIds};
 
-  const contractsHub=<ContractsCenter
+  const contractsHub=<ContractsCenter key={"contracts-"+contractsEntry} initialTab={contractsEntry}
     manageComp={<div className="q-embedded-contracts"><ContractsPage embedded contracts={allVisibleContracts} investors={publicInvestors} settings={settings} onDelete={deleteContract} onRestore={restoreContract} onUpdate={updateContract} payments={publicPayments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={saveNewContract} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/></div>}
     newComp={<NewContractPage investors={publicInvestors} settings={settings} contracts={allVisibleContracts} onSave={saveNewContract} toast={toast} setInvTxList={setInvTxList}/>} 
-    goodsComp={<GoodsPage investors={publicInvestors} contracts={publicContracts} toast={toast} gsWrite={gsWrite}/>} 
+    goodsComp={<GoodsPage embedded investors={publicInvestors} contracts={publicContracts} toast={toast} gsWrite={gsWrite}/>} 
     reportsComp={<ContractReportsCenter contracts={publicContracts} investors={publicInvestors} payments={publicPayments} doneIds={doneIds}/>} 
   />;
 
-  const collectionHub=<CollectionCenter initialTab={page==="overdue"?"overdue":"followup"}
+  const collectionHub=<CollectionCenter key={"collection-"+collectionEntry} initialTab={collectionEntry}
     followupComp={switchTab=><CollectionCommandCenter contracts={publicContracts} investors={publicInvestors} payments={publicPayments} doneIds={doneIds} setPage={target=>target==="collect"?switchTab("investors"):setPage(target)} toast={toast} logAct={logAct} collectionFollowups={collectionFollowups} setCollectionFollowups={setCollectionFollowups}/>} 
-    investorsComp={<CollectionPage contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="collect"/>}
-    overdueComp={<CollectionPage contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="overdue"/>}
+    investorsComp={<CollectionPage embedded contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="collect"/>}
+    overdueComp={<CollectionPage embedded contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="overdue"/>}
   />;
 
   const portfolioView=<MonthlyPortfolio contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={publicContracts} investors={publicInvestors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={publicPayments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={publicContracts} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>} doneIds={doneIds} txList={invTxList}/>;
-  const financeHub=<FinanceCenter
+  const financeHub=<FinanceCenter key={"finance-"+financeEntry} initialTab={financeEntry}
     portfolioComp={portfolioView}
-    accountsComp={<AccountsPage {...accountCommon} initialSubTab="inv"/>}
-    investorsComp={<AccountsPage {...accountCommon} initialSubTab="list"/>}
+    accountsComp={<AccountsPage embedded {...accountCommon} initialSubTab="inv" initialInvestorId={financeInvestor}/>}
+    investorsComp={<AccountsPage embedded {...accountCommon} initialSubTab="list" onOpenInvestorAccount={id=>{setFinanceInvestor(id);setFinanceEntry("accounts");}}/>}
     supportComp={<SupportingAccountsCenter loans={loans} setLoans={setLoans} investors={publicInvestors} contracts={publicContracts} settings={settings} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} txList={invTxList} setTxList={setInvTxList} toast={toast}/>} 
   />;
 
@@ -13679,14 +13696,11 @@ function App() {
         {page==="dashboard" && <Dashboard contracts={publicAllContracts} investors={publicInvestors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={publicPayments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} setPrivateAccMode={setPrivateAccMode} doneIds={doneIds}/>} 
         {page==="search" && <SearchPage contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="qimaai" && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:999,background:"#f4f4f6",overflowY:"auto"}}><QimaAI contracts={contracts} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct} sourcePage={aiReturnPage} onOpenPage={target=>setPage(target)} goBack={()=>setPage(aiReturnPage||"dashboard")}/></div>}
-        {page==="customers" && <UpgradesPage customerOnly contracts={publicContracts} allContracts={contracts} investors={publicInvestors} payments={publicPayments} activity={activity} settings={settings} toast={toast} setPage={setPage} doneIds={doneIds} pastClients={pastClients} setPastClients={setPastClients} collectionFollowups={collectionFollowups} setCollectionFollowups={setCollectionFollowups} logAct={logAct}/>} 
-        {page==="pastclients" && <PastClientsPage toast={toast} pastClients={pastClients} setPastClients={setPastClients} contracts={contracts}/>} 
-        {(page==="collect"||page==="overdue") && collectionHub}
+        {page==="customers" && <UpgradesPage key={"customers-"+customersEntry} customerOnly initialCustomerTab={customersEntry} contracts={publicContracts} allContracts={contracts} investors={publicInvestors} payments={publicPayments} activity={activity} settings={settings} toast={toast} setPage={setPage} doneIds={doneIds} pastClients={pastClients} setPastClients={setPastClients} collectionFollowups={collectionFollowups} setCollectionFollowups={setCollectionFollowups} logAct={logAct}/>} 
+        {page==="collect" && collectionHub}
         {page==="contracts" && contractsHub}
         {page==="portfolio" && financeHub}
-        {page==="accounts" && <AccountsPage contracts={privateAccMode?activeContracts:publicContracts} investors={privateAccMode?investors:publicInvestors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={privateAccMode?payments:publicPayments} setPayments={setPayments} setContracts={setContracts} toast={toast} goBack={()=>{setPage(privateAccMode?"dashboard":"contracts");setPrivateAccMode(false);}} privateAccMode={privateAccMode} initialSubTab="inv" gsWrite={gsWrite} doneIds={doneIds}/>}
-        {page==="investorsList" && <AccountsPage contracts={publicContracts} investors={publicInvestors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={publicPayments} setPayments={setPayments} setContracts={setContracts} toast={toast} goBack={()=>setPage("contracts")} privateAccMode={false} initialSubTab="list" gsWrite={gsWrite} doneIds={doneIds}/>}
-        {page==="goods" && <GoodsPage investors={publicInvestors} contracts={publicContracts} toast={toast} gsWrite={gsWrite} goBack={()=>setPage("contracts")}/>}
+        {page==="privateAccounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} setPayments={setPayments} setContracts={setContracts} toast={toast} goBack={()=>{setPage("dashboard");setPrivateAccMode(false);}} privateAccMode={true} initialSubTab="inv" gsWrite={gsWrite} doneIds={doneIds}/>} 
         {/* البوصلة المالية انتقلت لتبويب داخل المحفظة الشهرية */}
         {page==="activity" && <ActivityPage activity={activity} setActivity={setActivity} toast={toast} setPage={setPage}/>}
         {page==="settings" && <SettingsPage settings={settings} onSave={setSettings} toast={toast} exportBackup={exportBackup} importBackup={importBackup} payments={publicPayments} setPayments={setPayments} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} setPage={setPage} investors={publicInvestors} contracts={publicContracts} setInvestors={setInvestors} gsWrite={gsWrite} saveLS={saveLS} loadLS={loadLS} daily={daily}/>}
@@ -16563,7 +16577,7 @@ body{background-image:radial-gradient(circle at 8% 5%,rgba(226,188,104,.18),tran
  .qimat-hero-tab.home{right:2%!important;left:auto!important;top:76px!important}.qimat-hero-tab.contracts{right:26.5%!important;left:auto!important;top:76px!important}.qimat-hero-tab.collection{right:51%!important;left:auto!important;top:76px!important}.qimat-hero-tab.portfolio{right:75.5%!important;left:auto!important;top:76px!important}.qimat-hero-tab.visits{right:14.25%!important;left:auto!important;top:153px!important}.qimat-hero-tab.ai{right:39%!important;left:auto!important;top:153px!important}.qimat-hero-tab.settings{right:63.75%!important;left:auto!important;top:153px!important}
  .q-module-hero{min-height:105px;padding:18px}.q-module-copy p{font-size:10px}.q-module-badge{min-width:72px;min-height:62px}.q-module-tabs{grid-template-columns:repeat(2,minmax(0,1fr));padding:8px}.q-module-content{padding:8px;border-radius:17px}.q-investors-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.q-report-tools{grid-template-columns:1fr 1fr}.q-report-search{grid-column:1/-1}.q-print-button{grid-column:1/-1}.q-customer-center-head{display:block;padding:17px}.q-customer-center-tabs{margin-top:13px}.q-customer-center-tabs button{flex:1;min-width:0}.q-new-contract-settlement{grid-template-columns:1fr!important}.q-inner-switch{justify-content:flex-start}
 }
-@media(max-width:620px){.q-module-hero{display:block}.q-module-badge{display:none}.q-module-tabs{grid-template-columns:1fr}.q-module-tabs button{min-height:62px!important}.q-investors-grid{grid-template-columns:1fr!important}.q-report-tools{grid-template-columns:1fr}.q-report-search,.q-print-button{grid-column:auto}.q-report-kpis{grid-template-columns:1fr}.q-customer-center-tabs{display:grid;grid-template-columns:1fr 1fr}.q-print-brand{display:block}.q-print-brand>*{display:block;margin:3px 0!important}}
+@media(max-width:620px){.q-module-hero{display:block;min-height:82px;padding:14px 16px}.q-module-copy h1{font-size:22px!important}.q-module-copy p{display:none}.q-module-badge{display:none}.q-module-tabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:7px}.q-module-tabs button{grid-template-columns:31px 1fr!important;min-height:56px!important;padding:8px 9px!important}.q-module-tabs button i{width:31px;height:31px;border-radius:9px;font-size:16px}.q-module-tabs button span{font-size:12px}.q-module-tabs button small{display:none}.q-investors-grid{grid-template-columns:1fr!important}.q-report-tools{grid-template-columns:1fr}.q-report-search,.q-print-button{grid-column:auto}.q-report-kpis{grid-template-columns:1fr}.q-customer-center-tabs{display:grid;grid-template-columns:1fr 1fr}.q-print-brand{display:block}.q-print-brand>*{display:block;margin:3px 0!important}}
 @media print{.q-module-hero,.q-module-tabs,.q-inner-switch,.q-report-tools,.q-customer-center-head{display:none!important}.q-module-content,.q-report-print-surface{padding:0!important;border:0!important;box-shadow:none!important;background:#fff!important}.q-report-table-wrap{border:0!important}.q-report-table-wrap table{min-width:0!important;font-size:9px!important}.q-print-brand{background:#fff!important;color:#000!important;border-bottom:2px solid #000!important}.q-print-brand *{color:#000!important}}
 </style>
 <script id="qimat-full-enterprise-ui-behavior">
