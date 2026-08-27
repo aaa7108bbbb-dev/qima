@@ -4686,8 +4686,10 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
 }
 
 // ─── Monthly Jard ────────────────────────────────────────────
-function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,payments,gsWrite,daily,dailyOpen,bankTx}) {
+function JardPage({contracts,goodsContracts,investors,settings,txList,loans,zakatTx,pending,payments,gsWrite,daily,dailyOpen,bankTx}) {
   const today = new Date();
+  const [,setGoodsRevision]=useState(0);
+  useEffect(()=>{const refresh=()=>setGoodsRevision(v=>v+1);window.addEventListener("qimma-goods-sync",refresh);return()=>window.removeEventListener("qimma-goods-sync",refresh);},[]);
   const _cd = settings.cycleDay||21;
   const currentYM = fiscalYM(today, _cd);
   const months = [...new Set(contracts.map(c=>fiscalYM(c.date, _cd)))].sort().reverse();
@@ -4706,7 +4708,7 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
     try{ return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}"); }catch{ return {}; }
   })();
   const defPrice2 = (() => {
-    try{ return parseFloat(localStorage.getItem("qimma_default_price"))||0; }catch{ return 0; }
+    try{ return parseFloat(priceOv.__default)||parseFloat(localStorage.getItem("qimma_default_price"))||0; }catch{ return parseFloat(priceOv.__default)||0; }
   })();
 
   const getVal = (key) => {
@@ -4753,50 +4755,12 @@ function JardPage({contracts,investors,settings,txList,loans,zakatTx,pending,pay
       return (mgrE - mgrT) + (accE - accT);
     }
     if(key==="cards") {
-      // مطابقة كشف البضاعة (GoodsPage) بالضبط: نميّز البطاقة عن السلعة النقدية،
-      // ونرجّع الإجمالي النقدي = نقدي البطاقات + نقدي السلع (العمود الأخير في الكشف).
-      const cRows = contracts.filter(c=>!c.isOldContract && c.contractType!=='migrated').map(c=>{
-        const isCard = (c.goods||"").trim().startsWith("بطاقة");
-        if(isCard){
-          return {
-            id:"c_"+c.id, date:c.date,
-            supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,
-            supportAcc:0,
-            withdrawnQty:parseInt(c.qty)||0,
-            price:0, cashOnly:false,
-          };
-        }
-        // سلعة نقدية (أسهم/سيارة/جوال): قيمتها النقدية تُخصم من نقدي السلع، بلا لمس البطاقات
-        return {
-          id:"c_"+c.id, date:c.date,
-          supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,
-          supportAcc:-(parseFloat(c.amount)||0),
-          withdrawnQty:0,
-          price:0, cashOnly:true,
-        };
-      });
-      const seqOf2 = r => { const n=parseInt(String(r.id).replace(/^c_/,""),10); return isNaN(n)?0:n; };
-      const allR = [...cRows,...goodsData].sort((a,b)=>{
-        const d=new Date(a.date)-new Date(b.date);
-        if(d!==0) return d;
-        return seqOf2(a)-seqOf2(b);
-      });
-      let runCards=0; let lastPrice2=0; let runGoodsCash=0;
-      allR.forEach(r=>{
-        if(r.cashOnly){
-          runGoodsCash += parseFloat(r.supportAcc)||0;
-          return;
-        }
-        const rowPrice=parseFloat(priceOv[r.id]||r.price)||defPrice2||lastPrice2||1;
-        if(rowPrice) lastPrice2=rowPrice;
-        const supC=parseFloat(r.supportClient)||0;
-        const supA=parseFloat(r.supportAcc)||0;
-        const supported=supC||supA?Math.floor((supC+supA)/rowPrice):0;
-        const withdrawn=parseInt(r.withdrawnQty)||0;
-        runCards=runCards+supported-withdrawn;
-      });
-      const cardsCash = runCards*lastPrice2;
-      return cardsCash + runGoodsCash;
+      // نفس المحرك الظاهر في صفحة البضاعة. نستخدم كل العقود التاريخية غير المحذوفة
+      // لحركة المخزون، مع إبقاء العقود المنتهية خارج ذمم الجرد الأخرى.
+      return buildGoodsLedger({
+        contracts:goodsContracts||contracts,
+        investors,manualRows:goodsData,priceOverrides:priceOv,defaultPrice:defPrice2
+      }).totals.totalCash;
     }
     return 0;
   };
@@ -9416,7 +9380,100 @@ function PastClientsPage({toast, pastClients, setPastClients, contracts}){
   );
 }
 
-function GoodsPage({investors, contracts, toast, gsWrite, goBack, embedded=false}) {
+// ─── محرك موحّد لحركة البضاعة ─────────────────────────────────────
+// يحتفظ بآلية النظام الأصلية (دعم الحساب/العميل يدخل، وصرف العقد يخرج)،
+// لكنه يمنع اختلاف النتيجة بين صفحة البضاعة والجرد والبوصلة المالية.
+function buildGoodsLedger({contracts=[],investors=[],manualRows=[],priceOverrides={},defaultPrice=0}) {
+  const supportOf = c => c && c.deductEnabled
+    ? (Array.isArray(c.deducts)
+        ? c.deducts.reduce((s,d)=>s+(parseFloat(d && d.amount)||0),0)
+        : (parseFloat(c.deductAmount)||0))
+    : 0;
+  const classifyGoods = c => {
+    const name=String(c && c.goods || "").trim();
+    if(!name) return "unknown";
+    return /بطاق/.test(name) ? "cards" : "other";
+  };
+  const contractRows=_arr(contracts)
+    .filter(c=>c && !c.deleted && !c.isOldContract && c.contractType!=="migrated")
+    .map(c=>{
+      const inv=_arr(investors).find(i=>String(i.id)===String(c.investorId));
+      const kind=classifyGoods(c);
+      const common={
+        id:"c_"+c.id,date:c.date,contractNum:c.num,
+        contractAmount:parseFloat(c.amount)||0,client:c.client||"—",
+        investor:inv?invLabel(inv):"—",supportClient:supportOf(c),
+        fromContract:true,itemName:String(c.goods||"").trim(),kind
+      };
+      if(kind==="unknown") return {...common,supportAcc:0,withdrawnQty:0,price:0,unclassified:true};
+      if(kind==="cards") return {...common,supportAcc:0,withdrawnQty:parseInt(c.qty)||0,price:0,cashOnly:false};
+      const stockInfo=(c.goods||"").includes("أسهم")&&c.stockName
+        ? " ("+c.stockName+(c.stockQty?" ×"+c.stockQty:"")+")" : "";
+      return {...common,client:(c.client||"—")+" — "+(c.goods||"سلعة")+stockInfo,
+        supportAcc:-(parseFloat(c.amount)||0),withdrawnQty:0,price:0,
+        cashOnly:true,isCashItem:true};
+    });
+  const normalizedManual=_arr(manualRows).map(r=>({
+    ...r,
+    kind:r && r.cashOnly?"other":"cards",
+    supportClient:parseFloat(r && r.supportClient)||0,
+    supportAcc:parseFloat(r && r.supportAcc)||0,
+    withdrawnQty:parseInt(r && r.withdrawnQty)||0,
+    contractAmount:parseFloat(r && r.contractAmount)||0
+  }));
+  const seqOf=r=>{const n=parseInt(String(r && r.id).replace(/^c_/,""),10);return isNaN(n)?0:n;};
+  const allRows=[...contractRows,...normalizedManual].sort((a,b)=>{
+    const d=new Date(a.date||0)-new Date(b.date||0);
+    return d!==0?d:seqOf(a)-seqOf(b);
+  });
+  const syncedDefault=parseFloat(priceOverrides && priceOverrides.__default)||parseFloat(defaultPrice)||0;
+  let runningCards=0,lastPrice=0,runningGoodsCash=0;
+  const rowsAsc=allRows.map(row=>{
+    if(row.unclassified){
+      const cardsCash=runningCards*(lastPrice||0);
+      return {...row,rowPrice:lastPrice||0,supported:0,withdrawn:0,runningCards,
+        cardsCash,goodsCash:runningGoodsCash,cashBalance:cardsCash+runningGoodsCash,
+        movementIn:0,movementOut:0,movementUnit:"—"};
+    }
+    if(row.cashOnly){
+      const amount=parseFloat(row.supportAcc)||0;
+      runningGoodsCash+=amount;
+      const cardsCash=runningCards*(lastPrice||0);
+      return {...row,rowPrice:0,supported:0,withdrawn:0,runningCards,cardsCash,
+        goodsCash:runningGoodsCash,cashBalance:cardsCash+runningGoodsCash,isCashItem:true,
+        movementIn:amount>0?amount:0,movementOut:amount<0?Math.abs(amount):0,movementUnit:"ر.س"};
+    }
+    const rowPrice=parseFloat(priceOverrides && priceOverrides[row.id])||parseFloat(row.price)||syncedDefault||lastPrice||0;
+    if(rowPrice>0) lastPrice=rowPrice;
+    const supportClient=parseFloat(row.supportClient)||0;
+    const supportAcc=parseFloat(row.supportAcc)||0;
+    const supportAmount=supportClient+supportAcc;
+    const supported=rowPrice>0&&supportAmount?Math.floor(supportAmount/rowPrice):0;
+    const withdrawn=parseInt(row.withdrawnQty)||0;
+    runningCards=runningCards+supported-withdrawn;
+    const valuationPrice=rowPrice||lastPrice||0;
+    const cardsCash=runningCards*valuationPrice;
+    return {...row,rowPrice:valuationPrice,supported,withdrawn,runningCards,cardsCash,
+      goodsCash:runningGoodsCash,cashBalance:cardsCash+runningGoodsCash,
+      movementIn:supported,movementOut:withdrawn,movementUnit:"بطاقة",
+      priceMissing:valuationPrice<=0&&(supportAmount!==0||withdrawn!==0)};
+  });
+  const last=rowsAsc.length?rowsAsc[rowsAsc.length-1]:null;
+  const totals={
+    cards: last?last.runningCards:0,
+    cardsCash:last?last.cardsCash:0,
+    goodsCash:last?last.goodsCash:0,
+    totalCash:last?last.cashBalance:0,
+    price:lastPrice||syncedDefault||0,
+    movements:allRows.length,
+    today:allRows.filter(r=>r.date===todayLocal()).length,
+    unclassified:rowsAsc.filter(r=>r.unclassified).length,
+    missingPrice:rowsAsc.filter(r=>r.priceMissing).length
+  };
+  return {rowsAsc,rowsDesc:[...rowsAsc].reverse(),totals};
+}
+
+function LegacyGoodsPage({investors, contracts, toast, gsWrite, goBack, embedded=false}) {
   const [priceOverrides, setPriceOverrides] = useState(()=>{
     try{return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}");}catch{return{};}
   });
@@ -9659,6 +9716,175 @@ function GoodsPage({investors, contracts, toast, gsWrite, goBack, embedded=false
       </div>
     </div>
   );
+}
+
+function GoodsPage({investors, contracts, toast, gsWrite, goBack, embedded=false}) {
+  const readPrices=()=>{try{return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}");}catch{return {};}};
+  const readManual=()=>{try{return JSON.parse(localStorage.getItem("qimma_goods3")||"[]");}catch{return [];}};
+  const [priceOverrides,setPriceOverrides]=useState(readPrices);
+  const [manualRows,setManualRows]=useState(readManual);
+  const [showAdd,setShowAdd]=useState(false);
+  const [tab,setTab]=useState("overview");
+  const [search,setSearch]=useState("");
+  const [newRow,setNewRow]=useState({date:todayLocal(),supportAcc:"",note:"",price:"",itemType:"cards",itemName:""});
+  const [defaultPrice,setDefaultPrice]=useState(()=>{
+    const p=readPrices();
+    try{return String(p.__default||localStorage.getItem("qimma_default_price")||"");}catch{return String(p.__default||"");}
+  });
+
+  useEffect(()=>{
+    const initial=readPrices();
+    let localDefault=0;
+    try{localDefault=parseFloat(localStorage.getItem("qimma_default_price"))||0;}catch(e){}
+    if(!initial.__default&&localDefault>0){
+      const migrated={...initial,__default:localDefault};
+      localStorage.setItem("qimma_price_ov",JSON.stringify(migrated));
+      setPriceOverrides(migrated);
+      if(gsWrite) gsWrite("price_ov",migrated);
+    }
+    const refresh=()=>{
+      const p=readPrices();
+      setPriceOverrides(p);
+      setManualRows(readManual());
+      setDefaultPrice(p.__default?String(p.__default):"");
+    };
+    window.addEventListener("qimma-goods-sync",refresh);
+    return()=>window.removeEventListener("qimma-goods-sync",refresh);
+  },[]);
+
+  const saveManual=rows=>{
+    const clean=_arr(rows);
+    setManualRows(clean);
+    localStorage.setItem("qimma_goods3",JSON.stringify(clean));
+    window.dispatchEvent(new Event("qimma-goods-sync"));
+    if(gsWrite) gsWrite("goods3",clean);
+  };
+  const savePrices=p=>{
+    setPriceOverrides(p);
+    localStorage.setItem("qimma_price_ov",JSON.stringify(p));
+    window.dispatchEvent(new Event("qimma-goods-sync"));
+    if(gsWrite) gsWrite("price_ov",p);
+  };
+  const commitDefaultPrice=value=>{
+    const n=parseFloat(value)||0;
+    const p={...priceOverrides};
+    if(n>0) p.__default=n; else delete p.__default;
+    setDefaultPrice(n>0?String(n):"");
+    try{localStorage.setItem("qimma_default_price",n>0?String(n):"");}catch(e){}
+    savePrices(p);
+    if(n>0&&toast) toast("تم تثبيت سعر البطاقة ومزامنته");
+  };
+  const savePriceOverride=(id,value)=>{
+    const p={...priceOverrides};
+    if(value==="") delete p[id]; else p[id]=value;
+    savePrices(p);
+  };
+
+  const ledger=buildGoodsLedger({contracts,investors,manualRows,priceOverrides,defaultPrice});
+  const {totals}=ledger;
+  const money=v=>(Number(v)||0).toLocaleString("en-US",{maximumFractionDigits:2});
+  const qty=v=>(Number(v)||0).toLocaleString("en-US",{maximumFractionDigits:0});
+  const signed=(v,unit="ر.س")=>{
+    const n=Number(v)||0;
+    return <span className={n<0?"qg-negative":n>0?"qg-positive":""}>{n<0?"−":""}{money(Math.abs(n))} <small>{unit}</small></span>;
+  };
+  const filtered=ledger.rowsDesc.filter(row=>{
+    if(tab==="cards"&&(row.cashOnly||row.unclassified)) return false;
+    if(tab==="other"&&!row.cashOnly) return false;
+    const q=search.trim().toLowerCase();
+    if(!q) return true;
+    return [row.client,row.contractNum,row.investor,row.itemName,row.date].some(v=>String(v||"").toLowerCase().includes(q));
+  });
+  const tabs=[
+    {id:"overview",label:"نظرة عامة",note:"كل الحركة"},
+    {id:"cards",label:"البطاقات",note:"الدعم والصرف"},
+    {id:"other",label:"السلع الأخرى",note:"النقدي"},
+    {id:"log",label:"سجل الحركة",note:totals.movements+" حركة"}
+  ];
+  const warnings=[];
+  if(totals.missingPrice) warnings.push("سعر البطاقة غير محدد لبعض الحركات؛ ثبّت السعر من الحقل الظاهر أعلى الصفحة.");
+  if(totals.unclassified) warnings.push(totals.unclassified+" عقد بلا تصنيف بضاعة؛ لم يُدخل في الرصيد حتى يُصنّف.");
+  if(totals.cards<0) warnings.push("رصيد البطاقات بالسالب: المصروف أكبر من الدعم المسجل بمقدار "+qty(Math.abs(totals.cards))+" بطاقة.");
+  if(totals.goodsCash<0) warnings.push("رصيد السلع الأخرى بالسالب: الصرف أكبر من الدعم المسجل بمقدار "+money(Math.abs(totals.goodsCash))+" ر.س.");
+
+  const addSupport=()=>{
+    const amount=parseFloat(newRow.supportAcc)||0;
+    if(amount<=0){if(toast)toast("أدخل مبلغ دعم أكبر من صفر","error");return;}
+    if(newRow.itemType==="other"&&!newRow.itemName.trim()){if(toast)toast("أدخل اسم السلعة","error");return;}
+    const base={id:Date.now(),date:newRow.date||todayLocal(),contractNum:"—",contractAmount:0,
+      investor:"—",supportClient:0,supportAcc:amount,withdrawnQty:0,fromContract:false};
+    const row=newRow.itemType==="other"
+      ? {...base,client:newRow.itemName.trim()+(newRow.note?" — "+newRow.note.trim():""),price:0,cashOnly:true,itemName:newRow.itemName.trim()}
+      : {...base,client:newRow.note.trim()||"دعم حساب البطاقات",price:parseFloat(newRow.price)||parseFloat(defaultPrice)||0,cashOnly:false,itemName:"بطاقات"};
+    saveManual([...manualRows,row]);
+    setNewRow({date:todayLocal(),supportAcc:"",note:"",price:"",itemType:"cards",itemName:""});
+    setShowAdd(false);
+    if(toast)toast("تم تسجيل دعم البضاعة");
+  };
+
+  return <div className="q-goods-page">
+    {goBack&&<button className="qg-back" onClick={goBack}>رجوع إلى العقود</button>}
+    <section className="qg-head">
+      <div className="qg-head-copy"><span>العقود · البضاعة والدعم</span><h2>البضاعة والدعم</h2><p>متابعة حركة البطاقات والسلع والأرصدة النقدية من مصدر واحد</p></div>
+      <div className="qg-head-actions">
+        <label className={totals.price?"":"is-alert"}><span>سعر البطاقة الحالي</span><input type="number" min="0" step="0.01" value={defaultPrice} placeholder="مثال 19.70" onChange={e=>setDefaultPrice(e.target.value)} onBlur={e=>commitDefaultPrice(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.currentTarget.blur();}}}/><small>يتزامن مع الجوال والجرد</small></label>
+        <button onClick={()=>setShowAdd(v=>!v)}>＋ إضافة دعم</button>
+      </div>
+    </section>
+
+    <section className="qg-kpis">
+      <div className="is-total"><span>إجمالي رصيد البضاعة</span><strong>{signed(totals.totalCash)}</strong><small>بطاقات + سلع أخرى</small></div>
+      <div><span>رصيد البطاقات</span><strong>{signed(totals.cards,"بطاقة")}</strong><small>{totals.price?"بسعر "+money(totals.price)+" ر.س":"السعر غير محدد"}</small></div>
+      <div><span>قيمة البطاقات</span><strong>{signed(totals.cardsCash)}</strong><small>الرصيد × السعر الحالي</small></div>
+      <div><span>رصيد السلع الأخرى</span><strong>{signed(totals.goodsCash)}</strong><small>الدعم ناقص الصرف</small></div>
+      <div><span>حركات اليوم</span><strong>{qty(totals.today)}</strong><small>من أصل {qty(totals.movements)} حركة</small></div>
+    </section>
+
+    {showAdd&&<section className="qg-add-panel">
+      <div className="qg-add-head"><div><span>حركة داخلة</span><h3>إضافة دعم بضاعة</h3></div><button onClick={()=>setShowAdd(false)}>×</button></div>
+      <div className="qg-kind-switch">
+        <button className={newRow.itemType==="cards"?"active":""} onClick={()=>setNewRow(p=>({...p,itemType:"cards"}))}>بطاقات</button>
+        <button className={newRow.itemType==="other"?"active":""} onClick={()=>setNewRow(p=>({...p,itemType:"other"}))}>سلعة أخرى</button>
+      </div>
+      <div className="qg-add-grid">
+        <label><span>التاريخ</span><input type="date" value={newRow.date} onChange={e=>setNewRow(p=>({...p,date:e.target.value}))}/></label>
+        <label><span>قيمة الدعم (ر.س)</span><input type="number" min="0" value={newRow.supportAcc} onChange={e=>setNewRow(p=>({...p,supportAcc:e.target.value}))} placeholder="0"/></label>
+        {newRow.itemType==="cards"
+          ?<label><span>سعر البطاقة لهذه الحركة</span><input type="number" min="0" step="0.01" value={newRow.price} onChange={e=>setNewRow(p=>({...p,price:e.target.value}))} placeholder={defaultPrice||"اختياري"}/></label>
+          :<label><span>اسم السلعة</span><input value={newRow.itemName} onChange={e=>setNewRow(p=>({...p,itemName:e.target.value}))} placeholder="أسهم / سيارة / جوال"/></label>}
+        <label><span>ملاحظة</span><input value={newRow.note} onChange={e=>setNewRow(p=>({...p,note:e.target.value}))} placeholder="اختياري"/></label>
+      </div>
+      <div className="qg-add-footer"><p>الدعم يزيد الرصيد. صرف العقد ينقصه آليًا ويظهر كحركة مستقلة.</p><button onClick={addSupport}>حفظ الدعم</button></div>
+    </section>}
+
+    {warnings.length>0&&<section className="qg-warnings"><div><strong>تنبيهات مطابقة البضاعة</strong><span>{warnings.length}</span></div>{warnings.map((w,i)=><p key={i}>! {w}</p>)}</section>}
+
+    <section className="qg-ledger">
+      <nav className="qg-tabs">{tabs.map(t=><button key={t.id} className={tab===t.id?"active":""} onClick={()=>setTab(t.id)}><strong>{t.label}</strong><small>{t.note}</small></button>)}</nav>
+      <div className="qg-tools">
+        <label><span>⌕</span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="ابحث بالعميل أو العقد أو المستثمر أو السلعة..."/></label>
+        <button onClick={()=>window.print()}>طباعة الكشف</button>
+        <span>{filtered.length} حركة ظاهرة</span>
+      </div>
+      <div className="qg-table-wrap"><table className="qg-table">
+        <thead><tr><th>التاريخ</th><th>العميل / البيان</th><th>رقم العقد</th><th>قيمة العقد</th><th>المستثمر</th><th>النوع</th><th>دعم العميل</th><th>دعم الحساب</th><th>سعر البطاقة</th><th>داخل</th><th>خارج</th><th>رصيد البطاقات</th><th>نقدي البطاقات</th><th>نقدي السلع</th><th>الإجمالي النقدي</th><th></th></tr></thead>
+        <tbody>{filtered.length===0?<tr><td colSpan="16" className="qg-empty">لا توجد حركات مطابقة</td></tr>:filtered.map((row,i)=>{
+          const unit=row.movementUnit;
+          const showMove=v=>v?(unit==="ر.س"?money(v):qty(v)):"—";
+          return <tr key={row.id||i} className={row.unclassified?"is-unclassified":row.cashOnly?"is-other":"is-card"}>
+            <td>{row.date||"—"}</td><td className="qg-name"><strong>{row.client||"—"}</strong><small>{row.itemName||""}</small></td><td>{row.contractNum||"—"}</td><td>{row.contractAmount?money(row.contractAmount):"—"}</td><td>{row.investor||"—"}</td>
+            <td><span className="qg-type">{row.unclassified?"غير مصنف":row.cashOnly?"سلعة":"بطاقات"}</span></td>
+            <td className="qg-in">{row.supportClient>0?money(row.supportClient):"—"}</td><td className="qg-in">{row.supportAcc>0?money(row.supportAcc):"—"}</td>
+            <td>{row.cashOnly||row.unclassified?"—":<input className="qg-price-cell" type="number" min="0" step="0.01" value={priceOverrides[row.id]||row.price||""} placeholder={row.rowPrice?money(row.rowPrice):"مطلوب"} onChange={e=>savePriceOverride(row.id,e.target.value)}/>}</td>
+            <td className="qg-in"><b>{showMove(row.movementIn)}</b><small>{row.movementIn?unit:""}</small></td><td className="qg-out"><b>{showMove(row.movementOut)}</b><small>{row.movementOut?unit:""}</small></td>
+            <td className={row.runningCards<0?"qg-negative":""}>{qty(row.runningCards)}</td><td className={row.cardsCash<0?"qg-negative":""}>{money(row.cardsCash)}</td><td className={row.goodsCash<0?"qg-negative":""}>{money(row.goodsCash)}</td><td className={row.cashBalance<0?"qg-total qg-negative":"qg-total"}>{money(row.cashBalance)}</td>
+            <td>{!row.fromContract&&<button className="qg-delete" onClick={()=>{if(window.confirm("حذف حركة الدعم هذه؟"))saveManual(manualRows.filter(r=>r.id!==row.id));}}>حذف</button>}</td>
+          </tr>;
+        })}</tbody>
+      </table></div>
+      <footer className="qg-footnote">الرصيد محسوب من دعم العميل ودعم الحساب وحركات صرف العقود. العقد المنتهي يبقى في سجل حركة البضاعة ولا يعيد الكمية إلى المخزون.</footer>
+    </section>
+  </div>;
 }
 
 
@@ -11969,8 +12195,10 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
 
 
 // ─── البوصلة المالية (4 أسئلة) ────────────────
-function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpen, txList, loans, zakatTx, pending, bankTx}) {
+function CashFlowPage({contracts, goodsContracts, investors, settings, payments, daily, dailyOpen, txList, loans, zakatTx, pending, bankTx}) {
   const SAR = v => (v||0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
+  const [,setGoodsRevision]=useState(0);
+  useEffect(()=>{const refresh=()=>setGoodsRevision(v=>v+1);window.addEventListener("qimma-goods-sync",refresh);return()=>window.removeEventListener("qimma-goods-sync",refresh);},[]);
   const allC = (contracts||[]).filter(c=>!c.deleted);
   const allPayments = payments||[];
   const _daily = _arr(daily);
@@ -11998,18 +12226,11 @@ function CashFlowPage({contracts, investors, settings, payments, daily, dailyOpe
   // بضاعة
   const goodsData2 = (()=>{try{return JSON.parse(localStorage.getItem("qimma_goods3")||"[]");}catch{return[];}})();
   const priceOv2 = (()=>{try{return JSON.parse(localStorage.getItem("qimma_price_ov")||"{}");}catch{return{};}})();
-  const defPrice3 = (()=>{try{return parseFloat(localStorage.getItem("qimma_default_price"))||0;}catch{return 0;}})();
-  const goodsVal = (()=>{
-    const cRows=contracts.filter(c=>!c.deleted&&(!c.isOldContract||c.contractType==='migrated')).map(c=>{
-      const isCard=(c.goods||"").trim().startsWith("بطاقة");
-      if(isCard) return{id:"c_"+c.id,date:c.date,supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,supportAcc:0,withdrawnQty:parseInt(c.qty)||0,price:0,cashOnly:false};
-      return{id:"c_"+c.id,date:c.date,supportClient:c.deductEnabled?(c.deducts?c.deducts.reduce((s,d)=>s+(parseFloat(d.amount)||0),0):parseFloat(c.deductAmount)||0):0,supportAcc:-(parseFloat(c.amount)||0),withdrawnQty:0,price:0,cashOnly:true};
-    });
-    const allR=[...cRows,...goodsData2].sort((a,b)=>new Date(a.date)-new Date(b.date));
-    let runCards=0,lastP=0,runGC=0;
-    allR.forEach(r=>{if(r.cashOnly){runGC+=parseFloat(r.supportAcc)||0;return;}const rp=parseFloat(priceOv2[r.id]||r.price)||defPrice3||lastP||1;if(rp)lastP=rp;const sC=parseFloat(r.supportClient)||0;const sA=parseFloat(r.supportAcc)||0;const sup=sC||sA?Math.floor((sC+sA)/rp):0;runCards=runCards+sup-(parseInt(r.withdrawnQty)||0);});
-    return runCards*lastP+runGC;
-  })();
+  const defPrice3 = (()=>{try{return parseFloat(priceOv2.__default)||parseFloat(localStorage.getItem("qimma_default_price"))||0;}catch{return parseFloat(priceOv2.__default)||0;}})();
+  const goodsVal = buildGoodsLedger({
+    contracts:goodsContracts||contracts,
+    investors,manualRows:goodsData2,priceOverrides:priceOv2,defaultPrice:defPrice3
+  }).totals.totalCash;
 
   // ذمم العملاء (متبقي = رأس مال + ربح)
   const remaining = allC.reduce((s,c)=>{
@@ -13537,8 +13758,8 @@ function App() {
       if (zk)  { setZakatTxRaw(zk); saveLS("qimma_zakat", zk); }
       if (pd)  { setPendingRaw(pd); saveLS("qimma_pending", pd); }
       if (pay) { setPaymentsRaw(pay); saveLS("qimma_payments", pay); }
-      if (gd)  { localStorage.setItem("qimma_goods3", JSON.stringify(gd)); }
-      if (pov) { localStorage.setItem("qimma_price_ov", JSON.stringify(pov)); }
+      if (gd)  { localStorage.setItem("qimma_goods3", JSON.stringify(gd)); window.dispatchEvent(new Event("qimma-goods-sync")); }
+      if (pov) { localStorage.setItem("qimma_price_ov", JSON.stringify(pov)); window.dispatchEvent(new Event("qimma-goods-sync")); }
       if (jov) { localStorage.setItem("qimma_jard_ov", JSON.stringify(jov)); }
       if (dly) { setDailyRaw(_arr(dly)); saveLS("qimma_daily", _arr(dly)); }
       if (dlyo && !Array.isArray(dlyo)) { setDailyOpenRaw(dlyo); saveLS("qimma_daily_open", dlyo); }
@@ -13580,8 +13801,8 @@ function App() {
               case "banktx": setBankTxRaw(_arr(data)); saveLS("qimma_banktx", JSON.stringify(_arr(data))); break;
               case "doneIds": setDoneIdsRaw(_arr(data)); localStorage.setItem("qimma_done", JSON.stringify(_arr(data))); break;
               case "pastClients": setPastClientsRaw(_arr(data)); saveLS("qimma_past_clients", _arr(data)); break;
-              case "goods3": localStorage.setItem("qimma_goods3", JSON.stringify(data)); break;
-              case "price_ov": localStorage.setItem("qimma_price_ov", JSON.stringify(data)); break;
+              case "goods3": localStorage.setItem("qimma_goods3", JSON.stringify(data)); window.dispatchEvent(new Event("qimma-goods-sync")); break;
+              case "price_ov": localStorage.setItem("qimma_price_ov", JSON.stringify(data)); window.dispatchEvent(new Event("qimma-goods-sync")); break;
               case "note_ov": localStorage.setItem("qimma_note_ov", JSON.stringify(data)); break;
               case "collection_followups": setCollectionFollowupsRaw(_arr(data)); saveLS("qimma_collection_followups", _arr(data)); break;
               case "jard_ov": localStorage.setItem("qimma_jard_ov", JSON.stringify(data)); break;
@@ -13636,7 +13857,7 @@ function App() {
   const contractsHub=<ContractsCenter key={"contracts-"+contractsEntry} initialTab={contractsEntry}
     manageComp={<div className="q-embedded-contracts"><ContractsPage embedded contracts={allVisibleContracts} investors={publicInvestors} settings={settings} onDelete={deleteContract} onRestore={restoreContract} onUpdate={updateContract} payments={publicPayments} setPayments={setPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={saveNewContract} setInvTxList={setInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/></div>}
     newComp={<NewContractPage investors={publicInvestors} settings={settings} contracts={allVisibleContracts} onSave={saveNewContract} toast={toast} setInvTxList={setInvTxList}/>} 
-    goodsComp={<GoodsPage embedded investors={publicInvestors} contracts={publicContracts} toast={toast} gsWrite={gsWrite}/>} 
+    goodsComp={<GoodsPage embedded investors={publicInvestors} contracts={publicAllContracts} toast={toast} gsWrite={gsWrite}/>} 
     reportsComp={<ContractReportsCenter contracts={publicContracts} investors={publicInvestors} payments={publicPayments} doneIds={doneIds}/>} 
   />;
 
@@ -13646,7 +13867,7 @@ function App() {
     overdueComp={<CollectionPage embedded contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="overdue"/>}
   />;
 
-  const portfolioView=<MonthlyPortfolio contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={publicContracts} investors={publicInvestors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={publicPayments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={publicContracts} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>} doneIds={doneIds} txList={invTxList}/>;
+  const portfolioView=<MonthlyPortfolio contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={publicContracts} goodsContracts={publicAllContracts} investors={publicInvestors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={publicPayments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={publicContracts} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={publicContracts} goodsContracts={publicAllContracts} investors={publicInvestors} settings={settings} payments={publicPayments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>} doneIds={doneIds} txList={invTxList}/>;
   const financeHub=<FinanceCenter key={"finance-"+financeEntry} initialTab={financeEntry}
     portfolioComp={portfolioView}
     accountsComp={<AccountsPage embedded {...accountCommon} initialSubTab="inv" initialInvestorId={financeInvestor}/>}
@@ -16607,7 +16828,17 @@ body{margin:0!important;background:radial-gradient(circle at 10% 0,rgba(220,176,
 @media(max-width:1180px){.q-appbar{grid-template-columns:minmax(210px,.8fr) minmax(500px,2fr) auto;gap:10px;padding-inline:16px}.q-appbar-brand b{font-size:13px}.q-appbar-nav button{min-width:72px;font-size:11px}.q-appbar-nav button i{width:17px;height:17px;flex-basis:17px}.q-appbar-actions .q-appbar-sync span{display:none}}
 @media(max-width:820px){.q-appbar{position:sticky;display:grid;grid-template-columns:1fr auto;grid-template-rows:55px 62px;gap:0;min-height:117px;padding:0 10px}.q-appbar-brand{grid-column:1;grid-row:1}.q-appbar-mark{width:34px;height:34px;flex-basis:34px;padding:6px;border-radius:10px}.q-appbar-brand b{font-size:12px}.q-appbar-brand small{font-size:8px}.q-appbar-actions{grid-column:2;grid-row:1}.q-appbar-nav{grid-column:1/-1;grid-row:2;justify-content:flex-start;width:100%;border-top:1px solid rgba(255,255,255,.08);direction:rtl}.q-appbar-nav button{min-width:92px;flex:0 0 92px;flex-direction:column;gap:4px;padding:6px 5px;font-size:10px}.q-appbar-nav button i{width:19px;height:19px;flex-basis:19px}.q-appbar-nav button:after{right:20%;left:20%}.q-main{width:calc(100% - 14px)!important;padding-top:10px!important}.q-page-heading{grid-template-columns:44px minmax(0,1fr);min-height:78px;padding:11px 4px}.q-page-heading-icon{width:40px;height:40px;border-radius:11px;font-size:10px}.q-page-heading-copy h1{font-size:22px!important}.q-page-heading-copy p{display:none}.q-page-heading-brand{display:none}.q-module-tabs{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;padding:6px!important}.q-module-tabs button{min-height:52px!important}.q-customer-center-head{grid-template-columns:1fr!important;padding:12px 3px!important}.q-customer-center-tabs{width:100%;box-sizing:border-box}.q-customer-center-tabs button{flex:1!important}.q-collection-center .qcc-reference-header{min-height:42px!important}.q-contracts-new>div:not(:first-child){padding:14px!important}.q-contracts-new [style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr!important}}
 @media(max-width:480px){.q-appbar-brand b{max-width:205px}.q-appbar-brand small{display:none}.q-appbar-logout{display:none}.q-appbar-nav button{min-width:84px;flex-basis:84px}.q-main{width:calc(100% - 10px)!important}.q-module-tabs button{grid-template-columns:27px 1fr!important;padding:7px!important}.q-module-tabs button i{width:27px!important;height:27px!important}.q-module-tabs button span{font-size:11px!important}.q-module-tabs button small{display:none}.q-page-heading-copy>span{font-size:8px}.q-page-heading-copy h1{font-size:20px!important}.q-customer-center-tabs{display:grid!important;grid-template-columns:1fr 1fr!important}.q-inner-switch{justify-content:flex-start!important;overflow-x:auto!important}.q-inner-switch button{min-width:120px!important}}
-@media print{.q-appbar,.q-page-heading,.q-module-tabs{display:none!important}.q-main{width:100%!important;max-width:none!important;padding:0!important}.q-module-content{min-height:0!important}}
+/* البضاعة والدعم — كشف واحد واضح للداخل والخارج */
+.q-goods-page{direction:rtl;color:var(--qc-ink)}.q-goods-page *{box-sizing:border-box}.qg-back{margin-bottom:10px;padding:9px 15px;border:1px solid var(--qc-line);border-radius:10px;background:#fffdfa;color:var(--qc-ink);font-family:inherit;font-weight:900;cursor:pointer}
+.qg-head{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:14px;padding:18px 20px;border:1px solid rgba(211,161,58,.62);border-radius:18px;background:radial-gradient(circle at 10% 0,rgba(239,204,114,.17),transparent 31%),linear-gradient(108deg,#061b31,#0a3151);box-shadow:0 12px 28px rgba(5,29,49,.14);color:#fff}.qg-head-copy>span{display:block;color:var(--qc-gold2);font-size:10px;font-weight:950}.qg-head-copy h2{margin:3px 0!important;color:#fff!important;font-size:clamp(24px,2.5vw,32px)!important;font-weight:950!important}.qg-head-copy p{margin:0;color:#d3dee6;font-size:11px;font-weight:750}.qg-head-actions{display:flex;align-items:stretch;gap:9px}.qg-head-actions>label{display:grid;grid-template-columns:auto 95px;align-items:center;column-gap:9px;min-width:250px;padding:8px 11px;border:1px solid rgba(255,255,255,.18);border-radius:12px;background:rgba(255,255,255,.06)}.qg-head-actions>label.is-alert{border-color:#efb23f;background:rgba(239,178,63,.12)}.qg-head-actions label span{font-size:10px;font-weight:900}.qg-head-actions label small{grid-column:1/-1;margin-top:4px;color:#bfcbd4;font-size:8px;font-weight:750}.qg-head-actions input{width:95px;min-height:34px;padding:5px 8px;border:1px solid #d7b15b;border-radius:8px;background:#fffdf8;color:#0b2e4c;font-family:inherit;font-size:14px;font-weight:950;text-align:center;outline:0}.qg-head-actions>button{min-width:132px;padding:0 15px;border:1px solid #b67c1d;border-radius:12px;background:linear-gradient(135deg,#efcd72,#ca922a);color:#082744;font-family:inherit;font-size:12px;font-weight:950;cursor:pointer}
+.qg-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin-bottom:14px}.qg-kpis>div{min-height:112px;padding:14px 15px;border:1px solid var(--qc-line);border-radius:15px;background:linear-gradient(145deg,#fff,#fdf9f1);box-shadow:var(--qc-shadow)}.qg-kpis>div.is-total{border-color:#d6ad55;background:linear-gradient(145deg,#fffaf0,#f7e8c7)}.qg-kpis span,.qg-kpis strong,.qg-kpis small{display:block}.qg-kpis>div>span{color:#697988;font-size:10px;font-weight:900}.qg-kpis strong{margin:10px 0 7px;color:#0b2d48;font-size:clamp(18px,2vw,26px);font-weight:950;line-height:1.15}.qg-kpis strong small{display:inline;color:inherit;font-size:9px}.qg-kpis>div>small{color:#8a948f;font-size:8.5px;font-weight:750}.qg-positive{color:#11815b!important}.qg-negative{color:#bf3f3b!important}
+.qg-add-panel{margin-bottom:14px;padding:16px;border:1px solid #d7b15c;border-radius:16px;background:#fffaf0;box-shadow:var(--qc-shadow)}.qg-add-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}.qg-add-head span{color:#ad781c;font-size:9px;font-weight:950}.qg-add-head h3{margin:2px 0 0;color:#0b2d48;font-size:18px;font-weight:950}.qg-add-head>button{width:32px;height:32px;border:1px solid #dbcaa8;border-radius:9px;background:#fff;color:#8b6e3d;font-size:20px;cursor:pointer}.qg-kind-switch{display:inline-flex;gap:5px;margin-bottom:12px;padding:4px;border:1px solid #dfd1b9;border-radius:11px;background:#efe6d7}.qg-kind-switch button{min-width:120px;padding:8px 13px;border:1px solid transparent;border-radius:8px;background:transparent;color:#687687;font-family:inherit;font-size:11px;font-weight:900;cursor:pointer}.qg-kind-switch button.active{border-color:#b77d1c;background:linear-gradient(135deg,#edcb70,#ca922a);color:#092944}.qg-add-grid{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:9px}.qg-add-grid label span{display:block;margin-bottom:4px;color:#536778;font-size:9px;font-weight:900}.qg-add-grid input{width:100%;min-height:43px;padding:8px 10px;border:1px solid #d9cdb9;border-radius:10px;background:#fff;color:#17364e;font-family:inherit;font-size:12px;font-weight:800;outline:0}.qg-add-footer{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:12px;padding-top:11px;border-top:1px solid #eadcc3}.qg-add-footer p{margin:0;color:#7f725e;font-size:9px;font-weight:750}.qg-add-footer button{min-width:135px;padding:10px 16px;border:1px solid #a87318;border-radius:10px;background:#0b3151;color:#fff;font-family:inherit;font-size:11px;font-weight:950;cursor:pointer}
+.qg-warnings{margin-bottom:14px;padding:12px 14px;border:1px solid #e7bd69;border-radius:14px;background:#fff8e8}.qg-warnings>div{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}.qg-warnings strong{color:#8a5c11;font-size:11px;font-weight:950}.qg-warnings>div span{display:grid;place-items:center;width:23px;height:23px;border-radius:50%;background:#d49b30;color:#fff;font-size:10px;font-weight:950}.qg-warnings p{margin:4px 0;color:#7d6641;font-size:9.5px;font-weight:780}
+.qg-ledger{overflow:hidden;border:1px solid var(--qc-line);border-radius:17px;background:#fffdfa;box-shadow:var(--qc-shadow)}.qg-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-bottom:1px solid var(--qc-line);background:#f7f0e4}.qg-tabs button{min-height:54px;padding:8px 12px;border:0;border-left:1px solid #e2d6c3;background:transparent;color:#607182;font-family:inherit;cursor:pointer}.qg-tabs button:last-child{border-left:0}.qg-tabs strong,.qg-tabs small{display:block}.qg-tabs strong{font-size:11px;font-weight:950}.qg-tabs small{margin-top:3px;color:#8a958f;font-size:7.5px;font-weight:750}.qg-tabs button.active{background:linear-gradient(105deg,#061b31,#0a3151);color:#fff}.qg-tabs button.active small{color:#efcc72}.qg-tools{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #e7ded1;background:#fffdfa}.qg-tools>label{display:flex;align-items:center;gap:7px;min-width:280px;max-width:560px;flex:1;min-height:40px;padding:0 10px;border:1px solid #dacdb9;border-radius:10px;background:#fff}.qg-tools label span{color:#ad781b;font-size:17px;font-weight:950}.qg-tools input{width:100%;height:38px;border:0;background:transparent;color:#17364e;font-family:inherit;font-size:11px;font-weight:800;outline:0}.qg-tools>button{min-height:40px;padding:0 14px;border:1px solid #b88020;border-radius:10px;background:#fff7e6;color:#875b12;font-family:inherit;font-size:10px;font-weight:950;cursor:pointer}.qg-tools>span{margin-right:auto;color:#778592;font-size:9px;font-weight:850}.qg-table-wrap{max-height:67vh;overflow:auto}.qg-table{width:100%;min-width:1660px;border-collapse:separate;border-spacing:0;font-size:10px}.qg-table th{position:sticky;top:0;z-index:3;padding:10px 7px!important;white-space:nowrap;text-align:center!important}.qg-table td{padding:9px 7px;border-bottom:1px solid #ece4d8;background:#fff;color:#294357;font-weight:750;text-align:center;white-space:nowrap}.qg-table tr:nth-child(even) td{background:#fcf9f3}.qg-table tr.is-unclassified td{background:#fff3e2!important}.qg-table tr.is-other td{box-shadow:inset 0 1px rgba(211,161,58,.05)}.qg-table .qg-name{position:sticky;right:0;z-index:2;min-width:190px;background:#fff!important;text-align:right}.qg-table tr:nth-child(even) .qg-name{background:#fcf9f3!important}.qg-name strong,.qg-name small{display:block}.qg-name strong{color:#0b2d48;font-size:10.5px;font-weight:950}.qg-name small{margin-top:2px;color:#89939b;font-size:7.5px}.qg-type{display:inline-block;padding:4px 7px;border:1px solid #ddcfb8;border-radius:999px;background:#f8f1e5;color:#725d3a;font-size:8px;font-weight:900}.qg-in{color:#11815b!important}.qg-out{color:#bf3f3b!important}.qg-in b,.qg-out b,.qg-in small,.qg-out small{display:block}.qg-in small,.qg-out small{font-size:7px}.qg-total{background:#fff4d9!important;color:#8a5c11!important;font-size:11px!important;font-weight:950!important}.qg-price-cell{width:66px;padding:5px;border:1px solid #d6ad55;border-radius:7px;background:#fffaf0;color:#0b2e4c;font-family:inherit;font-size:10px;font-weight:950;text-align:center;outline:0}.qg-delete{padding:5px 8px;border:1px solid #e0a6a3;border-radius:7px;background:#fff3f2;color:#b53b37;font-family:inherit;font-size:8px;font-weight:900;cursor:pointer}.qg-empty{height:150px;color:#83909b!important;font-size:12px!important;font-weight:850!important;text-align:center!important}.qg-footnote{padding:10px 13px;border-top:1px solid #e5dac8;background:#f7f0e4;color:#6f7b85;font-size:8.5px;font-weight:800;text-align:center}
+@media(max-width:1150px){.qg-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.qg-add-grid{grid-template-columns:repeat(2,minmax(150px,1fr))}}
+@media(max-width:720px){.qg-head{display:block;padding:15px}.qg-head-actions{margin-top:12px}.qg-head-actions>label{min-width:0;flex:1}.qg-head-actions>button{min-width:110px}.qg-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.qg-kpis>div{min-height:98px;padding:12px}.qg-kpis strong{font-size:18px}.qg-add-grid{grid-template-columns:1fr}.qg-add-footer{display:block}.qg-add-footer button{width:100%;margin-top:9px}.qg-tabs{grid-template-columns:repeat(2,1fr)}.qg-tools{flex-wrap:wrap}.qg-tools>label{min-width:100%;max-width:none}.qg-tools>span{margin-right:0}.qg-table-wrap{max-height:62vh}}
+@media(max-width:430px){.qg-head-actions{display:grid;grid-template-columns:1fr}.qg-head-actions>label,.qg-head-actions>button{min-height:50px;width:100%}.qg-kpis{grid-template-columns:1fr 1fr;gap:6px}.qg-kpis>div{min-height:91px}.qg-kpis>div.is-total{grid-column:1/-1}.qg-kind-switch{display:grid;grid-template-columns:1fr 1fr;width:100%}.qg-kind-switch button{min-width:0}.qg-tools>button{flex:1}}
+@media print{.q-appbar,.q-page-heading,.q-module-tabs,.qg-head-actions,.qg-add-panel,.qg-warnings,.qg-tabs,.qg-tools,.qg-delete{display:none!important}.q-main{width:100%!important;max-width:none!important;padding:0!important}.q-module-content{min-height:0!important}.qg-head{padding:10px;border:0;background:#fff!important;color:#000!important;box-shadow:none}.qg-head *{color:#000!important}.qg-kpis{grid-template-columns:repeat(5,1fr)}.qg-kpis>div{min-height:0;padding:7px;box-shadow:none}.qg-table-wrap{max-height:none;overflow:visible}.qg-table{min-width:0;font-size:7px}.qg-table th,.qg-table td{padding:4px!important}.qg-footnote{color:#000}}
 </style>
 <script id="qimat-full-enterprise-ui-behavior">
 (function(){
