@@ -13879,8 +13879,8 @@ function App() {
     <div style={styles.body}>
       <header className="q-appbar noprint" aria-label="قائمة التنقل الرئيسية">
         <div className="q-appbar-brand">
-          <span className="q-appbar-mark" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span><b>مؤسسة قمة الفرصة التجارية</b><small>نظام الإدارة والتنفيذ</small></span>
+          <span className="q-appbar-logo" aria-hidden="true"><span className="q-appbar-logo-bars"><i></i><i></i><i></i><i></i></span></span>
+          <span><b>مؤسسة قمة الفرصة التجارية</b></span>
         </div>
         <nav className="q-appbar-nav" aria-label="أبواب النظام">
           <button type="button" className={page==="dashboard"?"active":""} onClick={()=>setPage("dashboard")}><i><NavIcon id="dashboard" on={page==="dashboard"}/></i><span>الرئيسية</span></button>
@@ -16840,15 +16840,54 @@ body{margin:0!important;background:radial-gradient(circle at 10% 0,rgba(220,176,
 @media(max-width:430px){.qg-head-actions{display:grid;grid-template-columns:1fr}.qg-head-actions>label,.qg-head-actions>button{min-height:50px;width:100%}.qg-kpis{grid-template-columns:1fr 1fr;gap:6px}.qg-kpis>div{min-height:91px}.qg-kpis>div.is-total{grid-column:1/-1}.qg-kind-switch{display:grid;grid-template-columns:1fr 1fr;width:100%}.qg-kind-switch button{min-width:0}.qg-tools>button{flex:1}}
 @media print{.q-appbar,.q-page-heading,.q-module-tabs,.qg-head-actions,.qg-add-panel,.qg-warnings,.qg-tabs,.qg-tools,.qg-delete{display:none!important}.q-main{width:100%!important;max-width:none!important;padding:0!important}.q-module-content{min-height:0!important}.qg-head{padding:10px;border:0;background:#fff!important;color:#000!important;box-shadow:none}.qg-head *{color:#000!important}.qg-kpis{grid-template-columns:repeat(5,1fr)}.qg-kpis>div{min-height:0;padding:7px;box-shadow:none}.qg-table-wrap{max-height:none;overflow:visible}.qg-table{min-width:0;font-size:7px}.qg-table th,.qg-table td{padding:4px!important}.qg-footnote{color:#000}}
 </style>
+<style id="qima-brand-navigation-fix-v25">
+/* هوية العنوان: شعار قمة القديم واسم المؤسسة فقط */
+html{scroll-behavior:auto!important}
+.q-appbar{grid-template-columns:minmax(330px,1.2fr) minmax(620px,2.45fr) minmax(155px,.65fr)!important;gap:14px!important;min-height:82px!important}
+.q-appbar-brand{gap:15px!important;overflow:visible!important}.q-appbar-brand>span:last-child{min-width:0;overflow:visible!important}
+.q-appbar-brand b{display:block!important;overflow:visible!important;color:#fff!important;font-size:21px!important;font-weight:950!important;line-height:1.2!important;letter-spacing:0!important;text-overflow:clip!important;white-space:nowrap!important;text-shadow:0 2px 10px rgba(0,0,0,.2)}
+.q-appbar-brand small,.q-appbar-mark{display:none!important}
+.q-appbar-logo{position:relative;display:grid!important;place-items:center;width:56px;height:56px;flex:0 0 56px;padding:7px;border:1px solid rgba(237,199,100,.72);border-radius:13px;background:linear-gradient(145deg,#12324d,#061827);box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 6px 16px rgba(2,15,27,.24)}
+.q-appbar-logo-bars{display:flex;align-items:flex-end;justify-content:center;gap:4px;width:42px;height:38px;padding:0 6px 5px;border-bottom:2px solid #e4b94d;border-radius:50%;transform:skewY(-5deg)}
+.q-appbar-logo-bars i{display:block;width:5px;border-radius:2px 2px 0 0;background:linear-gradient(#f6dc98,#c18723);box-shadow:0 0 8px rgba(229,185,79,.16);transform:skew(-17deg)}
+.q-appbar-logo-bars i:nth-child(1){height:11px}.q-appbar-logo-bars i:nth-child(2){height:18px}.q-appbar-logo-bars i:nth-child(3){height:26px}.q-appbar-logo-bars i:nth-child(4){height:34px}
+
+/* شريط واحد فقط: الحالة النشطة من React، بلا تصنيف ذهبي ثابت */
+.q-appbar,.q-module-tabs{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.q-appbar-nav button{min-width:92px!important;padding-inline:10px!important;background:transparent!important;border:0!important;color:#dce5eb!important;font-size:15px!important;font-weight:950!important;filter:none!important;box-shadow:none!important;transform:none!important;transition:color .08s ease,background-color .08s ease!important;touch-action:manipulation!important}
+.q-appbar-nav button.qe-btn-primary,.q-appbar-nav button.qe-btn-secondary,.q-appbar-nav button.qe-btn-ghost,.q-appbar-nav button.qe-btn-success,.q-appbar-nav button.qe-btn-danger,.q-appbar-nav button.qe-btn-info{background:transparent!important;border:0!important;color:#dce5eb!important;box-shadow:none!important}
+.q-appbar-nav button:hover{background:rgba(255,255,255,.055)!important;color:#fff!important;transform:none!important}.q-appbar-nav button.active,.q-appbar-nav button.active[class*="qe-btn-"]{background:rgba(255,255,255,.035)!important;color:#fff!important}.q-appbar-nav button.active:after{height:4px!important;background:linear-gradient(90deg,#c78c25,#f0ce75)!important}
+
+/* التبويبات الداخلية أكبر وأثخن وأسهل في الضغط */
+.q-module-tabs{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))!important;gap:10px!important;padding:9px!important}
+.q-module-tabs button{grid-template-columns:42px 1fr!important;column-gap:12px!important;min-height:78px!important;padding:12px 15px!important;border-radius:13px!important;transition:background-color .1s ease,border-color .1s ease!important;touch-action:manipulation!important}
+.q-module-tabs button i{width:42px!important;height:42px!important;border-radius:11px!important;font-size:20px!important}.q-module-tabs button span{font-size:17px!important;font-weight:950!important;line-height:1.25!important}.q-module-tabs button small{margin-top:3px!important;font-size:10.5px!important;font-weight:850!important;line-height:1.3!important}.q-module-tabs button:hover{transform:none!important}
+.q-inner-switch button,.q-customer-center-tabs button{min-height:46px!important;padding:9px 19px!important;font-size:15.5px!important;font-weight:950!important;line-height:1.2!important;transform:none!important;transition:background-color .1s ease,border-color .1s ease!important}
+.qg-tabs button{min-height:62px!important}.qg-tabs strong{font-size:14px!important}.qg-tabs small{font-size:9px!important}
+
+@media(max-width:1180px){
+ .q-appbar{grid-template-columns:minmax(255px,.95fr) minmax(500px,2fr) auto!important;gap:9px!important;padding-inline:14px!important}.q-appbar-brand{gap:10px!important}.q-appbar-logo{width:48px;height:48px;flex-basis:48px}.q-appbar-logo-bars{transform:scale(.86) skewY(-5deg)}.q-appbar-brand b{font-size:17px!important}.q-appbar-nav button{min-width:78px!important;padding-inline:6px!important;font-size:13.5px!important}.q-appbar-nav button i{width:19px!important;height:19px!important;flex-basis:19px!important}
+}
+@media(max-width:820px){
+ .q-appbar{grid-template-columns:1fr auto!important;grid-template-rows:62px 68px!important;min-height:130px!important;padding:0 10px!important}.q-appbar-logo{width:45px;height:45px;flex-basis:45px}.q-appbar-logo-bars{transform:scale(.8) skewY(-5deg)}.q-appbar-brand b{font-size:15.5px!important}.q-appbar-nav button{min-width:104px!important;flex-basis:104px!important;gap:5px!important;padding:7px 6px!important;font-size:13px!important}.q-module-tabs{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;padding:8px!important}.q-module-tabs button{grid-template-columns:38px 1fr!important;min-height:68px!important;padding:10px 11px!important}.q-module-tabs button i{width:38px!important;height:38px!important;font-size:18px!important}.q-module-tabs button span{font-size:15px!important}.q-module-tabs button small{font-size:9px!important}.q-inner-switch button,.q-customer-center-tabs button{font-size:14px!important}
+}
+@media(max-width:480px){
+ .q-appbar-brand b{max-width:220px!important;font-size:14px!important}.q-appbar-logo{width:41px;height:41px;flex-basis:41px}.q-appbar-logo-bars{transform:scale(.72) skewY(-5deg)}.q-appbar-nav button{min-width:96px!important;flex-basis:96px!important;font-size:12.5px!important}.q-module-tabs button{grid-template-columns:34px 1fr!important;min-height:62px!important;padding:9px!important}.q-module-tabs button i{width:34px!important;height:34px!important}.q-module-tabs button span{font-size:14px!important}.q-module-tabs button small{display:none!important}.q-inner-switch button,.q-customer-center-tabs button{font-size:13.5px!important;padding-inline:12px!important}
+}
+</style>
 <script id="qimat-full-enterprise-ui-behavior">
 (function(){
  const textOf=(el)=>(el.innerText||el.textContent||'').replace(/\\s+/g,' ').trim();
  const hasAny=(t,arr)=>arr.some(x=>t.includes(x));
+ const legacyClasses=['qe-btn-primary','qe-btn-secondary','qe-btn-ghost','qe-btn-success','qe-btn-danger','qe-btn-info','qe-tab','qe-tab-active'];
+ const isStructuralControl=b=>!!b.closest('.q-appbar,.q-module-tabs,.q-inner-switch,.q-customer-center-tabs,.qg-tabs,.qmp-tabs');
  function classify(){
    document.querySelectorAll('button:not(.qimat-hero-tab)').forEach(b=>{
      const t=textOf(b);
      if(b.getAttribute('data-qe-manual')==='true') return;
-     b.classList.remove('qe-btn-primary','qe-btn-secondary','qe-btn-ghost','qe-btn-success','qe-btn-danger','qe-btn-info','qe-tab','qe-tab-active');
+     b.classList.remove(...legacyClasses);
+     // أزرار التنقل والتبويبات تدير حالتها من React؛ لا نلوّنها بتصنيف نصي قديم.
+     if(isStructuralControl(b)) return;
      if(!t) return;
      if(hasAny(t,['حذف','إلغاء','خروج','إزالة'])) b.classList.add('qe-btn-danger');
      else if(hasAny(t,['اعتماد','تأكيد','حفظ','إرسال','تم السداد','إقفال'])) b.classList.add('qe-btn-success');
@@ -16860,16 +16899,9 @@ body{margin:0!important;background:radial-gradient(circle at 10% 0,rgba(220,176,
      if(aria==='true') b.classList.add('qe-tab-active');
    });
    document.querySelectorAll('h2,h3').forEach(h=>h.classList.add('qe-section-title'));
-   document.querySelectorAll('td,th').forEach(c=>{if(/[0-9٠-٩]/.test(textOf(c))) c.classList.add('qe-number')});
-   document.querySelectorAll('div').forEach(d=>{
-     const cs=getComputedStyle(d); if(d.children.length===0) return;
-     const r=parseFloat(cs.borderRadius)||0; const bg=cs.backgroundColor;
-     const rect=d.getBoundingClientRect();
-     if(r>=10 && rect.width>180 && rect.height>55 && (bg==='rgb(255, 255, 255)'||bg==='rgb(255, 253, 249)'||bg==='rgb(250, 246, 238)')) d.classList.add('qe-surface');
-   });
  }
- /* التصنيف البصري يُنفّذ مرة واحدة فقط بعد بدء التطبيق.
-    لا MutationObserver هنا: كان يعيد مسح الصفحة عند كل تغيير React ويسبب ثقلاً في اللمس والرجوع على الجوال. */
+ /* تصنيف خفيف للأزرار التنفيذية فقط. أُلغي مسح الجداول والأسطح لأنه كان يفرض
+    حساب الأنماط والمقاسات على الصفحة كاملة ويؤخر النقر بعد فتح البرنامج. */
  const schedule=()=>{ if('requestIdleCallback' in window){requestIdleCallback(()=>classify(),{timeout:900});} else {setTimeout(classify,650);} };
  window.addEventListener('load',schedule,{once:true});
 })();
