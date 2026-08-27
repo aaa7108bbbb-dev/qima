@@ -6588,6 +6588,13 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
   const nf = v => (+v||0).toLocaleString("en-US",{maximumFractionDigits:0});
   const invOf = c => investors.find(x=>String(x.id)===String(c.investorId));
   const invText = c => {const x=invOf(c);return x?invLabel(x):"—";};
+  const stageText = c => {
+    const note=String((c&&c.note)||"").trim();
+    const marked=note.match(/(?:المرحلة|مرحلة)\s*[:：\-]?\s*([^|،,\n]+)/);
+    if(marked&&marked[1]) return marked[1].trim();
+    if(note) return note;
+    return c&&c.contractType==="migrated"?"مرحّل":"—";
+  };
   const sum = (rows,key) => rows.reduce((s,r)=>s+(+r[key]||0),0);
   const remainingRows = targetRows.filter(r=>r.remainingDue>0);
   const completedRows = targetRows.filter(r=>r.status==="paid");
@@ -6603,7 +6610,7 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
   }).filter(r=>r.rows.length>0);
 
   const meta={
-    target:{title:"أقساط الشهر",eyebrow:"كشف هدف الدورة",desc:"كل الأقساط المجدولة داخل دورة "+cycleLabel},
+    target:{title:"أقساط الشهر",eyebrow:"كشف الزبائن",desc:"أسماء الزبائن وأقساطهم المجدولة داخل دورة "+cycleLabel},
     remaining:{title:"باقي الأقساط",eyebrow:"كشف المتبقي",desc:"المبالغ غير المكتملة من أقساط الدورة"},
     done:{title:"المنجز منها",eyebrow:"كشف الإنجاز",desc:"الأقساط المكتملة بالكامل خلال الدورة"},
     progress:{title:"نسبة الإنجاز",eyebrow:"أداء المستثمرين",desc:"تحليل التحصيل والمتبقي لكل مستثمر"},
@@ -6627,7 +6634,7 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
   };
 
   let rows=[];
-  if(mode==="target") rows=tab==="due"?dueRows:tab==="upcoming"?upcomingRows:tab==="paid"?completedRows:tab==="partial"?partialRows:targetRows;
+  if(mode==="target") rows=targetRows;
   else if(mode==="remaining") rows=tab==="due"?dueRows:tab==="upcoming"?upcomingRows:tab==="partial"?partialRows:remainingRows;
   else if(mode==="done") rows=completedRows;
   else if(mode==="overdue") rows=manualRows;
@@ -6674,11 +6681,11 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
           <div className="qkpi-cycle"><small>الدورة المالية</small><strong>{cycleLabel}</strong></div>
         </header>
 
-        <section className="qkpi-summary">
+        {mode!=="target"&&<section className="qkpi-summary">
           {summary.map((x,i)=><div key={i}><small>{x[0]}</small><strong>{typeof x[1]==="number"?nf(x[1]):x[1]}</strong><em>{x[2]}</em></div>)}
-        </section>
+        </section>}
 
-        {(tabSets[mode]||[]).length>0&&(
+        {mode!=="target"&&(tabSets[mode]||[]).length>0&&(
           <nav className="qkpi-tabs" aria-label="تصفية الكشف">
             {tabSets[mode].map(x=><button type="button" key={x[0]} className={tab===x[0]?"active":""} onClick={()=>setTab(x[0])}>{x[1]} <b>{x[2]}</b></button>)}
           </nav>
@@ -6709,6 +6716,13 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
                 <td>{i+1}</td><td className="qkpi-name">{r.c.client||"—"}</td><td>#{r.c.num||"—"}</td><td>{invText(r.c)}</td><td className="qkpi-red qkpi-money">{nf(r.amount)} ر.س</td><td><span className="qkpi-badge is-manual">يدوي</span></td>
               </tr>)}</tbody>
             </table>
+          ) : mode==="target" ? (
+            <table className="qkpi-table qkpi-target-simple">
+              <thead><tr><th>#</th><th>اسم الزبون</th><th>المستثمر</th><th>تاريخ الاستحقاق</th><th>قيمة القسط</th><th>المحصّل</th><th>الحالة</th></tr></thead>
+              <tbody>{visibleRows.length===0?<tr><td colSpan={7} className="qkpi-empty">لا توجد أقساط في هذه الدورة</td></tr>:visibleRows.map((r,i)=>{const sm=statusMeta[r.status]||statusMeta.unknown;return <tr key={r.c.id}>
+                <td>{i+1}</td><td className="qkpi-name qkpi-customer-primary"><strong>{r.c.client||"—"}</strong><small>عقد #{r.c.num||"—"} · المرحلة: {stageText(r.c)}</small></td><td>{invText(r.c)}</td><td>{r.dueDateStr?fmtDate(r.dueDateStr):"—"}</td><td className="qkpi-money">{nf(r.due)}</td><td className="qkpi-green">{nf(r.paidApplied)}</td><td><span className={"qkpi-badge "+sm[1]}>{sm[0]}</span></td>
+              </tr>})}</tbody>
+            </table>
           ) : mode==="remaining" ? (
             <table className="qkpi-table">
               <thead><tr><th>#</th><th>الزبون والعقد</th><th>المستثمر</th><th>الاستحقاق</th><th>القسط</th><th>المدفوع</th><th>الباقي</th><th>الحالة</th></tr></thead>
@@ -6733,12 +6747,6 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
 
 function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dailyOpen,setDailyOpen,toast,setPage,payments,zakatTx,setZakatTx,loans,setLoans,setPrivateAccMode,doneIds}) {
   const [detail,setDetail] = useState(null); // {title, color, rows, mode}
-  const [homeInvId,setHomeInvId] = useState("");
-  const [homeSearch,setHomeSearch] = useState("");
-  const [homeContractType,setHomeContractType] = useState("active");
-  const [homePerPage,setHomePerPage] = useState(10);
-  const [homePage,setHomePage] = useState(1);
-  const [homeView,setHomeView] = useState("full");
   // الدورة المالية: من يوم cycleDay إلى اليوم اللي قبله من الشهر التالي
   const _cd = settings.cycleDay||21;
   const getPeriod = (dateStr) => fiscalYM(dateStr, _cd);
@@ -6758,32 +6766,6 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
     return total>0 && _getPaid(payments,c.id)>=total;
   };
   const currentC = allC.filter(c=>!_homeDone(c));
-  const _homeTypeOk = c => homeContractType==="all" ? true : homeContractType==="defer" ? c.contractType==="defer" : homeContractType==="done" ? _homeDone(c) : homeContractType==="deleted" ? !!c.deleted : (!_homeDone(c) && c.contractType!=="defer");
-  const _homeSource = homeContractType==="deleted" ? contracts.filter(c=>c.deleted) : allC;
-  const homePreviewRows = _homeSource.filter(c=>{
-    const invOk = !homeInvId || String(c.investorId)===String(homeInvId);
-    const q = homeSearch.trim().toLowerCase();
-    const textQ = String(c.client||"")+" "+String(c.num||"")+" "+String(c.idNum||"");
-    return invOk && _homeTypeOk(c) && (!q || textQ.toLowerCase().includes(q));
-  }).sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")));
-  const homeTypeCount = (type) => {
-    const src = type==="deleted" ? contracts.filter(c=>c.deleted) : allC;
-    return src.filter(c=> type==="active" ? (!_homeDone(c)&&c.contractType!=="defer") : type==="done" ? _homeDone(c) : type==="defer" ? c.contractType==="defer" : type==="deleted" ? !!c.deleted : true).length;
-  };
-  // ترقيم صفحات جدول العقود في الرئيسية
-  const homeTotalPages = Math.max(1, Math.ceil(homePreviewRows.length / homePerPage));
-  const homeCurPage = Math.min(homePage, homeTotalPages);
-  const homePagedRows = homePreviewRows.slice((homeCurPage-1)*homePerPage, homeCurPage*homePerPage);
-  const homePageList = (()=>{
-    const t = homeTotalPages, c = homeCurPage, out = [];
-    if(t<=6){ for(let i=1;i<=t;i++) out.push(i); return out; }
-    out.push(1);
-    if(c>3) out.push("…");
-    for(let i=Math.max(2,c-1); i<=Math.min(t-1,c+1); i++) out.push(i);
-    if(c<t-2) out.push("…");
-    out.push(t);
-    return out;
-  })();
   // ١. المحصّل هذا الشهر: مجموع الدفعات اللي تقع فترتها المالية = الشهر المختار
   const collectedThisMonth = (payments||[]).filter(p=>p.date && getPeriod(p.date)===sel).reduce((s,p)=>s+(+p.amount||0),0);
   // ٢. إجمالي المتبقي على الزبائن: (إجمالي كل عقد − المحصّل منه)
@@ -7149,94 +7131,6 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
       {/* دفتر اليومية مدمج في الرئيسية */}
       <div className="qhv6-daily"><DailyPage daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} contracts={contracts} settings={settings} toast={toast} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} investors={investors} payments={payments}/></div>
 
-      {/* كشف المستثمر + العقود في الرئيسية — واجهة عرض/تصفية فقط */}
-      <section className="qhome-investor-contracts" aria-label="كشف المستثمر والعقود">
-        <div className="qhome-investor-head">
-          <div className="qhome-head-row">
-            <span className="qhome-head-contracts">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3.4h8.4L18.6 7.6V20.6H6Z"/><path d="M14.2 3.4v4.4h4.4"/><path d="M9 12.6h6M9 16.2h6"/></svg>
-              <b>العقود</b><i>{homePreviewRows.length} عقد</i>
-            </span>
-            <h3>
-              كشف المستثمر
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="6.4"/><path d="m19.6 19.6-3.9-3.9"/></svg>
-            </h3>
-          </div>
-          <div className="qhome-investor-tools">
-            <label className="qhome-search">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="6.4"/><path d="m19.6 19.6-3.9-3.9"/></svg>
-              <input value={homeSearch} onChange={e=>{setHomeSearch(e.target.value);setHomePage(1);}} placeholder="بحث بالاسم..." />
-            </label>
-            <select value={homeInvId} onChange={e=>{setHomeInvId(e.target.value);setHomePage(1);}}>
-              <option value="">كل المستثمرين</option>
-              {sortedInvestors(investors).map(iv=><option key={"hf_"+iv.id} value={iv.id}>{invLabel(iv)}</option>)}
-            </select>
-            <select value={homeInvId} onChange={e=>{setHomeInvId(e.target.value);setHomePage(1);}}>
-              <option value="">-- اختر المستثمر --</option>
-              {sortedInvestors(investors).map(iv=><option key={"hs_"+iv.id} value={iv.id}>{invLabel(iv)}</option>)}
-            </select>
-          </div>
-        </div>
-
-        <div className="qhome-contracts-title"><span>اختار نوع العقود:</span></div>
-        <div className="qhome-type-tabs">
-          <button className={homeContractType==="active"?"active":""} onClick={()=>{setHomeContractType("active");setHomePage(1);}}>مستمرة ({homeTypeCount("active")})</button>
-          <button className={homeContractType==="done"?"active":""} onClick={()=>{setHomeContractType("done");setHomePage(1);}}>منتهية ({homeTypeCount("done")})</button>
-          <button className={homeContractType==="defer"?"active":""} onClick={()=>{setHomeContractType("defer");setHomePage(1);}}>المؤجل ({homeTypeCount("defer")})</button>
-          <button className={homeContractType==="deleted"?"active":""} onClick={()=>{setHomeContractType("deleted");setHomePage(1);}}>محذوفة ({homeTypeCount("deleted")})</button>
-          <div className="qhome-view-switch">
-            <button className={homeView==="full"?"active":""} onClick={()=>setHomeView("full")}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3.4h8.4L18.6 7.6V20.6H6Z"/><path d="M14.2 3.4v4.4h4.4"/></svg>
-              مفصل</button>
-            <button className={homeView==="brief"?"active":""} onClick={()=>setHomeView("brief")}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3.4h8.4L18.6 7.6V20.6H6Z"/><path d="M14.2 3.4v4.4h4.4"/></svg>
-              مختصر</button>
-          </div>
-        </div>
-
-        <div className="qhome-contracts-tablewrap">
-          <table>
-            <thead><tr>
-              <th><span className="qhome-th-date">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3.6" y="5" width="16.8" height="15.4" rx="2.2"/><path d="M3.6 9.6h16.8M8.4 3.2v3.6M15.6 3.2v3.6"/></svg>
-                التاريخ</span></th>
-              <th>#</th><th>العميل</th>{homeView==="full" && <th>الهوية</th>}<th className="qhome-th-act"></th>
-            </tr></thead>
-            <tbody>
-              {homePagedRows.map(c=>(
-                <tr key={"homec_"+c.id}>
-                  <td>{c.date||"—"}</td><td>{c.num||"—"}</td><td>{c.client||"—"}</td>
-                  {homeView==="full" && <td>{c.idNum||"—"}</td>}
-                  <td className="qhome-td-act">
-                    <button type="button" title="فتح صفحة العقود" onClick={()=>setPage&&setPage("contracts")}>•••</button>
-                  </td>
-                </tr>
-              ))}
-              {homePreviewRows.length===0 && <tr><td colSpan={homeView==="full"?5:4} style={{textAlign:"center"}}>لا توجد عقود مطابقة</td></tr>}
-            </tbody>
-          </table>
-        </div>
-        <div className="qhome-contracts-foot">
-          <div className="qhome-foot-show">
-            <span>عرض</span>
-            <select value={homePerPage} onChange={e=>{setHomePerPage(+e.target.value);setHomePage(1);}}>
-              <option value={10}>10</option><option value={25}>25</option><option value={50}>50</option>
-            </select>
-            <span>من {homePreviewRows.length} عقد</span>
-          </div>
-          <div className="qhome-pager">
-            <button type="button" disabled={homeCurPage<=1} onClick={()=>setHomePage(1)}>«</button>
-            <button type="button" disabled={homeCurPage<=1} onClick={()=>setHomePage(homeCurPage-1)}>‹</button>
-            {homePageList.map((p,i)=> p==="…"
-              ? <span key={"gap"+i} className="qhome-pg-gap">…</span>
-              : <button key={"pg"+p} type="button" className={p===homeCurPage?"active":""} onClick={()=>setHomePage(p)}>{p}</button>
-            )}
-            <button type="button" disabled={homeCurPage>=homeTotalPages} onClick={()=>setHomePage(homeCurPage+1)}>›</button>
-            <button type="button" disabled={homeCurPage>=homeTotalPages} onClick={()=>setHomePage(homeTotalPages)}>»</button>
-          </div>
-        </div>
-      </section>
-
     </div>
   );
 }
@@ -7377,7 +7271,7 @@ const DAILY_TYPES = [
   {key:"sadad",   label:"سداد",          sign:1,  color:"#16a34a"},
   {key:"sahb",    label:"سحب",           sign:-1, color:"#16a34a"},
   {key:"masroof", label:"مصروف",         sign:-1, color:"#dc2626"},
-  {key:"estilam", label:"استلمت نقدي",   sign:-1, color:"#dc2626"},
+  {key:"estilam", label:"استلام نقدي",   sign:-1, color:"#dc2626"},
   {key:"mgr",     label:"استلام مدير",   sign:-1, color:"#b45309"},
   {key:"acc",     label:"استلام محاسب",  sign:-1, color:"#b45309"},
   {key:"zakat",   label:"زكاة",          sign:-1, color:"#7c3aed"},
@@ -7735,25 +7629,24 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
         </div>
       </div>
 
-      {/* 📲 إرسال ملخص واتساب للمدير */}
+      {/* 📲 ملخص حركات اليوم */}
       <div className="daily-send-summary" style={{marginBottom:16}}>
         <div className="qsend-head">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 3.6 3 11l6.2 2.1L11.3 20l3.9-8Z"/></svg>
-          <b>إرسال ملخص اليوم للمدير — {selDay===today?"اليوم":dLabel(selDay)}</b>
+          <b>ملخص حركات اليوم — {selDay===today?"اليوم":dLabel(selDay)}</b>
         </div>
         <div className="qsend-total">
           <span>إجمالي اليوم</span>
           <strong className={dayNet<0?"neg":""}>{dayNet<0?"− ":"+ "}{SAR(Math.abs(dayNet))}</strong>
         </div>
         <div className="qsend-rows">
-          <div className="qsend-row">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3.2 8.6A2.4 2.4 0 0 1 5.6 6.2h13.2a1.8 1.8 0 0 1 1.8 1.8v9a1.8 1.8 0 0 1-1.8 1.8H5.6a2.4 2.4 0 0 1-2.4-2.4Z"/><path d="M3.2 8.6V7.2a2 2 0 0 1 2-2h11.4"/></svg>
-            <span>المتبقي في الصندوق</span><b>{SAR(closingBalance)}</b>
-          </div>
-          <div className="qsend-row">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>
-            <span>المدفوع للمدير</span><b>{SAR(sumByType("mgr"))}</b>
-          </div>
+          {dayRows.length===0?<div className="qsend-row qsend-empty"><span>لا توجد حركات مسجلة في هذا اليوم</span></div>:dayRows.map(d=>{
+            const t=DAILY_TYPES.find(x=>x.key===d.type)||{label:"حركة",sign:1};
+            return <div className="qsend-row" key={d.id}>
+              <span><strong>{t.label}</strong>{d.desc?" — "+d.desc:""}</span>
+              <b className={t.sign<0?"neg":"pos"}>{t.sign<0?"− ":"+ "}{SAR(Math.abs(+d.amount||0))}</b>
+            </div>;
+          })}
         </div>
         <button data-qe-manual="true" style={{width:"100%",justifyContent:"center",fontSize:15.5,padding:"14px",borderRadius:13,fontWeight:800,
           border:"none",cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:9,
@@ -7777,7 +7670,6 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
                   items.forEach((d,i)=>{ msg += "  "+(i+1)+". "+(d.desc||"—")+" — "+d.amount.toLocaleString()+"\n"; });
                 }
               });
-              msg += "\n💰 رصيد الصندوق: "+closingBalance.toLocaleString()+" ر.س\n";
             } else {
               msg += "\n📒 دفتر اليومية: لا توجد حركات\n";
             }
@@ -16874,6 +16766,18 @@ html{scroll-behavior:auto!important}
 @media(max-width:480px){
  .q-appbar-brand b{max-width:220px!important;font-size:14px!important}.q-appbar-logo{width:41px;height:41px;flex-basis:41px}.q-appbar-logo-bars{transform:scale(.72) skewY(-5deg)}.q-appbar-nav button{min-width:96px!important;flex-basis:96px!important;font-size:12.5px!important}.q-module-tabs button{grid-template-columns:34px 1fr!important;min-height:62px!important;padding:9px!important}.q-module-tabs button i{width:34px!important;height:34px!important}.q-module-tabs button span{font-size:14px!important}.q-module-tabs button small{display:none!important}.q-inner-switch button,.q-customer-center-tabs button{font-size:13.5px!important;padding-inline:12px!important}
 }
+
+/* دفتر اليومية: الأنواع الثمانية بنفس العرض والارتفاع */
+.qimat-home-v6 .qdaily-types{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-auto-rows:52px!important;gap:8px!important;align-items:stretch!important}
+.qimat-home-v6 .qdaily-types>button,.qimat-home-v6 .qdaily-types>button:nth-child(1),.qimat-home-v6 .qdaily-types>button:nth-child(2){grid-column:auto!important;width:100%!important;height:52px!important;min-height:52px!important;max-height:52px!important;margin:0!important;padding:8px 6px!important;box-sizing:border-box!important;align-self:stretch!important;justify-content:center!important;font-size:13.5px!important;font-weight:900!important;line-height:1.15!important;white-space:nowrap!important}
+
+/* ملخص اليوم يعرض الحركات المسجلة فقط */
+.qimat-home-v6 .qsend-rows{max-height:230px!important;overflow:auto!important}
+.qimat-home-v6 .qsend-row span{min-width:0!important;overflow-wrap:anywhere!important}.qimat-home-v6 .qsend-row span strong{color:#f0ca6d!important;font-weight:950!important}.qimat-home-v6 .qsend-row b{white-space:nowrap!important}.qimat-home-v6 .qsend-row b.pos{color:#56d39a!important}.qimat-home-v6 .qsend-row b.neg{color:#ff8f87!important}.qimat-home-v6 .qsend-row.qsend-empty{justify-content:center!important;min-height:58px!important;text-align:center!important}
+
+/* أقساط الشهر: كشف مباشر بلا بطاقات ملخص أو تبويبات داخلية */
+.qkpi-mode-target .qkpi-head{min-height:112px!important}.qkpi-mode-target .qkpi-tools{border-top:0!important}.qkpi-target-simple .qkpi-customer-primary{min-width:270px!important;text-align:right!important}.qkpi-target-simple .qkpi-customer-primary>strong{display:block!important;color:#102f49!important;font-size:19px!important;font-weight:950!important;line-height:1.35!important}.qkpi-target-simple .qkpi-customer-primary>small{display:block!important;margin-top:5px!important;color:#7a684e!important;font-size:12.5px!important;font-weight:900!important;line-height:1.45!important}.qkpi-target-simple tbody td{padding-block:13px!important;font-size:14px!important;font-weight:850!important}
+@media(max-width:720px){.qkpi-target-simple{min-width:840px!important}.qkpi-target-simple .qkpi-customer-primary>strong{font-size:17px!important}.qkpi-target-simple .qkpi-customer-primary>small{font-size:11.5px!important}}
 </style>
 <script id="qimat-full-enterprise-ui-behavior">
 (function(){
