@@ -1361,6 +1361,13 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
     ? Math.round(parseFloat(form.totalInst) / parseFloat(form.instAmt))
     : 0;
   const lastInst = (form.firstInst && numMonths > 0) ? addMonths(form.firstInst, numMonths - 1) : "";
+  const contractByNumber = value => contracts.find(c=>!c.deleted && String(c.num||"").trim()===String(value||"").trim());
+  const setSettlementContract = (idx,value) => {
+    const prior=contractByNumber(value);
+    const dd=[...(form.deducts||[])];
+    dd[idx]={...dd[idx],contractNum:value,investorId:prior?String(prior.investorId):""};
+    setForm(f=>({...f,deducts:dd}));
+  };
 
   const save = () => {
     const isDefer = form.contractType==="defer";
@@ -1397,11 +1404,22 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
       isOldContract:form.isOldContract||false};
     // migrate deducts array to contract
     const enteredDeducts = (form.deducts||[]).filter(d=>d.amount || d.investorId || d.contractNum);
-    if(form.deductEnabled && enteredDeducts.some(d=>!d.amount || !d.investorId || !String(d.contractNum||"").trim())){
-      toast("⚠️ أكمل رقم العقد السابق والمستثمر والمبلغ لكل سداد","warn");
+    if(form.deductEnabled && enteredDeducts.some(d=>!d.amount || !String(d.contractNum||"").trim())){
+      toast("⚠️ أكمل رقم العقد السابق والمبلغ لكل سداد","warn");
       return;
     }
-    const activeDeducts = enteredDeducts.filter(d=>d.amount && d.investorId && String(d.contractNum||"").trim());
+    let activeDeducts=[];
+    if(form.deductEnabled){
+      for(const d of enteredDeducts){
+        const prior=contractByNumber(d.contractNum);
+        if(!prior){toast("⚠️ العقد السابق رقم "+d.contractNum+" غير موجود؛ لم يُحسب الخصم","warn");return;}
+        if(d.investorId && String(d.investorId)!==String(prior.investorId)){
+          const owner=investors.find(i=>String(i.id)===String(prior.investorId));
+          toast("⚠️ العقد رقم "+d.contractNum+" تابع لـ "+(owner?invLabel(owner):"مستثمر آخر")+"؛ لم يُحسب الخصم","warn");return;
+        }
+        activeDeducts.push({...d,investorId:String(prior.investorId)});
+      }
+    }
     if(form.deductEnabled && activeDeducts.length>0){
       contract.deductEnabled=true;
       contract.deducts=activeDeducts;
@@ -1463,7 +1481,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
   return (
     <div className="q-contracts-new" style={{maxWidth:1100,margin:"0 auto"}}>
       {/* ═══ Header ═══ */}
-      <div style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:20,padding:"24px 20px",marginBottom:20,position:"relative",overflow:"hidden",border:"1px solid #b8862b"}}>
+      <div className="q-new-contract-hero" style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",borderRadius:20,padding:"24px 20px",marginBottom:20,position:"relative",overflow:"hidden",border:"1px solid #b8862b"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,background:"radial-gradient(circle at 20% 50%,rgba(200,146,42,0.15),transparent 60%)",pointerEvents:"none"}}/>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative"}}>
           <div>
@@ -1659,7 +1677,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
           <svg width="19" height="19" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.5v9M9.5 9.5h3.5a1.7 1.7 0 0 1 0 3.4h-2a1.7 1.7 0 0 0 0 3.4h4"/></g></svg>
           <h3 style={secTitle()}>المبالغ والتواريخ</h3>
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:14}}>
+        <div className={"q-new-contract-money-grid "+(form.contractType==="defer"?"is-defer":"is-monthly")} style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:14}}>
           {fields2.filter(f=>{
             if(form.contractType==="defer" && (f.key==="instAmt"||f.key==="firstInst")) return false;
             return true;
@@ -1766,7 +1784,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
               <div key={idx} className="q-new-contract-settlement" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,background:idx%2===0?"#fefce8":"#fff",padding:"12px 14px",borderRadius:12,border:"1px solid #e0d8c6"}}>
                 <div>
                   <label style={{...fLabel,fontSize:13}}>رقم العقد السابق {idx+1}</label>
-                  <input style={fInput} type="text" inputMode="numeric" placeholder="مثال: 854" value={d.contractNum||""} onChange={e=>{const dd=[...(form.deducts||[])];dd[idx]={...dd[idx],contractNum:e.target.value};setForm(f=>({...f,deducts:dd}));}}/>
+                  <input style={fInput} type="text" inputMode="numeric" placeholder="مثال: 854" value={d.contractNum||""} onChange={e=>setSettlementContract(idx,e.target.value)}/>
                 </div>
                 <div>
                   <label style={{...fLabel,fontSize:13}}>المبلغ (ريال) {idx+1}</label>
@@ -1774,8 +1792,8 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
                 </div>
                 <div>
                   <label style={{...fLabel,fontSize:13}}>المستثمر {idx+1}</label>
-                  <select style={{...styles.select,borderRadius:10}} value={d.investorId||""} onChange={e=>{const dd=[...(form.deducts||[])];dd[idx]={...dd[idx],investorId:e.target.value};setForm(f=>({...f,deducts:dd}));}}>
-                    <option value="">اختر مستثمر</option>
+                  <select disabled style={{...styles.select,borderRadius:10,background:"#f5f0e7",cursor:"not-allowed"}} value={d.investorId||""}>
+                    <option value="">يُحدد من رقم العقد</option>
                     {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
                   </select>
                 </div>
@@ -3187,7 +3205,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                   <div key={idx} className="q-new-contract-settlement" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,background:idx%2===0?"#fefce8":"#fff",padding:"12px 14px",borderRadius:12,border:"1px solid #e0d8c6"}}>
                     <div>
                       <label style={{fontSize:13,fontWeight:800,color:"#141428",display:"block",marginBottom:5}}>رقم العقد السابق {idx+1}</label>
-                      <input style={styles.input} type="text" inputMode="numeric" placeholder="مثال: 854" value={d.contractNum||""} onChange={e=>{const dd=[...(editForm.deducts||[])];dd[idx]={...dd[idx],contractNum:e.target.value};setEditForm(f=>({...f,deducts:dd}));}}/>
+                      <input style={styles.input} type="text" inputMode="numeric" placeholder="مثال: 854" value={d.contractNum||""} onChange={e=>{const value=e.target.value;const prior=contracts.find(c=>!c.deleted&&String(c.num||"").trim()===String(value||"").trim());const dd=[...(editForm.deducts||[])];dd[idx]={...dd[idx],contractNum:value,investorId:prior?String(prior.investorId):""};setEditForm(f=>({...f,deducts:dd}));}}/>
                     </div>
                     <div>
                       <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المبلغ (ريال) {idx+1}</label>
@@ -3195,8 +3213,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                     </div>
                     <div>
                       <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المستثمر {idx+1}</label>
-                      <select style={{...styles.select,borderRadius:10}} value={d.investorId||""} onChange={e=>{const dd=[...(editForm.deducts||[])];dd[idx]={...dd[idx],investorId:e.target.value};setEditForm(f=>({...f,deducts:dd}));}}>
-                        <option value="">اختر مستثمر</option>
+                      <select disabled style={{...styles.select,borderRadius:10,background:"#f5f0e7",cursor:"not-allowed"}} value={d.investorId||""}>
+                        <option value="">يُحدد من رقم العقد</option>
                         {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
                       </select>
                     </div>
@@ -3207,8 +3225,9 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           </div>
           <button style={styles.btnGold()} onClick={()=>{const ef={...editForm}; if(ef.investorId!==undefined&&ef.investorId!=="") ef.investorId=parseInt(ef.investorId); ["amount","totalInst","instAmt","qty"].forEach(k=>{if(ef[k]!==undefined&&ef[k]!=="")ef[k]=parseFloat(ef[k])||0;});
             const enteredDeducts=(ef.deducts||[]).filter(d=>d.amount||d.investorId||d.contractNum);
-            if(ef.deductEnabled&&enteredDeducts.some(d=>!d.amount||!d.investorId||!String(d.contractNum||"").trim())){toast("⚠️ أكمل رقم العقد السابق والمستثمر والمبلغ لكل سداد","warn");return;}
-            const activeDeducts=enteredDeducts.filter(d=>d.amount&&d.investorId&&String(d.contractNum||"").trim());
+            if(ef.deductEnabled&&enteredDeducts.some(d=>!d.amount||!String(d.contractNum||"").trim())){toast("⚠️ أكمل رقم العقد السابق والمبلغ لكل سداد","warn");return;}
+            let activeDeducts=[];
+            if(ef.deductEnabled){for(const d of enteredDeducts){const prior=contracts.find(c=>!c.deleted&&String(c.num||"").trim()===String(d.contractNum||"").trim());if(!prior){toast("⚠️ العقد السابق رقم "+d.contractNum+" غير موجود؛ لم يُحسب الخصم","warn");return;}if(d.investorId&&String(d.investorId)!==String(prior.investorId)){const owner=investors.find(i=>String(i.id)===String(prior.investorId));toast("⚠️ العقد رقم "+d.contractNum+" تابع لـ "+(owner?invLabel(owner):"مستثمر آخر")+"؛ لم يُحسب الخصم","warn");return;}activeDeducts.push({...d,investorId:String(prior.investorId)});}}
             if(ef.deductEnabled&&activeDeducts.length>0){ef.deducts=activeDeducts;ef.deductAmount=activeDeducts[0].amount;ef.deductInvestorId=activeDeducts[0].investorId;}
             if(setInvTxList){const cNum=editC.num||ef.num;const cClient=ef.client||editC.client;setInvTxList(prev=>{const next={};Object.keys(prev).forEach(k=>{next[k]=(prev[k]||[]).filter(tx=>!(String(tx.sourceContractNum||"")===String(cNum)||(tx.note&&tx.note.includes("عقد رقم "+cNum)&&tx.note.includes("سداد من عميل"))));});
               if(ef.deductEnabled&&activeDeducts.length>0){activeDeducts.forEach((d,idx)=>{const amt=parseFloat(d.amount)||0;const invId=String(parseInt(d.investorId));const txId=Date.now()+"_deduct_edit_"+idx;next[invId]=[...(next[invId]||[]),{id:txId,date:ef.date||editC.date,type:"deposit",amount:amt,note:"سداد عقد سابق من العميل: "+cClient+" | عقد رقم "+d.contractNum+" | عبر العقد الجديد "+cNum,sourceContractNum:String(cNum),settledContractNum:String(d.contractNum)}];});}
@@ -4116,11 +4135,11 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
     }
   };
 
-  const inv = investors.find(i=>i.id===selInv);
+  const inv = investors.find(i=>String(i.id)===String(selInv));
   const myTx = (txList[selInv]||[]);
 
   // Auto-transactions from contracts
-  const myContracts = contracts.filter(c=>c.investorId===selInv);
+  const myContracts = contracts.filter(c=>String(c.investorId)===String(selInv));
   const autoTx = myContracts.filter(c=>!c.isOldContract && c.contractType!=="migrated" && !c.excludeFromStatement).map(c=>{
     const r = calcC(c, settings);
     // ينخصم: قيمة العقد النقدية + عمولة المحاسبين + نصيب المؤسسة + الرسوم الإدارية
@@ -4192,6 +4211,26 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
   const saveNoteOv = (txId,val) => { const n={...noteOv,[selInv+"_"+txId]:val}; setNoteOv(n); try{localStorage.setItem("qimma_note_ov",JSON.stringify(n));}catch(e){} if(gsWrite) gsWrite("note_ov",n); setEditNoteId(null); };
   const getNoteOv = (txId) => noteOv[selInv+"_"+txId];
   const filteredRows = acctSearch ? rows.filter(tx=>(tx.note||"").includes(acctSearch)||(tx.type||"").includes(acctSearch)||(tx.date||"").includes(acctSearch)) : rows;
+  const accountTabData = sortedInvestors(privateAccMode?visibleInvestors:investors).map(iv=>{
+    const ivContracts=contracts.filter(c=>String(c.investorId)===String(iv.id));
+    const movements=[];
+    ivContracts.filter(c=>!c.isOldContract&&c.contractType!=="migrated"&&!c.excludeFromStatement).forEach(c=>{
+      const cr=calcC(c,settings), deduct=(+c.amount||0)+cr.acc+cr.inst+cr.admin;
+      movements.push({id:"c_"+c.id,date:c.date||"",amount:-deduct,label:"عقد #"+(c.num||"—")+" — "+(c.client||"—")});
+    });
+    (payments||[]).forEach(p=>{
+      const c=ivContracts.find(x=>String(x.id)===String(p.contractId));
+      if(c) movements.push({id:"p_"+(p.id||""),date:p.date||"",amount:+p.amount||0,label:"سداد عقد #"+(c.num||"—")+" — "+(c.client||"—")});
+    });
+    _arr(txList&&txList[iv.id]).forEach(t=>{
+      const tm=TX_TYPES.find(x=>x.key===t.type);
+      movements.push({id:"t_"+(t.id||""),date:t.date||"",amount:+t.amount||0,label:(tm?tm.label:"حركة")+(t.note?" — "+t.note:"")});
+    });
+    movements.sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.id).localeCompare(String(b.id)));
+    const last=movements.length?movements[movements.length-1]:null;
+    const balance=(+iv.capital||0)+movements.reduce((s,m)=>s+(+m.amount||0),0);
+    return {inv:iv,last,balance};
+  });
 
   const subTabs = privateAccMode ? [
     {key:"list",  label:"المستثمرون"},
@@ -4428,16 +4467,17 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
       {invSubTab==="zakat" && <ZakatPage investors={investors} contracts={contracts} settings={settings} zakatTx={zakatTx} setZakatTx={setZakatTx} txList={txList} setTxList={setTxList} toast={toast}/>}
       {invSubTab==="pending" && <PendingPage pending={pending} setPending={setPending}/>}
 
-      {/* Investor selector */}
-      <div style={{...styles.card,marginBottom:16,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-        <label style={{fontWeight:700,fontSize:15,whiteSpace:"nowrap"}}>المستثمر:</label>
-        <select style={{...styles.select,flex:1,maxWidth:300,borderColor:"#c9bca3",color:"#141428",fontWeight:700}}
-          value={selInv||""} onChange={e=>{const v=e.target.value;const special=(v==="zakat"||v==="pending"||v==="loans");setInvSubTab(special?v:"inv");setSelInv(special?v:parseInt(v));}}>
-          {sortedInvestors(privateAccMode ? visibleInvestors : investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
-          {!privateAccMode && <option value="loans">🤝 السلف</option>}
-          {!privateAccMode && <option value="zakat">🌙 صندوق الزكاة</option>}
-          {!privateAccMode && <option value="pending">📌 المتبقي</option>}
-        </select>
+      {/* حسابات المستثمرين: تبويب مباشر لكل مستثمر */}
+      <section className="q-account-tabs-shell">
+        <div className="q-account-tabs-heading"><div><span>الحسابات</span><h3>حسابات المستثمرين</h3></div><b>{accountTabData.length} حساب</b></div>
+        <div className="q-account-investor-tabs">
+          {accountTabData.map(r=><button type="button" key={r.inv.id} className={String(selInv)===String(r.inv.id)?"active":""} onClick={()=>{setInvSubTab("inv");setSelInv(r.inv.id);}}>
+            <span><strong>{invLabel(r.inv)}</strong><small>{r.last?("آخر حركة: "+r.last.label+" · "+fmtDate(r.last.date)):"لا توجد حركات"}</small></span>
+            <em><small>الرصيد</small><b className={r.balance<0?"negative":""}>{SAR(r.balance)}</b></em>
+          </button>)}
+        </div>
+      </section>
+      {privateAccMode && <div style={{...styles.card,marginBottom:16,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
         {privateAccMode && <button style={{background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",border:"1px solid #b8862b",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} onClick={()=>{
           const name = window.prompt("اسم المستثمر الخفي:");
           if(!name || !name.trim()) return;
@@ -4450,7 +4490,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
           setNewContract({client:"",phone:"",idNum:"",amount:"",totalInst:"",instAmt:"",firstInst:"",goods:"",investorId:selInv});
         }}>📄 عقد جديد</button>}
         {invSubTab==="inv" && inv && null}
-      </div>
+      </div>}
 
       {/* مودال إضافة عقد للمستثمر الخفي */}
       {newContract && (
@@ -9690,8 +9730,7 @@ function GoodsPage({investors, contracts, toast, gsWrite, goBack, embedded=false
   const tabs=[
     {id:"overview",label:"نظرة عامة",note:"كل الحركة"},
     {id:"cards",label:"البطاقات",note:"الدعم والصرف"},
-    {id:"other",label:"السلع الأخرى",note:"النقدي"},
-    {id:"log",label:"سجل الحركة",note:totals.movements+" حركة"}
+    {id:"other",label:"السلع الأخرى",note:"النقدي"}
   ];
   const warnings=[];
   if(totals.missingPrice) warnings.push("سعر البطاقة غير محدد لبعض الحركات؛ ثبّت السعر من الحقل الظاهر أعلى الصفحة.");
@@ -13276,16 +13315,15 @@ function SupportingAccountsCenter({loans,setLoans,investors,contracts,settings,z
   </div>;
 }
 
-function FinanceCenter({portfolioComp,accountsComp,investorsComp,supportComp,initialTab="portfolio"}){
+function FinanceCenter({portfolioComp,accountsComp,supportComp,initialTab="portfolio"}){
   const [tab,setTab]=useState(initialTab);
   const tabs=[
     {id:"portfolio",icon:"▥",label:"المحفظة الشهرية",note:"المؤشرات والجرد والأرصدة"},
-    {id:"accounts",icon:"▣",label:"الحسابات",note:"الحركات والأرصدة"},
-    {id:"investors",icon:"♙",label:"المستثمرون",note:"12 بطاقة استثمارية"},
+    {id:"accounts",icon:"▣",label:"الحسابات",note:"12 حسابًا وحركاتها وأرصدتها"},
     {id:"support",icon:"◇",label:"الحسابات المساندة",note:"السلف والزكاة والمعلّق"}
   ];
-  return <QimaModuleShell className="q-finance-center" eyebrow="قمة الفرصة · الإدارة المالية" title="المالية" description="صورة مالية مترابطة للمحفظة والحسابات والمستثمرين." badge="مالي" tabs={tabs} active={tab} onChange={setTab}>
-    {tab==="portfolio"?portfolioComp:tab==="accounts"?accountsComp:tab==="investors"?investorsComp:supportComp}
+  return <QimaModuleShell className="q-finance-center" eyebrow="قمة الفرصة · الإدارة المالية" title="المالية" description="صورة مالية مترابطة للمحفظة والحسابات والحسابات المساندة." badge="مالي" tabs={tabs} active={tab} onChange={setTab}>
+    {tab==="portfolio"?portfolioComp:tab==="accounts"?accountsComp:supportComp}
   </QimaModuleShell>;
 }
 
@@ -13328,7 +13366,7 @@ function App() {
   const [customersEntry,setCustomersEntry]=useState("stmt");
   const setPage=(target)=>{
     if(target==="accounts"){setFinanceEntry("accounts");setPageRaw("portfolio");return;}
-    if(target==="investorsList"){setFinanceEntry("investors");setPageRaw("portfolio");return;}
+    if(target==="investorsList"){setFinanceEntry("accounts");setPageRaw("portfolio");return;}
     if(target==="goods"){setContractsEntry("goods");setPageRaw("contracts");return;}
     if(target==="overdue"){setCollectionEntry("overdue");setPageRaw("collect");return;}
     if(target==="pastclients"){setCustomersEntry("customers");setPageRaw("customers");return;}
@@ -13763,7 +13801,6 @@ function App() {
   const financeHub=<FinanceCenter key={"finance-"+financeEntry} initialTab={financeEntry}
     portfolioComp={portfolioView}
     accountsComp={<AccountsPage embedded {...accountCommon} initialSubTab="inv" initialInvestorId={financeInvestor}/>}
-    investorsComp={<AccountsPage embedded {...accountCommon} initialSubTab="list" onOpenInvestorAccount={id=>{setFinanceInvestor(id);setFinanceEntry("accounts");}}/>}
     supportComp={<SupportingAccountsCenter loans={loans} setLoans={setLoans} investors={publicInvestors} contracts={publicContracts} settings={settings} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} txList={invTxList} setTxList={setInvTxList} toast={toast}/>} 
   />;
 
@@ -16778,6 +16815,30 @@ html{scroll-behavior:auto!important}
 /* أقساط الشهر: كشف مباشر بلا بطاقات ملخص أو تبويبات داخلية */
 .qkpi-mode-target .qkpi-head{min-height:112px!important}.qkpi-mode-target .qkpi-tools{border-top:0!important}.qkpi-target-simple .qkpi-customer-primary{min-width:270px!important;text-align:right!important}.qkpi-target-simple .qkpi-customer-primary>strong{display:block!important;color:#102f49!important;font-size:19px!important;font-weight:950!important;line-height:1.35!important}.qkpi-target-simple .qkpi-customer-primary>small{display:block!important;margin-top:5px!important;color:#7a684e!important;font-size:12.5px!important;font-weight:900!important;line-height:1.45!important}.qkpi-target-simple tbody td{padding-block:13px!important;font-size:14px!important;font-weight:850!important}
 @media(max-width:720px){.qkpi-target-simple{min-width:840px!important}.qkpi-target-simple .qkpi-customer-primary>strong{font-size:17px!important}.qkpi-target-simple .qkpi-customer-primary>small{font-size:11.5px!important}}
+
+/* عقد جديد: عنوان ممتد وحقول المبالغ متساوية */
+.q-contracts-new .q-new-contract-hero{width:100%!important;min-height:124px!important;padding:27px 30px!important;box-sizing:border-box!important}
+.q-contracts-new .q-new-contract-hero>div:nth-child(2){width:100%!important;gap:22px!important}
+.q-contracts-new .q-new-contract-hero>div:nth-child(2)>div:first-child>div:first-child{font-size:15px!important;font-weight:850!important}
+.q-contracts-new .q-new-contract-hero>div:nth-child(2)>div:first-child>div:last-child{font-size:32px!important;font-weight:950!important;line-height:1.25!important}
+@media(min-width:1000px){
+ .q-new-contract-money-grid.is-monthly{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+ .q-new-contract-money-grid.is-defer{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ .q-new-contract-money-grid>div{min-width:0!important}.q-new-contract-money-grid input{width:100%!important;min-height:56px!important;box-sizing:border-box!important}
+}
+
+/* الحسابات: المستثمرون داخل تبويب واحد، ثلاثة حسابات في الصف */
+.q-account-tabs-shell{margin-bottom:18px;padding:16px;border:1px solid #ded2bf;border-radius:17px;background:linear-gradient(145deg,#fffefa,#f8f1e5);box-shadow:0 8px 22px rgba(10,40,61,.07)}
+.q-account-tabs-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px}.q-account-tabs-heading span{display:block;color:#a87318;font-size:10px;font-weight:950}.q-account-tabs-heading h3{margin:2px 0 0!important;color:#0b2d48!important;font-size:21px!important;font-weight:950!important}.q-account-tabs-heading>b{padding:7px 11px;border:1px solid #d8b35f;border-radius:999px;background:#fff7e5;color:#79500f;font-size:11px;font-weight:950}
+.q-account-investor-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.q-account-investor-tabs>button{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:92px;padding:13px 14px;border:1px solid #ddd1be;border-radius:13px;background:#fff;color:#17364e;text-align:right;font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(10,40,61,.045);transition:border-color .1s ease,background-color .1s ease}
+.q-account-investor-tabs>button>span,.q-account-investor-tabs>button>em{min-width:0}.q-account-investor-tabs>button>span strong,.q-account-investor-tabs>button>span small,.q-account-investor-tabs>button>em small,.q-account-investor-tabs>button>em b{display:block}.q-account-investor-tabs>button>span strong{font-size:16.5px;font-weight:950;line-height:1.35}.q-account-investor-tabs>button>span small{margin-top:6px;color:#75838e;font-size:9.5px;font-weight:850;white-space:normal}.q-account-investor-tabs>button>em{font-style:normal;text-align:left;white-space:nowrap}.q-account-investor-tabs>button>em small{color:#7d8992;font-size:9px;font-weight:850}.q-account-investor-tabs>button>em b{margin-top:4px;color:#11815b;font-size:17px;font-weight:950}.q-account-investor-tabs>button>em b.negative{color:#bf3f3b}
+.q-account-investor-tabs>button.active{border-color:#bf8523;background:linear-gradient(135deg,#f1d47e,#cb932c);color:#08243d;box-shadow:0 8px 18px rgba(190,133,32,.18)}.q-account-investor-tabs>button.active small,.q-account-investor-tabs>button.active em small{color:#42515c}.q-account-investor-tabs>button.active em b{color:#08243d}
+
+/* البضاعة: ثلاثة تبويبات فقط بعد حذف التكرار */
+.qg-tabs{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+@media(max-width:999px){.q-account-investor-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.q-contracts-new .q-new-contract-hero{min-height:108px!important;padding:22px!important}.q-contracts-new .q-new-contract-hero>div:nth-child(2)>div:first-child>div:last-child{font-size:27px!important}}
+@media(max-width:620px){.q-account-investor-tabs{grid-template-columns:1fr}.qg-tabs{grid-template-columns:1fr!important}.q-contracts-new .q-new-contract-hero>div:nth-child(2)>div:first-child>div:last-child{font-size:23px!important}}
 </style>
 <script id="qimat-full-enterprise-ui-behavior">
 (function(){
