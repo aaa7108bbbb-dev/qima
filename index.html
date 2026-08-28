@@ -4782,11 +4782,12 @@ function JardPage({contracts,goodsContracts,investors,settings,txList,loans,zaka
     if(key==="zakat")   return (zakatTx||[]).reduce((s,t)=>s+(t.type==="collect"?t.amount:-t.amount),0);
     if(key==="deductions") return (pending||[]).reduce((s,p)=>s+p.amount,0);
     if(key==="staff") {
-      // حساب المتبقي للمدير والمحاسب = المستحق - المستلم
+      // نفس معادلة الرئيسية حرفياً: مستحقات دورة الصندوق الحالية ناقص المستلم خلالها.
       const _daily2 = _arr(daily);
-      const base2 = _daily2.find(d=>d.type==="opening");
+      const _dailyOpen2 = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
+      const base2 = _dailyOpen2.__base && typeof _dailyOpen2.__base==="object" ? _dailyOpen2.__base : null;
       const bDate = base2 ? base2.date : "0000-00-00";
-      const cycleC = contracts.filter(c=>!c.deleted && (!c.date || c.date >= bDate));
+      const cycleC = contracts.filter(c=>!c.date || c.date >= bDate);
       const mgrE = cycleC.reduce((s,c)=>s+calcC(c,settings).inst,0);
       const accE = cycleC.reduce((s,c)=>s+calcC(c,settings).acc,0);
       const mgrT = _daily2.filter(d=>d.type==="mgr" && d.date>=bDate).reduce((s,d)=>s+(d.amount||0),0);
