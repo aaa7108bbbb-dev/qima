@@ -4975,26 +4975,67 @@ function JardPage({contracts,goodsContracts,investors,settings,txList,loans,zaka
 // ─── Monthly Portfolio Page (المحفظة الشهرية) ───────────────
 // ─── طباعة كشف الحساب البنكي (الراجحي) بالأسماء وآخر رصيد ───
 // ─── تحليل نصوص PDF لكشف الراجحي إلى حركات (يعتمد على مواقع الأعمدة x) ───
+const _bankGenericName = v=>/^(?:الوقت|وقت|التاريخ|تاريخ|ملاحظ[هة]|رقم|الحساب|الرصيد|تحويل|حوال[هة]|عملي[هة]|عملي[هة] تحويل داخلي[هة]|داخلي[هة]|مؤسس[هة]|سداد|رسوم|نقاط البيع)$/i.test(String(v||"").trim());
+const _cleanBankArabicName = raw=>{
+  let v=String(raw||"");
+  try{v=v.normalize("NFKC");}catch(e){}
+  v=v.replace(/\u0640/g," ").replace(/[A-Za-z0-9:*]/g," ")
+    .replace(/ملاحظ[هة]|الوقت|التاريخ|الرصيد|رقم\s*الحساب/g," ")
+    .replace(/[^\u0600-\u06FF\s]/g," ").replace(/\s+/g," ").trim();
+  return _bankGenericName(v)?"":v;
+};
 const _bankNameFromRaw = raw=>{
   let v=String(raw||"");
   try{v=v.normalize("NFKC");}catch(e){}
-  const marker=v.search(/ملاحظ[هة]/);
-  if(marker<0) return "";
-  v=v.slice(marker).replace(/^ملاحظ[هة]\s*[:：\-–—]?\s*/,"")
-    .split(/الوقت|التاريخ|SAR|TOACCT|FRACCT|SANCBK|SAALBI|20\d{2}[\/\-]|عملية\s+تحويل|حوال[هة]|الرصيد/)[0];
-  return v.replace(/[A-Za-z0-9:*]/g," ").replace(/[^\u0600-\u06FF\s]/g," ").replace(/\s+/g," ").trim();
+  const parts=v.split(/\s*⏎\s*/).filter(Boolean);
+  const candidates=[];
+  const take = s=>{
+    const marker=s.search(/ملاحظ[هة]/);
+    if(marker<0) return;
+    const before=s.slice(0,marker);
+    const after=s.slice(marker).replace(/^ملاحظ[هة]\s*[:：\-–—]?\s*/,"")
+      .split(/الوقت|التاريخ|SAR|TOACCT|FRACCT|SANCBK|SAALBI|20\d{2}[\/\-]|الرصيد|رقم\s*الحساب/)[0];
+    [after,before].map(_cleanBankArabicName).filter(Boolean).forEach(x=>candidates.push(x));
+  };
+  parts.forEach(take); take(v);
+  return candidates.filter(x=>x.length<=90)
+    .sort((a,b)=>(b.split(/\s+/).length-a.split(/\s+/).length)||(b.length-a.length))[0]||"";
 };
 const _repairLegacyBankTxRows = rows => _arr(rows).map(tx=>{
   const name=String(tx&&tx.name||"").trim();
-  if(!name || tx.nameOrder==="logical" || (+tx.parserVersion||0)>=2) return tx;
-  if(/^bnk_pdf_/.test(String(tx.id||"")) && /[\u0600-\u06FF]/.test(name)){
-    const fixed=Array.from(name).reverse().join("").replace(/\s+/g," ").trim();
+  if(!/^bnk_pdf_/.test(String(tx&&tx.id||"")) || (+tx.parserVersion||0)>=3) return tx;
+  if(name && !/[\u0600-\u06FF]/.test(name)) return {...tx,nameOrder:"logical",parserVersion:3};
+  if(/[\u0600-\u06FF]/.test(name) || tx.raw){
+    const fixed=(tx.nameOrder==="logical" || (+tx.parserVersion||0)>=2)
+      ? _cleanBankArabicName(name)
+      : _cleanBankArabicName(Array.from(name).reverse().join(""));
     const fromRaw=_bankNameFromRaw(tx.raw);
     const full=fromRaw.length>fixed.length && fromRaw.length<=90 ? fromRaw : fixed;
-    return {...tx,name:full,nameOrder:"logical",parserVersion:2};
+    return {...tx,name:full,nameOrder:"logical",parserVersion:3};
   }
-  return tx;
+  return {...tx,name:"",nameOrder:"logical",parserVersion:3};
 });
+
+const _completeBankNameFromContracts = (tx, contracts)=>{
+  const original=String(tx&&tx.name||"").trim();
+  if(original && !/[\u0600-\u06FF]/.test(original)) return original;
+  const current=_cleanBankArabicName(original);
+  if(!current || !_arr(contracts).length) return current;
+  const canon=s=>String(s||"").normalize("NFKC").replace(/[إأآ]/g,"ا").replace(/ة/g,"ه").replace(/ى/g,"ي").replace(/[^\u0600-\u06FF\s]/g," ").replace(/\s+/g," ").trim();
+  const needle=canon(current), words=needle.split(" ").filter(Boolean);
+  if(!needle || _bankGenericName(current)) return "";
+  let hits=_arr(contracts).filter(c=>{
+    const full=canon(c&&c.client);
+    return full && words.every(w=>full.split(" ").includes(w));
+  });
+  hits=[...new Map(hits.map(c=>[canon(c.client),c])).values()];
+  if(hits.length>1){
+    const amount=Math.abs(+(tx&&tx.dain||0))||Math.abs(+(tx&&tx.madin||0));
+    const byAmount=hits.filter(c=>amount>0 && Math.abs((+c.instAmt||0)-amount)<0.01);
+    if(byAmount.length===1) hits=byAmount;
+  }
+  return hits.length===1 ? String(hits[0].client||current).trim() : current;
+};
 
 function parseRajhiPDF(items){
   const latinDigits = (s) => String(s||"")
@@ -5119,9 +5160,7 @@ function parseRajhiPDF(items){
       if(/\d{9,}/.test(joined)) return;
       const matched = matchType(joined);
       if(matched){ typeText = matched; return; }
-      // fallback: نص عربي مطبّع قصير
-      const cleaned = norm(joined).replace(/[^\u0600-\u06FF]/g,"");
-      if(cleaned && cleaned.length<=30){ typeText = rev(cleaned); }
+      // لا نقلب النص غير المعروف؛ القلب كان يُنتج كلمات عربية مشوهة في الكشف.
     };
     collectType(r);
     for(let k=1;k<=3 && !typeText;k++){ collectType(rowsY[i-k]); collectType(rowsY[i+k]); }
@@ -5135,7 +5174,7 @@ function parseRajhiPDF(items){
         const before=v.slice(0,marker), after=v.slice(marker).replace(/^ملاحظ[هة]\s*[:：\-–—]?\s*/,"");
         v=after.replace(/\s+/g," ").trim().length>=2?after:before;
       }
-      return v.replace(/ملاحظ[هة]|الوقت/g," ").replace(/[^\u0600-\u06FF\s]/g," ").replace(/\s+/g," ").trim();
+      return _cleanBankArabicName(v);
     };
     const collectName = (rr)=>{
       if(!rr || nameText) return;
@@ -5157,21 +5196,38 @@ function parseRajhiPDF(items){
         if(candidates.length) nameText=candidates[0];
       }
     };
-    for(let k=1;k<=3 && !nameText;k++){ collectName(rowsY[i+k]); collectName(rowsY[i-k]); }
+    for(let k=1;k<=6 && !nameText;k++){ collectName(rowsY[i+k]); collectName(rowsY[i-k]); }
+
+    // إذا قُسّم الاسم على أكثر من سطر في PDF، اجمع سطر الملاحظة مع السطرين الملاصقين.
+    const nearby=rowsY.map((rr,idx)=>({rr,idx})).filter(o=>o.rr&&o.rr.page===r.page&&Math.abs(o.idx-i)<=6);
+    const noteAt=nearby.find(o=>o.rr.cells.some(c=>{const n=norm(c.str);return /ملاحظ[هة]/.test(n)||/ملاحظ[هة]/.test(rev(n));}));
+    if(noteAt){
+      const fragments=[];
+      nearby.filter(o=>Math.abs(o.idx-noteAt.idx)<=2).sort((a,b)=>a.idx-b.idx).forEach(o=>{
+        const rr=o.rr;
+        if(moneyRow(rr)||dateOf(rr.text)||(/\d{7,}/.test(rr.text))) return;
+        if(matchType(rr.text) && o.idx!==noteAt.idx) return;
+        const line=[...rr.cells].filter(c=>hasArabic(c.str)).sort((a,b)=>(+b.x||0)-(+a.x||0)).map(c=>c.str).join(" ");
+        const frag=cleanArabicName(line);
+        if(frag && !_bankGenericName(frag) && frag.split(/\s+/).length<=7) fragments.push(frag);
+      });
+      const combined=[...new Set(fragments)].join(" ").replace(/\s+/g," ").trim();
+      if(combined && combined.length<=90 && combined.split(/\s+/).length>(nameText||"").split(/\s+/).filter(Boolean).length) nameText=combined;
+    }
 
     parsed.push({
       id: "bnk_pdf_"+i+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),
       date: date||"",
       type: typeText||"غير محدد",
       name: nameText||"",
-      raw: rowsY.slice(Math.max(0,i-3),i+4)
+      raw: rowsY.slice(Math.max(0,i-6),i+7)
         .filter(rr=>rr && rr.page===r.page && (rr===r || !moneyRow(rr)))
-        .map(rr=>rr.text||"").join(" "),
+        .map(rr=>rr.text||"").join(" ⏎ "),
       madin: Math.abs(madin)||0,
       dain: Math.abs(dain)||0,
       balance: bal,
       nameOrder:"logical",
-      parserVersion:2,
+      parserVersion:3,
     });
   }
   return parsed;
@@ -5528,7 +5584,7 @@ function BankReconcile({bankTx, contracts, investors, payments, setPayments, don
 }
 
 function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, setPayments, doneIds, daily, setDaily, logAct}) {
-  const rows = _arr(bankTx);
+  const rows = _repairLegacyBankTxRows(bankTx).map(tx=>({...tx,name:_completeBankNameFromContracts(tx,contracts)}));
   const [bankView, setBankView] = useState("tx");
   const fileRef = React.useRef(null);
   const [dragOver, setDragOver] = React.useState(false);
@@ -5904,7 +5960,7 @@ function BankPage({bankTx, setBankTx, toast, contracts, investors, payments, set
       {bankView==="rc" && (
         rows.length===0
           ? <div className="qmp-bank-empty" style={{textAlign:"center",padding:"50px 20px",color:"#94a3b8",fontSize:14}}>ارفع كشف البنك أولاً من تبويب «الحركات»</div>
-          : <BankReconcile bankTx={bankTx} contracts={contracts} investors={investors} payments={payments}
+          : <BankReconcile bankTx={rows} contracts={contracts} investors={investors} payments={payments}
               setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} toast={toast} logAct={logAct}/>
       )}
       {bankView==="tx" && (
