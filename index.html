@@ -3603,7 +3603,6 @@ function ZakatPage({investors, contracts, settings, zakatTx, setZakatTx, txList,
   const save=()=>{
     const amount=parseFloat(form.amount)||0;
     if(amount<=0){toast&&toast("⚠️ أدخل مبلغاً صحيحاً","warn");return;}
-    if(form.type==="pay" && amount>balance){toast&&toast("⚠️ الرصيد في صندوق الزكاة لا يكفي","warn");return;}
     if(form.type==="investor" && !form.investorId){toast&&toast("⚠️ اختر المستثمر","warn");return;}
     const id=Date.now();
     const inv=_arr(investors).find(i=>String(i.id)===String(form.investorId));
