@@ -2578,7 +2578,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         </button>
         <button type="button" data-qe-manual="true" className="qimat-quick-action" onClick={()=>setPage("collect")} style={{borderRadius:14,padding:"16px 8px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
           <svg width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="#141428" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></g></svg>
-          التحصيل
+          التحصيل المالي
         </button>
       </div>}
       {!embedded && <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
@@ -13294,19 +13294,6 @@ function ContractsCenter({manageComp,newComp,goodsComp,reportsComp,initialTab="m
   </QimaModuleShell>;
 }
 
-function CollectionCenter({followupComp,investorsComp,overdueComp,initialTab="followup"}){
-  const [tab,setTab]=useState(initialTab);
-  const tabs=[
-    {id:"followup",icon:"⚑",label:"متابعة اليوم",note:"أولويات الجولة"},
-    {id:"investors",icon:"◎",label:"تحصيل المستثمرين",note:"الزبائن والسدادات"},
-    {id:"overdue",icon:"!",label:"المتعثرون",note:"التحديد اليدوي فقط"}
-  ];
-  const followup=typeof followupComp==="function"?followupComp(setTab):followupComp;
-  return <QimaModuleShell className="q-collection-center" eyebrow="قمة الفرصة · العمليات" title="مركز التحصيل" description="متابعة واضحة لما يستحق اليوم، وما تم، وما يحتاج إجراء." badge="اليوم" tabs={tabs} active={tab} onChange={setTab}>
-    {tab==="followup"?followup:tab==="investors"?investorsComp:overdueComp}
-  </QimaModuleShell>;
-}
-
 function SupportingAccountsCenter({loans,setLoans,investors,contracts,settings,zakatTx,setZakatTx,pending,setPending,txList,setTxList,toast}){
   const [tab,setTab]=useState("loans");
   return <div className="q-supporting-center">
@@ -13315,15 +13302,18 @@ function SupportingAccountsCenter({loans,setLoans,investors,contracts,settings,z
   </div>;
 }
 
-function FinanceCenter({portfolioComp,accountsComp,supportComp,initialTab="portfolio"}){
+function FinanceCenter({portfolioComp,followupComp,collectionComp,accountsComp,supportComp,initialTab="portfolio",onTabChange}){
   const [tab,setTab]=useState(initialTab);
   const tabs=[
     {id:"portfolio",icon:"▥",label:"المحفظة الشهرية",note:"المؤشرات والجرد والأرصدة"},
+    {id:"followup",icon:"⚑",label:"متابعة اليوم",note:"الأولويات والوعود"},
+    {id:"collection",icon:"◎",label:"التحصيل المالي",note:"الزبائن والسدادات"},
     {id:"accounts",icon:"▣",label:"الحسابات",note:"12 حسابًا وحركاتها وأرصدتها"},
     {id:"support",icon:"◇",label:"الحسابات المساندة",note:"السلف والزكاة والمعلّق"}
   ];
-  return <QimaModuleShell className="q-finance-center" eyebrow="قمة الفرصة · الإدارة المالية" title="المالية" description="صورة مالية مترابطة للمحفظة والحسابات والحسابات المساندة." badge="مالي" tabs={tabs} active={tab} onChange={setTab}>
-    {tab==="portfolio"?portfolioComp:tab==="accounts"?accountsComp:supportComp}
+  const changeTab=id=>{setTab(id);if(onTabChange)onTabChange(id);};
+  return <QimaModuleShell className="q-finance-center" eyebrow="قمة الفرصة · الإدارة المالية" title="المالية" description="المتابعة والتحصيل والمحفظة والحسابات في مركز مالي واحد." badge="مالي" tabs={tabs} active={tab} onChange={changeTab}>
+    {tab==="portfolio"?portfolioComp:tab==="followup"?followupComp:tab==="collection"?collectionComp:tab==="accounts"?accountsComp:supportComp}
   </QimaModuleShell>;
 }
 
@@ -13360,7 +13350,6 @@ function App() {
   const [page,setPageRaw]=useState("dashboard");
   const [privateAccMode,setPrivateAccMode]=useState(false);
   const [contractsEntry,setContractsEntry]=useState("manage");
-  const [collectionEntry,setCollectionEntry]=useState("followup");
   const [financeEntry,setFinanceEntry]=useState("portfolio");
   const [financeInvestor,setFinanceInvestor]=useState(null);
   const [customersEntry,setCustomersEntry]=useState("stmt");
@@ -13368,10 +13357,11 @@ function App() {
     if(target==="accounts"){setFinanceEntry("accounts");setPageRaw("portfolio");return;}
     if(target==="investorsList"){setFinanceEntry("accounts");setPageRaw("portfolio");return;}
     if(target==="goods"){setContractsEntry("goods");setPageRaw("contracts");return;}
-    if(target==="overdue"){setCollectionEntry("overdue");setPageRaw("collect");return;}
+    if(target==="overdue"){setPageRaw("dashboard");return;}
     if(target==="pastclients"){setCustomersEntry("customers");setPageRaw("customers");return;}
     if(target==="contracts"){setContractsEntry("manage");setPageRaw("contracts");return;}
-    if(target==="collect"){setCollectionEntry("followup");setPageRaw("collect");return;}
+    if(target==="followup"){setFinanceEntry("followup");setPageRaw("portfolio");return;}
+    if(target==="collect"){setFinanceEntry("collection");setPageRaw("portfolio");return;}
     if(target==="portfolio"){setFinanceEntry("portfolio");setPageRaw("portfolio");return;}
     if(target==="customers"){setCustomersEntry("stmt");setPageRaw("customers");return;}
     setPageRaw(target);
@@ -13744,7 +13734,7 @@ function App() {
     return () => { if (_unsubSnap) _unsubSnap(); };
   }, []);
 
-  const AI_ORIGIN_LABELS={dashboard:"الرئيسية",contracts:"العقود",customers:"العملاء",collect:"التحصيل",overdue:"المتعثرون",portfolio:"المالية",accounts:"الحسابات",investorsList:"المستثمرون",goods:"البضاعة",activity:"سجل النشاط",pastclients:"الزبائن",settings:"الإعدادات",search:"البحث"};
+  const AI_ORIGIN_LABELS={dashboard:"الرئيسية",contracts:"العقود",customers:"العملاء",collect:"التحصيل المالي",overdue:"المتعثرون",portfolio:"المالية",accounts:"الحسابات",investorsList:"المستثمرون",goods:"البضاعة",activity:"سجل النشاط",pastclients:"الزبائن",settings:"الإعدادات",search:"البحث"};
   const openQimaAI=(origin)=>{
     const from=(origin&&origin!=="qimaai")?origin:(page!=="qimaai"?page:aiReturnPage);
     setAiReturnPage(from||"dashboard");
@@ -13756,7 +13746,6 @@ function App() {
   const TABS=[
     {id:"dashboard",label:"🏠",name:"الرئيسية",color:"#1e3a5f"},
     {id:"contracts",label:"📋",name:"العقود",color:"#7c3aed"},
-    {id:"collect",label:"⚡",name:"التحصيل",color:"#0d9488"},
     {id:"portfolio",label:"📊",name:"المالية",color:"#0d9488"},
     {id:"customers",label:"👥",name:"العملاء",color:"#c8922a"},
     {id:"qimaai",label:"🤖",name:"قمة AI",color:"#6d28d9"},
@@ -13791,15 +13780,14 @@ function App() {
     reportsComp={<ContractReportsCenter contracts={publicContracts} investors={publicInvestors} payments={publicPayments} doneIds={doneIds}/>} 
   />;
 
-  const collectionHub=<CollectionCenter key={"collection-"+collectionEntry} initialTab={collectionEntry}
-    followupComp={switchTab=><CollectionCommandCenter contracts={publicContracts} investors={publicInvestors} payments={publicPayments} doneIds={doneIds} setPage={target=>target==="collect"?switchTab("investors"):setPage(target)} toast={toast} logAct={logAct} collectionFollowups={collectionFollowups} setCollectionFollowups={setCollectionFollowups}/>} 
-    investorsComp={<CollectionPage embedded contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="collect"/>}
-    overdueComp={<CollectionPage embedded contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="overdue"/>}
-  />;
+  const financeFollowup=<CollectionCommandCenter contracts={publicContracts} investors={publicInvestors} payments={publicPayments} doneIds={doneIds} setPage={setPage} toast={toast} logAct={logAct} collectionFollowups={collectionFollowups} setCollectionFollowups={setCollectionFollowups}/>;
+  const financeCollection=<CollectionPage embedded contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone} setContracts={setContracts} activeContracts={publicContracts} initialMode="collect"/>;
 
   const portfolioView=<MonthlyPortfolio contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={publicContracts} goodsContracts={publicAllContracts} investors={publicInvestors} settings={settings} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} payments={publicPayments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={publicContracts} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={publicContracts} goodsContracts={publicAllContracts} investors={publicInvestors} settings={settings} payments={publicPayments} daily={daily} dailyOpen={dailyOpen} txList={invTxList} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx}/>} doneIds={doneIds} txList={invTxList}/>;
-  const financeHub=<FinanceCenter key={"finance-"+financeEntry} initialTab={financeEntry}
+  const financeHub=<FinanceCenter key={"finance-"+financeEntry} initialTab={financeEntry} onTabChange={setFinanceEntry}
     portfolioComp={portfolioView}
+    followupComp={financeFollowup}
+    collectionComp={financeCollection}
     accountsComp={<AccountsPage embedded {...accountCommon} initialSubTab="inv" initialInvestorId={financeInvestor}/>}
     supportComp={<SupportingAccountsCenter loans={loans} setLoans={setLoans} investors={publicInvestors} contracts={publicContracts} settings={settings} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} txList={invTxList} setTxList={setInvTxList} toast={toast}/>} 
   />;
@@ -13814,7 +13802,6 @@ function App() {
         <nav className="q-appbar-nav" aria-label="أبواب النظام">
           <button type="button" className={page==="dashboard"?"active":""} onClick={()=>setPage("dashboard")}><i><NavIcon id="dashboard" on={page==="dashboard"}/></i><span>الرئيسية</span></button>
           <button type="button" className={page==="contracts"?"active":""} onClick={()=>setPage("contracts")}><i><NavIcon id="contracts" on={page==="contracts"}/></i><span>العقود</span></button>
-          <button type="button" className={page==="collect"||page==="overdue"?"active":""} onClick={()=>setPage("collect")}><i><NavIcon id="collect" on={page==="collect"||page==="overdue"}/></i><span>التحصيل</span></button>
           <button type="button" className={page==="portfolio"?"active":""} onClick={()=>setPage("portfolio")}><i><NavIcon id="portfolio" on={page==="portfolio"}/></i><span>المالية</span></button>
           <button type="button" className={page==="customers"?"active":""} onClick={()=>setPage("customers")}><i><NavIcon id="pastclients" on={page==="customers"}/></i><span>العملاء</span></button>
           <button type="button" className={page==="qimaai"?"active":""} onClick={()=>openQimaAI(page)}><i><NavIcon id="qimaai" on={page==="qimaai"}/></i><span>قمة AI</span></button>
@@ -13832,15 +13819,14 @@ function App() {
         </div>
       )}
 
-      {/* التبويبات السبعة مدمجة داخل الكليشة العلوية نفسها */}
+      {/* أبواب النظام الرئيسية */}
 
       <main className="q-main" style={styles.main}>
-        {/* المتعثرون انتقلت لتبويب داخل التحصيل */}
+        {/* المتعثرون يكتفى ببطاقتهم وتفاصيلهم داخل الرئيسية */}
         {page==="dashboard" && <Dashboard contracts={publicAllContracts} investors={publicInvestors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={publicPayments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} setPrivateAccMode={setPrivateAccMode} doneIds={doneIds}/>} 
         {page==="search" && <SearchPage contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="qimaai" && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:999,background:"#f4f4f6",overflowY:"auto"}}><QimaAI contracts={contracts} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct} sourcePage={aiReturnPage} onOpenPage={target=>setPage(target)} goBack={()=>setPage(aiReturnPage||"dashboard")}/></div>}
         {page==="customers" && <UpgradesPage key={"customers-"+customersEntry} customerOnly initialCustomerTab={customersEntry} contracts={publicContracts} allContracts={contracts} investors={publicInvestors} payments={publicPayments} activity={activity} settings={settings} toast={toast} setPage={setPage} doneIds={doneIds} pastClients={pastClients} setPastClients={setPastClients} collectionFollowups={collectionFollowups} setCollectionFollowups={setCollectionFollowups} logAct={logAct}/>} 
-        {page==="collect" && collectionHub}
         {page==="contracts" && contractsHub}
         {page==="portfolio" && financeHub}
         {page==="privateAccounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} setPayments={setPayments} setContracts={setContracts} toast={toast} goBack={()=>{setPage("dashboard");setPrivateAccMode(false);}} privateAccMode={true} initialSubTab="inv" gsWrite={gsWrite} doneIds={doneIds}/>} 
