@@ -13302,12 +13302,12 @@ function SupportingAccountsCenter({loans,setLoans,investors,contracts,settings,z
   </div>;
 }
 
-function FinanceCenter({portfolioComp,followupComp,collectionComp,accountsComp,supportComp,initialTab="portfolio",onTabChange}){
+function FinanceCenter({portfolioComp,followupComp,collectionComp,accountsComp,supportComp,initialTab="followup",onTabChange}){
   const [tab,setTab]=useState(initialTab);
   const tabs=[
-    {id:"portfolio",icon:"▥",label:"المحفظة الشهرية",note:"المؤشرات والجرد والأرصدة"},
     {id:"followup",icon:"⚑",label:"متابعة اليوم",note:"الأولويات والوعود"},
     {id:"collection",icon:"◎",label:"التحصيل المالي",note:"الزبائن والسدادات"},
+    {id:"portfolio",icon:"▥",label:"المحفظة الشهرية",note:"المؤشرات والجرد والأرصدة"},
     {id:"accounts",icon:"▣",label:"الحسابات",note:"12 حسابًا وحركاتها وأرصدتها"},
     {id:"support",icon:"◇",label:"الحسابات المساندة",note:"السلف والزكاة والمعلّق"}
   ];
@@ -13350,7 +13350,7 @@ function App() {
   const [page,setPageRaw]=useState("dashboard");
   const [privateAccMode,setPrivateAccMode]=useState(false);
   const [contractsEntry,setContractsEntry]=useState("manage");
-  const [financeEntry,setFinanceEntry]=useState("portfolio");
+  const [financeEntry,setFinanceEntry]=useState("followup");
   const [financeInvestor,setFinanceInvestor]=useState(null);
   const [customersEntry,setCustomersEntry]=useState("stmt");
   const setPage=(target)=>{
@@ -13362,7 +13362,7 @@ function App() {
     if(target==="contracts"){setContractsEntry("manage");setPageRaw("contracts");return;}
     if(target==="followup"){setFinanceEntry("followup");setPageRaw("portfolio");return;}
     if(target==="collect"){setFinanceEntry("collection");setPageRaw("portfolio");return;}
-    if(target==="portfolio"){setFinanceEntry("portfolio");setPageRaw("portfolio");return;}
+    if(target==="portfolio"){setFinanceEntry("followup");setPageRaw("portfolio");return;}
     if(target==="customers"){setCustomersEntry("stmt");setPageRaw("customers");return;}
     setPageRaw(target);
   };
