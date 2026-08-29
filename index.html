@@ -814,11 +814,32 @@ const dateLocal = (dt) => {
 };
 // رمز المستثمر: يُعرض الرمز إن وُجد، وإلا الاسم الكامل
 const invLabel = inv => (inv && inv.code && String(inv.code).trim()) ? String(inv.code).trim() : (inv ? inv.name : "—");
-// ترتيب المستثمرين حسب الرقم (3,4,7,8,9,10,11 ثم ل.ن, ح.ل)
-const sortedInvestors = (arr) => [..._arr(arr)].sort((a,b)=>{
-  const n = (x)=>{ const m=String(invLabel(x)).match(/(\d+)/); return m?parseInt(m[1]):9999; };
-  return n(a)-n(b);
-});
+// قاعدة موحّدة لترتيب الفرص رقمياً في جميع التبويبات.
+// تدعم الأرقام العربية والهندية، وتضع الفرص غير المرقمة بعد الفرص المرقمة.
+const _latinDigits = value => String(value==null?"":value)
+  .replace(/[٠-٩]/g,d=>String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
+  .replace(/[۰-۹]/g,d=>String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)));
+const opportunityNumber = inv => {
+  const candidates = [inv&&inv.code, inv&&inv.name];
+  for(const raw of candidates){
+    const text = _latinDigits(raw).trim();
+    if(!text) continue;
+    const tagged = text.match(/(?:فرصة|ف)\s*[-#:]?\s*(\d+)/i);
+    if(tagged) return parseInt(tagged[1],10);
+    const trailing = text.match(/(\d+)\s*$/);
+    if(trailing) return parseInt(trailing[1],10);
+    const all = text.match(/\d+/g);
+    if(all&&all.length) return parseInt(all[all.length-1],10);
+  }
+  return Number.POSITIVE_INFINITY;
+};
+const compareInvestors = (a,b) => {
+  const an=opportunityNumber(a), bn=opportunityNumber(b);
+  if(an!==bn) return an-bn;
+  const byName=String(invLabel(a)||"").localeCompare(String(invLabel(b)||""),"ar",{numeric:true,sensitivity:"base"});
+  return byName || String((a&&a.id)||"").localeCompare(String((b&&b.id)||""),"ar",{numeric:true});
+};
+const sortedInvestors = arr => [..._arr(arr)].sort(compareInvestors);
 const NUM = n => (+(n||0)).toLocaleString("en-US");
 
 function calcContract(amount, s = {profit:50, admin:2.5, acc:10, inst:10}, totalActual) {
@@ -4059,15 +4080,16 @@ function FundsPanel({investors, contracts, settings, setInvestors, toast}){
   const _cd = settings.cycleDay||21;
   const curYM = fiscalYM(new Date(), _cd);
   const mc = contracts.filter(c=>fiscalYM(c.date, _cd)===curYM);
+  const orderedInvestors = sortedInvestors(investors);
   return (
     <div className="q-contracts-funds">
       <div style={styles.panel}>
         <div style={styles.panelHdr}><h3 style={{margin:0,fontSize:15,fontWeight:700}}>🏦 الصناديق</h3></div>
         <div style={{padding:"14px 18px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:12}}>
-          {[...new Set(investors.map(i=>i.fund))].map(fund=>{
-            const cap=investors.filter(i=>i.fund===fund).reduce((s,i)=>s+i.capital,0);
+          {[...new Set(orderedInvestors.map(i=>i.fund))].map(fund=>{
+            const fundInvs = orderedInvestors.filter(i=>i.fund===fund);
+            const cap=fundInvs.reduce((s,i)=>s+i.capital,0);
             const fNet=mc.filter(c=>(investors.find(i=>String(i.id)===String(c.investorId))?.fund)===fund).reduce((s,c)=>s+calcC(c,settings).net,0);
-            const fundInvs = investors.filter(i=>i.fund===fund);
             return (
               <div key={fund} style={{padding:"14px",border:"1px solid "+C.border,borderRadius:10,background:"#fcfcfd"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
@@ -4125,9 +4147,10 @@ function FundsPanel({investors, contracts, settings, setInvestors, toast}){
 function AccountsPage({contracts, investors, setInvestors, settings, txList, setTxList, loans, setLoans, zakatTx, setZakatTx, pending, setPending, payments, setPayments, setContracts, toast, goBack, privateAccMode, initialSubTab, gsWrite, doneIds=[], embedded=false, initialInvestorId=null, onOpenInvestorAccount}) {
   const specialNames = ["1","2","4","7","8","9","11"];
   const isSpecial = function(inv){ var nm=(inv.name||"").trim(); return specialNames.some(function(n){return nm.endsWith(" "+n);}); };
-  const visibleInvestors = privateAccMode ? investors.filter(function(inv){return isSpecial(inv) || inv.hidden;}) : investors;
+  const orderedInvestors = sortedInvestors(investors);
+  const visibleInvestors = privateAccMode ? orderedInvestors.filter(function(inv){return isSpecial(inv) || inv.hidden;}) : orderedInvestors;
   const [subTab, setSubTab] = useState(initialSubTab || (privateAccMode ? "list" : "inv"));
-  const [selInv, setSelInv] = useState(initialInvestorId || (privateAccMode ? (visibleInvestors[0]?.id||null) : (investors[0]?.id||null)));
+  const [selInv, setSelInv] = useState(initialInvestorId || (visibleInvestors[0]?.id||null));
   const [invSubTab, setInvSubTab] = useState("inv");
   const [newContract, setNewContract] = useState(null); // null or {client,phone,amount,totalInst,instAmt,firstInst,goods}
   const [form, setForm] = useState({type:"deposit", amount:"", note:"", date:todayLocal()});
@@ -4448,7 +4471,7 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
                 </tr></thead>
                 <tbody>{perInvData.map((d,i)=>(
                   <tr key={i} style={{borderBottom:"1px solid "+K.line}}>
-                    <td style={{padding:"clamp(10px,1.2vw,16px) 12px",fontWeight:700,color:K.gold,whiteSpace:"nowrap",fontSize:"clamp(12px,1.3vw,18px)"}}>الفرصة {d.num} <span style={{fontSize:"clamp(10px,1vw,14px)",color:K.dim2,fontWeight:400}}>({d.cons})</span></td>
+                    <td style={{padding:"clamp(10px,1.2vw,16px) 12px",fontWeight:700,color:K.gold,whiteSpace:"nowrap",fontSize:"clamp(12px,1.3vw,18px)"}}><b style={{display:"inline-flex",width:24,height:24,borderRadius:8,alignItems:"center",justifyContent:"center",marginLeft:7,background:"#fff",color:"#141428",fontSize:11}}>{i+1}</b>الفرصة {d.num} <span style={{fontSize:"clamp(10px,1vw,14px)",color:K.dim2,fontWeight:400}}>({d.cons})</span></td>
                     <td style={{padding:"clamp(10px,1.2vw,16px) 8px",fontWeight:700,color:d.cash>=0?K.green:K.red,fontFamily:"monospace",fontSize:"clamp(13px,1.5vw,20px)"}}>{NF(d.cash)}</td>
                     <td style={{padding:"clamp(10px,1.2vw,16px) 8px",fontWeight:700,color:K.gold,fontFamily:"monospace",fontSize:"clamp(13px,1.5vw,20px)"}}>{NF(d.left)}</td>
                     <td style={{padding:"clamp(10px,1.2vw,16px) 8px",fontWeight:700,color:K.gold,fontFamily:"monospace",fontSize:"clamp(13px,1.5vw,20px)"}}>{NF(d.total)}</td>
@@ -4479,7 +4502,8 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
       <section className="q-account-tabs-shell">
         <div className="q-account-tabs-heading"><div><span>الحسابات</span><h3>حسابات المستثمرين</h3></div><b>{accountTabData.length} حساب</b></div>
         <div className="q-account-investor-tabs">
-          {accountTabData.map(r=><button type="button" key={r.inv.id} className={String(selInv)===String(r.inv.id)?"active":""} onClick={()=>{setInvSubTab("inv");setSelInv(r.inv.id);}}>
+          {accountTabData.map((r,i)=><button type="button" key={r.inv.id} className={String(selInv)===String(r.inv.id)?"active":""} onClick={()=>{setInvSubTab("inv");setSelInv(r.inv.id);}}>
+            <b style={{width:28,height:28,borderRadius:9,display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",fontSize:13,fontWeight:900}}>{i+1}</b>
             <span><strong>{invLabel(r.inv)}</strong><small>{r.last?("آخر حركة: "+r.last.label+" · "+fmtDate(r.last.date)):"لا توجد حركات"}</small></span>
             <em><small>الرصيد</small><b className={r.balance<0?"negative":""}>{SAR(r.balance)}</b></em>
           </button>)}
@@ -4875,10 +4899,7 @@ function JardPage({contracts,goodsContracts,investors,settings,txList,loans,zaka
     if(v>=0) totalSalib+=v; else totalMojab+=Math.abs(v);
   });
   const farq = totalSalib - totalMojab;
-  const sortedJardInvestors = [...investors].sort((a,b)=>{
-    const numOf = (nm)=>{ const m=String(nm).match(/(\d+)\s*$/); return m?parseInt(m[1]):9999; };
-    return numOf(a.name)-numOf(b.name);
-  });
+  const sortedJardInvestors = sortedInvestors(investors);
 
   const thS = {...styles.th, padding:"10px 14px"};
   const tdS = {...styles.td, padding:"9px 8px", verticalAlign:"middle"};
@@ -4889,6 +4910,7 @@ function JardPage({contracts,goodsContracts,investors,settings,txList,loans,zaka
   const Row = ({name,mojab,salib,onMojab,onSalib,auto,isInv,hint,i,autoSalib,hideMojab}) => (
     <tr className="qmp-jard-row" style={{background:i%2===0?C.white:C.gray}}>
       <td style={tdS}>
+        {isInv && <b style={{display:"inline-flex",width:25,height:25,borderRadius:8,alignItems:"center",justifyContent:"center",marginLeft:8,background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",fontSize:12}}>{i+1}</b>}
         <span style={{fontWeight:700}}>{name}</span>
         {hint && <div style={{fontSize:13,color:"#1f2937",marginTop:2}}>{hint}</div>}
         {isInv && <div style={{fontSize:13,color:"#1f2937",marginTop:2}}>رصيد الحساب الجاري</div>}
@@ -6495,7 +6517,7 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
   const printReport = () => {
     const w=window.open("","_blank"); if(!w){alert("اسمح بالنوافذ");return;}
     const cardsHtml=cards.map(c=>"<div class='cc'><div class='cl'>"+c[0]+"</div><div class='cv'>"+(c[3]?c[1]:SAR(c[1]))+"</div></div>").join("");
-    const rowsHtml=d.invRows.map(r=>"<tr><td style='text-align:right;font-weight:bold'>"+r.name+"</td><td>"+r.count+"</td><td>"+SAR(r.cash)+"</td><td>"+SAR(r.total)+"</td><td>"+SAR(r.inst)+"</td><td>"+SAR(r.coll)+"</td><td>"+SAR(r.due)+"</td><td style='color:#b91c1c'>"+SAR(r.late)+"</td></tr>").join("");
+    const rowsHtml=d.invRows.map((r,i)=>"<tr><td style='text-align:right;font-weight:bold'>"+(i+1)+". "+r.name+"</td><td>"+r.count+"</td><td>"+SAR(r.cash)+"</td><td>"+SAR(r.total)+"</td><td>"+SAR(r.inst)+"</td><td>"+SAR(r.coll)+"</td><td>"+SAR(r.due)+"</td><td style='color:#b91c1c'>"+SAR(r.late)+"</td></tr>").join("");
     w.document.write("<!DOCTYPE html><html dir='rtl'><head><meta charset='utf-8'><title>تقرير "+mLabel(ym)+"</title><style>*{font-family:Arial;box-sizing:border-box}body{padding:18px;color:#000}h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:18px 0 8px}.g{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.cc{border:1px solid #000;border-radius:8px;padding:8px;text-align:center}.cl{font-size:12px;color:#555}.cv{font-size:16px;font-weight:bold}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #000;padding:6px;text-align:center;font-weight:600}th{background:#fff;color:#000;font-weight:900;border-bottom:2px solid #000}@media print{@page{size:A4 landscape;margin:8mm}}</style></head><body onload='window.print()'><h1>مؤسسة قمة الفرصة التجارية</h1><div>تقرير "+mLabel(ym)+"</div><h2>مؤشرات الشهر</h2><div class='g'>"+cardsHtml+"</div><h2>محصلة المستثمرين</h2><table><thead><tr><th>المستثمر</th><th>عدد العقود</th><th>النقدي</th><th>الإجمالي</th><th>الأقساط</th><th>المحصّل</th><th>المستحق</th><th>المتعثّر</th></tr></thead><tbody>"+rowsHtml+"</tbody></table></body></html>");
     w.document.close();
     attachPrintReturn(w);
@@ -6601,7 +6623,7 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
             <tbody>
               {d.invRows.map((r,i)=>(
                 <tr key={i} style={{background:i%2?"#fafafa":"#fff"}}>
-                  <td style={{...td,textAlign:"right",fontWeight:800,color:C.ink}}>{r.name}</td>
+                  <td style={{...td,textAlign:"right",fontWeight:800,color:C.ink}}><b style={{display:"inline-flex",width:24,height:24,borderRadius:8,alignItems:"center",justifyContent:"center",marginLeft:7,background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",fontSize:11}}>{i+1}</b>{r.name}</td>
                   <td style={{...td,fontWeight:700}}>{r.count}</td>
                   <td style={td}>{SAR(r.cash)}</td>
                   <td style={{...td,color:"#7c3aed"}}>{SAR(r.total)}</td>
@@ -6660,7 +6682,7 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
               <tbody>
                 {rows2.map((r,i)=>{const bg=i%2?"#fafafa":"#fff";return(
                   <tr key={i} style={{background:bg}}>
-                    <td style={tdSticky(bg)}>{r.name}</td>
+                    <td style={tdSticky(bg)}><b style={{display:"inline-flex",width:24,height:24,borderRadius:8,alignItems:"center",justifyContent:"center",marginLeft:7,background:"linear-gradient(140deg,#e0b85c,#c8922a)",color:"#141428",fontSize:11}}>{i+1}</b>{r.name}</td>
                     <td style={{...td,fontWeight:700,color:"#0d9488"}}>{r.activeN||"—"}</td>
                     <td style={{...td,fontWeight:700,color:"#d97706"}}>{r.deferN||"—"}</td>
                     <td style={{...td,fontWeight:700,color:"#6b7280"}}>{r.doneN||"—"}</td>
@@ -8169,7 +8191,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},doneIds=
 
           {/* ══════ بطاقات المستثمرين ══════ */}
           <div className="q-investors-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",alignItems:"start",gap:11,maxWidth:1200,margin:"0 auto",width:"100%"}}>
-          {list.map(r=>{
+          {list.map((r,opportunityIndex)=>{
             const inv=r.inv, isOpen=openId===inv.id;
             const secLbl = t => (<div style={{fontSize:11.5,color:"#18324a",fontWeight:900,letterSpacing:".2px",
               marginBottom:10,display:"flex",alignItems:"center",gap:8}}>
@@ -8185,6 +8207,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},doneIds=
               {/* رأس البطاقة */}
               <div data-inv-card="" onClick={()=>setOpenId(isOpen?null:inv.id)}
                 style={{padding:"15px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",background:isOpen?"linear-gradient(135deg,#12314b,#071a2b)":"linear-gradient(135deg,#0d2940,#071a2b)",color:"#fff",touchAction:"manipulation",WebkitTapHighlightColor:"transparent"}}>
+                <b style={{width:34,height:34,borderRadius:11,display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:"linear-gradient(140deg,#f0cf79,#c8922a)",color:"#081b2b",fontSize:15,fontWeight:900,boxShadow:"0 5px 12px rgba(200,146,42,.22)"}}>{opportunityIndex+1}</b>
                 <div style={{flex:1,minWidth:0}}>
                   <div data-inv-name="" style={{fontFamily:"'IBM Plex Sans Arabic','Tajawal',Arial",fontSize:18,fontWeight:900,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{inv.name}</div>
                   <div data-inv-sub="" style={{fontSize:12,color:"#b8c5d1",marginTop:4,fontWeight:700}}>{r.activeC} عقد جاري · آخر سداد {shortDate(r.lastPay)}</div>
@@ -10249,7 +10272,7 @@ function QimaAI({contracts, investors, payments, setPayments, settings, doneIds,
     ctx += `دخل شهري متوقع: ${monthlyExpected} | متعثرين: ${overdueList.length} (${overdueList.reduce((s,c)=>s+_overdue(c)*_n(c.instAmt),0)} ر.س)\n`;
 
     ctx += `\n═══ المستثمرون (${investors.length}) ═══\n`;
-    investors.forEach(inv=>{
+    sortedInvestors(investors).forEach(inv=>{
       const ic = activeC.filter(c=>String(c.investorId)===String(inv.id));
       ctx += `• ${inv.name} (ID:${inv.id}) | رأس المال: ${_n(inv.fund)} | نشطة: ${ic.length} | نقدي: ${ic.reduce((s,c)=>s+_n(c.amount),0)} | أقساط: ${ic.reduce((s,c)=>s+_n(c.totalInst),0)} | واصل: ${ic.reduce((s,c)=>s+_paid(c.id),0)} | متبقي: ${ic.reduce((s,c)=>s+_left(c),0)} | قسط شهري: ${ic.reduce((s,c)=>s+_n(c.instAmt),0)} | متعثرين: ${ic.filter(c=>_overdue(c)>0).length}\n`;
     });
@@ -11223,11 +11246,7 @@ tbody tr:nth-child(even){background:#f7f9fb}
             React.createElement("svg",{width:"clamp(20px,5.5vw,26px)",height:"clamp(20px,5.5vw,26px)",viewBox:"0 0 24 24",fill:"none",stroke:"#c8922a",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:"M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"}),React.createElement("circle",{cx:9,cy:7,r:4}),React.createElement("path",{d:"M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"})),
             "المستثمرون"
           ),
-          investors.filter(inv=>inv.name).slice().sort((a,b)=>{
-            const nOf=x=>{const m=String(x.name||"").match(/(\d+)\s*$/); return m?parseInt(m[1],10):9999;};
-            const d=nOf(a)-nOf(b);
-            return d!==0?d:String(a.name||"").localeCompare(String(b.name||""),"ar");
-          }).map((inv,i)=>{
+          sortedInvestors(investors.filter(inv=>inv.name)).map((inv,i)=>{
             const ic=activeC.filter(c=>String(c.investorId)===String(inv.id));
             const tot=ic.reduce((s,c)=>s+_n(c.totalInst),0), paid=ic.reduce((s,c)=>s+_paid(c.id),0);
             const profit=ic.reduce((s,c)=>{const p=_paid(c.id),t=_n(c.totalInst),cost=_n(c.amount);return s+(t>0&&cost>0?Math.max(0,p-(cost/t*p)):0);},0);
@@ -12091,11 +12110,7 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
     const iid=String(iv.id);
     if(!grouped[iid]) grouped[iid]={inv:iv, items:[]};
   });
-  const groups = Object.values(grouped).sort((a,b)=>{
-    const na=a.inv?(a.inv.code||a.inv.name):"", nb=b.inv?(b.inv.code||b.inv.name):"";
-    const ma=String(na).match(/(\d+)/), mb=String(nb).match(/(\d+)/);
-    return (ma?parseInt(ma[1]):9999)-(mb?parseInt(mb[1]):9999);
-  });
+  const groups = Object.values(grouped).sort((a,b)=>compareInvestors(a.inv||{},b.inv||{}));
 
   const filtered = rows.filter(x=>filterInv==="all"||String(x.c.investorId)===filterInv);
   const totalDefaulters = filtered.length;
@@ -12137,7 +12152,7 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
       {groups.length===0 && (
         <div style={{...styles.panel,textAlign:"center",padding:40,color:"#6b7280",fontSize:16}}>✅ لا يوجد متعثرون</div>
       )}
-      {groups.map(g=>{
+      {groups.map((g,groupIndex)=>{
         const gRemaining = g.items.reduce((s,x)=>{const pd=(payments||[]).filter(p=>p.contractId===x.c.id).reduce((ss,p)=>ss+(p.amount||0),0);return s+Math.max(0,(+x.c.totalInst||0)-pd);},0);
         const gPaid = g.items.reduce((s,x)=>(payments||[]).filter(p=>p.contractId===x.c.id).reduce((ss,p)=>ss+(p.amount||0),s),0);
         const gTotal = g.items.reduce((s,x)=>s+(+x.c.totalInst||0),0);
@@ -12145,7 +12160,7 @@ function OverduePage({contracts, investors, payments, goCollect, onFlag}) {
         return (
         <div key={g.inv?g.inv.id:"x"} style={styles.panel}>
           <div style={{...styles.panelHdr,background:"linear-gradient(140deg,#e0b85c,#c8922a)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <h3 style={{margin:0,fontSize:16,fontWeight:900,color:"#fff"}}>{g.inv?invLabel(g.inv):"—"}</h3>
+            <h3 style={{margin:0,fontSize:16,fontWeight:900,color:"#fff",display:"flex",alignItems:"center",gap:8}}><b style={{width:26,height:26,borderRadius:8,display:"inline-flex",alignItems:"center",justifyContent:"center",background:"#fff",color:"#141428",fontSize:12}}>{groupIndex+1}</b>{g.inv?invLabel(g.inv):"—"}</h3>
             <span style={{background:C.red,color:"#fff",borderRadius:20,padding:"3px 14px",fontSize:14,fontWeight:800}}>{g.items.length} متعثر</span>
           </div>
           <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
@@ -12646,6 +12661,7 @@ function CollectionCommandCenter({contracts, investors, payments, doneIds, setPa
 // ═══════════ متابعة اليوم المعتمدة: تواصل فقط بلا تسجيل مبالغ أو تخمين ═══════════
 function ApprovedTodayFollowup({contracts,investors,payments,doneIds,toast,logAct,collectionFollowups,setCollectionFollowups}){
   const [selectedId,setSelectedId]=React.useState("");
+  const [selectedInv,setSelectedInv]=React.useState("");
   const [search,setSearch]=React.useState("");
   const dayKey=todayLocal(), now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   const doneSet=new Set(_arr(doneIds).map(String)), pays=_arr(payments), follows=[..._arr(collectionFollowups)].sort((a,b)=>String(b.updatedAt||b.id||"").localeCompare(String(a.updatedAt||a.id||"")));
@@ -12660,14 +12676,19 @@ function ApprovedTodayFollowup({contracts,investors,payments,doneIds,toast,logAc
     const todayPays=cp.filter(p=>String(p.date||"").slice(0,10)===dayKey), lastPay=[...cp].sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")))[0]||null;
     return {c,paid,remaining,inst,due,days,latest,lastPay,todayPaid:todayPays.reduce((s,p)=>s+(+p.amount||0),0),dueAmount:Math.min(inst||remaining,remaining)};
   }).filter(r=>r.remaining>0).sort((a,b)=>(b.days-a.days)||(b.remaining-a.remaining));
-  React.useEffect(()=>{if(rows.length&&!rows.some(r=>String(r.c.id)===String(selectedId)))setSelectedId(String(rows[0].c.id));},[rows.length,selectedId]);
-  const selected=rows.find(r=>String(r.c.id)===String(selectedId))||rows[0]||null;
+  const groups=sortedInvestors(invs).map(inv=>({inv,rows:rows.filter(r=>String(r.c.investorId)===String(inv.id))})).filter(g=>g.rows.length);
+  const orphan=rows.filter(r=>!invs.some(i=>String(i.id)===String(r.c.investorId)));if(orphan.length)groups.push({inv:{id:"__none",name:"غير محدد"},rows:orphan});
+  React.useEffect(()=>{if(groups.length&&!groups.some(g=>String(g.inv.id)===String(selectedInv)))setSelectedInv(String(groups[0].inv.id));},[groups.length,selectedInv]);
+  const scopedRows=selectedInv?rows.filter(r=>String(r.c.investorId)===String(selectedInv)||(selectedInv==="__none"&&!invs.some(i=>String(i.id)===String(r.c.investorId)))):rows;
+  React.useEffect(()=>{if(scopedRows.length&&!scopedRows.some(r=>String(r.c.id)===String(selectedId)))setSelectedId(String(scopedRows[0].c.id));},[scopedRows.length,selectedId,selectedInv]);
+  const selected=scopedRows.find(r=>String(r.c.id)===String(selectedId))||scopedRows[0]||null;
   const happenedToday=f=>String(f.updatedAt||f.date||"").slice(0,10)===dayKey;
-  const contactedToday=new Set(follows.filter(f=>f.type==="contacted"&&happenedToday(f)).map(f=>String(f.contractId)));
-  const promised=rows.filter(r=>r.latest&&r.latest.type==="promise"&&String(r.latest.date||"")>=dayKey);
-  const remainingFollow=rows.filter(r=>!contactedToday.has(String(r.c.id))&&!r.todayPaid).length;
-  const dueTotal=rows.filter(r=>r.days>=0).reduce((s,r)=>s+r.dueAmount,0);
-  const filtered=rows.filter(r=>!search.trim()||String(r.c.client||"").includes(search.trim())||String(number(r.c)).includes(search.trim())||phone(r.c).includes(search.replace(/\D/g,"")));
+  const scopedIds=new Set(scopedRows.map(r=>String(r.c.id)));
+  const contactedToday=new Set(follows.filter(f=>f.type==="contacted"&&happenedToday(f)&&scopedIds.has(String(f.contractId))).map(f=>String(f.contractId)));
+  const promised=scopedRows.filter(r=>r.latest&&r.latest.type==="promise"&&String(r.latest.date||"")>=dayKey);
+  const remainingFollow=scopedRows.filter(r=>!contactedToday.has(String(r.c.id))&&!r.todayPaid).length;
+  const dueTotal=scopedRows.filter(r=>r.days>=0).reduce((s,r)=>s+r.dueAmount,0);
+  const filtered=scopedRows.filter(r=>!search.trim()||String(r.c.client||"").includes(search.trim())||String(number(r.c)).includes(search.trim())||phone(r.c).includes(search.replace(/\D/g,"")));
   const future=n=>{const d=new Date(today);d.setDate(d.getDate()+n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
   const addFollow=(r,type,date,note)=>{if(!r)return;const entry={id:Date.now()+Math.floor(Math.random()*1000),contractId:r.c.id,type,date:date||dayKey,note:note||"",updatedAt:new Date().toISOString()};setCollectionFollowups&&setCollectionFollowups([entry,..._arr(collectionFollowups)]);logAct&&logAct(type==="promise"?"وعد بالسداد":type==="postponed"?"تأجيل متابعة":"تواصل","متابعة اليوم",(r.c.client||"")+" — عقد #"+number(r.c));};
   const call=r=>{const p=phone(r&&r.c);if(!p){toast&&toast("لا يوجد رقم جوال مسجل","warn");return;}addFollow(r,"contacted",dayKey,"اتصال");window.location.href="tel:"+p;};
@@ -12676,7 +12697,8 @@ function ApprovedTodayFollowup({contracts,investors,payments,doneIds,toast,logAc
   const typeName=t=>t==="promise"?"وعد بالسداد":t==="postponed"?"تأجيل متابعة":t==="contacted"?"تم التواصل":"متابعة";
   return <div className="qaf-page">
     <div className="qaf-title"><div><span>المالية</span><h2>متابعة اليوم</h2><p>الاتصالات والوعود وخطوات المتابعة فقط</p></div><b>{fmtDate(dayKey)}</b></div>
-    <div className="qaf-kpis"><div><small>مستحق اليوم</small><strong>{NUM(dueTotal)}</strong><span>{rows.filter(r=>r.days>=0).length} عميل</span></div><div><small>تم التواصل</small><strong>{contactedToday.size}</strong><span>عميل اليوم</span></div><div><small>وعود السداد</small><strong>{promised.length}</strong><span>وعد قائم</span></div><div><small>متبقي للمتابعة</small><strong>{remainingFollow}</strong><span>عميل</span></div></div>
+    <div className="qfc-investors qaf-investors">{groups.map((g,i)=><button key={g.inv.id} className={String(selectedInv)===String(g.inv.id)?"active":""} onClick={()=>{setSelectedInv(String(g.inv.id));setSearch("");}}><span>{i+1}</span><div><strong>{g.inv.name||"مستثمر"}</strong><small>{g.rows.length} عميل للمتابعة</small></div></button>)}</div>
+    <div className="qaf-kpis"><div><small>مستحق اليوم</small><strong>{NUM(dueTotal)}</strong><span>{scopedRows.filter(r=>r.days>=0).length} عميل</span></div><div><small>تم التواصل</small><strong>{contactedToday.size}</strong><span>عميل اليوم</span></div><div><small>وعود السداد</small><strong>{promised.length}</strong><span>وعد قائم</span></div><div><small>متبقي للمتابعة</small><strong>{remainingFollow}</strong><span>عميل</span></div></div>
     <div className="qaf-grid">
       <section className="qaf-card qaf-list"><header><div><small>الأولوية</small><h3>قائمة متابعة اليوم</h3></div><span>{filtered.length}</span></header><label className="qaf-search"><span>⌕</span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="ابحث بالاسم أو العقد أو الجوال"/></label><div className="qaf-scroll">{filtered.map(r=><button key={r.c.id} className={selected&&String(selected.c.id)===String(r.c.id)?"active":""} onClick={()=>setSelectedId(String(r.c.id))}><div><strong>{r.c.client||"عميل بلا اسم"}</strong><small>عقد رقم {number(r.c)}</small></div><span><b>{r.days>0?r.days:0}</b><small>يوم</small></span></button>)}</div></section>
       <section className="qaf-card qaf-profile">{selected?<><header><div><small>ملف المتابعة</small><h3>{selected.c.client||"عميل بلا اسم"}</h3></div><span>{selected.days>0?"متأخر":"مستحق"}</span></header><div className="qaf-profile-info"><div><small>عقد رقم</small><strong>{number(selected.c)}</strong></div><div><small>الجوال</small><strong>{phone(selected.c)||"غير مسجل"}</strong></div><div><small>المستثمر</small><strong>{invName(selected.c)}</strong></div><div><small>القسط</small><strong>{NUM(selected.inst)}</strong></div><div><small>المتبقي</small><strong>{NUM(selected.remaining)}</strong></div><div><small>آخر سداد</small><strong>{selected.lastPay?fmtDate(selected.lastPay.date):"لا يوجد"}</strong></div></div><div className="qaf-actions"><button onClick={()=>call(selected)}>اتصال</button><button onClick={()=>whatsapp(selected)}>واتساب</button><button onClick={()=>{addFollow(selected,"promise",future(1),"وعد بالسداد");toast&&toast("تم تسجيل وعد السداد");}}>وعد بالسداد</button><button onClick={()=>{addFollow(selected,"postponed",future(2),"تأجيل المتابعة");toast&&toast("تم تأجيل المتابعة يومين");}}>تأجيل المتابعة</button></div></>:<div className="qaf-empty">لا توجد حالات تحتاج متابعة</div>}</section>
@@ -12702,7 +12724,7 @@ function ApprovedFinancialCollection({contracts,investors,payments,setPayments,t
     let late=0;const first=new Date(c.firstInst||c.startDate||c.date||"");if(inst>0&&!isNaN(first.getTime())){const now=new Date();let months=(now.getFullYear()-first.getFullYear())*12+(now.getMonth()-first.getMonth());if(now.getDate()>=first.getDate())months++;const expected=Math.min(overall,Math.max(0,months)*inst);late=Math.max(0,expected-received);}
     return {c,cp,overall,received,remaining,late,inst};
   }).filter(r=>r.remaining>0);
-  const groups=invs.map(inv=>({inv,rows:rows.filter(r=>String(r.c.investorId)===String(inv.id))})).filter(g=>g.rows.length);
+  const groups=sortedInvestors(invs).map(inv=>({inv,rows:rows.filter(r=>String(r.c.investorId)===String(inv.id))})).filter(g=>g.rows.length);
   const orphan=rows.filter(r=>!invs.some(i=>String(i.id)===String(r.c.investorId)));if(orphan.length)groups.push({inv:{id:"__none",name:"غير محدد"},rows:orphan});
   React.useEffect(()=>{if(groups.length&&!groups.some(g=>String(g.inv.id)===String(selectedInv)))setSelectedInv(String(groups[0].inv.id));},[groups.length,selectedInv]);
   const group=groups.find(g=>String(g.inv.id)===String(selectedInv))||groups[0]||{inv:{},rows:[]};
@@ -12718,7 +12740,7 @@ function ApprovedFinancialCollection({contracts,investors,payments,setPayments,t
   const collected=group.rows.reduce((s,r)=>s+r.received,0), remaining=group.rows.reduce((s,r)=>s+r.remaining,0);
   return <div className="qfc-page">
     <div className="qfc-title"><div><span>المالية</span><h2>التحصيل المالي</h2><p>الأقساط والسدادات حسب المستثمر</p></div><label><span>⌕</span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="ابحث باسم العميل أو رقم العقد"/></label></div>
-    <div className="qfc-investors">{groups.map(g=><button key={g.inv.id} className={String(group.inv.id)===String(g.inv.id)?"active":""} onClick={()=>setSelectedInv(String(g.inv.id))}><span>{String(g.inv.name||"م").charAt(0)}</span><div><strong>{g.inv.name||"مستثمر"}</strong><small>{g.rows.length} عميل</small></div></button>)}</div>
+    <div className="qfc-investors">{groups.map((g,i)=><button key={g.inv.id} className={String(group.inv.id)===String(g.inv.id)?"active":""} onClick={()=>setSelectedInv(String(g.inv.id))}><span>{i+1}</span><div><strong>{g.inv.name||"مستثمر"}</strong><small>{g.rows.length} عميل</small></div></button>)}</div>
     <div className="qfc-summary"><div><small>المستثمر</small><strong>{group.inv.name||"—"}</strong></div><div><small>الواصل</small><strong>{NUM(collected)}</strong></div><div><small>المتبقي</small><strong>{NUM(remaining)}</strong></div><div><small>العملاء</small><strong>{group.rows.length}</strong></div></div>
     <div className={historyRow?"qfc-layout history-open":"qfc-layout"}><section className="qfc-table-card"><header><div><small>حساب المستثمر</small><h3>العملاء والأقساط</h3></div><span>{shown.length} عميل</span></header><div className="qfc-table-wrap"><table><thead><tr><th>الاسم</th><th>الإجمالي</th><th>الواصل</th><th>المتبقي</th><th>المتأخر</th><th>القسط</th><th>الإجراء</th></tr></thead><tbody>{shown.length?shown.map(r=><tr key={r.c.id}><td><button className="qfc-client" onClick={()=>setHistoryId(String(r.c.id))}><strong>{r.c.client||"عميل بلا اسم"}</strong><small>عقد رقم {number(r.c)}</small></button></td><td>{NUM(r.overall)}</td><td className="qfc-green">{NUM(r.received)}</td><td>{NUM(r.remaining)}</td><td className={r.late>0?"qfc-red":""}>{NUM(r.late)}</td><td>{NUM(r.inst)}</td><td><button className="qfc-pay" onClick={()=>openPay(r)}>تسجيل سداد</button></td></tr>):<tr><td colSpan="7" className="qfc-empty">لا توجد عقود نشطة لهذا المستثمر</td></tr>}</tbody></table></div></section>
       {historyRow&&<aside className="qfc-history"><button className="qfc-close" onClick={()=>setHistoryId("")}>×</button><small>سدادات العميل</small><h3>{historyRow.c.client||"عميل بلا اسم"}</h3><b>عقد رقم {number(historyRow.c)}</b><div className="qfc-history-table"><table><thead><tr><th>التاريخ</th><th>القسط</th><th>المتبقي</th></tr></thead><tbody>{history.length?history.map(p=><tr key={p.id}><td>{fmtDate(p.date)}</td><td>{NUM(p.amount)}</td><td>{NUM(p.balance)}</td></tr>):<tr><td colSpan="3" className="qfc-empty">لا توجد سدادات مسجلة</td></tr>}</tbody></table></div><footer><div><small>إجمالي الأقساط</small><strong>{NUM(historyRow.overall)}</strong></div><div><small>المتبقي الحالي</small><strong>{NUM(historyRow.remaining)}</strong></div></footer></aside>}
@@ -12932,7 +12954,7 @@ function UpgradesPage({contracts, allContracts, investors, payments, activity, s
     const invNames=[...new Set(his.map(c=>{
       const inv=(investors||[]).find(i=>String(i.id)===String(c.investorId));
       return inv?(inv.name||inv.title||"مستثمر"):"غير محدد";
-    }))];
+    }))].sort((a,b)=>compareInvestors({name:a},{name:b}));
     const nextDue=data.dueItems[0]||null;
     const paidPct=data.total>0?Math.min(100,Math.round(data.paid/data.total*100)):0;
     const completeFields=[customerName,idNum,phone,job,address,nationality,guarantor,guarantorId,guarantorPhone];
@@ -13694,14 +13716,14 @@ function App() {
     if(!localStorage.getItem("qimma_inv_names_fixed")){
       localStorage.setItem("qimma_inv_names_fixed","1");
       localStorage.removeItem("qimma_investors");
-      return DEFAULT_INVESTORS;
+      return sortedInvestors(DEFAULT_INVESTORS);
     }
-    const d=loadLS("qimma_investors",DEFAULT_INVESTORS);return d&&d.length?d:DEFAULT_INVESTORS;});
+    const d=loadLS("qimma_investors",DEFAULT_INVESTORS);return sortedInvestors(d&&d.length?d:DEFAULT_INVESTORS);});
   const [contracts,setContractsRaw]=useState(()=>_arr(loadLS("qimma_contracts",[])));
   const [settings,setSettingsRaw]=useState(()=>loadLS("qimma_settings",{profit:50,admin:2.5,acc:10,inst:10}));
 
   const setInvestors = v => {
-    const d=typeof v==="function"?v(investors):v;
+    const d=sortedInvestors(typeof v==="function"?v(investors):v);
     const before=_arr(investors);
     setInvestorsRaw(d); saveLS("qimma_investors",d); gsWrite("investors",d);
     try {
@@ -13833,7 +13855,7 @@ function App() {
         gsRead("daily"), gsRead("daily_open"), gsRead("activity"), gsRead("monthclose"), gsRead("price_ov"), gsRead("banktx"),
         gsRead("doneIds"), gsRead("pastClients"), gsRead("note_ov"), gsRead("collection_followups")
       ]);
-      if (inv) { setInvestorsRaw(inv); saveLS("qimma_investors", inv); }
+      if (inv) { const orderedInv=sortedInvestors(inv); setInvestorsRaw(orderedInv); saveLS("qimma_investors", orderedInv); }
       if (con) { setContractsRaw(con); saveLS("qimma_contracts", con); }
       if (set) { setSettingsRaw(set); saveLS("qimma_settings", set); }
       if (tx)  { setInvTxListRaw(tx); saveLS("qimma_txlist", tx); }
@@ -13869,7 +13891,7 @@ function App() {
             try { data = typeof raw.payload === "string" ? JSON.parse(raw.payload) : raw.payload; } catch(e) { return; }
             if (data == null) return;
             switch(sheet) {
-              case "investors": setInvestorsRaw(data); saveLS("qimma_investors", data); break;
+              case "investors": { const orderedInv=sortedInvestors(data); setInvestorsRaw(orderedInv); saveLS("qimma_investors", orderedInv); break; }
               case "contracts": setContractsRaw(data); saveLS("qimma_contracts", data); break;
               case "settings": setSettingsRaw(data); saveLS("qimma_settings", data); break;
               case "txlist": setInvTxListRaw(data); saveLS("qimma_txlist", data); break;
