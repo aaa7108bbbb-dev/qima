@@ -819,6 +819,23 @@ const invLabel = inv => (inv && inv.code && String(inv.code).trim()) ? String(in
 const _latinDigits = value => String(value==null?"":value)
   .replace(/[٠-٩]/g,d=>String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
   .replace(/[۰-۹]/g,d=>String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)));
+// رقم العقد في الكشوف: المرحّل يأخذ رقمه الأصلي من الملاحظات،
+// والعقد المنشأ في النظام يعرض حقل num كما هو. لا نستخدم id الطويل بديلاً.
+const reportContractNumber = contract => {
+  if(!contract) return "—";
+  const clean=value=>_latinDigits(value).trim();
+  if(contract.contractType==="migrated"){
+    const note=clean(contract.note||contract.notes||contract.remarks||"");
+    const patterns=[
+      /(?:رقم\s*)?العقد(?:\s*رقم)?\s*[:#\-–—]?\s*(\d{1,10})/,
+      /(?:^|[\s،:؛\-])عقد(?:\s*رقم)?\s*[:#\-–—]?\s*(\d{1,10})/
+    ];
+    for(const pattern of patterns){const match=note.match(pattern);if(match)return match[1];}
+    const oldNum=clean(contract.oldNum);if(oldNum)return oldNum;
+  }
+  const num=clean(contract.num);if(num)return num;
+  const oldNum=clean(contract.oldNum);return oldNum||"—";
+};
 const opportunityNumber = inv => {
   const candidates = [inv&&inv.code, inv&&inv.name];
   for(const raw of candidates){
@@ -2036,11 +2053,11 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
     if(!list.length) return;
     const isAll = invSearch==="__all__";
     const invName = isAll ? "كل المستثمرين" : (invSearch || "");
-    const cNum = c => { if(c.contractType==="migrated"){ if(c.oldNum) return c.oldNum; const m=String(c.note||"").match(/عقد\s*(\d+)/); return m?m[1]:"—"; } return c.num||"—"; };
+    const cNum = reportContractNumber;
     const cleanInv = c => { const inv=investors.find(i=>String(i.id)===String(c.investorId)); const m=String(invLabel(inv)||"").match(/(\d+)/); return m?"فرصة "+m[1]:(inv?invLabel(inv):"—"); };
     const invNum = c => { const inv=investors.find(i=>String(i.id)===String(c.investorId)); const m=String(invLabel(inv)||"").match(/(\d+)/); return m?parseInt(m[1]):9999; };
     // ستايل موحد: خط عريض أسود + عناوين أسمك
-    const pStyle = `*{font-family:Arial}body{padding:18px;color:#000}h2{font-size:18px;text-align:center;margin:0 0 10px}table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}th,td{border:1px solid #000;padding:8px;text-align:center;font-weight:600}th{background:#fff;color:#000;font-weight:900;font-size:13px;border-bottom:2px solid #000}@media print{.noprint{display:none!important}button{display:none!important}.page-break{page-break-before:always}}`;
+    const pStyle = `*{font-family:Arial}body{padding:18px;color:#000}h2{font-size:18px;text-align:center;margin:0 0 10px}table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}th,td{border:1px solid #000;padding:8px;text-align:center;font-weight:600}th{background:#fff;color:#000;font-weight:900;font-size:13px;border-bottom:2px solid #000}th:nth-child(2),td:nth-child(2){width:56px;min-width:56px;max-width:56px;padding-left:3px;padding-right:3px;white-space:nowrap}@media print{.noprint{display:none!important}button{display:none!important}.page-break{page-break-before:always}}`;
     let content = "";
     if(isAll){
       // تجميع حسب المستثمر
@@ -2052,35 +2069,35 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         const gName = cleanInv(grp[0]);
         const pb = idx>0 ? ' class="page-break"' : '';
         if(reportMode==="brief"){
-          let rows = grp.map((c,i)=>`<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${c.cPhone||""}</td><td>${reportStatusOf(c)}</td><td>${NUM(c.instAmt||0)}</td><td style="width:100px"></td></tr>`).join("");
-          const tot = grp.reduce((s,c)=>s+(c.instAmt||0),0);
-          rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="5">الإجمالي</td><td>${NUM(tot)}</td><td></td></tr>`;
-          content += `<div${pb}><h2>${gName} — (${grp.length} عقد)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th><th>الحالة</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+          let rows = grp.map((c,i)=>{const left=Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id));return `<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${c.cPhone||""}</td><td style="color:#dc2626">${NUM(left)}</td><td>${NUM(c.instAmt||0)}</td><td style="width:100px"></td></tr>`;}).join("");
+          const tot = grp.reduce((s,c)=>s+(c.instAmt||0),0),leftTot=grp.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
+          rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="4">الإجمالي</td><td style="color:#dc2626">${NUM(leftTot)}</td><td>${NUM(tot)}</td><td></td></tr>`;
+          content += `<div${pb}><h2>${gName} — (${grp.length} عقد)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th><th>المتبقي</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${rows}</tbody></table></div>`;
         } else {
           let rows = grp.map((c,i)=>{
             const paid=_getPaid(payments,c.id); const left=Math.max(0,(c.totalInst||0)-paid);
-            return `<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${reportStatusOf(c)}</td><td>${NUM(c.amount||0)}</td><td>${NUM(c.totalInst||0)}</td><td>${NUM(c.instAmt||0)}</td><td style="color:#15803d">${NUM(paid)}</td><td style="color:#dc2626">${NUM(left)}</td></tr>`;
+            return `<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td style="color:#dc2626">${NUM(left)}</td><td>${NUM(c.amount||0)}</td><td>${NUM(c.totalInst||0)}</td><td>${NUM(c.instAmt||0)}</td><td style="color:#15803d">${NUM(paid)}</td></tr>`;
           }).join("");
           const tA=grp.reduce((s,c)=>s+(c.amount||0),0), tT=grp.reduce((s,c)=>s+(c.totalInst||0),0), tI=grp.reduce((s,c)=>s+(c.instAmt||0),0), tP=grp.reduce((s,c)=>s+_getPaid(payments,c.id),0), tL=grp.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
-          rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="4">الإجمالي</td><td>${NUM(tA)}</td><td>${NUM(tT)}</td><td>${NUM(tI)}</td><td style="color:#15803d">${NUM(tP)}</td><td style="color:#dc2626">${NUM(tL)}</td></tr>`;
-          content += `<div${pb}><h2>${gName} — (${grp.length} عقد)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>الحالة</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>المحصّل</th><th>المتبقي</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+          rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="3">الإجمالي</td><td style="color:#dc2626">${NUM(tL)}</td><td>${NUM(tA)}</td><td>${NUM(tT)}</td><td>${NUM(tI)}</td><td style="color:#15803d">${NUM(tP)}</td></tr>`;
+          content += `<div${pb}><h2>${gName} — (${grp.length} عقد)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>المتبقي</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>المحصّل</th></tr></thead><tbody>${rows}</tbody></table></div>`;
         }
       });
     } else {
       // مستثمر فردي
       if(reportMode==="brief"){
-        let rows = list.map((c,i)=>`<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${c.cPhone||""}</td><td>${reportStatusOf(c)}</td><td>${NUM(c.instAmt||0)}</td><td style="width:100px"></td></tr>`).join("");
-        const tot = list.reduce((s,c)=>s+(c.instAmt||0),0);
-        rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="5">الإجمالي</td><td>${NUM(tot)}</td><td></td></tr>`;
-        content = `<h2>كشف المستثمر — ${invName} (مختصر)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th><th>الحالة</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${rows}</tbody></table>`;
+        let rows = list.map((c,i)=>{const left=Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id));return `<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${c.cPhone||""}</td><td style="color:#dc2626">${NUM(left)}</td><td>${NUM(c.instAmt||0)}</td><td style="width:100px"></td></tr>`;}).join("");
+        const tot = list.reduce((s,c)=>s+(c.instAmt||0),0),leftTot=list.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
+        rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="4">الإجمالي</td><td style="color:#dc2626">${NUM(leftTot)}</td><td>${NUM(tot)}</td><td></td></tr>`;
+        content = `<h2>كشف المستثمر — ${invName} (مختصر)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th><th>المتبقي</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${rows}</tbody></table>`;
       } else {
         let rows = list.map((c,i)=>{
           const paid=_getPaid(payments,c.id); const left=Math.max(0,(c.totalInst||0)-paid);
-          return `<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td>${reportStatusOf(c)}</td><td>${NUM(c.amount||0)}</td><td>${NUM(c.totalInst||0)}</td><td>${NUM(c.instAmt||0)}</td><td style="color:#15803d">${NUM(paid)}</td><td style="color:#dc2626">${NUM(left)}</td></tr>`;
+          return `<tr><td>${i+1}</td><td>${cNum(c)}</td><td>${c.client||""}</td><td style="color:#dc2626">${NUM(left)}</td><td>${NUM(c.amount||0)}</td><td>${NUM(c.totalInst||0)}</td><td>${NUM(c.instAmt||0)}</td><td style="color:#15803d">${NUM(paid)}</td></tr>`;
         }).join("");
         const tA=list.reduce((s,c)=>s+(c.amount||0),0), tT=list.reduce((s,c)=>s+(c.totalInst||0),0), tI=list.reduce((s,c)=>s+(c.instAmt||0),0), tP=list.reduce((s,c)=>s+_getPaid(payments,c.id),0), tL=list.reduce((s,c)=>s+Math.max(0,(c.totalInst||0)-_getPaid(payments,c.id)),0);
-        rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="4">الإجمالي</td><td>${NUM(tA)}</td><td>${NUM(tT)}</td><td>${NUM(tI)}</td><td style="color:#15803d">${NUM(tP)}</td><td style="color:#dc2626">${NUM(tL)}</td></tr>`;
-        content = `<h2>كشف المستثمر — ${invName} (مفصل)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>الحالة</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>المحصّل</th><th>المتبقي</th></tr></thead><tbody>${rows}</tbody></table>`;
+        rows += `<tr style="background:#fffbf0;font-weight:900"><td colspan="3">الإجمالي</td><td style="color:#dc2626">${NUM(tL)}</td><td>${NUM(tA)}</td><td>${NUM(tT)}</td><td>${NUM(tI)}</td><td style="color:#15803d">${NUM(tP)}</td></tr>`;
+        content = `<h2>كشف المستثمر — ${invName} (مفصل)</h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>المتبقي</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>المحصّل</th></tr></thead><tbody>${rows}</tbody></table>`;
       }
     }
     const w = window.open("","_blank");
@@ -2697,7 +2714,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
             </button>
             <button style={{padding:"8px 14px",borderRadius:10,border:"none",background:"#25d366",color:"#fff",fontWeight:800,fontSize:12,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",display:"flex",alignItems:"center",gap:4}} onClick={()=>{
               const NUM=n=>Math.round(+(n||0)).toLocaleString("en-US");
-              const cNum=c=>{if(c.contractType==="migrated"){if(c.num)return c.num;if(c.oldNum)return c.oldNum;var m=String(c.note||"").match(/(\d+)/);return m?m[1]:"—";}return c.num||"—";};
+              const cNum=reportContractNumber;
               const invName=invSearch==="__all__"?"كل المستثمرين":invSearch;
               const isBrief=reportMode==="brief";
               let tRows="";
@@ -3903,7 +3920,7 @@ function DeductionsSheet({contracts, investors, payments, doneIds=[], embedded=f
   const printSheet=()=>{
     const fmt=n=>Math.round(+(n||0)).toLocaleString("en-US");
     const isCheck = payF.has("شيكات")||payF.has("المقاصة");
-    const cNum = c => { if(c.contractType==="migrated"){ if(c.num) return c.num; if(c.oldNum) return c.oldNum; const m=String(c.note||"").match(/(\d+)/); return m?m[1]:"—"; } return c.num||"—"; };
+    const cNum = reportContractNumber;
     const cleanInv = name => { const m=String(name||"").match(/(\d+)/); return m?"فرصة "+m[1]:name||"—"; };
     // ترتيب موحد للطباعة
     const _dispBankP = x => {
@@ -3950,7 +3967,7 @@ function DeductionsSheet({contracts, investors, payments, doneIds=[], embedded=f
     const colCount = hasChecks ? 9 : 8;
     const win=window.open("","_blank");
     win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${titleLabel}</title>
-    <style>body{font-family:Arial;padding:8px 6px;color:#000;margin:0}.header{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px}.org{font-size:15px;font-weight:900}.sub{font-size:11px}.title{text-align:center;font-size:17px;font-weight:900;border:2px solid #000;padding:8px;margin-bottom:10px}table{width:100%;border-collapse:collapse;font-size:12px;border:2px solid #000}th,td{border:1px solid #000;padding:4px 5px;text-align:right;font-weight:700;white-space:nowrap}th{font-weight:900;border-bottom:2px solid #000;font-size:11px}td:nth-child(1){width:22px;text-align:center}td:nth-child(2){white-space:normal}td.amt{font-weight:900;text-align:left}.foot{text-align:center;color:#444;font-size:10px;margin-top:10px;border-top:1px solid #000;padding-top:6px}@media print{button{display:none!important}@page{size:A4;margin:5mm}}</style>
+    <style>body{font-family:Arial;padding:8px 6px;color:#000;margin:0}.header{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px}.org{font-size:15px;font-weight:900}.sub{font-size:11px}.title{text-align:center;font-size:17px;font-weight:900;border:2px solid #000;padding:8px;margin-bottom:10px}table{width:100%;border-collapse:collapse;font-size:12px;border:2px solid #000}th,td{border:1px solid #000;padding:4px 5px;text-align:right;font-weight:700;white-space:nowrap}th{font-weight:900;border-bottom:2px solid #000;font-size:11px}th:nth-child(1),td:nth-child(1){width:22px;text-align:center}th:nth-child(2),td:nth-child(2){width:56px;max-width:56px;white-space:nowrap;text-align:center}td.amt{font-weight:900;text-align:left}.foot{text-align:center;color:#444;font-size:10px;margin-top:10px;border-top:1px solid #000;padding-top:6px}@media print{button{display:none!important}@page{size:A4;margin:5mm}}</style>
     </head><body>
     <div class="header"><div><div class="org">مؤسسة قمة الفرصة التجارية</div><div class="sub">بريدة - شارع الثلاثين</div><div class="sub">ج: 0555171283  ت: 0163839323</div></div>
     <div style="text-align:left"><div class="sub">التقارير والكشوف</div><div class="sub">التاريخ: ${(()=>{const d=new Date();return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0");})()}</div></div></div>
@@ -4087,7 +4104,8 @@ function DeductionsSheet({contracts, investors, payments, doneIds=[], embedded=f
           <table style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14}}>
             <thead><tr>{["✓","اسم الزبون","رقم الجوال","رقم العقد","رقم الحساب","البنك","المستثمر","الحالة","يوم","القسط","المتبقي"].map((h,hi)=>{
               const isName = h==="اسم الزبون";
-              return <th key={h} style={{...styles.th,whiteSpace:"nowrap",position:"sticky",top:0,zIndex:isName?12:10,...(isName?{right:0,zIndex:12}:{})}}>{h}</th>;
+              const isContract = h==="رقم العقد";
+              return <th key={h} style={{...styles.th,whiteSpace:"nowrap",position:"sticky",top:0,zIndex:isName?12:10,...(isName?{right:0,zIndex:12}:{}),...(isContract?{width:64,minWidth:64,maxWidth:64,textAlign:"center"}:{})}}>{h}</th>;
             })}</tr></thead>
             <tbody>
               {dRows.map((c,i)=>(
@@ -4095,7 +4113,7 @@ function DeductionsSheet({contracts, investors, payments, doneIds=[], embedded=f
                   <td style={{...styles.td,textAlign:"center"}}><input type="checkbox" checked={!!checked[c.id]} onChange={()=>toggle(c.id)} style={{width:20,height:20,cursor:"pointer"}}/></td>
                   <td style={{...styles.td,fontWeight:700,whiteSpace:"nowrap",textDecoration:checked[c.id]?"line-through":"none",position:"sticky",right:0,background:checked[c.id]?"#ecfdf5":(i%2===0?"#fff":"#f8f8f8"),zIndex:5,borderLeft:"1px solid #e0d8c6"}}>{c.client}</td>
                   <td style={{...styles.td,whiteSpace:"nowrap"}}>{c.cPhone||"—"}</td>
-                  <td style={{...styles.td,textAlign:"center"}}>{c.contractType==="migrated"?(c.oldNum||(String(c.note||"").match(/عقد\s*(\d+)/)||[])[1]||"—"):(c.num||"—")}</td>
+                  <td style={{...styles.td,textAlign:"center",width:64,minWidth:64,maxWidth:64,whiteSpace:"nowrap"}}>{reportContractNumber(c)}</td>
                   <td style={{...styles.td,fontFamily:"monospace",whiteSpace:"nowrap"}}>{c.bankAccount||"—"}</td>
                   <td style={{...styles.td,whiteSpace:"nowrap",fontWeight:700,color:_bankOf(c)?C.ink:"#cbd5e1"}}>{_bankOf(c)||"—"}</td>
                   <td style={{...styles.td,whiteSpace:"nowrap"}}>{c.invName}</td>
@@ -6895,28 +6913,28 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
             <table className="qkpi-table">
               <thead><tr><th>#</th><th>اسم الزبون</th><th>رقم العقد</th><th>المستثمر</th><th>المبلغ المتعثر</th><th>التصنيف</th></tr></thead>
               <tbody>{visibleRows.length===0?<tr><td colSpan={6} className="qkpi-empty">لا يوجد متعثرون محددون يدويًا</td></tr>:visibleRows.map((r,i)=><tr key={r.c.id}>
-                <td>{i+1}</td><td className="qkpi-name">{r.c.client||"—"}</td><td>#{r.c.num||"—"}</td><td>{invText(r.c)}</td><td className="qkpi-red qkpi-money">{nf(r.amount)} ر.س</td><td><span className="qkpi-badge is-manual">يدوي</span></td>
+                <td>{i+1}</td><td className="qkpi-name">{r.c.client||"—"}</td><td>{reportContractNumber(r.c)}</td><td>{invText(r.c)}</td><td className="qkpi-red qkpi-money">{nf(r.amount)} ر.س</td><td><span className="qkpi-badge is-manual">يدوي</span></td>
               </tr>)}</tbody>
             </table>
           ) : mode==="target" ? (
             <table className="qkpi-table qkpi-target-simple">
               <thead><tr><th>#</th><th>اسم الزبون</th><th>المستثمر</th><th>تاريخ الاستحقاق</th><th>قيمة القسط</th><th>المحصّل</th><th>الحالة</th></tr></thead>
               <tbody>{visibleRows.length===0?<tr><td colSpan={7} className="qkpi-empty">لا توجد أقساط في هذه الدورة</td></tr>:visibleRows.map((r,i)=>{const sm=statusMeta[r.status]||statusMeta.unknown;return <tr key={r.c.id}>
-                <td>{i+1}</td><td className="qkpi-name qkpi-customer-primary"><strong>{r.c.client||"—"}</strong><small>عقد #{r.c.num||"—"} · المرحلة: {stageText(r.c)}</small></td><td>{invText(r.c)}</td><td>{r.dueDateStr?fmtDate(r.dueDateStr):"—"}</td><td className="qkpi-money">{nf(r.due)}</td><td className="qkpi-green">{nf(r.paidApplied)}</td><td><span className={"qkpi-badge "+sm[1]}>{sm[0]}</span></td>
+                <td>{i+1}</td><td className="qkpi-name qkpi-customer-primary"><strong>{r.c.client||"—"}</strong><small>عقد {reportContractNumber(r.c)} · المرحلة: {stageText(r.c)}</small></td><td>{invText(r.c)}</td><td>{r.dueDateStr?fmtDate(r.dueDateStr):"—"}</td><td className="qkpi-money">{nf(r.due)}</td><td className="qkpi-green">{nf(r.paidApplied)}</td><td><span className={"qkpi-badge "+sm[1]}>{sm[0]}</span></td>
               </tr>})}</tbody>
             </table>
           ) : mode==="remaining" ? (
             <table className="qkpi-table">
               <thead><tr><th>#</th><th>الزبون والعقد</th><th>المستثمر</th><th>الاستحقاق</th><th>القسط</th><th>المدفوع</th><th>الباقي</th><th>الحالة</th></tr></thead>
               <tbody>{visibleRows.length===0?<tr><td colSpan={8} className="qkpi-empty">لا توجد نتائج</td></tr>:visibleRows.map((r,i)=>{const sm=statusMeta[r.status]||statusMeta.unknown;return <tr key={r.c.id}>
-                <td>{i+1}</td><td className="qkpi-name">{r.c.client||"—"}<small>عقد #{r.c.num||"—"}</small></td><td>{invText(r.c)}</td><td>{r.dueDateStr?fmtDate(r.dueDateStr):"—"}</td><td>{nf(r.due)}</td><td className="qkpi-green">{nf(r.paidApplied)}</td><td className="qkpi-red qkpi-money">{nf(r.remainingDue)}</td><td><span className={"qkpi-badge "+sm[1]}>{sm[0]}</span></td>
+                <td>{i+1}</td><td className="qkpi-name">{r.c.client||"—"}<small>عقد {reportContractNumber(r.c)}</small></td><td>{invText(r.c)}</td><td>{r.dueDateStr?fmtDate(r.dueDateStr):"—"}</td><td>{nf(r.due)}</td><td className="qkpi-green">{nf(r.paidApplied)}</td><td className="qkpi-red qkpi-money">{nf(r.remainingDue)}</td><td><span className={"qkpi-badge "+sm[1]}>{sm[0]}</span></td>
               </tr>})}</tbody>
             </table>
           ) : (
             <table className="qkpi-table">
               <thead><tr><th>#</th><th>الزبون والعقد</th><th>المستثمر</th><th>تاريخ الاستحقاق</th><th>{mode==="done"?"المبلغ المنجز":"قيمة القسط"}</th><th>{mode==="done"?"تاريخ السداد":"المحصّل"}</th><th>الحالة</th></tr></thead>
               <tbody>{visibleRows.length===0?<tr><td colSpan={7} className="qkpi-empty">لا توجد نتائج في هذا التبويب</td></tr>:visibleRows.map((r,i)=>{const sm=statusMeta[r.status]||statusMeta.unknown;return <tr key={r.c.id}>
-                <td>{i+1}</td><td className="qkpi-name">{r.c.client||"—"}<small>عقد #{r.c.num||"—"}</small></td><td>{invText(r.c)}</td><td>{r.dueDateStr?fmtDate(r.dueDateStr):"—"}</td><td className="qkpi-money">{nf(r.due)}</td><td className="qkpi-green">{mode==="done"?(r.lastPaymentDate?fmtDate(r.lastPaymentDate):"—"):nf(r.paidApplied)}</td><td><span className={"qkpi-badge "+sm[1]}>{sm[0]}</span></td>
+                <td>{i+1}</td><td className="qkpi-name">{r.c.client||"—"}<small>عقد {reportContractNumber(r.c)}</small></td><td>{invText(r.c)}</td><td>{r.dueDateStr?fmtDate(r.dueDateStr):"—"}</td><td className="qkpi-money">{nf(r.due)}</td><td className="qkpi-green">{mode==="done"?(r.lastPaymentDate?fmtDate(r.lastPaymentDate):"—"):nf(r.paidApplied)}</td><td><span className={"qkpi-badge "+sm[1]}>{sm[0]}</span></td>
               </tr>})}</tbody>
             </table>
           )}
@@ -7235,7 +7253,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
                     {paid?"✓":(i+1)}</div>
                   <div className="q-monthly-installments-client" style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:14,fontWeight:700,color:C.ink,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{c.client}</div>
-                    <div style={{fontSize:11,color:"#64748b",marginTop:2}}>عقد #{c.num||"—"} · استحقاق {shortD(c.firstInst)||"—"}</div>
+                    <div style={{fontSize:11,color:"#64748b",marginTop:2}}>عقد {reportContractNumber(c)} · استحقاق {shortD(c.firstInst)||"—"}</div>
                   </div>
                   <div className="q-monthly-installments-investor">{inv?invLabel(inv):"—"}</div>
                   <div className="q-monthly-installments-amount" style={{textAlign:"left",flexShrink:0}}>
@@ -7272,7 +7290,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
                         unpaidRows.forEach((r,i)=>{
                           const c2=r.c;
                           const inv2=investors.find(x=>String(x.id)===String(c2.investorId));
-                          html+="<tr><td>"+(i+1)+"</td><td>"+c2.client+"</td><td>"+(inv2?invLabel(inv2):"—")+"</td><td>"+fmt(r.due)+"</td><td>#"+(c2.num||"—")+"</td></tr>";
+                          html+="<tr><td>"+(i+1)+"</td><td>"+c2.client+"</td><td>"+(inv2?invLabel(inv2):"—")+"</td><td>"+fmt(r.due)+"</td><td>"+reportContractNumber(c2)+"</td></tr>";
                         });
                         html+="</tbody></table>";
                         html+="<div style='text-align:center;margin-top:16px;font-weight:700'>الإجمالي: "+fmt(unpaidAmount)+" ﷼ · "+unpaidRows.length+" عميل</div>";
@@ -12637,7 +12655,7 @@ function CollectionCommandCenter({contracts, investors, payments, doneIds, setPa
   const now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   const todayKey=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
   const doneSet=new Set(_arr(doneIds).map(String)), payList=_arr(payments), flowList=_arr(collectionFollowups), invList=_arr(investors);
-  const num=c=>c?(c.num||c.oldNum||c.id||"—"):"—";
+  const num=reportContractNumber;
   const inst=c=>+(c.instAmt||c.installment||0), total=c=>+(c.totalInst||c.total||c.amount||0);
   const phone=c=>String((c&&(c.cPhone||c.phone))||"").replace(/[^0-9]/g,"");
   const invName=c=>{const x=invList.find(i=>String(i.id)===String(c&&c.investorId));return x?(x.name||x.title||"مستثمر"):"غير محدد";};
@@ -12706,7 +12724,7 @@ function ApprovedTodayFollowup({contracts,investors,payments,doneIds,toast,logAc
   const [search,setSearch]=React.useState("");
   const dayKey=todayLocal(), now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   const doneSet=new Set(_arr(doneIds).map(String)), pays=_arr(payments), follows=[..._arr(collectionFollowups)].sort((a,b)=>String(b.updatedAt||b.id||"").localeCompare(String(a.updatedAt||a.id||"")));
-  const invs=_arr(investors), number=c=>c?(c.num||c.oldNum||c.id||"—"):"—", total=c=>+(c.totalInst||c.total||c.amount||0), installment=c=>+(c.instAmt||c.installment||0);
+  const invs=_arr(investors), number=reportContractNumber, total=c=>+(c.totalInst||c.total||c.amount||0), installment=c=>+(c.instAmt||c.installment||0);
   const phone=c=>String((c&&(c.cPhone||c.phone))||"").replace(/[^0-9]/g,"");
   const invName=c=>{const x=invs.find(i=>String(i.id)===String(c&&c.investorId));return x?(x.name||x.title||"مستثمر"):"غير محدد";};
   const dateOnly=v=>{if(!v)return null;const d=new Date(v);return isNaN(d.getTime())?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());};
@@ -12760,7 +12778,7 @@ function ApprovedFinancialCollection({contracts,investors,payments,setPayments,t
   const [saving,setSaving]=React.useState(false);
   const savingRef=React.useRef(false);
   const pays=_arr(payments), invs=_arr(investors), doneSet=new Set(_arr(doneIds).map(String));
-  const number=c=>c?(c.num||c.oldNum||c.id||"—"):"—", total=c=>+(c.totalInst||c.total||c.amount||0), installment=c=>+(c.instAmt||c.installment||0);
+  const number=reportContractNumber, total=c=>+(c.totalInst||c.total||c.amount||0), installment=c=>+(c.instAmt||c.installment||0);
   const rows=_arr(contracts).filter(c=>c&&!c.deleted&&!doneSet.has(String(c.id))).map(c=>{
     const cp=pays.filter(p=>String(p.contractId)===String(c.id)), received=cp.reduce((s,p)=>s+(+p.amount||0),0), overall=total(c), remaining=Math.max(0,overall-received), inst=installment(c);
     let late=0;const first=new Date(c.firstInst||c.startDate||c.date||"");if(inst>0&&!isNaN(first.getTime())){const now=new Date();let months=(now.getFullYear()-first.getFullYear())*12+(now.getMonth()-first.getMonth());if(now.getDate()>=first.getDate())months++;const expected=Math.min(overall,Math.max(0,months)*inst);late=Math.max(0,expected-received);}
@@ -12883,13 +12901,7 @@ function UpgradesPage({contracts, allContracts, investors, payments, activity, s
     .replace(/ة/g,"ه")
     .replace(/[^\u0600-\u06FFa-zA-Z0-9]+/g," ")
     .trim().toLowerCase();
-  const stmtContractNum = c => {
-    if(!c) return "—";
-    if(c.num) return c.num;
-    if(c.oldNum) return c.oldNum;
-    const m=String(c.note||"").match(/(?:عقد|رقم)?\s*#?\s*(\d+)/);
-    return m?m[1]:"—";
-  };
+  const stmtContractNum = reportContractNumber;
   const stmtContractPaid = c => pays
     .filter(p=>String(p.contractId)===String(c.id))
     .reduce((sum,p)=>sum+(+p.amount||0),0);
@@ -13025,13 +13037,13 @@ function UpgradesPage({contracts, allContracts, investors, payments, activity, s
       const rows=typeof limit==="number"?his.slice(0,limit):his;
       return <div className="qcf-table-wrap">
         <table className="qcf-table">
-          <thead><tr><th>رقم العقد</th><th>التاريخ</th><th>المستثمر</th><th>الإجمالي</th><th>المسدد</th><th>المتبقي</th><th>الحالة</th></tr></thead>
+          <thead><tr><th className="q-contract-no-cell">رقم العقد</th><th>التاريخ</th><th>المستثمر</th><th>الإجمالي</th><th>المسدد</th><th>المتبقي</th><th>الحالة</th></tr></thead>
           <tbody>{rows.map(c=>{
             const inv=(investors||[]).find(i=>String(i.id)===String(c.investorId));
             const rem=stmtContractRemaining(c), paid=stmtContractPaid(c);
             const done=stmtIsEnded(c);
             return <tr key={c.id}>
-              <td className="qcf-strong">#{stmtContractNum(c)}</td>
+              <td className="qcf-strong q-contract-no-cell">{stmtContractNum(c)}</td>
               <td className="qcf-date">{c.date?fmtDate(c.date):"—"}</td>
               <td>{inv?(inv.name||inv.title||"—"):"—"}</td>
               <td>{SAR(stmtContractTotal(c))}</td>
@@ -13144,10 +13156,10 @@ function UpgradesPage({contracts, allContracts, investors, payments, activity, s
 
       {stmtView==="payments" && <section className="qcf-section qcf-full-section">
         <div className="qcf-section-head"><div><span className="qcf-section-kicker">{sortedPays.length} حركة سداد</span><h3>سجل السدادات الموحد</h3></div><strong className="qcf-total-paid">المجموع {SAR(data.paid)}</strong></div>
-        <div className="qcf-table-wrap"><table className="qcf-table"><thead><tr><th>#</th><th>التاريخ</th><th>رقم العقد</th><th>البيان</th><th>المبلغ</th></tr></thead><tbody>
+        <div className="qcf-table-wrap"><table className="qcf-table"><thead><tr><th>#</th><th>التاريخ</th><th className="q-contract-no-cell">رقم العقد</th><th>البيان</th><th>المبلغ</th></tr></thead><tbody>
           {sortedPays.length?sortedPays.map((p,i)=>{
             const c=his.find(x=>String(x.id)===String(p.contractId));
-            return <tr key={p.id||i}><td>{i+1}</td><td className="qcf-date">{p.date?fmtDate(p.date):"—"}</td><td className="qcf-strong">#{stmtContractNum(c)}</td><td>{p.note||p.method||"سداد"}</td><td className="qcf-paid qcf-strong">{SAR(p.amount)}</td></tr>;
+            return <tr key={p.id||i}><td>{i+1}</td><td className="qcf-date">{p.date?fmtDate(p.date):"—"}</td><td className="qcf-strong q-contract-no-cell">{stmtContractNum(c)}</td><td>{p.note||p.method||"سداد"}</td><td className="qcf-paid qcf-strong">{SAR(p.amount)}</td></tr>;
           }):<tr><td colSpan="5"><div className="qcf-empty">لا توجد سدادات مسجلة لهذا العميل</div></td></tr>}
         </tbody></table></div>
       </section>}
@@ -13474,7 +13486,7 @@ function PaymentsReportPage({contracts,investors,payments}){
     return {...p,c,inv};
   }).filter(r=>{
     const q=search.trim().toLowerCase();
-    const hay=[r.c&&r.c.client,r.c&&r.c.num,r.c&&r.c.idNum,r.inv&&r.inv.name,r.note].join(" ").toLowerCase();
+    const hay=[r.c&&r.c.client,reportContractNumber(r.c),r.c&&r.c.idNum,r.inv&&r.inv.name,r.note].join(" ").toLowerCase();
     if(q&&!hay.includes(q)) return false;
     if(invId!=="all"&&String(r.c&&r.c.investorId)!==String(invId)) return false;
     if(from&&String(r.date||"")<from) return false;
@@ -13494,8 +13506,8 @@ function PaymentsReportPage({contracts,investors,payments}){
     <div id="q-payments-print" className="q-report-print-surface">
       <div className="q-print-brand"><strong>مؤسسة قمة الفرصة التجارية</strong><span>تقرير السدادات</span><small>{fmtDate(todayLocal())}</small></div>
       <div className="q-report-kpis"><div><span>إجمالي السدادات</span><strong>{NUM(total)}</strong></div><div><span>عدد الحركات</span><strong>{rows.length}</strong></div><div><span>العملاء</span><strong>{clients}</strong></div></div>
-      <div className="q-report-table-wrap"><table><thead><tr><th>#</th><th>التاريخ</th><th>العميل</th><th>رقم العقد</th><th>المستثمر</th><th>طريقة السداد</th><th>المبلغ</th><th>ملاحظة</th></tr></thead><tbody>
-        {rows.length?rows.map((r,i)=><tr key={r.id||i}><td>{i+1}</td><td>{r.date?fmtDate(r.date):"—"}</td><td className="strong">{r.c&&r.c.client||"—"}</td><td>#{r.c&&r.c.num||"—"}</td><td>{r.inv?invLabel(r.inv):"—"}</td><td>{r.method||r.type||"سداد"}</td><td className="amount">{NUM(r.amount)}</td><td>{r.note||"—"}</td></tr>):<tr><td colSpan="8" className="q-empty-row">لا توجد سدادات مطابقة للفلاتر</td></tr>}
+      <div className="q-report-table-wrap"><table><thead><tr><th>#</th><th>التاريخ</th><th>العميل</th><th className="q-report-contract-no">رقم العقد</th><th>المستثمر</th><th>طريقة السداد</th><th>المبلغ</th><th>ملاحظة</th></tr></thead><tbody>
+        {rows.length?rows.map((r,i)=><tr key={r.id||i}><td>{i+1}</td><td>{r.date?fmtDate(r.date):"—"}</td><td className="strong">{r.c&&r.c.client||"—"}</td><td className="q-report-contract-no">{reportContractNumber(r.c)}</td><td>{r.inv?invLabel(r.inv):"—"}</td><td>{r.method||r.type||"سداد"}</td><td className="amount">{NUM(r.amount)}</td><td>{r.note||"—"}</td></tr>):<tr><td colSpan="8" className="q-empty-row">لا توجد سدادات مطابقة للفلاتر</td></tr>}
       </tbody></table></div>
     </div>
   </div>;
@@ -13507,7 +13519,7 @@ function InvestorClientsReportPage({contracts,investors,payments,doneIds}){
   const invs=sortedInvestors(_arr(investors)).filter((inv,i,list)=>list.findIndex(x=>String(x.id)===String(inv.id))===i);
   const doneSet=new Set(_arr(doneIds).map(String));
   const paidMap=_arr(payments).reduce((map,p)=>{const key=String(p.contractId);map[key]=(map[key]||0)+(+p.amount||0);return map;},{});
-  const cNum=c=>c?(c.num||c.oldNum||c.id||"—"):"—";
+  const cNum=reportContractNumber;
   const paidOf=c=>paidMap[String(c.id)]||0;
   const totalOf=c=>+(c.totalInst||c.total||c.amount||0);
   const ended=c=>{
@@ -13515,7 +13527,6 @@ function InvestorClientsReportPage({contracts,investors,payments,doneIds}){
     if(doneSet.has(String(c.id))||c.done||c.status==="done")return true;
     const total=totalOf(c);return total>0&&paidOf(c)>=total;
   };
-  const statusOf=c=>c.contractType==="defer"?"مؤجل":c.contractType==="migrated"?"مستمر مرحّل":"مستمر";
   const invOrder=new Map(invs.map((inv,i)=>[String(inv.id),i]));
   const rowSort=(a,b)=>{
     const ai=invOrder.has(String(a.investorId))?invOrder.get(String(a.investorId)):9999;
@@ -13539,19 +13550,20 @@ function InvestorClientsReportPage({contracts,investors,payments,doneIds}){
     const section=(g,index)=>{
       let body="";
       if(mode==="brief"){
-        body=g.rows.map((c,i)=>`<tr><td>${i+1}</td><td>${esc(cNum(c))}</td><td>${esc(c.client||"—")}</td><td>${esc(c.cPhone||c.phone||"—")}</td><td>${esc(statusOf(c))}</td><td class="num">${NUM(c.instAmt||c.installment||0)}</td><td></td></tr>`).join("");
-        body+=`<tr class="total"><td colspan="5">الإجمالي</td><td class="num">${NUM(g.rows.reduce((s,c)=>s+(+(c.instAmt||c.installment)||0),0))}</td><td></td></tr>`;
-        return `<section${index?' class="page-break"':''}><h2>${esc(g.name)} <small>(${g.rows.length} زبون)</small></h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th><th>الحالة</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${body}</tbody></table></section>`;
+        body=g.rows.map((c,i)=>{const left=Math.max(0,totalOf(c)-paidOf(c));return `<tr><td>${i+1}</td><td class="contract-no">${esc(cNum(c))}</td><td>${esc(c.client||"—")}</td><td>${esc(c.cPhone||c.phone||"—")}</td><td class="num red">${NUM(left)}</td><td class="num">${NUM(c.instAmt||c.installment||0)}</td><td></td></tr>`;}).join("");
+        const leftTotal=g.rows.reduce((s,c)=>s+Math.max(0,totalOf(c)-paidOf(c)),0),installmentTotal=g.rows.reduce((s,c)=>s+(+(c.instAmt||c.installment)||0),0);
+        body+=`<tr class="total"><td colspan="4">الإجمالي</td><td class="num red">${NUM(leftTotal)}</td><td class="num">${NUM(installmentTotal)}</td><td></td></tr>`;
+        return `<section${index?' class="page-break"':''}><h2>${esc(g.name)} <small>(${g.rows.length} زبون)</small></h2><table><thead><tr><th>#</th><th class="contract-no">رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th><th>المتبقي</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${body}</tbody></table></section>`;
       }
-      body=g.rows.map((c,i)=>{const paid=paidOf(c),left=Math.max(0,totalOf(c)-paid);return `<tr><td>${i+1}</td><td>${esc(cNum(c))}</td><td>${esc(c.client||"—")}</td><td>${esc(statusOf(c))}</td><td class="num">${NUM(c.amount||0)}</td><td class="num">${NUM(totalOf(c))}</td><td class="num">${NUM(c.instAmt||c.installment||0)}</td><td class="num green">${NUM(paid)}</td><td class="num red">${NUM(left)}</td></tr>`;}).join("");
+      body=g.rows.map((c,i)=>{const paid=paidOf(c),left=Math.max(0,totalOf(c)-paid);return `<tr><td>${i+1}</td><td class="contract-no">${esc(cNum(c))}</td><td>${esc(c.client||"—")}</td><td class="num red">${NUM(left)}</td><td class="num">${NUM(c.amount||0)}</td><td class="num">${NUM(totalOf(c))}</td><td class="num">${NUM(c.instAmt||c.installment||0)}</td><td class="num green">${NUM(paid)}</td></tr>`;}).join("");
       const ta=g.rows.reduce((s,c)=>s+(+c.amount||0),0),tt=g.rows.reduce((s,c)=>s+totalOf(c),0),ti=g.rows.reduce((s,c)=>s+(+(c.instAmt||c.installment)||0),0),tp=g.rows.reduce((s,c)=>s+paidOf(c),0),tl=g.rows.reduce((s,c)=>s+Math.max(0,totalOf(c)-paidOf(c)),0);
-      body+=`<tr class="total"><td colspan="4">الإجمالي</td><td class="num">${NUM(ta)}</td><td class="num">${NUM(tt)}</td><td class="num">${NUM(ti)}</td><td class="num green">${NUM(tp)}</td><td class="num red">${NUM(tl)}</td></tr>`;
-      return `<section${index?' class="page-break"':''}><h2>${esc(g.name)} <small>(${g.rows.length} زبون)</small></h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>الحالة</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>الواصل</th><th>المتبقي</th></tr></thead><tbody>${body}</tbody></table></section>`;
+      body+=`<tr class="total"><td colspan="3">الإجمالي</td><td class="num red">${NUM(tl)}</td><td class="num">${NUM(ta)}</td><td class="num">${NUM(tt)}</td><td class="num">${NUM(ti)}</td><td class="num green">${NUM(tp)}</td></tr>`;
+      return `<section${index?' class="page-break"':''}><h2>${esc(g.name)} <small>(${g.rows.length} زبون)</small></h2><table><thead><tr><th>#</th><th class="contract-no">رقم العقد</th><th>اسم الزبون</th><th>المتبقي</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>الواصل</th></tr></thead><tbody>${body}</tbody></table></section>`;
     };
     const content=printable.map(section).join("");
     const w=window.open("","_blank");
     if(!w){alert("الرجاء السماح بالنوافذ المنبثقة");return;}
-    w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>كشف زبائن ${esc(selectedName)}</title><style>*{box-sizing:border-box}body{margin:0;padding:14px;color:#000;font-family:Arial,sans-serif}.actions{display:flex;gap:8px;margin-bottom:14px}.actions button{min-height:44px;padding:9px 22px;border:0;border-radius:9px;color:#fff;font-size:15px;font-weight:900;cursor:pointer}.print{flex:1;background:#0b765e}.close{background:#c53030}.brand{display:flex;justify-content:space-between;gap:20px;padding-bottom:9px;margin-bottom:10px;border-bottom:2px solid #000;font-weight:900}.brand small{font-weight:700}.report-title{text-align:center;margin:4px 0 12px;font-size:18px}.note{text-align:center;margin:-7px 0 12px;font-size:11px;font-weight:700}section h2{text-align:center;margin:10px 0 8px;font-size:17px}section h2 small{font-size:12px}table{width:100%;border-collapse:collapse;border:2px solid #000;font-size:12px}th,td{padding:6px;border:1px solid #000;text-align:center;font-weight:700}th{font-weight:900;border-bottom:2px solid #000}.num{direction:ltr;font-weight:900}.green{color:#126c4f}.red{color:#b42318}.total td{border-top:2px solid #000;background:#fff9e9;font-weight:900}.page-break{page-break-before:always;margin-top:22px}@media print{.actions{display:none!important}.brand{margin-top:0}.page-break{margin-top:0}@page{size:A4;margin:7mm}}</style></head><body><div class="actions"><button class="print" onclick="window.print()">طباعة</button><button class="close" onclick="window.close()">إغلاق</button></div><div class="brand"><div>مؤسسة قمة الفرصة التجارية<br><small>التقارير والكشوف</small></div><small>${fmtDate(todayLocal())}</small></div><h1 class="report-title">كشف زبائن ${esc(selectedName)} — ${mode==="brief"?"مختصر":"مفصل"}</h1><div class="note">العقود الجارية فقط</div>${content}</body></html>`);
+    w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>كشف زبائن ${esc(selectedName)}</title><style>*{box-sizing:border-box}body{margin:0;padding:14px;color:#000;font-family:Arial,sans-serif}.actions{display:flex;gap:8px;margin-bottom:14px}.actions button{min-height:44px;padding:9px 22px;border:0;border-radius:9px;color:#fff;font-size:15px;font-weight:900;cursor:pointer}.print{flex:1;background:#0b765e}.close{background:#c53030}.brand{display:flex;justify-content:space-between;gap:20px;padding-bottom:9px;margin-bottom:10px;border-bottom:2px solid #000;font-weight:900}.brand small{font-weight:700}.report-title{text-align:center;margin:4px 0 12px;font-size:18px}.note{text-align:center;margin:-7px 0 12px;font-size:11px;font-weight:700}section h2{text-align:center;margin:10px 0 8px;font-size:17px}section h2 small{font-size:12px}table{width:100%;border-collapse:collapse;border:2px solid #000;font-size:12px;table-layout:auto}th,td{padding:6px;border:1px solid #000;text-align:center;font-weight:700}th{font-weight:900;border-bottom:2px solid #000}.contract-no{width:56px;min-width:56px;max-width:56px;padding-left:3px!important;padding-right:3px!important;white-space:nowrap}.num{direction:ltr;font-weight:900}.green{color:#126c4f}.red{color:#b42318}.total td{border-top:2px solid #000;background:#fff9e9;font-weight:900}.page-break{page-break-before:always;margin-top:22px}@media print{.actions{display:none!important}.brand{margin-top:0}.page-break{margin-top:0}@page{size:A4;margin:7mm}}</style></head><body><div class="actions"><button class="print" onclick="window.print()">طباعة</button><button class="close" onclick="window.close()">إغلاق</button></div><div class="brand"><div>مؤسسة قمة الفرصة التجارية<br><small>التقارير والكشوف</small></div><small>${fmtDate(todayLocal())}</small></div><h1 class="report-title">كشف زبائن ${esc(selectedName)} — ${mode==="brief"?"مختصر":"مفصل"}</h1><div class="note">العقود الجارية فقط</div>${content}</body></html>`);
     w.document.close();attachPrintReturn(w);
   };
   return <div className="q-investor-clients-report">
@@ -13563,8 +13575,8 @@ function InvestorClientsReportPage({contracts,investors,payments,doneIds}){
     <div className="q-report-print-surface">
       <div className="q-print-brand"><strong>مؤسسة قمة الفرصة التجارية</strong><span>كشف زبائن {selectedName}</span><small>العقود الجارية فقط</small></div>
       <div className="q-report-kpis"><div><span>الزبائن</span><strong>{rows.length}</strong></div><div><span>الواصل</span><strong>{NUM(collected)}</strong></div><div><span>المتبقي</span><strong>{NUM(remaining)}</strong></div></div>
-      <div className="q-report-table-wrap"><table><thead><tr>{mode==="brief"?<><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>المستثمر</th><th>رقم الجوال</th><th>الحالة</th><th>القسط</th></>:<><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>المستثمر</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>الواصل</th><th>المتبقي</th></>}</tr></thead><tbody>
-        {rows.length?rows.map((r,i)=>mode==="brief"?<tr key={r.c.id}><td>{i+1}</td><td>#{cNum(r.c)}</td><td className="strong">{r.c.client||"—"}</td><td>{r.group.name}</td><td>{r.c.cPhone||r.c.phone||"—"}</td><td>{statusOf(r.c)}</td><td className="amount">{NUM(r.c.instAmt||r.c.installment||0)}</td></tr>:<tr key={r.c.id}><td>{i+1}</td><td>#{cNum(r.c)}</td><td className="strong">{r.c.client||"—"}</td><td>{r.group.name}</td><td>{NUM(r.c.amount||0)}</td><td>{NUM(totalOf(r.c))}</td><td>{NUM(r.c.instAmt||r.c.installment||0)}</td><td className="amount">{NUM(paidOf(r.c))}</td><td>{NUM(Math.max(0,totalOf(r.c)-paidOf(r.c)))}</td></tr>):<tr><td colSpan={mode==="brief"?7:9} className="q-empty-row">لا توجد عقود جارية لهذا المستثمر</td></tr>}
+      <div className="q-report-table-wrap"><table><thead><tr>{mode==="brief"?<><th>#</th><th className="q-report-contract-no">رقم العقد</th><th>اسم الزبون</th><th>المستثمر</th><th>رقم الجوال</th><th>المتبقي</th><th>القسط</th></>:<><th>#</th><th className="q-report-contract-no">رقم العقد</th><th>اسم الزبون</th><th>المستثمر</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>الواصل</th><th>المتبقي</th></>}</tr></thead><tbody>
+        {rows.length?rows.map((r,i)=>mode==="brief"?<tr key={r.c.id}><td>{i+1}</td><td className="q-report-contract-no">{cNum(r.c)}</td><td className="strong">{r.c.client||"—"}</td><td>{r.group.name}</td><td>{r.c.cPhone||r.c.phone||"—"}</td><td>{NUM(Math.max(0,totalOf(r.c)-paidOf(r.c)))}</td><td className="amount">{NUM(r.c.instAmt||r.c.installment||0)}</td></tr>:<tr key={r.c.id}><td>{i+1}</td><td className="q-report-contract-no">{cNum(r.c)}</td><td className="strong">{r.c.client||"—"}</td><td>{r.group.name}</td><td>{NUM(r.c.amount||0)}</td><td>{NUM(totalOf(r.c))}</td><td>{NUM(r.c.instAmt||r.c.installment||0)}</td><td className="amount">{NUM(paidOf(r.c))}</td><td>{NUM(Math.max(0,totalOf(r.c)-paidOf(r.c)))}</td></tr>):<tr><td colSpan={mode==="brief"?7:9} className="q-empty-row">لا توجد عقود جارية لهذا المستثمر</td></tr>}
       </tbody></table></div>
     </div>
   </div>;
@@ -16985,6 +16997,8 @@ body{background-image:radial-gradient(circle at 8% 5%,rgba(226,188,104,.18),tran
 
 /* التقارير والسدادات */
 .q-report-tools{display:grid;grid-template-columns:minmax(230px,1fr) minmax(170px,240px) 150px 150px auto;align-items:end;gap:9px;margin-bottom:13px;padding:13px;border:1px solid var(--q23-line);border-radius:15px;background:#f7f1e7}.q-report-search{display:flex;align-items:center;gap:8px;min-height:47px;padding:0 12px;border:1px solid #d9cebd;border-radius:11px;background:#fff}.q-report-search span{color:#ad781b;font-size:21px;font-weight:950}.q-report-search input{width:100%;height:43px;border:0;background:transparent;color:#17364e;font-size:13px;font-weight:800;outline:0}.q-report-tools>select,.q-report-tools label input{width:100%;min-height:47px;padding:0 11px;border:1px solid #d9cebd;border-radius:11px;background:#fff;color:#17364e;font-family:inherit;font-size:12px;font-weight:800;box-sizing:border-box}.q-report-tools label span{display:block;margin-bottom:4px;color:#687788;font-size:9px;font-weight:900}.q-print-button{min-height:47px;padding:9px 17px;border:1px solid #a9741c;border-radius:11px;background:linear-gradient(135deg,#efd078,#c88e29);color:#092640;font-family:inherit;font-size:12px;font-weight:950;cursor:pointer}.q-report-print-surface{padding:16px;border:1px solid var(--q23-line);border-radius:16px;background:#fff}.q-print-brand{display:flex;align-items:center;gap:10px;margin-bottom:13px;padding:13px 15px;border-radius:12px;background:linear-gradient(105deg,#061b31,#0a3151);color:#fff}.q-print-brand strong{font-size:16px;font-weight:950}.q-print-brand span{color:#efca69;font-size:13px;font-weight:900}.q-print-brand small{margin-right:auto;color:#d8e0e6;font-size:10px}.q-report-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:12px}.q-report-kpis>div{padding:12px;border:1px solid #e1d6c4;border-radius:12px;background:#fdfaf4;text-align:center}.q-report-kpis span,.q-report-kpis strong{display:block}.q-report-kpis span{color:#687788;font-size:10px;font-weight:850}.q-report-kpis strong{margin-top:5px;color:#0b2d48;font-size:21px;font-weight:950}.q-report-table-wrap{overflow:auto;border:1px solid #dfd5c6;border-radius:12px}.q-report-table-wrap table{width:100%;min-width:900px;border-collapse:collapse}.q-report-table-wrap th{padding:11px 9px;background:#082846;color:#fff;font-size:11px;font-weight:900;text-align:right}.q-report-table-wrap td{padding:11px 9px;border-bottom:1px solid #ece4d9;background:#fff;color:#294357;font-size:11.5px;font-weight:750}.q-report-table-wrap tr:nth-child(even) td{background:#fcf9f3}.q-report-table-wrap .strong{color:#0b2d48;font-size:12.5px;font-weight:950}.q-report-table-wrap .amount{color:#11815b;font-size:13px;font-weight:950}.q-empty-row{height:130px;text-align:center!important;color:#85919b!important}
+.q-report-table-wrap th.q-report-contract-no,.q-report-table-wrap td.q-report-contract-no{width:64px;min-width:64px;max-width:64px;padding-left:4px;padding-right:4px;text-align:center;white-space:nowrap}
+.q-contract-no-cell{width:64px!important;min-width:64px!important;max-width:64px!important;padding-left:4px!important;padding-right:4px!important;text-align:center!important;white-space:nowrap!important}
 .q-investor-print-tools{grid-template-columns:minmax(230px,1fr) minmax(210px,260px) auto}.q-investor-report-mode{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-height:47px;padding:4px;border:1px solid #d9cebd;border-radius:11px;background:#fff}.q-investor-report-mode button{border:0;border-radius:8px;background:transparent;color:#687788;font-family:inherit;font-size:12px;font-weight:900;cursor:pointer}.q-investor-report-mode button.active{background:#0a2b47;color:#fff;box-shadow:0 3px 9px rgba(7,40,68,.16)}.q-investor-print-tools .q-print-button{display:flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}.q-investor-print-tools .q-print-button span{font-size:18px}
 @media(max-width:760px){.q-investor-print-tools{grid-template-columns:1fr!important}.q-investor-print-tools .q-print-button{grid-column:auto!important}}
 
