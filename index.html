@@ -13501,11 +13501,80 @@ function PaymentsReportPage({contracts,investors,payments}){
   </div>;
 }
 
+function InvestorClientsReportPage({contracts,investors,payments,doneIds}){
+  const [invId,setInvId]=useState("__all__");
+  const [mode,setMode]=useState("brief");
+  const invs=sortedInvestors(_arr(investors)).filter((inv,i,list)=>list.findIndex(x=>String(x.id)===String(inv.id))===i);
+  const doneSet=new Set(_arr(doneIds).map(String));
+  const paidMap=_arr(payments).reduce((map,p)=>{const key=String(p.contractId);map[key]=(map[key]||0)+(+p.amount||0);return map;},{});
+  const cNum=c=>c?(c.num||c.oldNum||c.id||"—"):"—";
+  const paidOf=c=>paidMap[String(c.id)]||0;
+  const totalOf=c=>+(c.totalInst||c.total||c.amount||0);
+  const ended=c=>{
+    if(!c)return true;
+    if(doneSet.has(String(c.id))||c.done||c.status==="done")return true;
+    const total=totalOf(c);return total>0&&paidOf(c)>=total;
+  };
+  const statusOf=c=>c.contractType==="defer"?"مؤجل":c.contractType==="migrated"?"مستمر مرحّل":"مستمر";
+  const invOrder=new Map(invs.map((inv,i)=>[String(inv.id),i]));
+  const rowSort=(a,b)=>{
+    const ai=invOrder.has(String(a.investorId))?invOrder.get(String(a.investorId)):9999;
+    const bi=invOrder.has(String(b.investorId))?invOrder.get(String(b.investorId)):9999;
+    if(ai!==bi)return ai-bi;
+    const an=Number(String(cNum(a)).match(/\d+/)?.[0]||999999),bn=Number(String(cNum(b)).match(/\d+/)?.[0]||999999);
+    return an-bn||String(a.client||"").localeCompare(String(b.client||""),"ar");
+  };
+  const active=_arr(contracts).filter(c=>c&&!c.deleted&&!ended(c)).sort(rowSort);
+  const groups=invs.map(inv=>({id:String(inv.id),name:invLabel(inv),rows:active.filter(c=>String(c.investorId)===String(inv.id))}));
+  const orphanRows=active.filter(c=>!invs.some(inv=>String(inv.id)===String(c.investorId)));
+  if(orphanRows.length)groups.push({id:"__none",name:"غير محدد",rows:orphanRows});
+  const selectedGroups=invId==="__all__"?groups.filter(g=>g.rows.length):groups.filter(g=>g.id===String(invId));
+  const rows=selectedGroups.reduce((list,g)=>list.concat(g.rows.map(c=>({c,group:g}))),[]);
+  const selectedName=invId==="__all__"?"كل المستثمرين":(groups.find(g=>g.id===String(invId))?.name||"المستثمر");
+  const collected=rows.reduce((s,r)=>s+paidOf(r.c),0),remaining=rows.reduce((s,r)=>s+Math.max(0,totalOf(r.c)-paidOf(r.c)),0);
+  const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+  const printClients=()=>{
+    const printable=selectedGroups.filter(g=>g.rows.length);
+    if(!printable.length){alert("لا توجد عقود جارية لهذا المستثمر");return;}
+    const section=(g,index)=>{
+      let body="";
+      if(mode==="brief"){
+        body=g.rows.map((c,i)=>`<tr><td>${i+1}</td><td>${esc(cNum(c))}</td><td>${esc(c.client||"—")}</td><td>${esc(c.cPhone||c.phone||"—")}</td><td>${esc(statusOf(c))}</td><td class="num">${NUM(c.instAmt||c.installment||0)}</td><td></td></tr>`).join("");
+        body+=`<tr class="total"><td colspan="5">الإجمالي</td><td class="num">${NUM(g.rows.reduce((s,c)=>s+(+(c.instAmt||c.installment)||0),0))}</td><td></td></tr>`;
+        return `<section${index?' class="page-break"':''}><h2>${esc(g.name)} <small>(${g.rows.length} زبون)</small></h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>رقم الجوال</th><th>الحالة</th><th>القسط</th><th>ملاحظات</th></tr></thead><tbody>${body}</tbody></table></section>`;
+      }
+      body=g.rows.map((c,i)=>{const paid=paidOf(c),left=Math.max(0,totalOf(c)-paid);return `<tr><td>${i+1}</td><td>${esc(cNum(c))}</td><td>${esc(c.client||"—")}</td><td>${esc(statusOf(c))}</td><td class="num">${NUM(c.amount||0)}</td><td class="num">${NUM(totalOf(c))}</td><td class="num">${NUM(c.instAmt||c.installment||0)}</td><td class="num green">${NUM(paid)}</td><td class="num red">${NUM(left)}</td></tr>`;}).join("");
+      const ta=g.rows.reduce((s,c)=>s+(+c.amount||0),0),tt=g.rows.reduce((s,c)=>s+totalOf(c),0),ti=g.rows.reduce((s,c)=>s+(+(c.instAmt||c.installment)||0),0),tp=g.rows.reduce((s,c)=>s+paidOf(c),0),tl=g.rows.reduce((s,c)=>s+Math.max(0,totalOf(c)-paidOf(c)),0);
+      body+=`<tr class="total"><td colspan="4">الإجمالي</td><td class="num">${NUM(ta)}</td><td class="num">${NUM(tt)}</td><td class="num">${NUM(ti)}</td><td class="num green">${NUM(tp)}</td><td class="num red">${NUM(tl)}</td></tr>`;
+      return `<section${index?' class="page-break"':''}><h2>${esc(g.name)} <small>(${g.rows.length} زبون)</small></h2><table><thead><tr><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>الحالة</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>الواصل</th><th>المتبقي</th></tr></thead><tbody>${body}</tbody></table></section>`;
+    };
+    const content=printable.map(section).join("");
+    const w=window.open("","_blank");
+    if(!w){alert("الرجاء السماح بالنوافذ المنبثقة");return;}
+    w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>كشف زبائن ${esc(selectedName)}</title><style>*{box-sizing:border-box}body{margin:0;padding:14px;color:#000;font-family:Arial,sans-serif}.actions{display:flex;gap:8px;margin-bottom:14px}.actions button{min-height:44px;padding:9px 22px;border:0;border-radius:9px;color:#fff;font-size:15px;font-weight:900;cursor:pointer}.print{flex:1;background:#0b765e}.close{background:#c53030}.brand{display:flex;justify-content:space-between;gap:20px;padding-bottom:9px;margin-bottom:10px;border-bottom:2px solid #000;font-weight:900}.brand small{font-weight:700}.report-title{text-align:center;margin:4px 0 12px;font-size:18px}.note{text-align:center;margin:-7px 0 12px;font-size:11px;font-weight:700}section h2{text-align:center;margin:10px 0 8px;font-size:17px}section h2 small{font-size:12px}table{width:100%;border-collapse:collapse;border:2px solid #000;font-size:12px}th,td{padding:6px;border:1px solid #000;text-align:center;font-weight:700}th{font-weight:900;border-bottom:2px solid #000}.num{direction:ltr;font-weight:900}.green{color:#126c4f}.red{color:#b42318}.total td{border-top:2px solid #000;background:#fff9e9;font-weight:900}.page-break{page-break-before:always;margin-top:22px}@media print{.actions{display:none!important}.brand{margin-top:0}.page-break{margin-top:0}@page{size:A4;margin:7mm}}</style></head><body><div class="actions"><button class="print" onclick="window.print()">طباعة</button><button class="close" onclick="window.close()">إغلاق</button></div><div class="brand"><div>مؤسسة قمة الفرصة التجارية<br><small>التقارير والكشوف</small></div><small>${fmtDate(todayLocal())}</small></div><h1 class="report-title">كشف زبائن ${esc(selectedName)} — ${mode==="brief"?"مختصر":"مفصل"}</h1><div class="note">العقود الجارية فقط</div>${content}</body></html>`);
+    w.document.close();attachPrintReturn(w);
+  };
+  return <div className="q-investor-clients-report">
+    <div className="q-report-tools q-investor-print-tools noprint">
+      <select value={invId} onChange={e=>setInvId(e.target.value)}><option value="__all__">كل المستثمرين</option>{invs.map(inv=><option key={inv.id} value={inv.id}>{invLabel(inv)}</option>)}{orphanRows.length>0&&<option value="__none">غير محدد</option>}</select>
+      <div className="q-investor-report-mode"><button type="button" className={mode==="brief"?"active":""} onClick={()=>setMode("brief")}>مختصر</button><button type="button" className={mode==="detailed"?"active":""} onClick={()=>setMode("detailed")}>مفصل</button></div>
+      <button className="q-print-button" onClick={printClients}><span aria-hidden="true">▧</span> طباعة الزبائن</button>
+    </div>
+    <div className="q-report-print-surface">
+      <div className="q-print-brand"><strong>مؤسسة قمة الفرصة التجارية</strong><span>كشف زبائن {selectedName}</span><small>العقود الجارية فقط</small></div>
+      <div className="q-report-kpis"><div><span>الزبائن</span><strong>{rows.length}</strong></div><div><span>الواصل</span><strong>{NUM(collected)}</strong></div><div><span>المتبقي</span><strong>{NUM(remaining)}</strong></div></div>
+      <div className="q-report-table-wrap"><table><thead><tr>{mode==="brief"?<><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>المستثمر</th><th>رقم الجوال</th><th>الحالة</th><th>القسط</th></>:<><th>#</th><th>رقم العقد</th><th>اسم الزبون</th><th>المستثمر</th><th>الأصل</th><th>الإجمالي</th><th>القسط</th><th>الواصل</th><th>المتبقي</th></>}</tr></thead><tbody>
+        {rows.length?rows.map((r,i)=>mode==="brief"?<tr key={r.c.id}><td>{i+1}</td><td>#{cNum(r.c)}</td><td className="strong">{r.c.client||"—"}</td><td>{r.group.name}</td><td>{r.c.cPhone||r.c.phone||"—"}</td><td>{statusOf(r.c)}</td><td className="amount">{NUM(r.c.instAmt||r.c.installment||0)}</td></tr>:<tr key={r.c.id}><td>{i+1}</td><td>#{cNum(r.c)}</td><td className="strong">{r.c.client||"—"}</td><td>{r.group.name}</td><td>{NUM(r.c.amount||0)}</td><td>{NUM(totalOf(r.c))}</td><td>{NUM(r.c.instAmt||r.c.installment||0)}</td><td className="amount">{NUM(paidOf(r.c))}</td><td>{NUM(Math.max(0,totalOf(r.c)-paidOf(r.c)))}</td></tr>):<tr><td colSpan={mode==="brief"?7:9} className="q-empty-row">لا توجد عقود جارية لهذا المستثمر</td></tr>}
+      </tbody></table></div>
+    </div>
+  </div>;
+}
+
 function ContractReportsCenter({contracts,investors,payments,doneIds}){
   const [tab,setTab]=useState("contracts");
   return <div className="q-reports-center">
-    <div className="q-inner-switch"><button className={tab==="contracts"?"active":""} onClick={()=>setTab("contracts")}>كشوف العقود</button><button className={tab==="payments"?"active":""} onClick={()=>setTab("payments")}>تقرير السدادات</button></div>
-    {tab==="contracts"?<DeductionsSheet embedded contracts={contracts} investors={investors} payments={payments} doneIds={doneIds}/>:<PaymentsReportPage contracts={contracts} investors={investors} payments={payments}/>} 
+    <div className="q-inner-switch"><button className={tab==="contracts"?"active":""} onClick={()=>setTab("contracts")}>كشوف العقود</button><button className={tab==="investors"?"active":""} onClick={()=>setTab("investors")}><span aria-hidden="true">▧</span> طباعة الزبائن</button><button className={tab==="payments"?"active":""} onClick={()=>setTab("payments")}>تقرير السدادات</button></div>
+    {tab==="contracts"?<DeductionsSheet embedded contracts={contracts} investors={investors} payments={payments} doneIds={doneIds}/>:tab==="investors"?<InvestorClientsReportPage contracts={contracts} investors={investors} payments={payments} doneIds={doneIds}/>:<PaymentsReportPage contracts={contracts} investors={investors} payments={payments}/>} 
   </div>;
 }
 
@@ -16916,6 +16985,8 @@ body{background-image:radial-gradient(circle at 8% 5%,rgba(226,188,104,.18),tran
 
 /* التقارير والسدادات */
 .q-report-tools{display:grid;grid-template-columns:minmax(230px,1fr) minmax(170px,240px) 150px 150px auto;align-items:end;gap:9px;margin-bottom:13px;padding:13px;border:1px solid var(--q23-line);border-radius:15px;background:#f7f1e7}.q-report-search{display:flex;align-items:center;gap:8px;min-height:47px;padding:0 12px;border:1px solid #d9cebd;border-radius:11px;background:#fff}.q-report-search span{color:#ad781b;font-size:21px;font-weight:950}.q-report-search input{width:100%;height:43px;border:0;background:transparent;color:#17364e;font-size:13px;font-weight:800;outline:0}.q-report-tools>select,.q-report-tools label input{width:100%;min-height:47px;padding:0 11px;border:1px solid #d9cebd;border-radius:11px;background:#fff;color:#17364e;font-family:inherit;font-size:12px;font-weight:800;box-sizing:border-box}.q-report-tools label span{display:block;margin-bottom:4px;color:#687788;font-size:9px;font-weight:900}.q-print-button{min-height:47px;padding:9px 17px;border:1px solid #a9741c;border-radius:11px;background:linear-gradient(135deg,#efd078,#c88e29);color:#092640;font-family:inherit;font-size:12px;font-weight:950;cursor:pointer}.q-report-print-surface{padding:16px;border:1px solid var(--q23-line);border-radius:16px;background:#fff}.q-print-brand{display:flex;align-items:center;gap:10px;margin-bottom:13px;padding:13px 15px;border-radius:12px;background:linear-gradient(105deg,#061b31,#0a3151);color:#fff}.q-print-brand strong{font-size:16px;font-weight:950}.q-print-brand span{color:#efca69;font-size:13px;font-weight:900}.q-print-brand small{margin-right:auto;color:#d8e0e6;font-size:10px}.q-report-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:12px}.q-report-kpis>div{padding:12px;border:1px solid #e1d6c4;border-radius:12px;background:#fdfaf4;text-align:center}.q-report-kpis span,.q-report-kpis strong{display:block}.q-report-kpis span{color:#687788;font-size:10px;font-weight:850}.q-report-kpis strong{margin-top:5px;color:#0b2d48;font-size:21px;font-weight:950}.q-report-table-wrap{overflow:auto;border:1px solid #dfd5c6;border-radius:12px}.q-report-table-wrap table{width:100%;min-width:900px;border-collapse:collapse}.q-report-table-wrap th{padding:11px 9px;background:#082846;color:#fff;font-size:11px;font-weight:900;text-align:right}.q-report-table-wrap td{padding:11px 9px;border-bottom:1px solid #ece4d9;background:#fff;color:#294357;font-size:11.5px;font-weight:750}.q-report-table-wrap tr:nth-child(even) td{background:#fcf9f3}.q-report-table-wrap .strong{color:#0b2d48;font-size:12.5px;font-weight:950}.q-report-table-wrap .amount{color:#11815b;font-size:13px;font-weight:950}.q-empty-row{height:130px;text-align:center!important;color:#85919b!important}
+.q-investor-print-tools{grid-template-columns:minmax(230px,1fr) minmax(210px,260px) auto}.q-investor-report-mode{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-height:47px;padding:4px;border:1px solid #d9cebd;border-radius:11px;background:#fff}.q-investor-report-mode button{border:0;border-radius:8px;background:transparent;color:#687788;font-family:inherit;font-size:12px;font-weight:900;cursor:pointer}.q-investor-report-mode button.active{background:#0a2b47;color:#fff;box-shadow:0 3px 9px rgba(7,40,68,.16)}.q-investor-print-tools .q-print-button{display:flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}.q-investor-print-tools .q-print-button span{font-size:18px}
+@media(max-width:760px){.q-investor-print-tools{grid-template-columns:1fr!important}.q-investor-print-tools .q-print-button{grid-column:auto!important}}
 
 /* العملاء */
 .q-customer-center-head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:13px;padding:20px 24px;border:1px solid rgba(231,192,87,.62);border-radius:20px;background:linear-gradient(112deg,#061827,#0a3150);box-shadow:0 15px 35px rgba(6,27,46,.16);color:#fff}.q-customer-center-copy span{color:#efc969;font-size:11px;font-weight:900}.q-customer-center-copy h2{margin:3px 0!important;color:#fff!important;font-size:27px!important;font-weight:950!important}.q-customer-center-copy p{margin:0;color:#cad6df;font-size:11px;font-weight:750}.q-customer-center-tabs{display:flex;gap:7px;padding:5px;border:1px solid rgba(238,199,99,.27);border-radius:13px;background:rgba(255,255,255,.06)}.q-customer-center-tabs button{min-width:130px;min-height:42px;border:1px solid transparent;border-radius:9px;background:transparent;color:#fff;font-family:inherit;font-size:13px;font-weight:900;cursor:pointer}.q-customer-center-tabs button.active{border-color:#c88f29;background:linear-gradient(135deg,#efd078,#ca922a);color:#08243d}
