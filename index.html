@@ -1371,7 +1371,42 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
     {contractNum:"",amount:"",investorId:""},
     {contractNum:"",amount:"",investorId:""}
   ]);
-  const [form, setForm] = useState({client:"",idNum:"",idType:"هوية وطنية",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nextNum),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:emptySettlements(),contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",payMethod:"نقدي",bankName:"",bankAccount:"",stockName:"",stockQty:"",isOldContract:false,payDay:""});
+  const DRAFT_KEY="qima_new_contract_draft_v1";
+  const emptyForm = num => ({client:"",idNum:"",idType:"هوية وطنية",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(num==null?nextNum:num),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:emptySettlements(),contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",payMethod:"نقدي",bankName:"",bankAccount:"",stockName:"",stockQty:"",isOldContract:false,payDay:""});
+  const hasDraftContent = f => !!(f && (["client","idNum","address","job","goods","qty","category","investorId","amount","totalInst","instAmt","firstInst","cPhone","gName","gId","gJob","gPhone","note","bankName","bankAccount","stockName","stockQty","payDay"].some(k=>String(f[k]??"").trim()) || f.deductEnabled || f.contractType!=="monthly" || f.payMethod!=="نقدي" || f.date!==today || f.idType!=="هوية وطنية" || f.nationality!=="سعودي" || f.deferMonths!=="12" || f.deferPayments!=="1" || f.isOldContract));
+  const initialDraftRef=React.useRef(undefined);
+  if(initialDraftRef.current===undefined){
+    initialDraftRef.current=null;
+    try{
+      const saved=JSON.parse(localStorage.getItem(DRAFT_KEY)||"null");
+      const draft=saved&&saved.form?saved.form:saved;
+      if(hasDraftContent(draft)){
+        const draftNum=String(draft.num||nextNum), numberUsed=contracts.some(c=>!c.deleted&&String(c.num||"")===draftNum);
+        const ds=_arr(draft.deducts).slice(0,3);while(ds.length<3)ds.push({contractNum:"",amount:"",investorId:""});
+        initialDraftRef.current={...emptyForm(numberUsed?nextNum:draftNum),...draft,num:numberUsed?String(nextNum):draftNum,deducts:ds};
+      }
+    }catch(e){}
+  }
+  const [form, setForm] = useState(()=>initialDraftRef.current||emptyForm(nextNum));
+  const [draftRestored,setDraftRestored]=useState(()=>!!initialDraftRef.current);
+  const [draftSavedAt,setDraftSavedAt]=useState("");
+  React.useEffect(()=>{
+    try{
+      if(hasDraftContent(form)){
+        const updatedAt=new Date().toISOString();
+        localStorage.setItem(DRAFT_KEY,JSON.stringify({form,updatedAt}));
+        setDraftSavedAt(updatedAt);
+      }else{
+        localStorage.removeItem(DRAFT_KEY);
+        setDraftSavedAt("");
+      }
+    }catch(e){}
+  },[form]);
+  const clearDraft=()=>{
+    if(hasDraftContent(form)&&!window.confirm("مسح مسودة العقد الحالية؟ لن يمكن استعادتها بعد المسح."))return;
+    try{localStorage.removeItem(DRAFT_KEY);}catch(e){}
+    setDraftRestored(false);setDraftSavedAt("");setForm(emptyForm(form.num||nextNum));toast("تم مسح مسودة العقد");
+  };
   const _autoFill = (f,prev) => ({...f, client:prev.client||f.client, idNum:prev.idNum||f.idNum, job:prev.job||f.job, cPhone:prev.cPhone||f.cPhone, nationality:prev.nationality||f.nationality, address:prev.address||f.address, idType:prev.idType||f.idType, gName:prev.gName||f.gName, gId:prev.gId||f.gId, gJob:prev.gJob||f.gJob, gPhone:prev.gPhone||f.gPhone});
   const set = (k,v) => {
     setForm(f=>({...f,[k]:v}));
@@ -1481,7 +1516,8 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
     }
     toast("✅ تم حفظ العقد بنجاح");
     const nn = parseInt(form.num)+1;
-    setForm({client:"",idNum:"",idType:"هوية وطنية",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:String(nn),cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:emptySettlements(),contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",payMethod:"نقدي",bankName:"",bankAccount:"",stockName:"",stockQty:"",isOldContract:false,payDay:""});
+    try{localStorage.removeItem(DRAFT_KEY);}catch(e){}
+    setDraftRestored(false);setDraftSavedAt("");setForm(emptyForm(nn));
   };
 
   const fields1 = [
@@ -1524,6 +1560,11 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
           </div>
         </div>
       </div>
+
+      {hasDraftContent(form) && <div className="q-contract-draft-note" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap",background:draftRestored?"#fff8df":"#eefaf4",border:"1px solid "+(draftRestored?"#d9ae42":"#80c7a2"),borderRadius:13,padding:"11px 14px",marginBottom:15,color:"#17382a",boxShadow:"0 3px 12px rgba(20,70,45,.06)"}}>
+        <div><strong style={{display:"block",fontSize:14}}>{draftRestored?"تم استعادة مسودة العقد":"المسودة محفوظة تلقائيًا"}</strong><small style={{color:"#66756d",fontWeight:700}}>يمكنك التنقل بين الصفحات والرجوع لإكمالها دون فقدان البيانات{draftSavedAt?" · آخر حفظ "+new Date(draftSavedAt).toLocaleTimeString("ar-SA",{hour:"2-digit",minute:"2-digit"}):""}</small></div>
+        <button type="button" onClick={clearDraft} style={{border:"1px solid #c7a050",background:"#fff",color:"#7b5510",borderRadius:9,padding:"8px 12px",fontFamily:"inherit",fontWeight:900,cursor:"pointer"}}>مسح المسودة</button>
+      </div>}
 
       {/* ═══ المستثمر ═══ */}
       <div style={secStyle}>
@@ -1838,7 +1879,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
         <button onClick={save} style={{background:"linear-gradient(135deg,#c8922a,#a87520)",color:"#fff",border:"none",borderRadius:14,padding:"18px",fontSize:18,fontWeight:900,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial",boxShadow:"0 4px 16px rgba(200,146,42,0.3)",display:"flex",alignItems:"center",justifyContent:"center",gap:9}}>
           <svg width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h11l3 3v13H5Z"/><path d="M8 4v5h7M8 20v-6h8v6"/></g></svg>
           حفظ العقد</button>
-        <button onClick={()=>setForm({client:"",idNum:"",idType:"هوية وطنية",address:"",nationality:"سعودي",job:"",goods:"",qty:"",category:"",investorId:"",amount:"",totalInst:"",instAmt:"",date:today,firstInst:"",num:form.num,cPhone:"",gName:"",gId:"",gJob:"",gPhone:"",note:"",deductEnabled:false,deducts:emptySettlements(),contractType:"monthly",deferMonths:"12",deferPayments:"1",payType:"normal",payMethod:"نقدي",bankName:"",bankAccount:"",stockName:"",stockQty:"",isOldContract:false,payDay:""})} style={{background:"#fff",color:"#94a3b8",border:"1px solid #e0d8c6",borderRadius:14,padding:"18px 24px",fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>مسح</button>
+        <button onClick={clearDraft} style={{background:"#fff",color:"#7b5510",border:"1px solid #d6bb82",borderRadius:14,padding:"18px 24px",fontSize:16,fontWeight:800,cursor:"pointer",fontFamily:"IBM Plex Sans Arabic,Arial"}}>مسح المسودة</button>
       </div>
     </div>
   );
