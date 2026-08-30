@@ -978,6 +978,33 @@ const _normSaPhone = v => {
   return /^05\d{8}$/.test(s) ? s : "";
 };
 
+// ═══ تثبيت هوية قائمة الزبائن وإصداراتها ═══
+// بعض السجلات القديمة لا تملك id؛ نولّد لها معرفاً حتمياً حتى لا يتغير الحذف
+// بعد الفرز أو التحديث. لا تدمج هذه الدالة أي شخصين ولا تحذف أي سجل.
+const _legacyPastClientId = (client,index) => {
+  const source=_baseName(client&&client.name)+"|"+String(client&&client.phone||"")+"|"+index;
+  let hash=2166136261;
+  for(let i=0;i<source.length;i++){ hash^=source.charCodeAt(i); hash=Math.imul(hash,16777619); }
+  return "pc_legacy_"+(hash>>>0).toString(36)+"_"+index;
+};
+const _normalizePastClients = raw => {
+  const used=new Set();
+  const rows=_arr(raw).filter(Boolean).map((client,index)=>{
+    const hasId=client.id!==undefined && client.id!==null && String(client.id)!=="";
+    let id=hasId?client.id:_legacyPastClientId(client,index),key=String(id);
+    if(used.has(key)){id=key+"_dup_"+index;key=String(id);}
+    used.add(key);
+    return {...client,id};
+  });
+  return _numberDupNames(rows);
+};
+const _decodePastClientsPayload = raw => {
+  if(raw && !Array.isArray(raw) && Array.isArray(raw.items)){
+    return {items:_normalizePastClients(raw.items),revision:Math.max(0,+raw.revision||0)};
+  }
+  return {items:_normalizePastClients(Array.isArray(raw)?raw:[]),revision:0};
+};
+
 // ═══ قراءة البنك للعرض والفلترة فقط — لا يُعدّل أي بيانات محفوظة ═══
 // العقود القديمة محفوظة بـ payMethod="المقاصة" بدون bankName. هذه الدالة
 // تُظهرها تحت بنك "مقاصة" عند الفلترة والطباعة، والعقد نفسه يبقى كما هو.
@@ -9160,7 +9187,7 @@ function PrivateNotes({toast, gsWrite, saveLS, loadLS}){
 }
 
 // ═══ صفحة الزبائن ═══
-function PastClientsPage({toast, pastClients, setPastClients, contracts}){
+function PastClientsPage({toast, pastClients, setPastClients, contracts, dataReady=true}){
   const clients = pastClients || [];
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState("manual"); // manual | paste | file
@@ -9172,9 +9199,16 @@ function PastClientsPage({toast, pastClients, setPastClients, contracts}){
   const [editForm, setEditForm] = useState({name:"", phone:""});
   const [showMsg, setShowMsg] = useState(false);
   const [msg, setMsg] = useState("السلام عليكم ورحمة الله\nنسعد بخدمتكم من جديد ..\n\nمؤسسة قمة الفرصه التجاريه\n0555171283");
+  const [selectedIds,setSelectedIds] = useState(()=>new Set());
+  const [deleteBusy,setDeleteBusy] = useState(false);
   const fileRef = React.useRef(null);
 
-  const save = d => setPastClients(_numberDupNames(_arr(d)));
+  // الحفظ الوظيفي يمنع النقرات المتتابعة من العمل على نسخة قديمة من القائمة.
+  const save = next => setPastClients(prev=>{
+    const value=typeof next==="function"?next(_arr(prev)):next;
+    return _normalizePastClients(value);
+  });
+  const clientKey = client=>String(client&&client.id);
 
   // ── تطبيع رقم الجوال السعودي (الدالة المشتركة) ──
   const normPhone = _normSaPhone;
@@ -9249,7 +9283,7 @@ function PastClientsPage({toast, pastClients, setPastClients, contracts}){
   const confirmImport = () => {
     const toAdd = previewRows.filter(r=>r.include).map(r=>({id:Date.now()+Math.random(), name:(r.name||"").trim(), phone:r.phone||""}));
     if(!toAdd.length){ toast("لا يوجد صفوف محددة للاستيراد","warn"); return; }
-    save([...clients, ...toAdd]);
+    save(prev=>[...prev, ...toAdd]);
     toast("تم إضافة "+toAdd.length+" جهة اتصال");
     setPreviewRows([]);
     setPasteText("");
@@ -9284,7 +9318,7 @@ function PastClientsPage({toast, pastClients, setPastClients, contracts}){
     const phone = manual.phone ? normPhone(manual.phone) : "";
     if(!manual.name.trim() && !phone){ toast("أدخل اسم أو رقم جوال صحيح","warn"); return; }
     if(manual.phone && !phone){ toast("رقم الجوال غير صحيح — الصيغة 05XXXXXXXX","error"); return; }
-    save([...clients, {id:Date.now()+Math.random(), name:manual.name.trim(), phone}]);
+    save(prev=>[...prev, {id:Date.now()+Math.random(), name:manual.name.trim(), phone}]);
     setManual({name:"", phone:""});
     toast("تمت الإضافة");
   };
@@ -9294,12 +9328,22 @@ function PastClientsPage({toast, pastClients, setPastClients, contracts}){
   const saveEdit = () => {
     const phone = editForm.phone ? normPhone(editForm.phone) : "";
     if(editForm.phone && !phone){ toast("رقم الجوال غير صحيح — الصيغة 05XXXXXXXX","error"); return; }
-    save(clients.map(c=>c.id===editId?{...c, name:editForm.name.trim(), phone}:c));
+    save(prev=>prev.map(c=>String(c.id)===String(editId)?{...c, name:editForm.name.trim(), phone}:c));
     setEditId(null);
     toast("تم التحديث");
   };
-  const del = id => save(clients.filter(c=>c.id!==id));
-  const clearAll = () => { if(window.confirm("حذف جميع الزبائن؟ لا يمكن التراجع.")){ save([]); toast("تم حذف الكل"); } };
+  const del = async id => {
+    const ok=await save(prev=>prev.filter(c=>String(c.id)!==String(id)));
+    setSelectedIds(prev=>{const next=new Set(prev);next.delete(String(id));return next;});
+    toast(ok===false?"حُذف من الجهاز، لكن تعذّر تثبيت الحذف سحابياً":"تم حذف الزبون",ok===false?"error":"success");
+  };
+  const clearAll = async () => {
+    if(!window.confirm("حذف جميع الزبائن من ملف الزبائن فقط؟\nلن تُحذف العقود أو السدادات، ولا يمكن التراجع.")) return;
+    setDeleteBusy(true);
+    const ok=await save(()=>[]);
+    setSelectedIds(new Set());setDeleteBusy(false);
+    toast(ok===false?"حُذفت القائمة من الجهاز، لكن تعذّر تثبيت الحذف سحابياً":"تم حذف جميع الزبائن",ok===false?"error":"success");
+  };
 
   const sendWA = (phone) => {
     const p = phone.startsWith("05") ? "966"+phone.slice(1) : phone;
@@ -9316,13 +9360,42 @@ function PastClientsPage({toast, pastClients, setPastClients, contracts}){
     toast("تم التصدير");
   };
 
-  const filtered = (search ? clients.filter(c=>{const s=search.trim().toLowerCase();return (c.name||"").toLowerCase().includes(s)||(c.phone||"").includes(s);}) : clients).sort((a,b)=>String(a.name||"").localeCompare(String(b.name||""),"ar"));
+  // النسخ قبل الفرز مهم: sort على clients مباشرة كان يغيّر مصفوفة الحالة نفسها.
+  const filtered = React.useMemo(()=>{
+    const source=search ? clients.filter(c=>{const s=search.trim().toLowerCase();return (c.name||"").toLowerCase().includes(s)||(c.phone||"").includes(s);}) : clients;
+    return [...source].sort((a,b)=>String(a.name||"").localeCompare(String(b.name||""),"ar"));
+  },[clients,search]);
+  const selectedCount=selectedIds.size;
+  const allFilteredSelected=filtered.length>0 && filtered.every(c=>selectedIds.has(clientKey(c)));
+  const toggleClient = id => setSelectedIds(prev=>{const next=new Set(prev),key=String(id);if(next.has(key))next.delete(key);else next.add(key);return next;});
+  const toggleFiltered = () => setSelectedIds(prev=>{
+    const next=new Set(prev);
+    if(allFilteredSelected) filtered.forEach(c=>next.delete(clientKey(c)));
+    else filtered.forEach(c=>next.add(clientKey(c)));
+    return next;
+  });
+  const deleteSelected = async () => {
+    if(!selectedCount||deleteBusy)return;
+    if(!window.confirm("حذف "+selectedCount+" زبوناً محدداً من ملف الزبائن؟\nلن تُحذف عقودهم أو سداداتهم، ولا يمكن التراجع.")) return;
+    const ids=new Set(selectedIds);
+    setDeleteBusy(true);
+    const ok=await save(prev=>prev.filter(c=>!ids.has(clientKey(c))));
+    setSelectedIds(new Set());setDeleteBusy(false);
+    toast(ok===false?"حُذف المحدد من الجهاز، لكن تعذّر تثبيت الحذف سحابياً":"تم حذف "+selectedCount+" زبوناً",ok===false?"error":"success");
+  };
+  React.useEffect(()=>{
+    const available=new Set(clients.map(clientKey));
+    setSelectedIds(prev=>{
+      const next=new Set([...prev].filter(id=>available.has(id)));
+      return next.size===prev.size?prev:next;
+    });
+  },[clients]);
 
   return (
     <div style={{maxWidth:1100,margin:"0 auto"}}>
       <div style={{fontSize:22,fontWeight:900,color:C.gold,marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
         📇 الزبائن
-        <span style={{fontSize:13,fontWeight:600,color:"#64748b"}}>{clients.length} زبون</span>
+        <span style={{fontSize:13,fontWeight:600,color:"#64748b"}}>{dataReady?(clients.length+" زبون"):"جارٍ التحميل…"}</span>
       </div>
 
       {/* ═══ إضافة زبائن (قابل للطي) ═══ */}
@@ -9415,7 +9488,7 @@ function PastClientsPage({toast, pastClients, setPastClients, contracts}){
                 <input style={{...styles.input,maxWidth:280}} placeholder="🔍 بحث بالاسم أو الجوال" value={search} onChange={e=>setSearch(e.target.value)}/>
                 <button style={styles.btn("#fff",C.ink2)} onClick={()=>setShowMsg(!showMsg)}>✏️ تعديل رسالة واتساب</button>
                 <button style={styles.btn("#fff",C.ink2)} onClick={exportCSV}>📥 تصدير CSV</button>
-                <button style={{...styles.btn(C.redLt,C.red)}} onClick={clearAll}>🗑 حذف الكل</button>
+                <button disabled={deleteBusy} style={{...styles.btn(C.redLt,C.red),opacity:deleteBusy?0.5:1}} onClick={clearAll}>🗑 حذف الكل</button>
               </div>
               {showMsg && (
                 <div style={{marginTop:12}}>
@@ -9457,10 +9530,22 @@ function PastClientsPage({toast, pastClients, setPastClients, contracts}){
       {clients.length>0 && <>
         {/* ═══ القائمة ═══ */}
         <div style={styles.panel}>
+          <div style={{...styles.panelHdr,gap:12,flexWrap:"wrap",position:"sticky",top:0,zIndex:4}}>
+            <label style={{display:"flex",alignItems:"center",gap:9,cursor:filtered.length?"pointer":"default",fontWeight:850,color:C.ink}}>
+              <input type="checkbox" checked={allFilteredSelected} disabled={!filtered.length} onChange={toggleFiltered} style={{width:19,height:19,accentColor:C.gold,cursor:"pointer"}}/>
+              <span>تحديد كل الظاهر <small style={{color:"#64748b"}}>({filtered.length})</small></span>
+            </label>
+            <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+              <span style={{minWidth:74,textAlign:"center",padding:"7px 10px",borderRadius:999,background:selectedCount?C.goldLt:"#eef2f6",color:selectedCount?"#79500f":"#64748b",fontSize:12,fontWeight:900}}>{selectedCount} محدد</span>
+              {selectedCount>0 && <button type="button" style={{...styles.btn("#fff",C.ink2),fontSize:12,padding:"7px 11px"}} onClick={()=>setSelectedIds(new Set())}>إلغاء التحديد</button>}
+              <button type="button" disabled={!selectedCount||deleteBusy} style={{...styles.btn(C.redLt,C.red),fontSize:13,padding:"7px 12px",opacity:(!selectedCount||deleteBusy)?0.5:1,cursor:(!selectedCount||deleteBusy)?"not-allowed":"pointer"}} onClick={deleteSelected}>{deleteBusy?"جارٍ الحذف...":"🗑 حذف المحدد"+(selectedCount?" ("+selectedCount+")":"")}</button>
+            </div>
+          </div>
           {filtered.length===0 ? (
             <div style={{padding:40,textAlign:"center",color:"#64748b"}}>لا توجد نتائج مطابقة</div>
           ) : filtered.map(c=>(
-            <div key={c.id} style={{padding:"12px 18px",borderBottom:"1px solid "+C.border,display:"flex",alignItems:"center",gap:12}}>
+            <div key={clientKey(c)} style={{padding:"12px 18px",borderBottom:"1px solid "+C.border,display:"flex",alignItems:"center",gap:12,background:selectedIds.has(clientKey(c))?"#fff8e7":"#fff"}}>
+              <input type="checkbox" aria-label={"تحديد "+(c.name||"الزبون")} checked={selectedIds.has(clientKey(c))} onChange={()=>toggleClient(c.id)} style={{width:19,height:19,accentColor:C.gold,cursor:"pointer",flexShrink:0}}/>
               {editId===c.id ? (
                 <>
                   <input style={{...styles.input,flex:1}} value={editForm.name} onChange={e=>setEditForm(f=>({...f,name:e.target.value}))}/>
@@ -9484,7 +9569,10 @@ function PastClientsPage({toast, pastClients, setPastClients, contracts}){
         </div>
       </>}
 
-      {clients.length===0 && previewRows.length===0 && (
+      {!dataReady && clients.length===0 && previewRows.length===0 && (
+        <div style={{...styles.panel,padding:40,textAlign:"center",color:C.ink,fontWeight:850}}>جارٍ تحميل قائمة الزبائن المحفوظة…</div>
+      )}
+      {dataReady && clients.length===0 && previewRows.length===0 && (
         <div style={{...styles.panel,padding:40,textAlign:"center",color:"#64748b"}}>لا يوجد زبائن بعد — أضف يدوياً أو الصق قائمة أو ارفع ملف من الأعلى</div>
       )}
     </div>
@@ -12828,7 +12916,7 @@ function ApprovedFinancialCollection({contracts,investors,payments,setPayments,t
   </div>;
 }
 
-function UpgradesPage({contracts, allContracts, investors, payments, activity, settings, toast, setPage, doneIds, pastClients, setPastClients, collectionFollowups, setCollectionFollowups, logAct, customerOnly=false, initialCustomerTab="stmt"}) {
+function UpgradesPage({contracts, allContracts, investors, payments, activity, settings, toast, setPage, doneIds, pastClients, setPastClients, pastClientsReady=true, collectionFollowups, setCollectionFollowups, logAct, customerOnly=false, initialCustomerTab="stmt"}) {
   const [tab, setTab] = React.useState(customerOnly?initialCustomerTab:"log");
   const [logFilter, setLogFilter] = React.useState("all");
   const [stmtSearch, setStmtSearch] = React.useState("");
@@ -13268,7 +13356,7 @@ function UpgradesPage({contracts, allContracts, investors, payments, activity, s
 
     // ═══ TAB 2: الزبائن — نُقلت كاملة من الشريط الرئيسي ═══
     tab==="customers" && <div className="qima-upgrades-customers">
-      <PastClientsPage toast={toast} pastClients={pastClients} setPastClients={setPastClients} contracts={allContracts||contracts}/>
+      <PastClientsPage toast={toast} pastClients={pastClients} setPastClients={setPastClients} contracts={allContracts||contracts} dataReady={pastClientsReady}/>
     </div>,
 
     // ═══ صفحة العملاء الرئيسية: ملف العميل الشامل ═══
@@ -13726,6 +13814,37 @@ function App() {
     } catch (e) { return null; }
   };
 
+  // قائمة الزبائن كبيرة وحساسة للحذف؛ نحفظ إصدارها في pastClientsState مع
+  // إبقاء pastClients كمصفوفة عادية للتوافق مع النسخ السابقة من البرنامج.
+  // نقرأ نسختي Firebase وSheets ثم نختار الإصدار الأحدث. وفي البيانات القديمة
+  // بلا رقم إصدار نفضّل القائمة الأكبر حتى لا تظهر 0 زبون بسبب مصدر فارغ.
+  const readPastClientsCloud = async () => {
+    const jobs=[];
+    if(window._fbReady && window._fbDB){
+      ["pastClientsState","pastClients"].forEach(sheet=>jobs.push((async()=>{
+          try{
+            const doc=await window._fbDB.collection("qima").doc(sheet).get();
+            if(!doc.exists)return null;
+            const raw=doc.data();
+            if(!raw||raw.payload===undefined)return null;
+            const payload=typeof raw.payload==="string"?JSON.parse(raw.payload):raw.payload;
+            return _decodePastClientsPayload(payload);
+          }catch(e){return null;}
+        })()));
+    }
+    ["pastClientsState","pastClients"].forEach(sheet=>jobs.push((async()=>{
+        try{
+          const res=await fetch(`${GS_URL}?action=read&sheet=${sheet}&_=${Date.now()}`,{cache:"no-store"});
+          const json=await res.json();
+          return _decodePastClientsPayload(json&&json.data);
+        }catch(e){return null;}
+      })()));
+    const sources=(await Promise.all(jobs)).filter(Boolean);
+    if(!sources.length)return null;
+    sources.sort((a,b)=>(b.revision-a.revision)||(b.items.length-a.items.length));
+    return sources[0];
+  };
+
   // ═══ الكتابة: إلى Firebase (أساسي) + Google Sheets (احتياط) ═══
   const gsWrite = async (sheet, data, _retry) => {
     setSyncStatus("saving");
@@ -13755,9 +13874,11 @@ function App() {
     if (ok) {
       setSyncStatus("saved");
       setTimeout(()=>setSyncStatus(s=>s==="saved"?"idle":s), 2000);
+      return true;
     } else {
       if (!_retry) { await new Promise(r=>setTimeout(r,1200)); return gsWrite(sheet, data, true); }
       setSyncStatus("error");
+      return false;
     }
   };
 
@@ -13778,6 +13899,7 @@ function App() {
     "qimma_jard_ov":"jard_ov", "qimma_daily":"daily", "qimma_daily_open":"daily_open",
     "qimma_activity":"activity", "qimma_monthclose":"monthclose", "qimma_price_ov":"price_ov", "qimma_banktx":"banktx",
     "qimma_pvt_loans":"pvt_loans", "qimma_note_ov":"note_ov",
+    "qimma_past_clients":"pastClients",
     "qimma_collection_followups":"collection_followups"
   };
   const exportBackup = () => {
@@ -13803,9 +13925,20 @@ function App() {
       if(!data || typeof data!=="object"){ toast("⚠️ ملف غير صالح","error"); return; }
       // اكتب في الجهاز
       Object.keys(data).forEach(k=>{ if(k.indexOf("qimma_")===0){ try{ localStorage.setItem(k, JSON.stringify(data[k])); }catch{} } });
+      if(data.qimma_past_clients!=null && data.qimma_past_clients_rev==null){
+        localStorage.setItem("qimma_past_clients_rev",String(Date.now()));
+      }
       // ادفع للسحابة (المفاتيح المعروفة فقط)
       const jobs = [];
-      Object.keys(BACKUP_MAP).forEach(k=>{ if(data[k]!=null){ jobs.push(gsWrite(BACKUP_MAP[k], data[k])); } });
+      Object.keys(BACKUP_MAP).forEach(k=>{
+        if(data[k]==null)return;
+        if(k==="qimma_past_clients"){
+          const revision=Math.max(1,+data.qimma_past_clients_rev||Date.now());
+          const items=_normalizePastClients(data[k]);
+          jobs.push(gsWrite("pastClients",items));
+          jobs.push(gsWrite("pastClientsState",{items,revision}));
+        }else jobs.push(gsWrite(BACKUP_MAP[k], data[k]));
+      });
       await Promise.all(jobs);
       toast("✅ تم استرجاع النسخة... جارٍ التحديث");
       setTimeout(()=>window.location.reload(), 1200);
@@ -13890,18 +14023,50 @@ function App() {
     return raw;
   });
   const setLoans = v => { const d=_arr(typeof v==="function"?v(loans):v); setLoansRaw(d); saveLS("qimma_loans",d); gsWrite("loans",d); };
-  const [pastClients,setPastClientsRaw]=useState(()=>_arr(loadLS("qimma_past_clients",[])));
-  const setPastClients = v => { const d=_arr(typeof v==="function"?v(pastClients):v); setPastClientsRaw(d); saveLS("qimma_past_clients",d); gsWrite("pastClients",d); };
+  const pastClientsInitialRevision=(()=>{const n=+localStorage.getItem("qimma_past_clients_rev");return Number.isFinite(n)&&n>0?n:0;})();
+  const [pastClients,setPastClientsRaw]=useState(()=>_normalizePastClients(loadLS("qimma_past_clients",[])));
+  const pastClientsRef=React.useRef(pastClients);
+  const pastClientsRevRef=React.useRef(pastClientsInitialRevision);
+  const pastClientsWriteQueueRef=React.useRef(Promise.resolve(true));
+  const [pastClientsReady,setPastClientsReady]=useState(()=>pastClients.length>0||pastClientsInitialRevision>0);
+  const applyPastClientsSnapshot = snapshot => {
+    const decoded=snapshot&&snapshot.items?{items:_normalizePastClients(snapshot.items),revision:Math.max(0,+snapshot.revision||0)}:_decodePastClientsPayload(snapshot);
+    pastClientsRef.current=decoded.items;pastClientsRevRef.current=decoded.revision;
+    setPastClientsRaw(decoded.items);saveLS("qimma_past_clients",decoded.items);
+    localStorage.setItem("qimma_past_clients_rev",String(decoded.revision));
+    setPastClientsReady(true);
+    return decoded.items;
+  };
+  const setPastClients = v => {
+    const current=pastClientsRef.current;
+    const proposed=typeof v==="function"?v(current):v;
+    if(proposed===current)return Promise.resolve(true);
+    const d=_normalizePastClients(proposed);
+    const revision=Math.max(Date.now(),pastClientsRevRef.current+1);
+    pastClientsRef.current=d;pastClientsRevRef.current=revision;
+    setPastClientsRaw(d);saveLS("qimma_past_clients",d);
+    localStorage.setItem("qimma_past_clients_rev",String(revision));
+    setPastClientsReady(true);
+    const write=()=>Promise.all([
+        gsWrite("pastClients",d),
+        gsWrite("pastClientsState",{items:d,revision})
+      ]).then(results=>results[1]===true);
+    const queued=pastClientsWriteQueueRef.current.catch(()=>false).then(write);
+    pastClientsWriteQueueRef.current=queued;
+    return queued;
+  };
   // ── يضيف عميل العقد الجديد تلقائياً إلى الزبائن ──
   // لا يتخطى إلا السجل المطابق تماماً (نفس الاسم ونفس الجوال). الأسماء المتشابهة تُرقَّم.
   const addPastClientFromContract = (c) => {
     const phone = _normSaPhone(c && c.cPhone);
     const name  = _baseName(c && c.client);
     if(!phone && !name) return;
-    const list = _arr(pastClients);
-    const dup = list.some(x => _baseName(x.name)===name && _normSaPhone(x.phone)===phone);
-    if(dup) return;
-    setPastClients(_numberDupNames([...list, {id: Date.now()+Math.random(), name, phone}]));
+    setPastClients(list=>{
+      const current=_arr(list);
+      const dup=current.some(x => _baseName(x.name)===name && _normSaPhone(x.phone)===phone);
+      if(dup)return current;
+      return [...current,{id:Date.now()+Math.random(),name,phone}];
+    });
   };
   const [zakatTx,setZakatTxRaw]=useState(()=>_arr(loadLS("qimma_zakat",[])));
   const setZakatTx = v => { const d=_arr(typeof v==="function"?v(zakatTx):v); setZakatTxRaw(d); saveLS("qimma_zakat",d); gsWrite("zakat",d); };
@@ -13995,7 +14160,7 @@ function App() {
         gsRead("txlist"), gsRead("loans"), gsRead("zakat"),
         gsRead("pending"), gsRead("payments"), gsRead("goods3"), gsRead("jard_ov"),
         gsRead("daily"), gsRead("daily_open"), gsRead("activity"), gsRead("monthclose"), gsRead("price_ov"), gsRead("banktx"),
-        gsRead("doneIds"), gsRead("pastClients"), gsRead("note_ov"), gsRead("collection_followups")
+        gsRead("doneIds"), readPastClientsCloud(), gsRead("note_ov"), gsRead("collection_followups")
       ]);
       if (inv) { const orderedInv=sortedInvestors(inv); setInvestorsRaw(orderedInv); saveLS("qimma_investors", orderedInv); }
       if (con) { setContractsRaw(con); saveLS("qimma_contracts", con); }
@@ -14014,7 +14179,13 @@ function App() {
       if (mcl && typeof mcl==="object" && !Array.isArray(mcl)) { setMonthCloseRaw(mcl); saveLS("qimma_monthclose", JSON.stringify(mcl)); }
       if (btx) { const cleanBankTx=_dedupeBankTxRows(_repairLegacyBankTxRows(btx)); setBankTxRaw(cleanBankTx); saveLS("qimma_banktx", JSON.stringify(cleanBankTx)); }
       if (dids) { setDoneIdsRaw(_arr(dids)); localStorage.setItem("qimma_done", JSON.stringify(_arr(dids))); }
-      if (pcl) { setPastClientsRaw(_arr(pcl)); saveLS("qimma_past_clients", _arr(pcl)); }
+      if (pcl) {
+        const remote=_decodePastClientsPayload(pcl.items?{items:pcl.items,revision:pcl.revision}:pcl);
+        const localRevision=pastClientsRevRef.current,localItems=pastClientsRef.current;
+        const remoteWins=remote.revision>localRevision || (remote.revision===0 && localRevision===0 && remote.items.length>localItems.length);
+        if(remoteWins) applyPastClientsSnapshot(remote);
+      }
+      setPastClientsReady(true);
       if (nov) { localStorage.setItem("qimma_note_ov", JSON.stringify(nov)); }
       if (cfl) { setCollectionFollowupsRaw(_arr(cfl)); saveLS("qimma_collection_followups", _arr(cfl)); }
       setSyncStatus("idle");
@@ -14047,7 +14218,14 @@ function App() {
               case "monthclose": if(typeof data==="object" && !Array.isArray(data)) { setMonthCloseRaw(data); saveLS("qimma_monthclose", JSON.stringify(data)); } break;
               case "banktx": { const cleanBankTx=_dedupeBankTxRows(_repairLegacyBankTxRows(data)); setBankTxRaw(cleanBankTx); saveLS("qimma_banktx", JSON.stringify(cleanBankTx)); break; }
               case "doneIds": setDoneIdsRaw(_arr(data)); localStorage.setItem("qimma_done", JSON.stringify(_arr(data))); break;
-              case "pastClients": setPastClientsRaw(_arr(data)); saveLS("qimma_past_clients", _arr(data)); break;
+              case "pastClientsState":
+              case "pastClients": {
+                const incoming=_decodePastClientsPayload(data);
+                const localRevision=pastClientsRevRef.current,localItems=pastClientsRef.current;
+                const newer=incoming.revision>localRevision || (incoming.revision===0 && localRevision===0 && incoming.items.length>localItems.length);
+                if(newer)applyPastClientsSnapshot(incoming);
+                break;
+              }
               case "goods3": localStorage.setItem("qimma_goods3", JSON.stringify(data)); window.dispatchEvent(new Event("qimma-goods-sync")); break;
               case "price_ov": localStorage.setItem("qimma_price_ov", JSON.stringify(data)); window.dispatchEvent(new Event("qimma-goods-sync")); break;
               case "note_ov": localStorage.setItem("qimma_note_ov", JSON.stringify(data)); break;
@@ -14153,7 +14331,7 @@ function App() {
         {page==="dashboard" && <Dashboard contracts={publicAllContracts} investors={publicInvestors} settings={settings} setInvestors={setInvestors} daily={daily} setDaily={setDaily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} toast={toast} setPage={setPage} payments={publicPayments} zakatTx={zakatTx} setZakatTx={setZakatTx} loans={loans} setLoans={setLoans} setPrivateAccMode={setPrivateAccMode} doneIds={doneIds}/>} 
         {page==="search" && <SearchPage contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} setPayments={setPayments} toast={toast} setPage={setPage}/>}
         {page==="qimaai" && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:999,background:"#f4f4f6",overflowY:"auto"}}><QimaAI contracts={contracts} investors={publicInvestors} payments={publicPayments} setPayments={setPayments} settings={settings} doneIds={doneIds} markDone={markDone} daily={daily} setDaily={setDaily} loans={loans} zakatTx={zakatTx} pending={pending} bankTx={bankTx} invTxList={invTxList} monthClose={monthClose} dailyOpen={dailyOpen} toast={toast} logAct={logAct} sourcePage={aiReturnPage} onOpenPage={target=>setPage(target)} goBack={()=>setPage(aiReturnPage||"dashboard")}/></div>}
-        {page==="customers" && <UpgradesPage key={"customers-"+customersEntry} customerOnly initialCustomerTab={customersEntry} contracts={publicContracts} allContracts={contracts} investors={publicInvestors} payments={publicPayments} activity={activity} settings={settings} toast={toast} setPage={setPage} doneIds={doneIds} pastClients={pastClients} setPastClients={setPastClients} collectionFollowups={collectionFollowups} setCollectionFollowups={setCollectionFollowups} logAct={logAct}/>} 
+        {page==="customers" && <UpgradesPage key={"customers-"+customersEntry} customerOnly initialCustomerTab={customersEntry} contracts={publicContracts} allContracts={contracts} investors={publicInvestors} payments={publicPayments} activity={activity} settings={settings} toast={toast} setPage={setPage} doneIds={doneIds} pastClients={pastClients} setPastClients={setPastClients} pastClientsReady={pastClientsReady} collectionFollowups={collectionFollowups} setCollectionFollowups={setCollectionFollowups} logAct={logAct}/>} 
         {page==="contracts" && contractsHub}
         {page==="portfolio" && financeHub}
         {page==="privateAccounts" && <AccountsPage contracts={activeContracts} investors={investors} setInvestors={setInvestors} settings={settings} txList={invTxList} setTxList={setInvTxList} loans={loans} setLoans={setLoans} zakatTx={zakatTx} setZakatTx={setZakatTx} pending={pending} setPending={setPending} payments={payments} setPayments={setPayments} setContracts={setContracts} toast={toast} goBack={()=>{setPage("dashboard");setPrivateAccMode(false);}} privateAccMode={true} initialSubTab="inv" gsWrite={gsWrite} doneIds={doneIds}/>} 
