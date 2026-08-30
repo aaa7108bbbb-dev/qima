@@ -6926,7 +6926,7 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
           <div className="qkpi-cycle"><small>الدورة المالية</small><strong>{cycleLabel}</strong></div>
         </header>
 
-        {mode!=="target"&&<section className="qkpi-summary">
+        {mode!=="target"&&mode!=="remaining"&&<section className="qkpi-summary">
           {summary.map((x,i)=><div key={i}><small>{x[0]}</small><strong>{typeof x[1]==="number"?nf(x[1]):x[1]}</strong><em>{x[2]}</em></div>)}
         </section>}
 
@@ -6969,10 +6969,10 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
               </tr>})}</tbody>
             </table>
           ) : mode==="remaining" ? (
-            <table className="qkpi-table">
+            <table className="qkpi-table qkpi-remaining-table">
               <thead><tr><th>#</th><th>الزبون والعقد</th><th>المستثمر</th><th>الاستحقاق</th><th>القسط</th><th>المدفوع</th><th>الباقي</th><th>الحالة</th></tr></thead>
               <tbody>{visibleRows.length===0?<tr><td colSpan={8} className="qkpi-empty">لا توجد نتائج</td></tr>:visibleRows.map((r,i)=>{const sm=statusMeta[r.status]||statusMeta.unknown;return <tr key={r.c.id}>
-                <td>{i+1}</td><td className="qkpi-name">{r.c.client||"—"}<small>عقد {reportContractNumber(r.c)}</small></td><td>{invText(r.c)}</td><td>{r.dueDateStr?fmtDate(r.dueDateStr):"—"}</td><td>{nf(r.due)}</td><td className="qkpi-green">{nf(r.paidApplied)}</td><td className="qkpi-red qkpi-money">{nf(r.remainingDue)}</td><td><span className={"qkpi-badge "+sm[1]}>{sm[0]}</span></td>
+                <td>{i+1}</td><td className="qkpi-name qkpi-remaining-client"><strong>{r.c.client||"—"}</strong><small>عقد رقم <b>{reportContractNumber(r.c)}</b></small></td><td>{invText(r.c)}</td><td>{r.dueDateStr?fmtDate(r.dueDateStr):"—"}</td><td>{nf(r.due)}</td><td className="qkpi-green">{nf(r.paidApplied)}</td><td className="qkpi-red qkpi-money">{nf(r.remainingDue)}</td><td><span className={"qkpi-badge "+sm[1]}>{sm[0]}</span></td>
               </tr>})}</tbody>
             </table>
           ) : (
@@ -17309,6 +17309,7 @@ html{scroll-behavior:auto!important}
 
 /* أقساط الشهر: كشف مباشر بلا بطاقات ملخص أو تبويبات داخلية */
 .qkpi-mode-target .qkpi-head{min-height:112px!important}.qkpi-mode-target .qkpi-tools{border-top:0!important}.qkpi-target-simple .qkpi-customer-primary{min-width:270px!important;text-align:right!important}.qkpi-target-simple .qkpi-customer-primary>strong{display:block!important;color:#102f49!important;font-size:19px!important;font-weight:950!important;line-height:1.35!important}.qkpi-target-simple .qkpi-customer-primary>small{display:block!important;margin-top:5px!important;color:#7a684e!important;font-size:12.5px!important;font-weight:900!important;line-height:1.45!important}.qkpi-target-simple tbody td{padding-block:13px!important;font-size:14px!important;font-weight:850!important}
+.qkpi-mode-remaining .qkpi-tools{border-top:0!important}.qkpi-remaining-table th{font-size:13px!important}.qkpi-remaining-table td{padding-block:15px!important;font-size:15px!important;font-weight:900!important;font-variant-numeric:tabular-nums}.qkpi-remaining-table .qkpi-remaining-client{min-width:245px!important;text-align:right!important}.qkpi-remaining-table .qkpi-remaining-client>strong{display:block!important;color:#092942!important;font-size:18px!important;font-weight:950!important;line-height:1.4!important}.qkpi-remaining-table .qkpi-remaining-client>small{display:block!important;margin-top:5px!important;color:#111827!important;font-size:14px!important;font-weight:900!important;line-height:1.4!important}.qkpi-remaining-table .qkpi-remaining-client>small b{color:#050b12!important;font-size:15px!important;font-weight:950!important}.qkpi-remaining-table .qkpi-badge{min-width:82px!important;padding:7px 11px!important;font-size:12px!important;font-weight:950!important}.qkpi-remaining-table .qkpi-money{font-size:16px!important}
 @media(max-width:720px){.qkpi-target-simple{min-width:840px!important}.qkpi-target-simple .qkpi-customer-primary>strong{font-size:17px!important}.qkpi-target-simple .qkpi-customer-primary>small{font-size:11.5px!important}}
 
 /* عقد جديد: عنوان ممتد وحقول المبالغ متساوية */
