@@ -803,14 +803,24 @@ function printStatement(elementId) {
 
 // ─── helpers ───────────────────────────────────────────────
 const SAR = n => Math.round(+(n||0)).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
-// التاريخ المحلي (يحل مشكلة نقص يوم بسبب UTC في toISOString)
-const todayLocal = () => {
-  const d = new Date();
-  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+// تاريخ العمل الرسمي للمؤسسة بتوقيت السعودية. لا نعتمد منطقة وقت الجهاز ولا UTC
+// حتى لا يتقدم تاريخ العقد أو يتأخر يوماً عند اختلاف إعدادات المتصفح.
+const _businessYmd = value => {
+  const d = value instanceof Date ? value : new Date(value);
+  if(Number.isNaN(d.getTime())) return "";
+  try{
+    const parts=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Riyadh",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(d);
+    const get=type=>(parts.find(p=>p.type===type)||{}).value||"";
+    return get("year")+"-"+get("month")+"-"+get("day");
+  }catch(e){
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
 };
-const dateLocal = (dt) => {
-  const d = new Date(dt);
-  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const todayLocal = () => _businessYmd(new Date());
+const dateLocal = dt => {
+  const raw=String(dt==null?"":dt).trim();
+  const exact=raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return exact?raw:_businessYmd(dt);
 };
 // رمز المستثمر: يُعرض الرمز إن وُجد، وإلا الاسم الكامل
 const invLabel = inv => (inv && inv.code && String(inv.code).trim()) ? String(inv.code).trim() : (inv ? inv.name : "—");
@@ -1481,7 +1491,8 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
   const save = () => {
     const isDefer = form.contractType==="defer";
     // المؤجل: المبلغ والإجمالي يدوي، القسط يُحسب من الإجمالي ÷ عدد الدفعات
-    let saveForm = {...form};
+    // حقول type=date تُحفظ كما اختارها المستخدم (YYYY-MM-DD) بلا أي تحويل زمني.
+    let saveForm = {...form,date:String(form.date||today).slice(0,10),firstInst:String(form.firstInst||"").slice(0,10)};
     if(isDefer){
       const months = parseInt(form.deferMonths)||12;
       const nPays = parseInt(form.deferPayments)||1;
@@ -1574,7 +1585,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
   ];
   const fields2 = [
     {label:"قيمة العقد النقدية (القيمة) *",key:"amount",type:"number",ph:"مثال: 15000"},
-    {label:"قيمة العقد أقساط (الإجمالي) *",key:"totalInst",type:"number",ph:"مثال: 18000"},
+    {label:"قيمة العقد أقساط (الإجمالي)",key:"totalInst",type:"number",ph:"مثال: 18000"},
     {label:"قيمة القسط الشهري *",key:"instAmt",type:"number",ph:"مثال: 1500"},
     {label:"تاريخ العقد *",key:"date",type:"date",ph:""},
     {label:"تاريخ أول قسط *",key:"firstInst",type:"date",ph:""},
@@ -1799,7 +1810,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
           }).map(f=>(
             <div key={f.key}>
               <label style={fLabel}>{
-                form.contractType==="defer" ? (f.key==="amount"?"المبلغ نقداً *":f.key==="totalInst"?"المبلغ الإجمالي (مع فائدتك) *":f.label) : f.label
+                form.contractType==="defer" ? (f.key==="amount"?"المبلغ نقداً *":f.key==="totalInst"?"المبلغ الإجمالي (مع فائدتك)":f.label) : f.label
               }</label>
               <input style={{...fInput,borderColor:["amount","instAmt","totalInst"].includes(f.key)?"#c8922a":"#141428",fontWeight:["amount","instAmt","totalInst"].includes(f.key)?800:400}} type={f.type} placeholder={f.key==="totalInst"&&form.contractType==="defer"?"اكتب الإجمالي مع الفائدة":f.ph} value={form[f.key]} onChange={e=>set(f.key,e.target.value)}/>
             </div>
@@ -2382,8 +2393,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         totalInst:rem,
         instAmt:inst,
         months:inst>0?Math.ceil(rem/inst):0,
-        firstInst:new Date().toISOString().slice(0,10),
-        date:new Date().toISOString().slice(0,10),
+        firstInst:todayLocal(),
+        date:todayLocal(),
         goods:"مرحّل",
         contractType:"migrated",
         oldNum:mf.oldNum||"",
@@ -6824,7 +6835,7 @@ function MonthDetail({ym, calcMonth, mLabel, isClosed, onBack, onClose, onReopen
   );
 }
 
-function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycleLabel,totals}) {
+function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycleLabel,totals,programRemaining=0}) {
   const [tab,setTab] = React.useState("all");
   const [query,setQuery] = React.useState("");
   const [invFilter,setInvFilter] = React.useState("all");
@@ -6869,18 +6880,12 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
       ["upcoming","القادم",upcomingRows.length],
       ["paid","مسدد",completedRows.length],
       ["partial","مسدد جزئيًا",partialRows.length]
-    ],
-    remaining:[
-      ["all","كل المتبقي",remainingRows.length],
-      ["due","مستحق حتى اليوم",dueRows.length],
-      ["upcoming","القادم",upcomingRows.length],
-      ["partial","مسدد جزئيًا",partialRows.length]
     ]
   };
 
   let rows=[];
   if(mode==="target") rows=targetRows;
-  else if(mode==="remaining") rows=tab==="due"?dueRows:tab==="upcoming"?upcomingRows:tab==="partial"?partialRows:remainingRows;
+  else if(mode==="remaining") rows=remainingRows;
   else if(mode==="done") rows=completedRows;
   else if(mode==="overdue") rows=manualRows;
 
@@ -6900,6 +6905,8 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
     upcoming:["قادم","is-upcoming"],unknown:["تاريخ غير محدد","is-unknown"]
   };
   const dueNowAmount=sum(dueRows,"remainingDue"), upcomingAmount=sum(upcomingRows,"remainingDue");
+  const defaulterAmount=sum(manualRows,"amount");
+  const defaulterRatio=programRemaining>0?Math.round((defaulterAmount/programRemaining)*1000)/10:0;
   const summary = mode==="target" ? [
     ["إجمالي الدورة",totals.target,"ر.س"],["مستحق حتى اليوم",dueNowAmount,"ر.س"],
     ["قادم",upcomingAmount,"ر.س"],["تم تحصيله",totals.collected,"ر.س"]
@@ -6910,8 +6917,8 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
     ["المنجز بالكامل",totals.done,"ر.س"],["أقساط مكتملة",completedRows.length,"قسط"],
     ["تحصيل الدورة",totals.collected,"ر.س"],["نسبة التحصيل",totals.pct,"٪"]
   ] : mode==="overdue" ? [
-    ["المبلغ المتعثر",sum(manualRows,"amount"),"ر.س"],["العقود المتعثرة",manualRows.length,"عقد"],
-    ["إجمالي المتبقي",sum(manualRows,"remaining"),"ر.س"],["مصدر التصنيف","يدوي",""]
+    ["المبلغ المتعثر",defaulterAmount,""],["العقود المتعثرة",manualRows.length,"عقد"],
+    ["إجمالي المتبقي",sum(manualRows,"remaining"),""],["نسبة التعثر",defaulterRatio,"٪"],["مصدر التصنيف","يدوي",""]
   ] : [
     ["هدف الدورة",totals.target,"ر.س"],["المحصّل",totals.collected,"ر.س"],
     ["المتبقي",totals.remaining,"ر.س"],["نسبة الإنجاز",totals.pct,"٪"]
@@ -6927,7 +6934,7 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
         </header>
 
         {mode!=="target"&&mode!=="remaining"&&<section className="qkpi-summary">
-          {summary.map((x,i)=><div key={i}><small>{x[0]}</small><strong>{typeof x[1]==="number"?nf(x[1]):x[1]}</strong><em>{x[2]}</em></div>)}
+          {summary.map((x,i)=><div key={i}><small>{x[0]}</small><strong>{typeof x[1]==="number"?x[1].toLocaleString("en-US",{maximumFractionDigits:x[2]==="٪"?1:0}):x[1]}</strong><em>{x[2]}</em></div>)}
         </section>}
 
         {mode!=="target"&&(tabSets[mode]||[]).length>0&&(
@@ -6958,7 +6965,7 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
             <table className="qkpi-table">
               <thead><tr><th>#</th><th>اسم الزبون</th><th>رقم العقد</th><th>المستثمر</th><th>المبلغ المتعثر</th><th>التصنيف</th></tr></thead>
               <tbody>{visibleRows.length===0?<tr><td colSpan={6} className="qkpi-empty">لا يوجد متعثرون محددون يدويًا</td></tr>:visibleRows.map((r,i)=><tr key={r.c.id}>
-                <td>{i+1}</td><td className="qkpi-name">{r.c.client||"—"}</td><td>{reportContractNumber(r.c)}</td><td>{invText(r.c)}</td><td className="qkpi-red qkpi-money">{nf(r.amount)} ر.س</td><td><span className="qkpi-badge is-manual">يدوي</span></td>
+                <td>{i+1}</td><td className="qkpi-name qkpi-overdue-client">{r.c.client||"—"}</td><td className="qkpi-contract-number">{reportContractNumber(r.c)}</td><td className="qkpi-investor-name">{invText(r.c)}</td><td className="qkpi-red qkpi-money qkpi-overdue-amount">{nf(r.amount)}</td><td><span className="qkpi-badge is-manual">يدوي</span></td>
               </tr>)}</tbody>
             </table>
           ) : mode==="target" ? (
@@ -7247,7 +7254,7 @@ function Dashboard({contracts,investors,settings,setInvestors,daily,setDaily,dai
 
       {/* نوافذ التفاصيل للبطاقات الخمس — ترتيب البطاقات في الرئيسية لم يتغير */}
       {detail && <DashboardKpiDetails mode={detail.mode} onClose={()=>setDetail(null)} targetRows={targetRows}
-        manualRows={manualDefaulters} investors={investors} cycleLabel={cycleLabel}
+        manualRows={manualDefaulters} investors={investors} cycleLabel={cycleLabel} programRemaining={totalRemaining}
         totals={{target:targetAmount,collected:collectedAmount,remaining:remAmount,done:doneAmount,pct:donePct}}/>}
 
       {/* النافذة القديمة محفوظة مرجعيًا ومعطلة */}
@@ -17310,7 +17317,9 @@ html{scroll-behavior:auto!important}
 /* أقساط الشهر: كشف مباشر بلا بطاقات ملخص أو تبويبات داخلية */
 .qkpi-mode-target .qkpi-head{min-height:112px!important}.qkpi-mode-target .qkpi-tools{border-top:0!important}.qkpi-target-simple .qkpi-customer-primary{min-width:270px!important;text-align:right!important}.qkpi-target-simple .qkpi-customer-primary>strong{display:block!important;color:#102f49!important;font-size:19px!important;font-weight:950!important;line-height:1.35!important}.qkpi-target-simple .qkpi-customer-primary>small{display:block!important;margin-top:5px!important;color:#7a684e!important;font-size:12.5px!important;font-weight:900!important;line-height:1.45!important}.qkpi-target-simple tbody td{padding-block:13px!important;font-size:14px!important;font-weight:850!important}
 .qkpi-mode-remaining .qkpi-tools{border-top:0!important}.qkpi-remaining-table th{font-size:13px!important}.qkpi-remaining-table td{padding-block:15px!important;font-size:15px!important;font-weight:900!important;font-variant-numeric:tabular-nums}.qkpi-remaining-table .qkpi-remaining-client{min-width:245px!important;text-align:right!important}.qkpi-remaining-table .qkpi-remaining-client>strong{display:block!important;color:#092942!important;font-size:18px!important;font-weight:950!important;line-height:1.4!important}.qkpi-remaining-table .qkpi-remaining-client>small{display:block!important;margin-top:5px!important;color:#111827!important;font-size:14px!important;font-weight:900!important;line-height:1.4!important}.qkpi-remaining-table .qkpi-remaining-client>small b{color:#050b12!important;font-size:15px!important;font-weight:950!important}.qkpi-remaining-table .qkpi-badge{min-width:82px!important;padding:7px 11px!important;font-size:12px!important;font-weight:950!important}.qkpi-remaining-table .qkpi-money{font-size:16px!important}
+.qkpi-mode-overdue .qkpi-summary{grid-template-columns:repeat(5,minmax(0,1fr))!important}.qkpi-mode-overdue .qkpi-summary>div{min-height:94px!important;padding:15px 16px!important}.qkpi-mode-overdue .qkpi-summary small{color:#3f5264!important;font-size:13px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-summary strong{margin-top:8px!important;color:#102f49!important;font-size:26px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-summary em{font-size:11px!important;font-weight:900!important}.qkpi-mode-overdue .qkpi-table th{padding-block:14px!important;font-size:13px!important}.qkpi-mode-overdue .qkpi-table td{padding-block:15px!important;font-size:15px!important;font-weight:900!important;font-variant-numeric:tabular-nums}.qkpi-mode-overdue .qkpi-overdue-client{min-width:260px!important;color:#092942!important;font-size:18px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-contract-number{color:#050b12!important;font-size:17px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-investor-name{color:#173b57!important;font-size:16px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-overdue-amount{font-size:18px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-badge{min-width:78px!important;padding:7px 10px!important;font-size:12px!important}
 @media(max-width:720px){.qkpi-target-simple{min-width:840px!important}.qkpi-target-simple .qkpi-customer-primary>strong{font-size:17px!important}.qkpi-target-simple .qkpi-customer-primary>small{font-size:11.5px!important}}
+@media(max-width:760px){.qkpi-mode-overdue .qkpi-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}.q-new-contract-money-grid>div>label{min-height:0!important}}
 
 /* عقد جديد: عنوان ممتد وحقول المبالغ متساوية */
 .q-contracts-new .q-new-contract-hero{width:100%!important;min-height:124px!important;padding:27px 30px!important;box-sizing:border-box!important}
@@ -17320,7 +17329,7 @@ html{scroll-behavior:auto!important}
 @media(min-width:1000px){
  .q-new-contract-money-grid.is-monthly{grid-template-columns:repeat(5,minmax(0,1fr))!important}
  .q-new-contract-money-grid.is-defer{grid-template-columns:repeat(3,minmax(0,1fr))!important}
- .q-new-contract-money-grid>div{min-width:0!important}.q-new-contract-money-grid input{width:100%!important;min-height:56px!important;box-sizing:border-box!important}
+ .q-new-contract-money-grid>div{display:flex!important;min-width:0!important;flex-direction:column!important}.q-new-contract-money-grid>div>label{display:flex!important;min-height:62px!important;align-items:flex-end!important;line-height:1.45!important}.q-new-contract-money-grid input{width:100%!important;min-height:56px!important;margin-top:auto!important;box-sizing:border-box!important}
 }
 
 /* الحسابات: المستثمرون داخل تبويب واحد، ثلاثة حسابات في الصف */
