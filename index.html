@@ -6917,8 +6917,9 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
     ["المنجز بالكامل",totals.done,"ر.س"],["أقساط مكتملة",completedRows.length,"قسط"],
     ["تحصيل الدورة",totals.collected,"ر.س"],["نسبة التحصيل",totals.pct,"٪"]
   ] : mode==="overdue" ? [
-    ["المبلغ المتعثر",defaulterAmount,""],["العقود المتعثرة",manualRows.length,"عقد"],
-    ["إجمالي المتبقي",sum(manualRows,"remaining"),""],["نسبة التعثر",defaulterRatio,"٪"],["مصدر التصنيف","يدوي",""]
+    ["المبلغ المتعثر",defaulterAmount,""],["إجمالي المتبقي بالبرنامج",programRemaining,""],
+    ["نسبة التعثر",defaulterRatio,"٪",nf(defaulterAmount)+" ÷ "+nf(programRemaining)],
+    ["العقود المتعثرة",manualRows.length,"عقد"],["مصدر التصنيف","يدوي",""]
   ] : [
     ["هدف الدورة",totals.target,"ر.س"],["المحصّل",totals.collected,"ر.س"],
     ["المتبقي",totals.remaining,"ر.س"],["نسبة الإنجاز",totals.pct,"٪"]
@@ -6934,7 +6935,7 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
         </header>
 
         {mode!=="target"&&mode!=="remaining"&&<section className="qkpi-summary">
-          {summary.map((x,i)=><div key={i}><small>{x[0]}</small><strong>{typeof x[1]==="number"?x[1].toLocaleString("en-US",{maximumFractionDigits:x[2]==="٪"?1:0}):x[1]}</strong><em>{x[2]}</em></div>)}
+          {summary.map((x,i)=><div key={i}><small>{x[0]}</small><strong>{typeof x[1]==="number"?x[1].toLocaleString("en-US",{maximumFractionDigits:x[2]==="٪"?1:0}):x[1]}</strong><em>{x[2]}</em>{x[3]&&<span className="qkpi-summary-note">{x[3]}</span>}</div>)}
         </section>}
 
         {mode!=="target"&&(tabSets[mode]||[]).length>0&&(
@@ -17318,6 +17319,7 @@ html{scroll-behavior:auto!important}
 .qkpi-mode-target .qkpi-head{min-height:112px!important}.qkpi-mode-target .qkpi-tools{border-top:0!important}.qkpi-target-simple .qkpi-customer-primary{min-width:270px!important;text-align:right!important}.qkpi-target-simple .qkpi-customer-primary>strong{display:block!important;color:#102f49!important;font-size:19px!important;font-weight:950!important;line-height:1.35!important}.qkpi-target-simple .qkpi-customer-primary>small{display:block!important;margin-top:5px!important;color:#7a684e!important;font-size:12.5px!important;font-weight:900!important;line-height:1.45!important}.qkpi-target-simple tbody td{padding-block:13px!important;font-size:14px!important;font-weight:850!important}
 .qkpi-mode-remaining .qkpi-tools{border-top:0!important}.qkpi-remaining-table th{font-size:13px!important}.qkpi-remaining-table td{padding-block:15px!important;font-size:15px!important;font-weight:900!important;font-variant-numeric:tabular-nums}.qkpi-remaining-table .qkpi-remaining-client{min-width:245px!important;text-align:right!important}.qkpi-remaining-table .qkpi-remaining-client>strong{display:block!important;color:#092942!important;font-size:18px!important;font-weight:950!important;line-height:1.4!important}.qkpi-remaining-table .qkpi-remaining-client>small{display:block!important;margin-top:5px!important;color:#111827!important;font-size:14px!important;font-weight:900!important;line-height:1.4!important}.qkpi-remaining-table .qkpi-remaining-client>small b{color:#050b12!important;font-size:15px!important;font-weight:950!important}.qkpi-remaining-table .qkpi-badge{min-width:82px!important;padding:7px 11px!important;font-size:12px!important;font-weight:950!important}.qkpi-remaining-table .qkpi-money{font-size:16px!important}
 .qkpi-mode-overdue .qkpi-summary{grid-template-columns:repeat(5,minmax(0,1fr))!important}.qkpi-mode-overdue .qkpi-summary>div{min-height:94px!important;padding:15px 16px!important}.qkpi-mode-overdue .qkpi-summary small{color:#3f5264!important;font-size:13px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-summary strong{margin-top:8px!important;color:#102f49!important;font-size:26px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-summary em{font-size:11px!important;font-weight:900!important}.qkpi-mode-overdue .qkpi-table th{padding-block:14px!important;font-size:13px!important}.qkpi-mode-overdue .qkpi-table td{padding-block:15px!important;font-size:15px!important;font-weight:900!important;font-variant-numeric:tabular-nums}.qkpi-mode-overdue .qkpi-overdue-client{min-width:260px!important;color:#092942!important;font-size:18px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-contract-number{color:#050b12!important;font-size:17px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-investor-name{color:#173b57!important;font-size:16px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-overdue-amount{font-size:18px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-badge{min-width:78px!important;padding:7px 10px!important;font-size:12px!important}
+.qkpi-mode-overdue .qkpi-summary>div{min-height:104px!important}.qkpi-mode-overdue .qkpi-summary-note{display:block!important;margin-top:7px!important;color:#7a684e!important;font-size:10px!important;font-weight:900!important;direction:ltr!important;text-align:right!important;white-space:nowrap!important}
 @media(max-width:720px){.qkpi-target-simple{min-width:840px!important}.qkpi-target-simple .qkpi-customer-primary>strong{font-size:17px!important}.qkpi-target-simple .qkpi-customer-primary>small{font-size:11.5px!important}}
 @media(max-width:760px){.qkpi-mode-overdue .qkpi-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}.q-new-contract-money-grid>div>label{min-height:0!important}}
 
