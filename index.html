@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-08-31-qima-cycle-21-20-accounting-fix -->
+<!-- build: 2026-08-27-qima-organized-release-v27 -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
@@ -929,19 +929,6 @@ function getCycleDates(cycleDay){
   else       { from = new Date(y, m-1, cd); to = new Date(y, m, cd-1); }
   const fmt = x => x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");
   return { from:from, to:to, fromStr:fmt(from), toStr:fmt(to) };
-}
-
-// حدود دورة مالية محددة (المفتاح ym يمثل شهر بداية الدورة).
-// مثال 2026-08 مع cycleDay=21 => 2026-08-21 إلى 2026-09-20.
-function getFiscalCycleDates(ym, cycleDay){
-  const cd = cycleDay || 21;
-  const parts = String(ym||"").split("-");
-  const y = parseInt(parts[0],10), m = parseInt(parts[1],10);
-  if(!y || !m) return {from:null,to:null,fromStr:"",toStr:""};
-  const from = new Date(y, m-1, cd);
-  const to = new Date(y, m, cd-1);
-  const fmt = x => x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");
-  return {from,to,fromStr:fmt(from),toStr:fmt(to)};
 }
 
 function fmtDate(dateStr) {
@@ -4943,13 +4930,16 @@ function JardPage({contracts,goodsContracts,investors,settings,txList,loans,zaka
     if(key==="zakat")   return (zakatTx||[]).reduce((s,t)=>s+(t.type==="collect"?t.amount:-t.amount),0);
     if(key==="deductions") return (pending||[]).reduce((s,p)=>s+p.amount,0);
     if(key==="staff") {
-      // مستحقات الإدارة مرتبطة بالدورة المالية المختارة 21→20، وليست بتاريخ رصيد بداية الصندوق.
+      // نفس معادلة الرئيسية حرفياً: مستحقات دورة الصندوق الحالية ناقص المستلم خلالها.
       const _daily2 = _arr(daily);
-      const cycleC = (contracts||[]).filter(c=>!c.deleted && c.date && fiscalYM(c.date,_cd)===selMonth);
+      const _dailyOpen2 = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
+      const base2 = _dailyOpen2.__base && typeof _dailyOpen2.__base==="object" ? _dailyOpen2.__base : null;
+      const bDate = base2 ? base2.date : "0000-00-00";
+      const cycleC = contracts.filter(c=>!c.date || c.date >= bDate);
       const mgrE = cycleC.reduce((s,c)=>s+calcC(c,settings).inst,0);
       const accE = cycleC.reduce((s,c)=>s+calcC(c,settings).acc,0);
-      const mgrT = _daily2.filter(d=>d.type==="mgr" && d.date && fiscalYM(d.date,_cd)===selMonth).reduce((s,d)=>s+(d.amount||0),0);
-      const accT = _daily2.filter(d=>d.type==="acc" && d.date && fiscalYM(d.date,_cd)===selMonth).reduce((s,d)=>s+(d.amount||0),0);
+      const mgrT = _daily2.filter(d=>d.type==="mgr" && d.date>=bDate).reduce((s,d)=>s+(d.amount||0),0);
+      const accT = _daily2.filter(d=>d.type==="acc" && d.date>=bDate).reduce((s,d)=>s+(d.amount||0),0);
       return (mgrE - mgrT) + (accE - accT);
     }
     if(key==="cards") {
@@ -6354,55 +6344,48 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
   // النتيجة: المصروف/استلام المدير/الرئيس/السداد تتصفّر تلقائياً (الحركات القديمة تصير قبل نقطة البداية)
   // لا يُمسح أي شيء — كله محفوظ بالكشف الشامل والأرشيف
   const closeCycleAndReset = () => {
+    // 1) حساب المتبقي الحالي في الصندوق
     const _do = (dailyOpen && typeof dailyOpen==="object" && !Array.isArray(dailyOpen)) ? dailyOpen : {};
     const base = _do.__base && typeof _do.__base==="object" ? _do.__base : null;
     const baseAmount = base ? (+base.amount||0) : 0;
     const baseDate = base ? base.date : "0000-00-00";
     const _daily = daily||[];
-    const todayStr = todayLocal();
-    const todayDate = new Date(todayStr+"T00:00:00");
-    const activeYM = fiscalYM(todayDate,_cd);
-    const activeCycle = getFiscalCycleDates(activeYM,_cd);
-    const isCycleEnd = todayStr===activeCycle.toStr;
-
-    // إذا كان اليوم هو 20: نقفل الدورة المنتهية اليوم ونرحّل إلى 21 غداً.
-    // في بقية الأيام: نقفل آخر دورة مكتملة ونثبت بداية الصندوق عند 21 للدورة الحالية.
-    let closeYM, newBaseDate;
-    if(isCycleEnd){
-      closeYM = activeYM;
-      const nx = new Date(activeCycle.to); nx.setDate(nx.getDate()+1);
-      newBaseDate = nx.getFullYear()+"-"+String(nx.getMonth()+1).padStart(2,"0")+"-"+String(nx.getDate()).padStart(2,"0");
-    } else {
-      const a = new Date(activeCycle.from); a.setDate(a.getDate()-1);
-      closeYM = fiscalYM(a,_cd);
-      newBaseDate = activeCycle.fromStr;
-    }
-
-    // الرصيد المرحّل = رصيد البداية + الحركات النقدية فقط قبل نقطة البداية الجديدة.
-    // التحويل البنكي لا يدخل الصندوق، ولا نعيد احتساب حركات يوم البداية مرتين.
-    const carried = baseAmount + _daily.filter(d=>d.date>=baseDate && d.date<newBaseDate && d.channel!=="transfer")
+    const netSince = _daily.filter(d=>d.date >= baseDate)
       .reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
+    const boxNow = baseAmount + netSince;
 
+    // 2) الشهر (الدورة) الحالي حسب السنة المالية
+    const nowD = new Date();
+    const curYM = fiscalYM(nowD, _cd);
+    const todayStr = todayLocal();
+
+    // تأكيد
     if(!window.confirm(
-      "🔒 إقفال الدورة "+mLabel(closeYM)+"؟\n\n"+
-      "• حدود الدورة: "+getFiscalCycleDates(closeYM,_cd).fromStr+" → "+getFiscalCycleDates(closeYM,_cd).toStr+"\n"+
-      "• بداية الصندوق الجديدة: "+newBaseDate+"\n"+
-      "• الرصيد المرحّل النقدي = "+SAR(carried)+"\n\n"+
-      "التحويلات البنكية لا تدخل في رصيد الصندوق.\n"+
-      "لا يتم حذف العقود أو السدادات أو اليومية."
+      "🔒 إقفال الدورة الحالية وبدء شهر جديد؟\n\n"+
+      "• سيُحفظ الشهر ("+mLabel(curYM)+") في الأرشيف\n"+
+      "• الرصيد الافتتاحي الجديد = "+SAR(boxNow)+"\n"+
+      "• تتصفّر: المصروف · استلام المدير · استلام الرئيس · السداد\n\n"+
+      "⚠️ لا يُمسح أي شيء — كل الحركات محفوظة بالكشف الشامل.\n\n"+
+      "متابعة؟"
     )) return;
 
-    const d = calcMonth(closeYM);
-    setMonthClose(p=>({...(p||{}),[closeYM]:{
+    // 3) حفظ لقطة الشهر بالأرشيف
+    const d = calcMonth(curYM);
+    setMonthClose(p=>({...(p||{}),[curYM]:{
       closedAt:new Date().toISOString(),
       collected:d.collected, amt:d.tot.amt, profit:d.tot.profit,
       admin:d.tot.admin, acc:d.tot.acc, inst:d.tot.inst, net:d.tot.net, count:d.count,
-      cycleReset:true, openingCarried:carried, cycleFrom:getFiscalCycleDates(closeYM,_cd).fromStr, cycleTo:getFiscalCycleDates(closeYM,_cd).toStr
+      cycleReset:true, openingCarried:boxNow
     }}));
 
+    // 4) حفظ البداية القديمة للتراجع
     const prevBase = _do.__base ? {..._do.__base} : null;
-    setDailyOpen(p=>({...(p&&typeof p==="object"&&!Array.isArray(p)?p:{}), __base:{date:newBaseDate, amount:carried}, __prevBase:prevBase, __lastClosedYM:closeYM}));
-    toast("✅ تم إقفال دورة "+mLabel(closeYM)+" — الرصيد المرحّل "+SAR(carried));
+    const prevBaseKey = "__prevBase";
+
+    // 5) تحريك نقطة بداية الصندوق لليوم بمبلغ المتبقي
+    setDailyOpen(p=>({...(p&&typeof p==="object"&&!Array.isArray(p)?p:{}), __base:{date:todayStr, amount:boxNow}, [prevBaseKey]:prevBase}));
+
+    toast("✅ تم إقفال الدورة — بدأ شهر جديد برصيد "+SAR(boxNow));
   };
 
   // ── التراجع عن الإقفال ──
@@ -6415,26 +6398,23 @@ function MonthlyPortfolio({contracts, investors, settings, payments, monthClose,
     }
     if(!window.confirm("هل تريد التراجع عن إقفال الدورة وإرجاع البداية السابقة؟\n\nالبداية السابقة: "+prev.date+" — "+SAR(prev.amount))) return;
 
-    // إرجاع البداية القديمة وحذف مرجع آخر إقفال
-    const closedYM = _do.__lastClosedYM || null;
+    // إرجاع البداية القديمة
     setDailyOpen(p=>{
       const np = {...(p&&typeof p==="object"&&!Array.isArray(p)?p:{})};
       np.__base = {...prev};
       delete np.__prevBase;
-      delete np.__lastClosedYM;
       return np;
     });
 
-    // حذف نفس الدورة التي أُقفلت فعلياً، وليس الدورة الحالية بالضرورة.
-    if(closedYM){
-      setMonthClose(p=>{
-        const np = {...(p||{})};
-        delete np[closedYM];
-        return np;
-      });
-    }
+    // حذف آخر شهر مقفل من الأرشيف
+    const curYM = fiscalYM(new Date(), _cd);
+    setMonthClose(p=>{
+      const np = {...(p||{})};
+      delete np[curYM];
+      return np;
+    });
 
-    toast("✅ تم التراجع — رجعت نقطة الصندوق السابقة");
+    toast("✅ تم التراجع — رجعت الدورة السابقة");
   };
 
   const printAll = (rows, title) => {
@@ -7591,22 +7571,20 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   const mgrShare = dayContracts.reduce((s,c)=>s+calcC(c,settings).inst,0);
   const accShare = dayContracts.reduce((s,c)=>s+calcC(c,settings).acc,0);
 
-  // الحساب الكامل: المستحق والمستلم داخل الدورة المالية 21→20 لليوم المختار.
-  // رصيد بداية الصندوق لا يغيّر حدود الدورة ولا يستبعد العقود.
-  const cycleDay = settings.cycleDay || 21;
-  const selectedCycleYM = fiscalYM(selDay, cycleDay);
-  const selectedCycle = getFiscalCycleDates(selectedCycleYM, cycleDay);
-  const cycleContracts = (contracts||[]).filter(c=>!c.deleted && c.date && fiscalYM(c.date,cycleDay)===selectedCycleYM);
+  // الحساب الكامل: المستحق من عقود الدورة الحالية - المستلم من يومية الدورة الحالية
+  // العقود قبل بداية الدورة (baseDate) مؤرشفة، استحقاقها احتُسب في دورة سابقة
+  const cycleContracts = contracts.filter(c=>!c.date || c.date >= baseDate);
   const mgrEarnedAll = cycleContracts.reduce((s,c)=>s+calcC(c,settings).inst,0);
   const accEarnedAll = cycleContracts.reduce((s,c)=>s+calcC(c,settings).acc,0);
-  const mgrTakenAll = _daily.filter(d=>d.type==="mgr" && d.date && fiscalYM(d.date,cycleDay)===selectedCycleYM).reduce((s,d)=>s+(d.amount||0),0);
-  const accTakenAll = _daily.filter(d=>d.type==="acc" && d.date && fiscalYM(d.date,cycleDay)===selectedCycleYM).reduce((s,d)=>s+(d.amount||0),0);
+  const mgrTakenAll = _daily.filter(d=>d.type==="mgr" && d.date>=baseDate).reduce((s,d)=>s+(d.amount||0),0);
+  const accTakenAll = _daily.filter(d=>d.type==="acc" && d.date>=baseDate).reduce((s,d)=>s+(d.amount||0),0);
   const mgrLeft = mgrEarnedAll - mgrTakenAll;
   const accLeft = accEarnedAll - accTakenAll;
 
-  // ═══ كشف حساب الدورة 21→20 (مع السماح بتضييق الفترة يدوياً) ═══
+  // ═══ كشف حساب شامل عبر كل الأيام (أو ضمن فترة محددة) ═══
+  // يحترم بداية الدورة الحالية (baseDate): الحركات قبلها مؤرشفة ولا تظهر
   const stmtRows = _daily.filter(d=>{
-    if(!d.date || fiscalYM(d.date,cycleDay)!==selectedCycleYM) return false;
+    if(d.date < baseDate) return false;  // قبل بداية الدورة = مؤرشف
     if(stmtFrom && d.date < stmtFrom) return false;
     if(stmtTo   && d.date > stmtTo)   return false;
     return true;
@@ -7621,7 +7599,8 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   const stmtNet = stmtIn - stmtOut;
 
   // ═══ الحركات التفصيلية المصفّاة (بحث + نوع) — تعرض "مَن" وراء كل حركة ═══
-  // التفاصيل تعرض الكل عند البحث، بينما الإجماليات (stmtRows) محصورة بدورة 21→20 لليوم المختار
+  // التفاصيل تعرض الكل (قديم + جديد) مع فاصل "بداية الشهر الجديد"
+  // بينما الإجماليات (stmtRows) محصورة بالدورة الحالية فقط
   const stmtDetailSource = _daily.filter(d=>{
     if(stmtFrom && d.date < stmtFrom) return false;
     if(stmtTo   && d.date > stmtTo)   return false;
@@ -12428,7 +12407,7 @@ function CashFlowPage({contracts, goodsContracts, investors, settings, payments,
   const base = _do.__base && typeof _do.__base==="object" ? _do.__base : null;
   const baseAmount = base ? (+base.amount||0) : 0;
   const baseDate = base ? base.date : "0000-00-00";
-  const cashBox = baseAmount + _daily.filter(d=>d.date>=baseDate && d.channel!=="transfer").reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
+  const cashBox = baseAmount + _daily.filter(d=>d.date>=baseDate).reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
   // بنك (نفس منطق الجرد: أولاً كشف الراجحي، ثانياً القيمة اليدوية)
   const bt = _arr(bankTx);
   const cashBank = (()=>{
