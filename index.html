@@ -841,6 +841,18 @@ const reportContractNumber = contract => {
   const num=clean(contract.num);if(num)return num;
   const oldNum=clean(contract.oldNum);return oldNum||"—";
 };
+// بحث موحّد برقم العقد: يدعم رقم النظام، oldNum، ورقم العقد الأصلي للعقود المرحّلة المستخرج من الملاحظات.
+const findContractByNumber = (contracts,value) => {
+  const wanted=_latinDigits(value).trim();
+  if(!wanted) return null;
+  return (contracts||[]).find(c=>{
+    if(!c || c.deleted) return false;
+    const nums=[c.num,c.oldNum,reportContractNumber(c)]
+      .map(v=>_latinDigits(v).trim())
+      .filter(v=>v && v!=="—");
+    return nums.includes(wanted);
+  }) || null;
+};
 const opportunityNumber = inv => {
   const candidates = [inv&&inv.code, inv&&inv.name];
   for(const raw of candidates){
@@ -1512,11 +1524,11 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
     ? Math.round(parseFloat(form.totalInst) / parseFloat(form.instAmt))
     : 0;
   const lastInst = (form.firstInst && numMonths > 0) ? addMonths(form.firstInst, numMonths - 1) : "";
-  const contractByNumber = value => contracts.find(c=>!c.deleted && String(c.num||"").trim()===String(value||"").trim());
+  const contractByNumber = value => findContractByNumber(contracts,value);
   const setSettlementContract = (idx,value) => {
     const prior=contractByNumber(value);
     const dd=[...(form.deducts||[])];
-    dd[idx]={...dd[idx],contractNum:value,investorId:prior?String(prior.investorId):""};
+    dd[idx]={...dd[idx],contractNum:value,investorId:prior?String(prior.investorId):(dd[idx].investorId||"")};
     setForm(f=>({...f,deducts:dd}));
   };
 
@@ -1556,20 +1568,17 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
       isOldContract:form.isOldContract||false};
     // migrate deducts array to contract
     const enteredDeducts = (form.deducts||[]).filter(d=>d.amount || d.investorId || d.contractNum);
-    if(form.deductEnabled && enteredDeducts.some(d=>!d.amount || !String(d.contractNum||"").trim())){
-      toast("⚠️ أكمل رقم العقد السابق والمبلغ لكل سداد","warn");
-      return;
-    }
     let activeDeducts=[];
     if(form.deductEnabled){
       for(const d of enteredDeducts){
-        const prior=contractByNumber(d.contractNum);
-        if(!prior){toast("⚠️ العقد السابق رقم "+d.contractNum+" غير موجود؛ لم يُحسب الخصم","warn");return;}
-        if(d.investorId && String(d.investorId)!==String(prior.investorId)){
-          const owner=investors.find(i=>String(i.id)===String(prior.investorId));
-          toast("⚠️ العقد رقم "+d.contractNum+" تابع لـ "+(owner?invLabel(owner):"مستثمر آخر")+"؛ لم يُحسب الخصم","warn");return;
+        const contractNum=String(d.contractNum||"").trim();
+        const prior=contractNum?contractByNumber(contractNum):null;
+        const investorId=String(d.investorId||(prior&&prior.investorId)||"");
+        if(!d.amount || !investorId){
+          toast("⚠️ أكمل المبلغ واختر المستثمر لكل سداد","warn");
+          return;
         }
-        activeDeducts.push({...d,investorId:String(prior.investorId)});
+        activeDeducts.push({...d,contractNum,investorId});
       }
     }
     if(form.deductEnabled && activeDeducts.length>0){
@@ -1593,7 +1602,7 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
             date: form.date,
             type: "deposit",
             amount: amt,
-            note: "سداد عقد سابق من العميل: "+form.client+" | عقد رقم "+d.contractNum+" | عبر العقد الجديد "+form.num,
+            note: "سداد عقد سابق من العميل: "+form.client+(d.contractNum?" | عقد رقم "+d.contractNum:" | بدون رقم عقد سابق")+" | عبر العقد الجديد "+form.num,
             sourceContractNum: String(form.num||""),
             settledContractNum: String(d.contractNum||"")
           }];
@@ -1934,15 +1943,15 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
             <svg width="16" height="16" viewBox="0 0 24 24" style={{stroke:"currentColor"}}><g fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">{form.deductEnabled?<path d="M20 7 10 17l-5-5"/>:<><circle cx="12" cy="12" r="8.4"/><path d="M12 8v8M9.5 10h3.5a1.5 1.5 0 0 1 0 3h-2a1.5 1.5 0 0 0 0 3h4"/></>}</g></svg>
             خصم سداد مستثمر
           </button>
-          {form.deductEnabled && <span style={{fontSize:13,color:"#64748b"}}>سداد عقد سابق يُرحّل مباشرة إلى حساب المستثمر المختار</span>}
+          {form.deductEnabled && <span style={{fontSize:13,color:"#64748b"}}>يُرحّل السداد مباشرة إلى حساب المستثمر المختار؛ رقم العقد السابق اختياري</span>}
         </div>
         {form.deductEnabled && (
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {(form.deducts||[]).map((d,idx)=>(
               <div key={idx} className="q-new-contract-settlement" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,background:idx%2===0?"#fefce8":"#fff",padding:"12px 14px",borderRadius:12,border:"1px solid #e0d8c6"}}>
                 <div>
-                  <label style={{...fLabel,fontSize:13}}>رقم العقد السابق {idx+1}</label>
-                  <input style={fInput} type="text" inputMode="numeric" placeholder="مثال: 854" value={d.contractNum||""} onChange={e=>setSettlementContract(idx,e.target.value)}/>
+                  <label style={{...fLabel,fontSize:13}}>رقم العقد السابق {idx+1} (اختياري)</label>
+                  <input style={fInput} type="text" inputMode="numeric" placeholder="اختياري — مثال: 854" value={d.contractNum||""} onChange={e=>setSettlementContract(idx,e.target.value)}/>
                 </div>
                 <div>
                   <label style={{...fLabel,fontSize:13}}>المبلغ (ريال) {idx+1}</label>
@@ -1950,8 +1959,8 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
                 </div>
                 <div>
                   <label style={{...fLabel,fontSize:13}}>المستثمر {idx+1}</label>
-                  <select disabled style={{...styles.select,borderRadius:10,background:"#f5f0e7",cursor:"not-allowed"}} value={d.investorId||""}>
-                    <option value="">يُحدد من رقم العقد</option>
+                  <select style={{...styles.select,borderRadius:10,background:"#fff",cursor:"pointer"}} value={d.investorId||""} onChange={e=>{const dd=[...(form.deducts||[])];dd[idx]={...dd[idx],investorId:e.target.value};setForm(f=>({...f,deducts:dd}));}}>
+                    <option value="">— اختر المستثمر —</option>
                     {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
                   </select>
                 </div>
@@ -3355,15 +3364,15 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                 onClick={()=>setEditForm(f=>({...f,deductEnabled:!f.deductEnabled}))}>
                 {editForm.deductEnabled?"✓ ":""}خصم سداد مستثمر
               </button>
-              {editForm.deductEnabled && <span style={{fontSize:13,color:"#64748b"}}>سيطلع في العقد المطبوع</span>}
+              {editForm.deductEnabled && <span style={{fontSize:13,color:"#64748b"}}>يُرحّل السداد مباشرة إلى حساب المستثمر المختار؛ رقم العقد السابق اختياري</span>}
             </div>
             {editForm.deductEnabled && (
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {(editForm.deducts||[]).map((d,idx)=>(
                   <div key={idx} className="q-new-contract-settlement" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,background:idx%2===0?"#fefce8":"#fff",padding:"12px 14px",borderRadius:12,border:"1px solid #e0d8c6"}}>
                     <div>
-                      <label style={{fontSize:13,fontWeight:800,color:"#141428",display:"block",marginBottom:5}}>رقم العقد السابق {idx+1}</label>
-                      <input style={styles.input} type="text" inputMode="numeric" placeholder="مثال: 854" value={d.contractNum||""} onChange={e=>{const value=e.target.value;const prior=contracts.find(c=>!c.deleted&&String(c.num||"").trim()===String(value||"").trim());const dd=[...(editForm.deducts||[])];dd[idx]={...dd[idx],contractNum:value,investorId:prior?String(prior.investorId):""};setEditForm(f=>({...f,deducts:dd}));}}/>
+                      <label style={{fontSize:13,fontWeight:800,color:"#141428",display:"block",marginBottom:5}}>رقم العقد السابق {idx+1} (اختياري)</label>
+                      <input style={styles.input} type="text" inputMode="numeric" placeholder="اختياري — مثال: 854" value={d.contractNum||""} onChange={e=>{const value=e.target.value;const prior=findContractByNumber(contracts,value);const dd=[...(editForm.deducts||[])];dd[idx]={...dd[idx],contractNum:value,investorId:prior?String(prior.investorId):(dd[idx].investorId||"")};setEditForm(f=>({...f,deducts:dd}));}}/>
                     </div>
                     <div>
                       <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المبلغ (ريال) {idx+1}</label>
@@ -3371,8 +3380,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                     </div>
                     <div>
                       <label style={{fontSize:13,fontWeight:700,color:C.ink2,display:"block",marginBottom:4}}>المستثمر {idx+1}</label>
-                      <select disabled style={{...styles.select,borderRadius:10,background:"#f5f0e7",cursor:"not-allowed"}} value={d.investorId||""}>
-                        <option value="">يُحدد من رقم العقد</option>
+                      <select style={{...styles.select,borderRadius:10,background:"#fff",cursor:"pointer"}} value={d.investorId||""} onChange={e=>{const dd=[...(editForm.deducts||[])];dd[idx]={...dd[idx],investorId:e.target.value};setEditForm(f=>({...f,deducts:dd}));}}>
+                        <option value="">— اختر المستثمر —</option>
                         {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
                       </select>
                     </div>
@@ -3383,12 +3392,11 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
           </div>
           <button style={styles.btnGold()} onClick={()=>{const ef={...editForm}; if(ef.investorId!==undefined&&ef.investorId!=="") ef.investorId=parseInt(ef.investorId); ["amount","totalInst","instAmt","qty"].forEach(k=>{if(ef[k]!==undefined&&ef[k]!=="")ef[k]=parseFloat(ef[k])||0;});
             const enteredDeducts=(ef.deducts||[]).filter(d=>d.amount||d.investorId||d.contractNum);
-            if(ef.deductEnabled&&enteredDeducts.some(d=>!d.amount||!String(d.contractNum||"").trim())){toast("⚠️ أكمل رقم العقد السابق والمبلغ لكل سداد","warn");return;}
             let activeDeducts=[];
-            if(ef.deductEnabled){for(const d of enteredDeducts){const prior=contracts.find(c=>!c.deleted&&String(c.num||"").trim()===String(d.contractNum||"").trim());if(!prior){toast("⚠️ العقد السابق رقم "+d.contractNum+" غير موجود؛ لم يُحسب الخصم","warn");return;}if(d.investorId&&String(d.investorId)!==String(prior.investorId)){const owner=investors.find(i=>String(i.id)===String(prior.investorId));toast("⚠️ العقد رقم "+d.contractNum+" تابع لـ "+(owner?invLabel(owner):"مستثمر آخر")+"؛ لم يُحسب الخصم","warn");return;}activeDeducts.push({...d,investorId:String(prior.investorId)});}}
+            if(ef.deductEnabled){for(const d of enteredDeducts){const contractNum=String(d.contractNum||"").trim();const prior=contractNum?findContractByNumber(contracts,contractNum):null;const investorId=String(d.investorId||(prior&&prior.investorId)||"");if(!d.amount||!investorId){toast("⚠️ أكمل المبلغ واختر المستثمر لكل سداد","warn");return;}activeDeducts.push({...d,contractNum,investorId});}}
             if(ef.deductEnabled&&activeDeducts.length>0){ef.deducts=activeDeducts;ef.deductAmount=activeDeducts[0].amount;ef.deductInvestorId=activeDeducts[0].investorId;}
             if(setInvTxList){const cNum=editC.num||ef.num;const cClient=ef.client||editC.client;setInvTxList(prev=>{const next={};Object.keys(prev).forEach(k=>{next[k]=(prev[k]||[]).filter(tx=>!(String(tx.sourceContractNum||"")===String(cNum)||(tx.note&&tx.note.includes("عقد رقم "+cNum)&&tx.note.includes("سداد من عميل"))));});
-              if(ef.deductEnabled&&activeDeducts.length>0){activeDeducts.forEach((d,idx)=>{const amt=parseFloat(d.amount)||0;const invId=String(parseInt(d.investorId));const txId=Date.now()+"_deduct_edit_"+idx;next[invId]=[...(next[invId]||[]),{id:txId,date:ef.date||editC.date,type:"deposit",amount:amt,note:"سداد عقد سابق من العميل: "+cClient+" | عقد رقم "+d.contractNum+" | عبر العقد الجديد "+cNum,sourceContractNum:String(cNum),settledContractNum:String(d.contractNum)}];});}
+              if(ef.deductEnabled&&activeDeducts.length>0){activeDeducts.forEach((d,idx)=>{const amt=parseFloat(d.amount)||0;const invId=String(parseInt(d.investorId));const txId=Date.now()+"_deduct_edit_"+idx;next[invId]=[...(next[invId]||[]),{id:txId,date:ef.date||editC.date,type:"deposit",amount:amt,note:"سداد عقد سابق من العميل: "+cClient+(d.contractNum?" | عقد رقم "+d.contractNum:" | بدون رقم عقد سابق")+" | عبر العقد الجديد "+cNum,sourceContractNum:String(cNum),settledContractNum:String(d.contractNum||"")}];});}
               return next;});}
             onUpdate({...editC,...ef});setEditC(null);toast("✅ تم التعديل");}}>حفظ التعديل</button>
         </div>
