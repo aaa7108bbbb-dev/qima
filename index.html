@@ -4385,13 +4385,14 @@ function AccountsPage({contracts, investors, setInvestors, settings, txList, set
   // Auto payments grouped by day
   const paysByDay = {};
   (payments||[]).forEach(p=>{
-    const c = myContracts.find(x=>x.id===p.contractId);
-    if(!c) return;
+    const c = myContracts.find(x=>String(x.id)===String(p.contractId));
+    const standaloneInvestorPayment = p.postToInvestor===true && String(p.investorId)===String(selInv);
+    if(!c && !standaloneInvestorPayment) return;
     const day = p.date;
     if(!paysByDay[day]) paysByDay[day]={amount:0, count:0, date:day, details:[]};
     paysByDay[day].amount += p.amount;
     paysByDay[day].count  += 1;
-    paysByDay[day].details.push({client:c.client, phone:c.phone, amount:p.amount, date:p.date, contractNum:c.num||"", contractId:p.contractId, payId:p.id});
+    paysByDay[day].details.push({client:c?.client||p.client||"عميل", phone:c?.phone||p.phone||"", amount:p.amount, date:p.date, contractNum:c?reportContractNumber(c):(p.contractNum||""), contractId:p.contractId, payId:p.id});
   });
   const autoPayments = Object.entries(paysByDay).map(([day,v])=>{
     return {
@@ -8301,7 +8302,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},doneIds=
           const capital = +inv.capital||0;
           const _auto = myCon.filter(c=>!c.isOldContract&&c.contractType!=="migrated")
             .reduce((s,c)=>{const rr=calcC(c,settings);return s-(c.amount+rr.acc+rr.inst+rr.admin);},0);
-          const myPays = (payments||[]).filter(p=>myCon.some(c=>String(c.id)===String(p.contractId)));
+          const myPays = (payments||[]).filter(p=>myCon.some(c=>String(c.id)===String(p.contractId)) || (p.postToInvestor===true && String(p.investorId)===String(inv.id)));
           const paidSum = myPays.reduce((s,p)=>s+(+p.amount||0),0);
           const manualSum = ((txList&&txList[inv.id])||[]).reduce((s,t)=>s+(+t.amount||0),0);
           const netCash = capital + _auto + paidSum + manualSum;
@@ -13031,7 +13032,7 @@ function ApprovedFinancialCollection({contracts,investors,payments,setPayments,t
     }
 
     savingRef.current=true;
-    const entry={id:Date.now()+Math.floor(Math.random()*1000),contractId,amount,date:payDate,note:finishContract?"تحصيل مالي — سداد وإنهاء":"تحصيل مالي"};
+    const entry={id:Date.now()+Math.floor(Math.random()*1000),contractId,amount,date:payDate,note:finishContract?"تحصيل مالي — سداد وإنهاء":"تحصيل مالي",investorId:target.c.investorId,client,phone:target.c.phone||target.c.cPhone||"",contractNum:contractNo,postToInvestor:finishContract};
     setSaving(true);
     setPayments&&setPayments(prev=>[..._arr(prev),entry]);
     logAct&&logAct(finishContract?"سداد وإنهاء":"سداد","التحصيل المالي",client+" — عقد #"+contractNo+" — المسجل "+NUM(amount)+(finishContract&&remainingAfter>0?" — المتبقي المقفل دون سداد "+NUM(remainingAfter):""));
@@ -14284,6 +14285,14 @@ function App() {
   const publicContracts=activeContracts.filter(c=>!isOwnerOnlyContract(c));
   const publicInvestors=investors.filter(i=>!isOpportunityZeroInvestor(i));
   const publicPayments=payments.filter(p=>!isOwnerOnlyPayment(p));
+  // سداد وإنهاء يبقى حركة دائنة في حساب المستثمر حتى بعد خروج العقد من النشط.
+  // كما نعيد ربط الحركات التي سُجلت بالإصدار السابق قبل حفظ بيانات المستثمر داخل الحركة.
+  const publicAccountPayments=publicPayments.map(p=>{
+    const isFinishPayment=p&&((p.postToInvestor===true)||String(p.note||"").includes("سداد وإنهاء"));
+    if(!isFinishPayment)return p;
+    const sourceContract=allVisibleContracts.find(c=>String(c.id)===String(p.contractId));
+    return {...p,postToInvestor:true,investorId:p.investorId??sourceContract?.investorId,client:p.client||sourceContract?.client||"عميل",phone:p.phone||sourceContract?.phone||sourceContract?.cPhone||"",contractNum:p.contractNum||reportContractNumber(sourceContract)};
+  });
   const publicZakatTx=_arr(zakatTx).filter(z=>!ownerOnlyInvIds.has(String(z&&z.investorId)));
   const publicCollectionFollowups=_arr(collectionFollowups).filter(f=>!ownerOnlyContractIds.has(String(f&&f.contractId)));
   const publicInvTxList=Object.keys(invTxList||{}).reduce((out,key)=>{
@@ -14500,7 +14509,7 @@ function App() {
   const updateContract = updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));};
   const deleteContract = id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(x=>x.id===id?{...x,deleted:true}:x));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));};
   const restoreContract = id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(x=>x.id===id?{...x,deleted:false}:x));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));};
-  const accountCommon={contracts:publicContracts,investors:publicInvestors,setInvestors:setPublicInvestors,settings,txList:publicInvTxList,setTxList:setPublicInvTxList,loans,setLoans,zakatTx:publicZakatTx,setZakatTx:setPublicZakatTx,pending,setPending,payments:publicPayments,setPayments:setPublicPayments,setContracts,toast,privateAccMode:false,gsWrite,doneIds};
+  const accountCommon={contracts:publicContracts,investors:publicInvestors,setInvestors:setPublicInvestors,settings,txList:publicInvTxList,setTxList:setPublicInvTxList,loans,setLoans,zakatTx:publicZakatTx,setZakatTx:setPublicZakatTx,pending,setPending,payments:publicAccountPayments,setPayments:setPublicPayments,setContracts,toast,privateAccMode:false,gsWrite,doneIds};
 
   const contractsHub=<ContractsCenter key={"contracts-"+contractsEntry} initialTab={contractsEntry}
     manageComp={<div className="q-embedded-contracts"><ContractsPage embedded contracts={allVisibleContracts} investors={publicInvestors} settings={settings} onDelete={deleteContract} onRestore={restoreContract} onUpdate={updateContract} payments={publicPayments} setPayments={setPublicPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={saveNewContract} setInvTxList={setPublicInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/></div>}
