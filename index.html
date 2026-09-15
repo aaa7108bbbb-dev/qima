@@ -241,6 +241,39 @@
   }
   /* رأس الجدول ثابت: يلتصق بأعلى الشاشة عند تمرير الصفحة وبأعلى الحاوية عند التمرير الداخلي */
   table thead th { position: -webkit-sticky; position: sticky; top: 0; z-index: 5; }
+  /* إدارة العقود: تثبيت العناوين واسم العميل أثناء التمرير الرأسي والأفقي */
+  .q-contracts-management-scroll { overflow: auto !important; position: relative; isolation: isolate; }
+  .q-contracts-management-table thead,
+  .q-contracts-management-table thead th {
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    top: 0 !important;
+  }
+  .q-contracts-management-table thead { z-index: 30; }
+  .q-contracts-management-table thead th {
+    z-index: 31 !important;
+    background: linear-gradient(180deg,#102b43,#0b1d2d) !important;
+    color: #fff !important;
+  }
+  .q-contracts-management-table thead th:nth-child(3),
+  .q-contracts-management-table tbody td:not([colspan]):nth-child(3) {
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    right: 0;
+    min-width: 190px;
+    z-index: 20 !important;
+    border-left: 2px solid #c8922a !important;
+    box-shadow: -5px 0 10px rgba(15,25,35,.08);
+  }
+  .q-contracts-management-table thead th:nth-child(3) { z-index: 42 !important; }
+  .q-contracts-management-table tbody td:not([colspan]):nth-child(3) { background: #fffdf9 !important; }
+  .q-contracts-management-table tbody tr:nth-child(even) td:not([colspan]):nth-child(3) { background: #fbf7ef !important; }
+  .q-contracts-management-table tbody tr.q-contracts-data-row-old td:not([colspan]):nth-child(3) { background: #f8fafc !important; }
+  .q-contracts-management-table tbody tr:hover td:not([colspan]):nth-child(3) { background: #fff4d9 !important; }
+  @media (min-width: 1024px) {
+    .q-contracts-management-table thead th:nth-child(3),
+    .q-contracts-management-table tbody td:not([colspan]):nth-child(3) { right: 178px; }
+  }
   /* شريط تمرير واضح */
   table::-webkit-scrollbar { height: 8px; }
   table::-webkit-scrollbar-thumb { background: #c8922a; border-radius: 4px; }
@@ -2984,8 +3017,8 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
         </div>
       </div>
       <div style={{background:"rgba(255,255,255,0.92)",backdropFilter:"blur(12px)",borderRadius:18,border:"1px solid rgba(200,146,42,0.1)",boxShadow:"0 4px 24px rgba(0,0,0,0.04)",overflow:"hidden"}}>
-        <div style={{overflowX:"auto",maxHeight:"75vh",overflowY:"auto",position:"relative"}}>
-          <table className="freeze3" style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14}}>
+        <div className="q-contracts-management-scroll" style={{overflowX:"auto",maxHeight:"75vh",overflowY:"auto",position:"relative"}}>
+          <table className="freeze3 q-contracts-management-table" style={{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:14}}>
             <thead>
               <tr>{["التاريخ","#","العميل","الهوية","العمل","الكفيل","البضاعة","العدد","المستثمر","القيمة","الإجمالي","القسط","أول قسط","الربح","الإجراءات"].map((h,hi)=>(
                 <th key={h} style={{...styles.th,position:"sticky",top:0,zIndex:hi<3?14:10}}>{h}</th>
