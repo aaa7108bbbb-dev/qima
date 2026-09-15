@@ -680,6 +680,13 @@ body{background:linear-gradient(180deg,#020911,#03131f 48%,#020911)!important}
 @media(max-width:1050px){.qaf-grid{grid-template-columns:1fr 1.25fr}.qaf-history{grid-column:1/-1}.qfc-layout.history-open{grid-template-columns:1fr}.qfc-history{position:relative;top:auto;min-height:0;order:-1}.qfc-history-table{max-height:460px}}
 @media(max-width:700px){.qaf-page,.qfc-page{padding:10px;border-radius:0;min-height:calc(100vh - 145px)}.qaf-title,.qfc-title{align-items:flex-start;flex-direction:column}.qaf-title h2,.qfc-title h2{font-size:25px}.qfc-title>label{width:100%;min-width:0}.qaf-kpis{grid-template-columns:1fr 1fr;gap:7px}.qaf-kpis>div,.qfc-summary>div{padding:10px}.qaf-kpis strong,.qfc-summary strong{font-size:19px}.qaf-grid{grid-template-columns:1fr}.qaf-history{grid-column:auto}.qaf-scroll{max-height:360px}.qaf-profile-info{grid-template-columns:1fr 1fr;padding:10px}.qaf-actions{padding:0 10px 10px}.qfc-investors button{flex-basis:165px}.qfc-summary{grid-template-columns:1fr 1fr;gap:7px}.qfc-table-wrap{max-height:none}.qfc-table-card table{min-width:780px}.qfc-history{padding:15px 10px}.qfc-history-table{max-height:520px}.qfc-history th,.qfc-history td{padding:12px 7px!important}.qfc-history footer{grid-template-columns:1fr 1fr}.qfc-pay-form input{font-size:18px!important}}
 </style>
+<style id="qfc-finish-payment-ui">
+.qfc-form-actions{grid-template-columns:.8fr 1fr 1fr}
+.qfc-form-actions .qfc-pay-cancel{background:#fff;border-color:#b9c1c8}
+.qfc-form-actions .qfc-pay-finish{background:linear-gradient(145deg,#0b3653,#06243a);border-color:#c8922a;color:#fff}
+.qfc-finish-note{margin-top:10px;padding:9px 11px;border:1px solid #ead6aa;border-radius:8px;background:#fff8e7;color:#6f5521;font-size:12px;font-weight:850;line-height:1.7}
+@media(max-width:700px){.qfc-form-actions{grid-template-columns:1fr 1fr}.qfc-form-actions .qfc-pay-save{grid-column:1;grid-row:1}.qfc-form-actions .qfc-pay-finish{grid-column:2;grid-row:1}.qfc-form-actions .qfc-pay-cancel{grid-column:1/-1;grid-row:2}}
+</style>
 </head>
 <body>
 <div id="root"></div>
@@ -13009,9 +13016,29 @@ function ApprovedFinancialCollection({contracts,investors,payments,setPayments,t
   const history=historyRow?(()=>{let balance=historyRow.overall;return [...historyRow.cp].sort((a,b)=>String(a.date||"").localeCompare(String(b.date||""))||String(a.id||"").localeCompare(String(b.id||""))).map(p=>{balance=Math.max(0,balance-(+p.amount||0));return {...p,balance};}).reverse();})():[];
   const openPay=r=>{setPayTarget(r);setPayAmount(String(Math.min(r.inst||r.remaining,r.remaining)||""));setPayDate(todayLocal());};
   const closePay=()=>{if(!saving){setPayTarget(null);setPayAmount("");}};
-  const savePayment=()=>{
-    if(savingRef.current||!payTarget)return;const amount=+payAmount||0;if(amount<=0){toast&&toast("أدخل مبلغ السداد","warn");return;}if(amount>payTarget.remaining){toast&&toast("المبلغ أكبر من المتبقي على العقد","warn");return;}if(!payDate){toast&&toast("حدد تاريخ السداد","warn");return;}
-    savingRef.current=true;const contractId=payTarget.c.id, entry={id:Date.now()+Math.floor(Math.random()*1000),contractId,amount,date:payDate,note:"تحصيل مالي"};setSaving(true);setPayments&&setPayments(prev=>[..._arr(prev),entry]);logAct&&logAct("سداد","التحصيل المالي",(payTarget.c.client||"")+" — عقد #"+number(payTarget.c)+" — "+NUM(amount));setHistoryId(String(contractId));setPayTarget(null);setPayAmount("");setTimeout(()=>{savingRef.current=false;setSaving(false);},350);toast&&toast("تم تسجيل السداد على العقد رقم "+number(payTarget.c));if(amount>=payTarget.remaining&&markDone)setTimeout(()=>{if(confirm("اكتمل سداد العقد. هل تريد نقله إلى العقود المنتهية؟"))markDone(contractId);},450);
+  const savePayment=(finishContract=false)=>{
+    if(savingRef.current||!payTarget)return;
+    const amount=+payAmount||0;
+    if(amount<=0){toast&&toast("أدخل مبلغ السداد","warn");return;}
+    if(amount>payTarget.remaining){toast&&toast("المبلغ أكبر من المتبقي على العقد","warn");return;}
+    if(!payDate){toast&&toast("حدد تاريخ السداد","warn");return;}
+    if(finishContract&&!markDone){toast&&toast("تعذر إنهاء العقد. لم يتم تسجيل السداد.","warn");return;}
+
+    const target=payTarget, contractId=target.c.id, contractNo=number(target.c), client=target.c.client||"", remainingAfter=Math.max(0,target.remaining-amount);
+    if(finishContract){
+      const message="تأكيد سداد وإنهاء العقد رقم "+contractNo+"؟\n\nسيُسجّل للمستثمر مبلغ "+NUM(amount)+" فقط.\n"+(remainingAfter>0?"وسيُقفل المتبقي "+NUM(remainingAfter)+" دون إضافته إلى حساب المستثمر.":"وسيتم إقفال العقد بعد تسجيل هذا المبلغ.");
+      if(!confirm(message))return;
+    }
+
+    savingRef.current=true;
+    const entry={id:Date.now()+Math.floor(Math.random()*1000),contractId,amount,date:payDate,note:finishContract?"تحصيل مالي — سداد وإنهاء":"تحصيل مالي"};
+    setSaving(true);
+    setPayments&&setPayments(prev=>[..._arr(prev),entry]);
+    logAct&&logAct(finishContract?"سداد وإنهاء":"سداد","التحصيل المالي",client+" — عقد #"+contractNo+" — المسجل "+NUM(amount)+(finishContract&&remainingAfter>0?" — المتبقي المقفل دون سداد "+NUM(remainingAfter):""));
+    if(finishContract){markDone(contractId);setHistoryId("");}else{setHistoryId(String(contractId));}
+    setPayTarget(null);setPayAmount("");
+    setTimeout(()=>{savingRef.current=false;setSaving(false);},350);
+    if(finishContract){toast&&toast("تم تسجيل "+NUM(amount)+" فقط وإنهاء العقد رقم "+contractNo);}else{toast&&toast("تم تسجيل السداد على العقد رقم "+contractNo);if(amount>=target.remaining&&markDone)setTimeout(()=>{if(confirm("اكتمل سداد العقد. هل تريد نقله إلى العقود المنتهية؟"))markDone(contractId);},450);}
   };
   const collected=group.rows.reduce((s,r)=>s+r.received,0), remaining=group.rows.reduce((s,r)=>s+r.remaining,0);
   return <div className="qfc-page">
@@ -13021,7 +13048,7 @@ function ApprovedFinancialCollection({contracts,investors,payments,setPayments,t
     <div className={historyRow?"qfc-layout history-open":"qfc-layout"}><section className="qfc-table-card"><header><div><small>حساب المستثمر</small><h3>العملاء والأقساط</h3></div><span>{shown.length} عميل</span></header><div className="qfc-table-wrap"><table><thead><tr><th>الاسم</th><th>الإجمالي</th><th>الواصل</th><th>المتبقي</th><th>المتأخر</th><th>القسط</th><th>الإجراء</th></tr></thead><tbody>{shown.length?shown.map(r=><tr key={r.c.id}><td><button className="qfc-client" onClick={()=>setHistoryId(String(r.c.id))}><strong>{r.c.client||"عميل بلا اسم"}</strong><small>عقد رقم {number(r.c)}</small></button></td><td>{NUM(r.overall)}</td><td className="qfc-green">{NUM(r.received)}</td><td>{NUM(r.remaining)}</td><td className={r.late>0?"qfc-red":""}>{NUM(r.late)}</td><td>{NUM(r.inst)}</td><td><button className="qfc-pay" onClick={()=>openPay(r)}>تسجيل سداد</button></td></tr>):<tr><td colSpan="7" className="qfc-empty">لا توجد عقود نشطة لهذا المستثمر</td></tr>}</tbody></table></div></section>
       {historyRow&&<aside className="qfc-history"><button className="qfc-close" onClick={()=>setHistoryId("")}>×</button><small>سدادات العميل</small><h3>{historyRow.c.client||"عميل بلا اسم"}</h3><b>عقد رقم {number(historyRow.c)}</b><div className="qfc-history-table"><table><thead><tr><th>التاريخ</th><th>القسط</th><th>المتبقي</th></tr></thead><tbody>{history.length?history.map(p=><tr key={p.id}><td>{fmtDate(p.date)}</td><td>{NUM(p.amount)}</td><td>{NUM(p.balance)}</td></tr>):<tr><td colSpan="3" className="qfc-empty">لا توجد سدادات مسجلة</td></tr>}</tbody></table></div><footer><div><small>إجمالي الأقساط</small><strong>{NUM(historyRow.overall)}</strong></div><div><small>المتبقي الحالي</small><strong>{NUM(historyRow.remaining)}</strong></div></footer></aside>}
     </div>
-    <Modal open={!!payTarget} onClose={closePay} title={payTarget?("تسجيل سداد — "+payTarget.c.client):"تسجيل سداد"}><div className="qfc-pay-form"><div className="qfc-contract-line">عقد رقم {payTarget?number(payTarget.c):"—"}</div><label><span>المبلغ</span><input type="number" min="0" step="0.01" value={payAmount} onChange={e=>setPayAmount(e.target.value)} autoFocus/></label><label><span>التاريخ</span><input type="date" value={payDate} onChange={e=>setPayDate(e.target.value)}/></label><div className="qfc-form-actions"><button onClick={closePay}>إلغاء</button><button className="primary" disabled={saving} onClick={savePayment}>{saving?"جارٍ الحفظ...":"حفظ السداد"}</button></div></div></Modal>
+    <Modal open={!!payTarget} onClose={closePay} title={payTarget?("تسجيل سداد — "+payTarget.c.client):"تسجيل سداد"}><div className="qfc-pay-form"><div className="qfc-contract-line">عقد رقم {payTarget?number(payTarget.c):"—"}</div><label><span>المبلغ</span><input type="number" min="0" step="0.01" value={payAmount} onChange={e=>setPayAmount(e.target.value)} autoFocus/></label><label><span>التاريخ</span><input type="date" value={payDate} onChange={e=>setPayDate(e.target.value)}/></label><div className="qfc-form-actions"><button className="qfc-pay-cancel" disabled={saving} onClick={closePay}>إلغاء</button><button className="primary qfc-pay-save" disabled={saving} onClick={()=>savePayment(false)}>حفظ السداد</button><button className="qfc-pay-finish" disabled={saving} onClick={()=>savePayment(true)}>سداد وإنهاء</button></div><div className="qfc-finish-note">سداد وإنهاء: يسجّل المبلغ المكتوب فقط ثم يقفل العقد، ولا يضيف المبلغ المتبقي إلى حساب المستثمر.</div></div></Modal>
   </div>;
 }
 
