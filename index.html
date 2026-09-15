@@ -243,6 +243,8 @@
   table thead th { position: -webkit-sticky; position: sticky; top: 0; z-index: 5; }
   /* إدارة العقود: تثبيت العناوين واسم العميل أثناء التمرير الرأسي والأفقي */
   .q-contracts-management-scroll { overflow: auto !important; position: relative; isolation: isolate; }
+  /* طبقة التصميم التنفيذية تضع overflow:hidden على كل الجداول؛ هذا يمنع sticky من الارتباط بحاوية التمرير. */
+  body .contracts-lux table.q-contracts-management-table { overflow: visible !important; }
   .q-contracts-management-table thead,
   .q-contracts-management-table thead th {
     position: -webkit-sticky !important;
