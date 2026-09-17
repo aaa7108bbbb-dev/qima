@@ -6997,6 +6997,44 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
     paid:["مكتمل","is-paid"],partial:["جزئي","is-partial"],due:["مستحق","is-due"],
     upcoming:["قادم","is-upcoming"],unknown:["تاريخ غير محدد","is-unknown"]
   };
+  const canPrint=mode==="target"||mode==="remaining"||mode==="done";
+  const escapePrint=value=>String(value==null?"":value)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/\"/g,"&quot;").replace(/'/g,"&#39;");
+  const printCurrent=()=>{
+    if(!canPrint)return;
+    const selected=invFilter==="all"?null:investors.find(i=>String(i.id)===String(invFilter));
+    const investorFilter=selected?invLabel(selected):"كل المستثمرين";
+    const headings=mode==="remaining"
+      ?["#","الزبون والعقد","المستثمر","الاستحقاق","القسط","المدفوع","الباقي","الحالة"]
+      :mode==="done"
+        ?["#","الزبون والعقد","المستثمر","تاريخ الاستحقاق","المبلغ المنجز","تاريخ السداد","الحالة"]
+        :["#","اسم الزبون","المستثمر","تاريخ الاستحقاق","قيمة القسط","المحصّل","الحالة"];
+    const cell=value=>"<td>"+escapePrint(value)+"</td>";
+    const body=visibleRows.map((r,i)=>{
+      const c=r.c||{};
+      const sm=statusMeta[r.status]||statusMeta.unknown;
+      const client="<td class='name'>"+escapePrint(c.client||"—")+"<small>عقد "+escapePrint(reportContractNumber(c))+"</small></td>";
+      if(mode==="remaining")return "<tr>"+cell(i+1)+client+cell(invText(c))+cell(r.dueDateStr?fmtDate(r.dueDateStr):"—")+cell(nf(r.due))+cell(nf(r.paidApplied))+cell(nf(r.remainingDue))+cell(sm[0])+"</tr>";
+      if(mode==="done")return "<tr>"+cell(i+1)+client+cell(invText(c))+cell(r.dueDateStr?fmtDate(r.dueDateStr):"—")+cell(nf(r.due))+cell(r.lastPaymentDate?fmtDate(r.lastPaymentDate):"—")+cell(sm[0])+"</tr>";
+      const targetClient="<td class='name'>"+escapePrint(c.client||"—")+"<small>عقد "+escapePrint(reportContractNumber(c))+" · المرحلة: "+escapePrint(stageText(c))+"</small></td>";
+      return "<tr>"+cell(i+1)+targetClient+cell(invText(c))+cell(r.dueDateStr?fmtDate(r.dueDateStr):"—")+cell(nf(r.due))+cell(nf(r.paidApplied))+cell(sm[0])+"</tr>";
+    }).join("");
+    const primaryLabel=mode==="remaining"?"إجمالي الباقي":mode==="done"?"إجمالي المنجز":"إجمالي الأقساط";
+    const primaryValue=mode==="remaining"?sum(visibleRows,"remainingDue"):sum(visibleRows,"due");
+    const secondaryLabel=mode==="done"?"عدد الأقساط":"إجمالي المدفوع";
+    const secondaryValue=mode==="done"?visibleRows.length:sum(visibleRows,"paidApplied");
+    const queryInfo=query.trim()?" · البحث: "+escapePrint(query.trim()):"";
+    const printWindow=window.open("","_blank","width=1180,height=820");
+    if(!printWindow){window.alert("تعذر فتح نافذة الطباعة. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.");return;}
+    const empty="<tr><td class='empty' colspan='"+headings.length+"'>لا توجد نتائج للطباعة</td></tr>";
+    const head=headings.map(h=>"<th>"+escapePrint(h)+"</th>").join("");
+    printWindow.document.write("<!doctype html><html lang='ar' dir='rtl'><head><meta charset='utf-8'><title>"+escapePrint(meta.title)+"</title><style>"+
+      "@page{size:A4 landscape;margin:9mm}*{box-sizing:border-box}body{margin:0;background:#fff;color:#172b3b;font-family:Tahoma,Arial,sans-serif}.actions{display:flex;gap:8px;justify-content:flex-start;margin-bottom:14px}.actions button{border:0;border-radius:8px;padding:9px 18px;font-weight:800;cursor:pointer}.print{background:#0b3559;color:#fff}.close{background:#eee;color:#333}header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid #c79a3b;padding:0 0 12px;margin-bottom:12px}h1{margin:0 0 5px;font-size:24px;color:#0b3559}header p{margin:0;color:#66583f;font-size:12px;font-weight:700}.brand{text-align:left;color:#9a6b16;font-weight:900}.summary{display:flex;gap:10px;margin:0 0 12px}.summary div{min-width:170px;border:1px solid #dfd4c2;border-radius:9px;padding:9px 12px;background:#faf7f0}.summary small{display:block;color:#6b7280;font-weight:700}.summary strong{display:block;margin-top:4px;color:#0b3559;font-size:18px}table{width:100%;border-collapse:collapse;font-size:10.5px}thead{display:table-header-group}th{background:#0b3559;color:#fff;padding:9px 7px;border:1px solid #244c6c}td{padding:8px 7px;border:1px solid #d8d1c5;text-align:center;font-weight:700}tbody tr:nth-child(even){background:#faf8f3}td.name{text-align:right;min-width:165px;color:#102f49;font-weight:900}td.name small{display:block;margin-top:3px;color:#766a58;font-size:9px}.empty{padding:24px;color:#777}footer{margin-top:10px;color:#6b6254;font-size:10px}@media print{.actions{display:none}body{print-color-adjust:exact;-webkit-print-color-adjust:exact}tr{break-inside:avoid}}"+
+      "</style></head><body><div class='actions'><button class='print' onclick='window.print()'>طباعة الكشف</button><button class='close' onclick='window.close()'>إغلاق</button></div><header><div><h1>"+escapePrint(meta.title)+"</h1><p>الدورة: "+escapePrint(cycleLabel)+" · "+escapePrint(investorFilter)+queryInfo+" · النتائج: "+visibleRows.length+"</p></div><div class='brand'>مؤسسة قمة الفرصة التجارية</div></header><section class='summary'><div><small>"+primaryLabel+"</small><strong>"+nf(primaryValue)+" ر.س</strong></div><div><small>"+secondaryLabel+"</small><strong>"+(mode==="done"?secondaryValue+" قسط":nf(secondaryValue)+" ر.س")+"</strong></div></section><table><thead><tr>"+head+"</tr></thead><tbody>"+(body||empty)+"</tbody></table><footer>تاريخ الطباعة: "+escapePrint(fmtDate(todayLocal()))+"</footer></body></html>");
+    printWindow.document.close();
+    printWindow.focus();
+  };
   const dueNowAmount=sum(dueRows,"remainingDue"), upcomingAmount=sum(upcomingRows,"remainingDue");
   const defaulterAmount=sum(manualRows,"amount");
   const defaulterRatio=programRemaining>0?Math.round((defaulterAmount/programRemaining)*1000)/10:0;
@@ -7036,13 +7074,17 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
           </nav>
         )}
 
-        <div className="qkpi-tools">
+        <div className={"qkpi-tools "+(canPrint?"has-print":"")}>
           <label className="qkpi-search"><span>⌕</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={mode==="progress"?"ابحث باسم المستثمر...":"ابحث باسم الزبون أو رقم العقد..."}/></label>
           <select value={invFilter} onChange={e=>setInvFilter(e.target.value)}>
             <option value="all">كل المستثمرين</option>
             {sortedInvestors(investors).map(i=><option key={i.id} value={i.id}>{invLabel(i)}</option>)}
           </select>
           <span className="qkpi-result-count">{mode==="progress"?visibleInvestors.length:visibleRows.length} نتيجة</span>
+          {canPrint&&<button type="button" className="qkpi-print-btn" onClick={printCurrent} aria-label={"طباعة "+meta.title}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M7 14h10v7H7z"/><path d="M17.5 11h.01"/></svg>
+            <span>طباعة</span>
+          </button>}
         </div>
 
         <div className="qkpi-table-wrap">
@@ -17375,6 +17417,15 @@ body .contracts-lux table.freeze3 td.q-contracts-client>span:hover{
 .qkpi-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 17px;border-top:1px solid #e2d7c6;background:#f9f4eb}.qkpi-footer span{color:#84909b;font-size:9px;font-weight:800}.qkpi-footer button{min-height:37px!important;padding:6px 18px!important;border:1px solid #b77f1f!important;border-radius:10px!important;background:linear-gradient(135deg,#efd078,#c88e29)!important;color:#0a2741!important;font-size:11px!important;font-weight:950!important;box-shadow:none!important}
 @media(max-width:760px){.qkpi-overlay{align-items:flex-end;padding:0}.qkpi-modal{width:100%;max-height:94vh;border-radius:22px 22px 0 0}.qkpi-head{grid-template-columns:1fr;min-height:130px;padding:20px 18px 16px}.qkpi-head-copy h2{font-size:25px!important}.qkpi-head-copy p{padding-left:30px;font-size:10px}.qkpi-cycle{min-width:0;padding:8px 12px;text-align:right}.qkpi-cycle small,.qkpi-cycle strong{display:inline}.qkpi-cycle strong{margin-right:6px;font-size:11px}.qkpi-close{left:13px!important;top:13px!important}.qkpi-summary{grid-template-columns:1fr 1fr;padding:9px}.qkpi-summary>div{min-height:70px;padding:11px}.qkpi-summary strong{font-size:19px}.qkpi-tabs{padding:7px 9px}.qkpi-tabs button{min-width:132px!important}.qkpi-tools{grid-template-columns:1fr 1fr;padding:9px}.qkpi-result-count{grid-column:1/-1;text-align:right}.qkpi-table{min-width:790px}.qkpi-table th,.qkpi-table td{padding:10px 9px}.qkpi-footer{padding:9px}.qkpi-footer span{display:none}.qkpi-footer button{width:100%}}
 @media(max-width:430px){.qkpi-summary{gap:6px}.qkpi-summary>div{min-height:64px}.qkpi-tools{grid-template-columns:1fr}.qkpi-result-count{grid-column:auto}.qkpi-head-copy p{max-width:310px}.qkpi-table-wrap{min-height:245px}}
+</style>
+<style id="qima-kpi-print-v24">
+.qkpi-tools.has-print{grid-template-columns:minmax(260px,1fr) minmax(190px,290px) auto auto}
+.qkpi-print-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;min-width:108px!important;min-height:43px!important;padding:7px 15px!important;border:1px solid #b98425!important;border-radius:11px!important;background:linear-gradient(135deg,#0b3559,#061b31)!important;color:#f1cf73!important;font-size:12px!important;font-weight:950!important;line-height:1!important;cursor:pointer!important;box-shadow:0 4px 12px rgba(8,42,69,.13)!important;white-space:nowrap!important}
+.qkpi-print-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+.qkpi-print-btn:focus-visible{outline:3px solid rgba(199,154,59,.3)!important;outline-offset:2px!important}
+.qkpi-print-btn svg{width:18px!important;height:18px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important;flex:0 0 auto!important}
+@media(max-width:760px){.qkpi-tools.has-print{grid-template-columns:1fr 1fr}.qkpi-tools.has-print .qkpi-result-count{grid-column:1;text-align:right}.qkpi-print-btn{grid-column:2;width:100%!important}}
+@media(max-width:430px){.qkpi-tools.has-print{grid-template-columns:1fr}.qkpi-tools.has-print .qkpi-result-count,.qkpi-print-btn{grid-column:auto}}
 </style>
 <style id="qima-final-structure-v23">
 :root{--q23-cream:#f6f0e4;--q23-cream2:#fbf8f1;--q23-paper:#fffdf9;--q23-navy:#061b32;--q23-navy2:#0a3151;--q23-gold:#c9932b;--q23-gold2:#e8c55d;--q23-ink:#132d45;--q23-muted:#66788a;--q23-line:#dfd3bf;--q23-shadow:0 12px 34px rgba(15,42,64,.09)}
