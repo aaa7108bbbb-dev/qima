@@ -4984,7 +4984,7 @@ function JardPage({contracts,goodsContracts,investors,settings,txList,loans,zaka
 
   const getVal = (key) => {
     // البطاقات والزكاة والاستقطاعات: تلقائية دائماً (تتجاهل أي قيمة يدوية قديمة)
-    const alwaysAuto = ["cards","zakat","deductions","cash","accounts","staff"];
+    const alwaysAuto = ["cards","zakat","deductions","cash","accounts","staff","loans"];
     if(!alwaysAuto.includes(key) && overrides[selMonth+"_"+key]!==undefined) return overrides[selMonth+"_"+key];
     // رصيد الحسابات البنكية: آخر رصيد من كشف الراجحي المستورد
     if(key==="accounts") {
@@ -5040,18 +5040,20 @@ function JardPage({contracts,goodsContracts,investors,settings,txList,loans,zaka
     return newOv;
   });
   const getInv = (id) => {
-    const key = selMonth+"_inv_"+id;
-    if(overrides[key]!==undefined) return overrides[key];
-    const inv = investors.find(i=>i.id===id);
-    const capital = inv?.capital||0;
-    const myContracts = contracts.filter(c=>c.investorId===id);
-    const myManualTx = (txList[id]||[]);
-    const autoDeduct = myContracts.filter(c=>!c.isOldContract && c.contractType!=="migrated").reduce((s,c)=>{
+    // نفس رصيد الحساب الجاري حرفياً؛ لا نسمح لقيمة يدوية قديمة بتجميد الرصيد.
+    const inv = investors.find(i=>String(i.id)===String(id));
+    const capital = +(inv?.capital)||0;
+    const myContracts = _arr(contracts).filter(c=>!c.deleted && String(c.investorId)===String(id));
+    const myManualTx = _arr(txList&&txList[id]);
+    const autoDeduct = myContracts.filter(c=>!c.isOldContract && c.contractType!=="migrated" && !c.excludeFromStatement).reduce((s,c)=>{
       const r=calcC(c,settings);
-      return s-(c.amount+r.acc+r.inst+r.admin);
+      return s-((+c.amount||0)+(+r.acc||0)+(+r.inst||0)+(+r.admin||0));
     },0);
-    const autoPaid = (payments||[]).filter(p=>myContracts.find(c=>c.id===p.contractId)).reduce((s,p)=>s+p.amount,0);
-    const manualTotal = myManualTx.reduce((s,t)=>s+t.amount,0);
+    const autoPaid = _arr(payments).filter(p=>
+      myContracts.some(c=>String(c.id)===String(p.contractId)) ||
+      (p.postToInvestor===true && String(p.investorId)===String(id))
+    ).reduce((s,p)=>s+(+p.amount||0),0);
+    const manualTotal = myManualTx.reduce((s,t)=>s+(+t.amount||0),0);
     return capital + autoDeduct + autoPaid + manualTotal;
   };
   const setInv = (id,sign,v) => {
@@ -8300,7 +8302,7 @@ function InvestorsPage({investors,contracts,settings,payments,txList={},doneIds=
           const myCon = contracts.filter(c=>!c.deleted && !isFinishedContract(c) && String(c.investorId)===String(inv.id));
           const bidaya = +inv.bidaya||0;
           const capital = +inv.capital||0;
-          const _auto = myCon.filter(c=>!c.isOldContract&&c.contractType!=="migrated")
+          const _auto = myCon.filter(c=>!c.isOldContract&&c.contractType!=="migrated"&&!c.excludeFromStatement)
             .reduce((s,c)=>{const rr=calcC(c,settings);return s-(c.amount+rr.acc+rr.inst+rr.admin);},0);
           const myPays = (payments||[]).filter(p=>myCon.some(c=>String(c.id)===String(p.contractId)) || (p.postToInvestor===true && String(p.investorId)===String(inv.id)));
           const paidSum = myPays.reduce((s,p)=>s+(+p.amount||0),0);
@@ -14521,7 +14523,7 @@ function App() {
   const financeFollowup=<ApprovedTodayFollowup contracts={publicContracts} investors={publicInvestors} payments={publicPayments} doneIds={doneIds} toast={toast} logAct={logAct} collectionFollowups={publicCollectionFollowups} setCollectionFollowups={setPublicCollectionFollowups}/>;
   const financeCollection=<ApprovedFinancialCollection contracts={publicContracts} investors={publicInvestors} payments={publicPayments} setPayments={setPublicPayments} toast={toast} logAct={logAct} doneIds={doneIds} markDone={markDone}/>;
 
-  const portfolioView=<MonthlyPortfolio contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={publicContracts} goodsContracts={publicAllContracts} investors={publicInvestors} settings={settings} txList={publicInvTxList} loans={loans} zakatTx={publicZakatTx} pending={pending} payments={publicPayments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={publicContracts} investors={publicInvestors} payments={publicPayments} setPayments={setPublicPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={publicContracts} goodsContracts={publicAllContracts} investors={publicInvestors} settings={settings} payments={publicPayments} daily={daily} dailyOpen={dailyOpen} txList={publicInvTxList} loans={loans} zakatTx={publicZakatTx} pending={pending} bankTx={bankTx}/>} doneIds={doneIds} txList={publicInvTxList}/>;
+  const portfolioView=<MonthlyPortfolio contracts={publicContracts} investors={publicInvestors} settings={settings} payments={publicPayments} monthClose={monthClose} setMonthClose={setMonthClose} toast={toast} daily={daily} dailyOpen={dailyOpen} setDailyOpen={setDailyOpen} JardComp={<JardPage contracts={publicContracts} goodsContracts={publicAllContracts} investors={publicInvestors} settings={settings} txList={publicInvTxList} loans={loans} zakatTx={publicZakatTx} pending={pending} payments={publicAccountPayments} gsWrite={gsWrite} daily={daily} dailyOpen={dailyOpen} bankTx={bankTx}/>} BankComp={<BankPage bankTx={bankTx} setBankTx={setBankTx} toast={toast} contracts={publicContracts} investors={publicInvestors} payments={publicPayments} setPayments={setPublicPayments} doneIds={doneIds} daily={daily} setDaily={setDaily} logAct={logAct}/>} CashComp={<CashFlowPage contracts={publicContracts} goodsContracts={publicAllContracts} investors={publicInvestors} settings={settings} payments={publicPayments} daily={daily} dailyOpen={dailyOpen} txList={publicInvTxList} loans={loans} zakatTx={publicZakatTx} pending={pending} bankTx={bankTx}/>} doneIds={doneIds} txList={publicInvTxList}/>;
   const financeHub=<FinanceCenter key={"finance-"+financeEntry} initialTab={financeEntry} onTabChange={setFinanceEntry}
     portfolioComp={portfolioView}
     followupComp={financeFollowup}
