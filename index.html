@@ -5015,8 +5015,10 @@ function JardPage({contracts,goodsContracts,investors,settings,txList,loans,zaka
     if(key==="deductions") return (pending||[]).reduce((s,p)=>s+p.amount,0);
     if(key==="staff") {
       // مستحقات الإدارة مرتبطة بالدورة المالية المختارة 21→20، وليست بتاريخ رصيد بداية الصندوق.
+      // نستخدم كل العقود غير المحذوفة (goodsContracts) لا العقود النشطة فقط: عمولة المدير
+      // والمحاسب تُستحق عند إنشاء العقد، وسداد العميل الكامل أو المبكر لا يلغيها.
       const _daily2 = _arr(daily);
-      const cycleC = (contracts||[]).filter(c=>!c.deleted && c.date && fiscalYM(c.date,_cd)===selMonth);
+      const cycleC = (goodsContracts||contracts||[]).filter(c=>!c.deleted && c.date && fiscalYM(c.date,_cd)===selMonth);
       const mgrE = cycleC.reduce((s,c)=>s+calcC(c,settings).inst,0);
       const accE = cycleC.reduce((s,c)=>s+calcC(c,settings).acc,0);
       const mgrT = _daily2.filter(d=>_isMgrDailyTake(d) && d.date && fiscalYM(d.date,_cd)===selMonth).reduce((s,d)=>s+(d.amount||0),0);
