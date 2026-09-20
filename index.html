@@ -7678,10 +7678,14 @@ function DailyPage({daily, setDaily, dailyOpen, setDailyOpen, contracts, setting
   const base = _dailyOpen.__base && typeof _dailyOpen.__base==="object" ? _dailyOpen.__base : null;
   const baseAmount = base ? (+base.amount||0) : 0;
   const baseDate = base ? base.date : "0000-00-00";
-  // الرصيد الافتتاحي لليوم المختار = رصيد البداية + صافي كل الحركات النقدية من تاريخ البداية حتى أمس
-  const prevNet = _daily.filter(d=>d.date < selDay && d.date >= baseDate && d.channel!=="transfer")
+  // الرصيد الافتتاحي لليوم المختار = رصيد البداية + صافي الحركات النقدية من تاريخ البداية حتى أمس.
+  // ولو وقع اليوم المختار قبل تاريخ البداية بعد إقفال دورة، نحسب للخلف بطرح حركات
+  // الفترة من اليوم المختار حتى تاريخ البداية، لأنها أصلاً داخل الرصيد المرحّل فلا تُخصم مرتين.
+  const _cashNet = (from,to) => _daily.filter(d=>d.date>=from && d.date<to && d.channel!=="transfer")
     .reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
-  const openingBalance = baseAmount + prevNet;
+  const openingBalance = selDay>=baseDate
+    ? baseAmount + _cashNet(baseDate, selDay)
+    : baseAmount - _cashNet(selDay, baseDate);
 
   // صافي حركات اليوم (النقدية فقط)
   const dayNet = dayRows.filter(d=>d.channel!=="transfer").reduce((s,d)=>{const t=DAILY_TYPES.find(x=>x.key===d.type);return s+(t?t.sign:1)*(d.amount||0);},0);
