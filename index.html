@@ -6937,13 +6937,6 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
   const nf = v => (+v||0).toLocaleString("en-US",{maximumFractionDigits:0});
   const invOf = c => investors.find(x=>String(x.id)===String(c.investorId));
   const invText = c => {const x=invOf(c);return x?invLabel(x):"—";};
-  const stageText = c => {
-    const note=String((c&&c.note)||"").trim();
-    const marked=note.match(/(?:المرحلة|مرحلة)\s*[:：\-]?\s*([^|،,\n]+)/);
-    if(marked&&marked[1]) return marked[1].trim();
-    if(note) return note;
-    return c&&c.contractType==="migrated"?"مرحّل":"—";
-  };
   const sum = (rows,key) => rows.reduce((s,r)=>s+(+r[key]||0),0);
   const remainingRows = targetRows.filter(r=>r.remainingDue>0);
   const completedRows = targetRows.filter(r=>r.status==="paid");
@@ -6983,25 +6976,31 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
   else if(mode==="overdue") rows=manualRows;
 
   const q=query.trim().toLowerCase();
-  const _filteredRows=rows.filter(r=>{
+  const visibleRows=rows.filter(r=>{
     const c=r.c||{};
     const text=[c.client,c.num,c.idNum,c.cPhone,invText(c)].join(" ").toLowerCase();
     return (!q||text.includes(q))&&(invFilter==="all"||String(c.investorId)===String(invFilter));
   });
-  // أقساط الشهر / باقي الأقساط / المنجز: ترتيب الزبائن حسب رقم الفرصة (1، 2، 3 ...)
-  const visibleRows=(mode==="remaining"||mode==="target"||mode==="done")
-    ?[..._filteredRows].sort((a,b)=>compareInvestors(invOf(a.c||{})||{},invOf(b.c||{})||{}))
-    :_filteredRows;
   const visibleInvestors=investorRows.filter(r=>{
     const text=(invLabel(r.inv)||"").toLowerCase();
     return (!q||text.includes(q))&&(invFilter==="all"||String(r.inv.id)===String(invFilter));
   });
 
-  const statusMeta={
-    paid:["مكتمل","is-paid"],partial:["جزئي","is-partial"],due:["مستحق","is-due"],
-    upcoming:["قادم","is-upcoming"],unknown:["تاريخ غير محدد","is-unknown"]
-  };
   const canPrint=mode==="target"||mode==="remaining"||mode==="done";
+  // نفس الأعمدة والقيم للشاشة والطباعة، دون تغيير حسابات الأقساط.
+  const installmentColumns=[
+    {label:"#",className:"qkpi-col-index",width:"5%"},
+    {label:"الاسم",className:"qkpi-col-name",width:"31%"},
+    {label:"رقم العقد",className:"qkpi-col-contract",width:"9%"},
+    {label:"المستثمر",className:"qkpi-col-investor",width:"22%"},
+    {label:"القسط",className:"qkpi-col-amount",width:"11%"},
+    {label:"المدفوع",className:"qkpi-col-paid",width:"11%"},
+    {label:"الباقي",className:"qkpi-col-remaining",width:"11%"}
+  ];
+  const installmentRows=canPrint?visibleRows.map((r,i)=>({
+    id:r.c.id,
+    cells:[i+1,r.c.client||"—",reportContractNumber(r.c),invText(r.c),nf(r.due),nf(r.paidApplied),nf(r.remainingDue)]
+  })):[];
   const escapePrint=value=>String(value==null?"":value)
     .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
     .replace(/\"/g,"&quot;").replace(/'/g,"&#39;");
@@ -7009,33 +7008,24 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
     if(!canPrint)return;
     const selected=invFilter==="all"?null:investors.find(i=>String(i.id)===String(invFilter));
     const investorFilter=selected?invLabel(selected):"كل المستثمرين";
-    const headings=mode==="remaining"
-      ?["#","الاسم","رقم العقد","المستثمر","القسط","المدفوع","الباقي","الحالة"]
-      :mode==="done"
-        ?["#","الاسم","رقم العقد","المستثمر","القسط","المدفوع","تاريخ السداد","الحالة"]
-        :["#","الاسم","رقم العقد","المستثمر","القسط","المدفوع","الباقي","الحالة"];
-    const cell=value=>"<td>"+escapePrint(value)+"</td>";
-    const body=visibleRows.map((r,i)=>{
-      const c=r.c||{};
-      const sm=statusMeta[r.status]||statusMeta.unknown;
-      const client="<td class='name'>"+escapePrint(c.client||"—")+"<small>عقد "+escapePrint(reportContractNumber(c))+"</small></td>";
-      if(mode==="remaining")return "<tr>"+cell(i+1)+"<td class='name'>"+escapePrint(c.client||"—")+"</td>"+cell(reportContractNumber(c))+cell(invText(c))+cell(nf(r.due))+cell(nf(r.paidApplied))+cell(nf(r.remainingDue))+cell(sm[0])+"</tr>";
-      if(mode==="done")return "<tr>"+cell(i+1)+"<td class='name'>"+escapePrint(c.client||"—")+"</td>"+cell(reportContractNumber(c))+cell(invText(c))+cell(nf(r.due))+cell(nf(r.paidApplied))+cell(r.lastPaymentDate?fmtDate(r.lastPaymentDate):"—")+cell(sm[0])+"</tr>";
-      const targetClient="<td class='name'>"+escapePrint(c.client||"—")+"</td>";
-      return "<tr>"+cell(i+1)+targetClient+cell(reportContractNumber(c))+cell(invText(c))+cell(nf(r.due))+cell(nf(r.paidApplied))+cell(nf(r.remainingDue))+cell(sm[0])+"</tr>";
-    }).join("");
+    const body=installmentRows.map(row=>"<tr>"+installmentColumns.map((column,i)=>
+      "<td class='"+column.className+"'>"+escapePrint(row.cells[i])+"</td>"
+    ).join("")+"</tr>").join("");
     const primaryLabel=mode==="remaining"?"إجمالي الباقي":mode==="done"?"إجمالي المنجز":"إجمالي الأقساط";
     const primaryValue=mode==="remaining"?sum(visibleRows,"remainingDue"):sum(visibleRows,"due");
     const secondaryLabel=mode==="done"?"عدد الأقساط":"إجمالي المدفوع";
     const secondaryValue=mode==="done"?visibleRows.length:sum(visibleRows,"paidApplied");
     const queryInfo=query.trim()?" · البحث: "+escapePrint(query.trim()):"";
-    const printWindow=window.open("","_blank","width=1180,height=820");
+    const printWindow=window.open("","_blank","width=860,height=1000");
     if(!printWindow){window.alert("تعذر فتح نافذة الطباعة. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.");return;}
-    const empty="<tr><td class='empty' colspan='"+headings.length+"'>لا توجد نتائج للطباعة</td></tr>";
-    const head=headings.map(h=>"<th>"+escapePrint(h)+"</th>").join("");
+    const empty="<tr><td class='empty' colspan='"+installmentColumns.length+"'>لا توجد نتائج للطباعة</td></tr>";
+    const head=installmentColumns.map(column=>"<th scope='col'>"+escapePrint(column.label)+"</th>").join("");
+    const columns="<colgroup>"+installmentColumns.map(column=>"<col style='width:"+column.width+"'>").join("")+"</colgroup>";
     printWindow.document.write("<!doctype html><html lang='ar' dir='rtl'><head><meta charset='utf-8'><title>"+escapePrint(meta.title)+"</title><style>"+
-      "@page{size:A4 "+(canPrint?"portrait":"landscape")+";margin:9mm}*{box-sizing:border-box}body{margin:0;background:#fff;color:#172b3b;font-family:Tahoma,Arial,sans-serif}.actions{display:flex;gap:8px;justify-content:flex-start;margin-bottom:14px}.actions button{border:0;border-radius:8px;padding:9px 18px;font-weight:800;cursor:pointer}.print{background:#0b3559;color:#fff}.close{background:#eee;color:#333}header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid #c79a3b;padding:0 0 12px;margin-bottom:12px}h1{margin:0 0 5px;font-size:24px;color:#0b3559}header p{margin:0;color:#66583f;font-size:12px;font-weight:700}.brand{text-align:left;color:#9a6b16;font-weight:900}.summary{display:flex;gap:10px;margin:0 0 12px}.summary div{min-width:170px;border:1px solid #dfd4c2;border-radius:9px;padding:9px 12px;background:#faf7f0}.summary small{display:block;color:#6b7280;font-weight:700}.summary strong{display:block;margin-top:4px;color:#0b3559;font-size:18px}table{width:100%;border-collapse:collapse;font-size:10.5px}thead{display:table-header-group}th{background:#0b3559;color:#fff;padding:9px 7px;border:1px solid #244c6c}td{padding:8px 7px;border:1px solid #d8d1c5;text-align:center;font-weight:700}tbody tr:nth-child(even){background:#faf8f3}td.name{text-align:right;min-width:165px;color:#102f49;font-weight:900}td.name small{display:block;margin-top:3px;color:#766a58;font-size:9px}.empty{padding:24px;color:#777}footer{margin-top:10px;color:#6b6254;font-size:10px}@media print{.actions{display:none}body{print-color-adjust:exact;-webkit-print-color-adjust:exact}tr{break-inside:avoid}}"+(canPrint?"table{font-size:10px}th{padding:7px 4px}td{padding:6px 4px}td.name{min-width:0;font-size:10px}":"")+
-      "</style></head><body><div class='actions'><button class='print' onclick='window.print()'>طباعة الكشف</button><button class='close' onclick='window.close()'>إغلاق</button></div><header><div><h1>"+escapePrint(meta.title)+"</h1><p>الدورة: "+escapePrint(cycleLabel)+" · "+escapePrint(investorFilter)+queryInfo+" · النتائج: "+visibleRows.length+"</p></div><div class='brand'>مؤسسة قمة الفرصة التجارية</div></header><section class='summary'><div><small>"+primaryLabel+"</small><strong>"+nf(primaryValue)+" ر.س</strong></div><div><small>"+secondaryLabel+"</small><strong>"+(mode==="done"?secondaryValue+" قسط":nf(secondaryValue)+" ر.س")+"</strong></div></section><table><thead><tr>"+head+"</tr></thead><tbody>"+(body||empty)+"</tbody></table><footer>تاريخ الطباعة: "+escapePrint(fmtDate(todayLocal()))+"</footer></body></html>");
+      "@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box}body{margin:0;background:#fff;color:#111;font-family:Tahoma,Arial,sans-serif}.actions{display:flex;gap:8px;margin-bottom:14px}.actions button{border:0;border-radius:8px;padding:9px 18px;font-weight:800;cursor:pointer}.print{background:#0b3559;color:#fff}.close{background:#eee;color:#333}"+
+      "header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border-bottom:2px solid #555;padding:0 0 10px;margin-bottom:10px;break-inside:avoid}header>div:first-child{flex:1;min-width:0}h1{margin:0 0 5px;font-size:21px;color:#111}header p{margin:0;font-size:11px;font-weight:700;line-height:1.7;overflow-wrap:anywhere}.brand{max-width:40%;text-align:left;font-size:11px;font-weight:900;line-height:1.6}.summary{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 12px;break-inside:avoid}.summary div{min-width:150px;border:1px solid #bbb;border-radius:7px;padding:8px 10px}.summary small{display:block;font-weight:700}.summary strong{display:block;margin-top:3px;font-size:17px}"+
+      "table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:11px}thead{display:table-header-group}th{background:#1c2c38;color:#fff;padding:8px 3px;border:1px solid #444;text-align:center;font-weight:900;white-space:normal}td{padding:8px 4px;border:1px solid #aaa;text-align:center;font-weight:700;vertical-align:middle;line-height:1.6;overflow-wrap:anywhere}tbody tr:nth-child(even){background:#f6f6f6}.qkpi-col-name{text-align:right;font-size:12px;font-weight:900}.qkpi-col-investor{text-align:right}.qkpi-col-index,.qkpi-col-contract,.qkpi-col-amount,.qkpi-col-paid,.qkpi-col-remaining{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}.empty{padding:24px;color:#555}footer{margin-top:10px;color:#444;font-size:10px}@media screen{body{width:210mm;max-width:100%;margin:16px auto;padding:10mm}}@media print{.actions{display:none}body{print-color-adjust:exact;-webkit-print-color-adjust:exact}tr{break-inside:avoid;page-break-inside:avoid}}"+
+      "</style></head><body><div class='actions'><button class='print' onclick='window.print()'>طباعة الكشف</button><button class='close' onclick='window.close()'>إغلاق</button></div><header><div><h1>"+escapePrint(meta.title)+"</h1><p>الدورة: "+escapePrint(cycleLabel)+" · "+escapePrint(investorFilter)+queryInfo+" · النتائج: "+visibleRows.length+"</p></div><div class='brand'>مؤسسة قمة الفرصة التجارية</div></header><section class='summary'><div><small>"+primaryLabel+"</small><strong>"+nf(primaryValue)+" ر.س</strong></div><div><small>"+secondaryLabel+"</small><strong>"+(mode==="done"?secondaryValue+" قسط":nf(secondaryValue)+" ر.س")+"</strong></div></section><table>"+columns+"<thead><tr>"+head+"</tr></thead><tbody>"+(body||empty)+"</tbody></table><footer>تاريخ الطباعة: "+escapePrint(fmtDate(todayLocal()))+"</footer></body></html>");
     printWindow.document.close();
     printWindow.focus();
   };
@@ -7107,28 +7097,15 @@ function DashboardKpiDetails({mode,onClose,targetRows,manualRows,investors,cycle
                 <td>{i+1}</td><td className="qkpi-name qkpi-overdue-client">{r.c.client||"—"}</td><td className="qkpi-contract-number">{reportContractNumber(r.c)}</td><td className="qkpi-investor-name">{invText(r.c)}</td><td className="qkpi-red qkpi-money qkpi-overdue-amount">{nf(r.amount)}</td><td><span className="qkpi-badge is-manual">يدوي</span></td>
               </tr>)}</tbody>
             </table>
-          ) : mode==="target" ? (
-            <table className="qkpi-table qkpi-target-simple">
-              <thead><tr><th>#</th><th>الاسم</th><th>رقم العقد</th><th>المستثمر</th><th>القسط</th><th>المدفوع</th><th>الباقي</th><th>الحالة</th></tr></thead>
-              <tbody>{visibleRows.length===0?<tr><td colSpan={8} className="qkpi-empty">لا توجد أقساط في هذه الدورة</td></tr>:visibleRows.map((r,i)=>{const sm=statusMeta[r.status]||statusMeta.unknown;return <tr key={r.c.id}>
-                <td>{i+1}</td><td className="qkpi-name qkpi-customer-primary"><strong>{r.c.client||"—"}</strong></td><td className="qkpi-remaining-num">{reportContractNumber(r.c)}</td><td>{invText(r.c)}</td><td className="qkpi-money">{nf(r.due)}</td><td className="qkpi-green">{nf(r.paidApplied)}</td><td className="qkpi-red qkpi-money">{nf(r.remainingDue)}</td><td><span className={"qkpi-badge "+sm[1]}>{sm[0]}</span></td>
-              </tr>})}</tbody>
+          ) : canPrint ? (
+            <table className={"qkpi-table qkpi-installment-table qkpi-installment-"+mode}>
+              <colgroup>{installmentColumns.map(column=><col key={column.label} style={{width:column.width}}/>)}</colgroup>
+              <thead><tr>{installmentColumns.map(column=><th key={column.label} className={column.className}>{column.label}</th>)}</tr></thead>
+              <tbody>{installmentRows.length===0?<tr><td colSpan={installmentColumns.length} className="qkpi-empty">لا توجد نتائج</td></tr>:installmentRows.map(row=><tr key={row.id}>
+                {row.cells.map((value,i)=><td key={installmentColumns[i].label} className={installmentColumns[i].className}>{value}</td>)}
+              </tr>)}</tbody>
             </table>
-          ) : mode==="remaining" ? (
-            <table className="qkpi-table qkpi-remaining-table">
-              <thead><tr><th>#</th><th>الاسم</th><th>رقم العقد</th><th>المستثمر</th><th>القسط</th><th>المدفوع</th><th>الباقي</th><th>الحالة</th></tr></thead>
-              <tbody>{visibleRows.length===0?<tr><td colSpan={8} className="qkpi-empty">لا توجد نتائج</td></tr>:visibleRows.map((r,i)=>{const sm=statusMeta[r.status]||statusMeta.unknown;return <tr key={r.c.id}>
-                <td>{i+1}</td><td className="qkpi-name qkpi-remaining-client"><strong>{r.c.client||"—"}</strong></td><td className="qkpi-remaining-num">{reportContractNumber(r.c)}</td><td>{invText(r.c)}</td><td>{nf(r.due)}</td><td className="qkpi-green">{nf(r.paidApplied)}</td><td className="qkpi-red qkpi-money">{nf(r.remainingDue)}</td><td><span className={"qkpi-badge "+sm[1]}>{sm[0]}</span></td>
-              </tr>})}</tbody>
-            </table>
-          ) : (
-            <table className="qkpi-table">
-              <thead><tr><th>#</th><th>الاسم</th><th>رقم العقد</th><th>المستثمر</th><th>القسط</th><th>المدفوع</th><th>{mode==="done"?"تاريخ السداد":"الباقي"}</th><th>الحالة</th></tr></thead>
-              <tbody>{visibleRows.length===0?<tr><td colSpan={8} className="qkpi-empty">لا توجد نتائج في هذا التبويب</td></tr>:visibleRows.map((r,i)=>{const sm=statusMeta[r.status]||statusMeta.unknown;return <tr key={r.c.id}>
-                <td>{i+1}</td><td className="qkpi-name"><strong>{r.c.client||"—"}</strong></td><td className="qkpi-remaining-num">{reportContractNumber(r.c)}</td><td>{invText(r.c)}</td><td className="qkpi-money">{nf(r.due)}</td><td className="qkpi-green">{nf(r.paidApplied)}</td><td>{mode==="done"?(r.lastPaymentDate?fmtDate(r.lastPaymentDate):"—"):nf(r.remainingDue)}</td><td><span className={"qkpi-badge "+sm[1]}>{sm[0]}</span></td>
-              </tr>})}</tbody>
-            </table>
-          )}
+          ) : null}
         </div>
         <footer className="qkpi-footer"><span>تُحدّث البيانات مباشرة من العقود والسدادات</span><button type="button" onClick={onClose}>إغلاق الكشف</button></footer>
       </div>
@@ -17428,6 +17405,15 @@ body .contracts-lux table.freeze3 td.q-contracts-client>span:hover{
 .qkpi-print-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
 .qkpi-print-btn:focus-visible{outline:3px solid rgba(199,154,59,.3)!important;outline-offset:2px!important}
 .qkpi-print-btn svg{width:18px!important;height:18px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important;flex:0 0 auto!important}
+.qkpi-installment-table{table-layout:fixed!important;min-width:850px!important}
+.qkpi-installment-table th{padding-inline:8px!important;text-align:center!important}
+.qkpi-installment-table td{padding-block:14px!important;padding-inline:8px!important;text-align:center!important;font-size:14px!important;font-weight:900!important;font-variant-numeric:tabular-nums}
+.qkpi-installment-table .qkpi-col-name{text-align:right!important;color:#092942!important;font-size:17px!important;font-weight:950!important;overflow:hidden;text-overflow:ellipsis}
+.qkpi-installment-table .qkpi-col-investor{text-align:right!important;color:#173b57!important;font-size:14px!important;font-weight:950!important;overflow:hidden;text-overflow:ellipsis}
+.qkpi-installment-table .qkpi-col-contract{color:#111827!important;font-size:15px!important;font-weight:950!important}
+.qkpi-installment-table .qkpi-col-paid{color:#13835c!important}
+.qkpi-installment-table .qkpi-col-remaining{color:#c13e42!important}
+.qkpi-installment-table .qkpi-col-index,.qkpi-installment-table .qkpi-col-contract,.qkpi-installment-table .qkpi-col-amount,.qkpi-installment-table .qkpi-col-paid,.qkpi-installment-table .qkpi-col-remaining{direction:ltr;unicode-bidi:isolate}
 @media(max-width:760px){.qkpi-tools.has-print{grid-template-columns:1fr 1fr}.qkpi-tools.has-print .qkpi-result-count{grid-column:1;text-align:right}.qkpi-print-btn{grid-column:2;width:100%!important}}
 @media(max-width:430px){.qkpi-tools.has-print{grid-template-columns:1fr}.qkpi-tools.has-print .qkpi-result-count,.qkpi-print-btn{grid-column:auto}}
 </style>
@@ -17598,10 +17584,10 @@ html{scroll-behavior:auto!important}
 .qimat-home-v6 .qsend-row span{min-width:0!important;overflow-wrap:anywhere!important}.qimat-home-v6 .qsend-row span strong{color:#f0ca6d!important;font-weight:950!important}.qimat-home-v6 .qsend-row b{white-space:nowrap!important}.qimat-home-v6 .qsend-row b.pos{color:#56d39a!important}.qimat-home-v6 .qsend-row b.neg{color:#ff8f87!important}.qimat-home-v6 .qsend-row.qsend-empty{justify-content:center!important;min-height:58px!important;text-align:center!important}
 
 /* أقساط الشهر: كشف مباشر بلا بطاقات ملخص أو تبويبات داخلية */
-.qkpi-mode-target .qkpi-head{min-height:112px!important}.qkpi-mode-target .qkpi-tools{border-top:0!important}.qkpi-target-simple .qkpi-customer-primary{min-width:180px!important;text-align:right!important}.qkpi-target-simple .qkpi-customer-primary>strong{display:block!important;color:#102f49!important;font-size:19px!important;font-weight:950!important;line-height:1.35!important}.qkpi-target-simple .qkpi-remaining-num{font-size:15px!important;font-weight:950!important;color:#102f49!important;white-space:nowrap!important}.qkpi-target-simple tbody td{padding-block:13px!important;font-size:14px!important;font-weight:850!important}
-.qkpi-mode-remaining .qkpi-tools{border-top:0!important}.qkpi-remaining-table th{font-size:13px!important}.qkpi-remaining-table td{padding-block:15px!important;font-size:15px!important;font-weight:900!important;font-variant-numeric:tabular-nums}.qkpi-remaining-table .qkpi-remaining-client{min-width:180px!important;text-align:right!important}.qkpi-remaining-table .qkpi-remaining-client>strong{display:block!important;color:#092942!important;font-size:18px!important;font-weight:950!important;line-height:1.4!important}.qkpi-remaining-table .qkpi-remaining-num{font-size:16px!important;font-weight:950!important;color:#092942!important;white-space:nowrap!important}.qkpi-remaining-table .qkpi-badge{min-width:82px!important;padding:7px 11px!important;font-size:12px!important;font-weight:950!important}.qkpi-remaining-table .qkpi-money{font-size:16px!important}
+.qkpi-mode-target .qkpi-head{min-height:112px!important}.qkpi-mode-target .qkpi-tools{border-top:0!important}.qkpi-target-simple .qkpi-customer-primary{min-width:270px!important;text-align:right!important}.qkpi-target-simple .qkpi-customer-primary>strong{display:block!important;color:#102f49!important;font-size:19px!important;font-weight:950!important;line-height:1.35!important}.qkpi-target-simple .qkpi-customer-primary>small{display:block!important;margin-top:5px!important;color:#7a684e!important;font-size:12.5px!important;font-weight:900!important;line-height:1.45!important}.qkpi-target-simple tbody td{padding-block:13px!important;font-size:14px!important;font-weight:850!important}
+.qkpi-mode-remaining .qkpi-tools{border-top:0!important}.qkpi-remaining-table th{font-size:13px!important}.qkpi-remaining-table td{padding-block:15px!important;font-size:15px!important;font-weight:900!important;font-variant-numeric:tabular-nums}.qkpi-remaining-table .qkpi-remaining-client{min-width:245px!important;text-align:right!important}.qkpi-remaining-table .qkpi-remaining-client>strong{display:block!important;color:#092942!important;font-size:18px!important;font-weight:950!important;line-height:1.4!important}.qkpi-remaining-table .qkpi-remaining-client>small{display:block!important;margin-top:5px!important;color:#111827!important;font-size:14px!important;font-weight:900!important;line-height:1.4!important}.qkpi-remaining-table .qkpi-remaining-client>small b{color:#050b12!important;font-size:15px!important;font-weight:950!important}.qkpi-remaining-table .qkpi-badge{min-width:82px!important;padding:7px 11px!important;font-size:12px!important;font-weight:950!important}.qkpi-remaining-table .qkpi-money{font-size:16px!important}
 .qkpi-mode-overdue .qkpi-summary{grid-template-columns:repeat(5,minmax(0,1fr))!important}.qkpi-mode-overdue .qkpi-summary>div{min-height:94px!important;padding:15px 16px!important}.qkpi-mode-overdue .qkpi-summary small{color:#3f5264!important;font-size:13px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-summary strong{margin-top:8px!important;color:#102f49!important;font-size:26px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-summary em{font-size:11px!important;font-weight:900!important}.qkpi-mode-overdue .qkpi-table th{padding-block:14px!important;font-size:13px!important}.qkpi-mode-overdue .qkpi-table td{padding-block:15px!important;font-size:15px!important;font-weight:900!important;font-variant-numeric:tabular-nums}.qkpi-mode-overdue .qkpi-overdue-client{min-width:260px!important;color:#092942!important;font-size:18px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-contract-number{color:#050b12!important;font-size:17px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-investor-name{color:#173b57!important;font-size:16px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-overdue-amount{font-size:18px!important;font-weight:950!important}.qkpi-mode-overdue .qkpi-badge{min-width:78px!important;padding:7px 10px!important;font-size:12px!important}
-@media(max-width:720px){.qkpi-target-simple{min-width:840px!important}.qkpi-target-simple .qkpi-customer-primary>strong{font-size:17px!important}.qkpi-target-simple .qkpi-remaining-num{font-size:14px!important}}
+@media(max-width:720px){.qkpi-target-simple{min-width:840px!important}.qkpi-target-simple .qkpi-customer-primary>strong{font-size:17px!important}.qkpi-target-simple .qkpi-customer-primary>small{font-size:11.5px!important}}
 @media(max-width:760px){.qkpi-mode-overdue .qkpi-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}.q-new-contract-money-grid>div>label{min-height:0!important}}
 
 /* عقد جديد: عنوان ممتد وحقول المبالغ متساوية */
