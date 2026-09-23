@@ -5022,14 +5022,14 @@ function JardPage({contracts,goodsContracts,investors,settings,txList,loans,zaka
     if(key==="zakat")   return (zakatTx||[]).reduce((s,t)=>s+(t.type==="collect"?t.amount:-t.amount),0);
     if(key==="deductions") return (pending||[]).reduce((s,p)=>s+p.amount,0);
     if(key==="staff") {
-      // مستحقات الإدارة بند التزام تراكمي: كل ما استُحق للمدير والمحاسب من كل الدورات
-      // ناقص كل ما استلموه فعلاً — لا يقتصر على الدورة المختارة، وإلا اختفى الباقي من دورات سابقة.
+      // مستحقات الإدارة للدورة المختارة فقط: المستحق للمدير والمحاسب من عقود هذه الدورة
+      // ناقص ما استلموه فيها. تُصفّى قبل كل إقفال، فلا يبقى رصيد متراكم من دورة سابقة.
       const _daily2 = _arr(daily);
-      const allC = (goodsContracts||contracts||[]).filter(c=>!c.deleted);
-      const mgrE = allC.reduce((s,c)=>s+calcC(c,settings).inst,0);
-      const accE = allC.reduce((s,c)=>s+calcC(c,settings).acc,0);
-      const mgrT = _daily2.filter(d=>_isMgrDailyTake(d)).reduce((s,d)=>s+(d.amount||0),0);
-      const accT = _daily2.filter(d=>d.type==="acc").reduce((s,d)=>s+(d.amount||0),0);
+      const cycleC = (goodsContracts||contracts||[]).filter(c=>!c.deleted && c.date && fiscalYM(c.date,_cd)===selMonth);
+      const mgrE = cycleC.reduce((s,c)=>s+calcC(c,settings).inst,0);
+      const accE = cycleC.reduce((s,c)=>s+calcC(c,settings).acc,0);
+      const mgrT = _daily2.filter(d=>_isMgrDailyTake(d) && d.date && fiscalYM(d.date,_cd)===selMonth).reduce((s,d)=>s+(d.amount||0),0);
+      const accT = _daily2.filter(d=>d.type==="acc" && d.date && fiscalYM(d.date,_cd)===selMonth).reduce((s,d)=>s+(d.amount||0),0);
       return (mgrE - mgrT) + (accE - accT);
     }
     if(key==="cards") {
