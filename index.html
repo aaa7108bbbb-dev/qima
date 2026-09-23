@@ -1523,7 +1523,9 @@ function NewContractPage({investors, settings, contracts, onSave, toast, setInvT
       if(hasDraftContent(draft)){
         const draftNum=String(draft.num||nextNum), numberUsed=contracts.some(c=>!c.deleted&&String(c.num||"")===draftNum);
         const ds=_arr(draft.deducts).slice(0,3);while(ds.length<3)ds.push({contractNum:"",amount:"",investorId:""});
-        initialDraftRef.current={...emptyForm(numberUsed?nextNum:draftNum),...draft,num:numberUsed?String(nextNum):draftNum,deducts:ds};
+        // المسودة تُستعاد بتاريخ يوم الحفظ الفعلي (اليوم)، لا بتاريخها القديم، حتى لا يقع
+        // العقد في دورة مقفلة إذا اكتُملت المسودة في يوم لاحق.
+        initialDraftRef.current={...emptyForm(numberUsed?nextNum:draftNum),...draft,date:today,num:numberUsed?String(nextNum):draftNum,deducts:ds};
       }
     }catch(e){}
   }
@@ -2062,7 +2064,7 @@ const assessRisk = (c, payments) => {
   return {level, months:monthsBehind, overdue:behindAmt, color, score};
 };
 
-function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate,payments,setPayments,toast,completionAlert,setCompletionAlert,onSaveNew,setInvTxList,startCollect,setPage,logAct,dailyOpen,doneIds,markDone,embedded=false}) {
+function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate,payments,setPayments,toast,completionAlert,setCompletionAlert,onSaveNew,setInvTxList,startCollect,setPage,logAct,dailyOpen,doneIds,markDone,unmarkDone,embedded=false}) {
   const [showNew,setShowNew]=useState(false);
   const [showMigrated,setShowMigrated]=useState(false);
   const [showCollect,setShowCollect]=useState(!!startCollect);
@@ -3078,6 +3080,10 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                         <button className="q-contract-action q-contract-action-edit" style={styles.btnGold()} onClick={()=>{setEditC(c);const hasNewD=c.deducts&&c.deducts.length>0&&c.deducts.some(d=>d.amount||d.investorId||d.contractNum);const hasOldD=!hasNewD&&c.deductEnabled&&c.deductAmount;const emptyD=()=>({contractNum:"",amount:"",investorId:""});const dArr=hasNewD?[...c.deducts.slice(0,3),...Array(Math.max(0,3-c.deducts.length)).fill(0).map(emptyD)]:hasOldD?[{contractNum:"",amount:String(c.deductAmount),investorId:String(c.deductInvestorId||"")},emptyD(),emptyD()]:[emptyD(),emptyD(),emptyD()];setEditForm({...c, investorId:c.investorId!=null?String(c.investorId):"", deductEnabled:!!(hasNewD||hasOldD), deducts:dArr});}}>
                           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m14.5 5.5 4 4M5 19l3.9-.9L19 8a1.8 1.8 0 0 0 0-2.5l-.5-.5A1.8 1.8 0 0 0 16 5L5.9 15.1Z"/><path d="m12.8 7.2 4 4"/></svg><span>تعديل</span>
                         </button>
+                        {statusTab==="done" && unmarkDone &&
+                          <button className="q-contract-action q-contract-action-restore" style={styles.btnGold()} onClick={()=>{if(confirm("إرجاع هذا العقد للعقود المستمرة؟"))unmarkDone(c.id);toast("✅ رجع للمستمرة");}}>
+                            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 8V4m0 0h4M5 4l3.1 3.1A7 7 0 1 1 5.7 14"/></svg><span>إرجاع للنشط</span>
+                          </button>}
                         {statusTab==="deleted"
                           ? <button className="q-contract-action q-contract-action-restore" style={styles.btnGold()} onClick={()=>{onRestore(c.id);toast("✅ تم الاسترجاع");}}>
                               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 8V4m0 0h4M5 4l3.1 3.1A7 7 0 1 1 5.7 14"/></svg><span>استرجاع</span>
@@ -3310,7 +3316,7 @@ function ContractsPage({contracts,investors,settings,onDelete,onRestore,onUpdate
                         <td style={styles.td}>{p.note||"—"}</td>
                         <td style={styles.td}>
                           <button style={{...styles.btnGold(),fontSize:13,padding:"3px 8px"}}
-                            onClick={()=>{if(window.confirm("حذف هذا السداد؟"))setPayments(prev=>prev.filter(x=>x.id!==p.id));}}>حذف</button>
+                            onClick={()=>{if(window.confirm("حذف هذا السداد؟")){const _c=(contracts||[]).find(c=>c.id===p.contractId);logAct&&logAct("حذف سداد","سداد",((_c&&_c.client)||"عقد")+" — "+SAR(p.amount)+(p.date?" — "+p.date:""));setPayments(prev=>prev.filter(x=>x.id!==p.id));}}}>حذف</button>
                         </td>
                       </tr>
                     ))}
@@ -4341,7 +4347,7 @@ function FundsPanel({investors, contracts, settings, setInvestors, toast}){
   );
 }
 
-function AccountsPage({contracts, allContracts, investors, setInvestors, settings, txList, setTxList, loans, setLoans, zakatTx, setZakatTx, pending, setPending, payments, setPayments, setContracts, toast, goBack, privateAccMode, initialSubTab, gsWrite, doneIds=[], embedded=false, initialInvestorId=null, onOpenInvestorAccount}) {
+function AccountsPage({contracts, allContracts, investors, setInvestors, settings, txList, setTxList, loans, setLoans, zakatTx, setZakatTx, pending, setPending, payments, setPayments, setContracts, toast, goBack, privateAccMode, initialSubTab, gsWrite, doneIds=[], embedded=false, initialInvestorId=null, onOpenInvestorAccount, logAct}) {
   const specialNames = ["1","2","4","7","8","9","11"];
   const isSpecial = function(inv){ var nm=(inv.name||"").trim(); return specialNames.some(function(n){return nm.endsWith(" "+n);}); };
   const orderedInvestors = sortedInvestors(investors);
@@ -4929,6 +4935,7 @@ function AccountsPage({contracts, allContracts, investors, setInvestors, setting
                           if(tx.type==="installments"){
                             if(!window.confirm("حذف جميع سدادات هذا الشهر ("+tx.details.length+" سداد) من كشف المستثمر؟")) return;
                             const payIds = tx.details.map(d=>String(d.payId)).filter(Boolean);
+                            logAct&&logAct("حذف سداد","سداد","كشف مستثمر — "+payIds.length+" سداد"+(tx.monthLabel?" — "+tx.monthLabel:""));
                             setPayments(prev=>prev.filter(p=>!payIds.includes(String(p.id))));
                             toast("تم حذف "+payIds.length+" سداد");
                           } else if(tx.type==="contract"){
@@ -5015,15 +5022,14 @@ function JardPage({contracts,goodsContracts,investors,settings,txList,loans,zaka
     if(key==="zakat")   return (zakatTx||[]).reduce((s,t)=>s+(t.type==="collect"?t.amount:-t.amount),0);
     if(key==="deductions") return (pending||[]).reduce((s,p)=>s+p.amount,0);
     if(key==="staff") {
-      // مستحقات الإدارة مرتبطة بالدورة المالية المختارة 21→20، وليست بتاريخ رصيد بداية الصندوق.
-      // نستخدم كل العقود غير المحذوفة (goodsContracts) لا العقود النشطة فقط: عمولة المدير
-      // والمحاسب تُستحق عند إنشاء العقد، وسداد العميل الكامل أو المبكر لا يلغيها.
+      // مستحقات الإدارة بند التزام تراكمي: كل ما استُحق للمدير والمحاسب من كل الدورات
+      // ناقص كل ما استلموه فعلاً — لا يقتصر على الدورة المختارة، وإلا اختفى الباقي من دورات سابقة.
       const _daily2 = _arr(daily);
-      const cycleC = (goodsContracts||contracts||[]).filter(c=>!c.deleted && c.date && fiscalYM(c.date,_cd)===selMonth);
-      const mgrE = cycleC.reduce((s,c)=>s+calcC(c,settings).inst,0);
-      const accE = cycleC.reduce((s,c)=>s+calcC(c,settings).acc,0);
-      const mgrT = _daily2.filter(d=>_isMgrDailyTake(d) && d.date && fiscalYM(d.date,_cd)===selMonth).reduce((s,d)=>s+(d.amount||0),0);
-      const accT = _daily2.filter(d=>d.type==="acc" && d.date && fiscalYM(d.date,_cd)===selMonth).reduce((s,d)=>s+(d.amount||0),0);
+      const allC = (goodsContracts||contracts||[]).filter(c=>!c.deleted);
+      const mgrE = allC.reduce((s,c)=>s+calcC(c,settings).inst,0);
+      const accE = allC.reduce((s,c)=>s+calcC(c,settings).acc,0);
+      const mgrT = _daily2.filter(d=>_isMgrDailyTake(d)).reduce((s,d)=>s+(d.amount||0),0);
+      const accT = _daily2.filter(d=>d.type==="acc").reduce((s,d)=>s+(d.amount||0),0);
       return (mgrE - mgrT) + (accE - accT);
     }
     if(key==="cards") {
@@ -14542,11 +14548,12 @@ function App() {
   const saveNewContract = c=>{setContracts(p=>[...p,c]);addPastClientFromContract(c);logAct("إضافة","عقد",("#"+c.num+" — "+c.client));};
   const updateContract = updated=>{setContracts(p=>p.map(c=>c.id===updated.id?updated:c));logAct("تعديل","عقد",("#"+updated.num+" — "+updated.client));};
   const deleteContract = id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(x=>x.id===id?{...x,deleted:true}:x));logAct("حذف","عقد",(c?("#"+c.num+" — "+c.client):""));};
-  const restoreContract = id=>{const c=contracts.find(x=>x.id===id);setContracts(p=>p.map(x=>x.id===id?{...x,deleted:false}:x));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client):""));};
-  const accountCommon={contracts:publicContracts,allContracts:publicAllContracts,investors:publicInvestors,setInvestors:setPublicInvestors,settings,txList:publicInvTxList,setTxList:setPublicInvTxList,loans,setLoans,zakatTx:publicZakatTx,setZakatTx:setPublicZakatTx,pending,setPending,payments:publicAccountPayments,setPayments:setPublicPayments,setContracts,toast,privateAccMode:false,gsWrite,doneIds};
+  const restoreContract = id=>{const c=contracts.find(x=>x.id===id);const _td=todayLocal();setContracts(p=>p.map(x=>x.id===id?{...x,deleted:false,date:_td}:x));logAct("استرجاع","عقد",(c?("#"+c.num+" — "+c.client+" — بتاريخ اليوم"):""));};
+  const unmarkDone = id=>{const c=contracts.find(x=>x.id===id);setDoneIds(prev=>_arr(prev).filter(x=>String(x)!==String(id)));setContracts(p=>p.map(x=>x.id===id?{...x,done:false,status:(x.status==="done"?"":x.status)}:x));logAct("إرجاع للنشط","عقد",(c?("#"+c.num+" — "+c.client):""));};
+  const accountCommon={contracts:publicContracts,allContracts:publicAllContracts,investors:publicInvestors,setInvestors:setPublicInvestors,settings,txList:publicInvTxList,setTxList:setPublicInvTxList,loans,setLoans,zakatTx:publicZakatTx,setZakatTx:setPublicZakatTx,pending,setPending,payments:publicAccountPayments,setPayments:setPublicPayments,setContracts,toast,privateAccMode:false,gsWrite,doneIds,logAct};
 
   const contractsHub=<ContractsCenter key={"contracts-"+contractsEntry} initialTab={contractsEntry}
-    manageComp={<div className="q-embedded-contracts"><ContractsPage embedded contracts={allVisibleContracts} investors={publicInvestors} settings={settings} onDelete={deleteContract} onRestore={restoreContract} onUpdate={updateContract} payments={publicPayments} setPayments={setPublicPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={saveNewContract} setInvTxList={setPublicInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} setPage={setPage}/></div>}
+    manageComp={<div className="q-embedded-contracts"><ContractsPage embedded contracts={allVisibleContracts} investors={publicInvestors} settings={settings} onDelete={deleteContract} onRestore={restoreContract} onUpdate={updateContract} payments={publicPayments} setPayments={setPublicPayments} toast={toast} completionAlert={completionAlert} setCompletionAlert={setCompletionAlert} onSaveNew={saveNewContract} setInvTxList={setPublicInvTxList} logAct={logAct} dailyOpen={dailyOpen} doneIds={doneIds} markDone={markDone} unmarkDone={unmarkDone} setPage={setPage}/></div>}
     newComp={<NewContractPage investors={publicInvestors} settings={settings} contracts={allVisibleContracts} onSave={saveNewContract} toast={toast} setInvTxList={setPublicInvTxList}/>} 
     goodsComp={<GoodsPage embedded investors={publicInvestors} contracts={publicAllContracts} toast={toast} gsWrite={gsWrite}/>} 
     reportsComp={<ContractReportsCenter contracts={publicContracts} investors={publicInvestors} payments={publicPayments} doneIds={doneIds}/>} 
