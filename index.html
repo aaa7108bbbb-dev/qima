@@ -13060,14 +13060,14 @@ function ApprovedFinancialCollection({contracts,investors,payments,setPayments,t
   const savePayment=(finishContract=false)=>{
     if(savingRef.current||!payTarget)return;
     const amount=+payAmount||0;
-    if(amount<=0){toast&&toast("أدخل مبلغ السداد","warn");return;}
+    if(amount<=0 && !finishContract){toast&&toast("أدخل مبلغ السداد","warn");return;}
     if(amount>payTarget.remaining){toast&&toast("المبلغ أكبر من المتبقي على العقد","warn");return;}
     if(!payDate){toast&&toast("حدد تاريخ السداد","warn");return;}
     if(finishContract&&!markDone){toast&&toast("تعذر إنهاء العقد. لم يتم تسجيل السداد.","warn");return;}
 
     const target=payTarget, contractId=target.c.id, contractNo=number(target.c), client=target.c.client||"", remainingAfter=Math.max(0,target.remaining-amount);
     if(finishContract){
-      const message="تأكيد سداد وإنهاء العقد رقم "+contractNo+"؟\n\nسيُسجّل للمستثمر مبلغ "+NUM(amount)+" فقط.\n"+(remainingAfter>0?"وسيُقفل المتبقي "+NUM(remainingAfter)+" دون إضافته إلى حساب المستثمر.":"وسيتم إقفال العقد بعد تسجيل هذا المبلغ.");
+      const message=(amount<=0?"⚠️ تنبيه: بتقفل العقد رقم "+contractNo+" بدون تسجيل أي سداد.\n":"تأكيد سداد وإنهاء العقد رقم "+contractNo+"؟\n")+"\nسيُسجّل للمستثمر مبلغ "+NUM(amount)+" فقط.\n"+(remainingAfter>0?"وسيُقفل المتبقي "+NUM(remainingAfter)+" دون إضافته إلى حساب المستثمر.":"وسيتم إقفال العقد بعد تسجيل هذا المبلغ.");
       if(!confirm(message))return;
     }
 
